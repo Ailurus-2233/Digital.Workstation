@@ -1,16 +1,14 @@
 <Project>
     <PropertyGroup>
-        <!-- 关闭默认的 CopyLocal 设置 -->
-        <Private>false</Private>
         <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
     <ItemDefinitionGroup>
         <Reference>
-            <Private>false</Private> <!-- 对静态引用DLL关闭复制 -->
+            <Private>false</Private>
         </Reference>
         <ProjectReference>
-            <Private>false</Private> <!-- 对项目引用关闭复制 -->
+            <Private>false</Private>
         </ProjectReference>
     </ItemDefinitionGroup>
 </Project>

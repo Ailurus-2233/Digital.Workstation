@@ -1,0 +1,8 @@
+{
+    "AssemblySearchPaths": [
+        "./",
+        "./Core",
+        "./Modules",
+        "./Libraries"
+    ]
+}

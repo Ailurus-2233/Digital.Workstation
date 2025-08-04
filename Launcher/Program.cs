@@ -1,21 +1,7 @@
-﻿using Avalonia;
-using System;
+﻿// See https://aka.ms/new-console-template for more information
 
-namespace Workstation;
+using DigitalWorkstation.Common;
 
-sealed class Program
-{
-    // Initialization code. Don't use any Avalonia, third-party APIs or any
-    // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
-    // yet and stuff might break.
-    [STAThread]
-    public static void Main(string[] args) => BuildAvaloniaApp()
-        .StartWithClassicDesktopLifetime(args);
+Console.WriteLine("Hello, World!");
 
-    // Avalonia configuration, don't remove; also used by visual designer.
-    public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .WithInterFont()
-            .LogToTrace();
-}
+// AssemblyLoader.Initialize(@".\Configs\AssemblyPaths.json");
