@@ -1,0 +1,35 @@
+<Project>
+    <PropertyGroup>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\')) ">
+        <AssemblyName Condition="'$(AssemblyName)' == ''">Ailurus.DigitalWorkstation.$(MSBuildProjectName)</AssemblyName>
+        <RootNamespace Condition="'$(RootNamespace)' == ''">Ailurus.DigitalWorkstation.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and $(MSBuildProjectDirectory.Contains('\UnitTest\')) ">
+        <AssemblyName Condition="'$(AssemblyName)' == ''">Ailurus.DigitalWorkstation.UnitTest.$(MSBuildProjectName)</AssemblyName>
+        <RootNamespace Condition="'$(RootNamespace)' == ''">Ailurus.DigitalWorkstation.UnitTest.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(OutputPath)' == ''">
+        <OutputPath>$(SolutionDir)Output\</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\Core\'))">
+        <OutputPath>$(SolutionDir)Output\Core</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\Modules\'))">
+        <OutputPath>$(SolutionDir)Output\Modules</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\UnitTest\'))">
+        <OutputPath>$(SolutionDir)UnitTest\Output\</OutputPath>
+    </PropertyGroup>
+
+</Project>

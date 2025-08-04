@@ -1,0 +1,4 @@
+<Project>
+    <Import Project="$(SolutionDir)Build\Base.targets"
+            Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\'))"/>
+</Project>  
