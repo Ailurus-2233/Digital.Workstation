@@ -7,29 +7,46 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\')) ">
-        <AssemblyName Condition="'$(AssemblyName)' == ''">Ailurus.DigitalWorkstation.$(MSBuildProjectName)</AssemblyName>
-        <RootNamespace Condition="'$(RootNamespace)' == ''">Ailurus.DigitalWorkstation.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
+        <AssemblyName Condition="'$(AssemblyName)' == ''">DigitalWorkstation.$(MSBuildProjectName)</AssemblyName>
+        <RootNamespace Condition="'$(RootNamespace)' == ''">DigitalWorkstation.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and $(MSBuildProjectDirectory.Contains('\UnitTest\')) ">
-        <AssemblyName Condition="'$(AssemblyName)' == ''">Ailurus.DigitalWorkstation.UnitTest.$(MSBuildProjectName)</AssemblyName>
-        <RootNamespace Condition="'$(RootNamespace)' == ''">Ailurus.DigitalWorkstation.UnitTest.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(OutputPath)' == ''">
-        <OutputPath>$(SolutionDir)Output\</OutputPath>
+        <AssemblyName Condition="'$(AssemblyName)' == ''">DigitalWorkstation.UnitTest.$(MSBuildProjectName)</AssemblyName>
+        <RootNamespace Condition="'$(RootNamespace)' == ''">DigitalWorkstation.UnitTest.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\Core\'))">
-        <OutputPath>$(SolutionDir)Output\Core</OutputPath>
+        <OutputPath Condition=" '$(Configuration)' == 'Debug' ">$(SolutionDir)Output\Debug\Core\</OutputPath>
+        <OutputPath Condition=" '$(Configuration)' == 'Release' ">$(SolutionDir)Output\Release\Core\</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\Modules\'))">
-        <OutputPath>$(SolutionDir)Output\Modules</OutputPath>
+        <OutputPath Condition=" '$(Configuration)' == 'Debug' ">$(SolutionDir)Output\Debug\Modules\</OutputPath>
+        <OutputPath Condition=" '$(Configuration)' == 'Release' ">$(SolutionDir)Output\Release\Modules\</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\UnitTest\'))">
-        <OutputPath>$(SolutionDir)UnitTest\Output\</OutputPath>
+        <OutputPath Condition=" '$(Configuration)' == 'Debug' ">$(SolutionDir)UnitTest\Debug\Output\</OutputPath>
+        <OutputPath Condition=" '$(Configuration)' == 'Release' ">$(SolutionDir)UnitTest\Release\Output\</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(OutputPath)' == ''">
+        <OutputPath Condition=" '$(Configuration)' == 'Debug' ">$(SolutionDir)Output\Debug\</OutputPath>
+        <OutputPath Condition=" '$(Configuration)' == 'Release' ">$(SolutionDir)Output\Release\</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+        <DebugType>none</DebugType>
+        <GenerateDependencyFile>false</GenerateDependencyFile>
+        <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <!-- 定义 DLL 复制目标路径 -->
+        <NuGetDllOutputPath Condition=" '$(Configuration)' == 'Debug' ">$(SolutionDir)Output\Debug\Libraries\</NuGetDllOutputPath>
+        <NuGetDllOutputPath Condition=" '$(Configuration)' == 'Release' ">$(SolutionDir)Output\Release\Libraries\</NuGetDllOutputPath>
     </PropertyGroup>
 
 </Project>
