@@ -1,27 +1,35 @@
 <Project>
-    <!-- 阻止项目引用输出 -->
-    <Target Name="DisableProjectReferenceCopy" BeforeTargets="ResolveReferences">
-        <ItemGroup>
-            <ProjectReference>
-                <Private>false</Private> <!-- 禁止复制 -->
-            </ProjectReference>
-        </ItemGroup>
-    </Target>
+    <ItemDefinitionGroup>
+        <Reference>
+            <Private>false</Private> <!-- 对静态引用DLL关闭复制 -->
+        </Reference>
+        <ProjectReference>
+            <Private>false</Private> <!-- 对项目引用关闭复制 -->
+        </ProjectReference>
+    </ItemDefinitionGroup>
 
-    <!-- 复制 NuGet DLL 到结构化目录 -->
-    <Target Name="CopyPackageLibs" AfterTargets="ResolvePackageAssets">
-        <ItemGroup>
-            <!-- 收集所有 NuGet 包中的运行时 DLL -->
-            <PackageDlls Include="@(RuntimeCopyLocalItems)" Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' != ''" />
-        </ItemGroup>
+<!--    <Target Name="CopyRuntimes" AfterTargets="Build">-->
+<!--        <Copy SourceFiles="@(RuntimeCopyLocalItems)"-->
+<!--              DestinationFiles="@(RuntimeCopyLocalItems->'$(RuntimesPath)')" />-->
+<!--    </Target>-->
 
-        <!-- 按包ID和版本分组 -->
-        <ItemGroup>
-            <PackageGroup Include="@(PackageDlls->'%(NuGetPackageId)')" Version="%(NuGetPackageVersion)" Distinct="true" />
-        </ItemGroup>
+<!--    &lt;!&ndash; 在构建前先复制 RuntimeCopyLocalItems 到自定义目录 &ndash;&gt;-->
+<!--    <Target Name="PreCopyRuntimeItems" BeforeTargets="Build">-->
+<!--        <ItemGroup>-->
+<!--            &lt;!&ndash; 只包含 runtimes 路径下的 RuntimeCopyLocalItems &ndash;&gt;-->
+<!--            <FilteredRuntimeItems Include="@(RuntimeCopyLocalItems)"-->
+<!--                                  Condition=" '%(TargetPath)' != '' and %(TargetPath.StartsWith('runtimes\')) " />-->
+<!--        </ItemGroup>-->
 
-        <!-- 创建目标目录并复制文件 -->
-        <MakeDir Directories="@(PackageGroup->'$(PackageLibsOutputPath)%(Identity)-%(Version)')" />
-        <Copy SourceFiles="@(PackageDlls)" DestinationFiles="@(PackageDlls->'$(PackageLibsOutputPath)%(NuGetPackageId)-%(NuGetPackageVersion)\%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
-    </Target>
+<!--        <Copy SourceFiles="@(FilteredRuntimeItems)"-->
+<!--              DestinationFiles="@(FilteredRuntimeItems->'$(RuntimesPath)%(TargetPath)')"-->
+<!--              SkipUnchangedFiles="true" />-->
+<!--    </Target>-->
+
+    <!-- 元数据处理器：从 NuGet 包名提取第一个单词 -->
+    <ItemDefinitionGroup>
+        <NuGetDependencies>
+            <FirstFolder>$([System.Text.RegularExpressions.Regex]::Match('%(NuGetPackageId)', '^([^.]+)').Groups[1].Value)</FirstFolder>
+        </NuGetDependencies>
+    </ItemDefinitionGroup>
 </Project>
