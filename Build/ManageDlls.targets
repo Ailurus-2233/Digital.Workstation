@@ -1,31 +1,4 @@
 <Project>
-    <ItemDefinitionGroup>
-        <Reference>
-            <Private>false</Private> <!-- 对静态引用DLL关闭复制 -->
-        </Reference>
-        <ProjectReference>
-            <Private>false</Private> <!-- 对项目引用关闭复制 -->
-        </ProjectReference>
-    </ItemDefinitionGroup>
-
-<!--    <Target Name="CopyRuntimes" AfterTargets="Build">-->
-<!--        <Copy SourceFiles="@(RuntimeCopyLocalItems)"-->
-<!--              DestinationFiles="@(RuntimeCopyLocalItems->'$(RuntimesPath)')" />-->
-<!--    </Target>-->
-
-<!--    &lt;!&ndash; 在构建前先复制 RuntimeCopyLocalItems 到自定义目录 &ndash;&gt;-->
-<!--    <Target Name="PreCopyRuntimeItems" BeforeTargets="Build">-->
-<!--        <ItemGroup>-->
-<!--            &lt;!&ndash; 只包含 runtimes 路径下的 RuntimeCopyLocalItems &ndash;&gt;-->
-<!--            <FilteredRuntimeItems Include="@(RuntimeCopyLocalItems)"-->
-<!--                                  Condition=" '%(TargetPath)' != '' and %(TargetPath.StartsWith('runtimes\')) " />-->
-<!--        </ItemGroup>-->
-
-<!--        <Copy SourceFiles="@(FilteredRuntimeItems)"-->
-<!--              DestinationFiles="@(FilteredRuntimeItems->'$(RuntimesPath)%(TargetPath)')"-->
-<!--              SkipUnchangedFiles="true" />-->
-<!--    </Target>-->
-
     <!-- 元数据处理器：从 NuGet 包名提取第一个单词 -->
     <ItemDefinitionGroup>
         <NuGetDependencies>
