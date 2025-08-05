@@ -3,3 +3,4 @@
 **/obj/
 Output/
 .fake
+**/*.user
