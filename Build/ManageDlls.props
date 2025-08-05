@@ -1,0 +1,10 @@
+<Project>
+    <PropertyGroup>
+        <!-- 阻止项目引用输出到项目目录 -->
+        <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+
+        <!-- 定义 DLL 复制目标路径 -->
+        <PackageLibsOutputPath Condition=" '$(Configuration)' == 'Debug' ">$(SolutionDir)Output\Debug\Libraries\</PackageLibsOutputPath>
+        <PackageLibsOutputPath Condition=" '$(Configuration)' == 'Release' ">$(SolutionDir)Output\Release\Libraries\</PackageLibsOutputPath>
+    </PropertyGroup>
+</Project>

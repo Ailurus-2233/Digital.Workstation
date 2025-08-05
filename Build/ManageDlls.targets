@@ -1,0 +1,27 @@
+<Project>
+    <!-- 阻止项目引用输出 -->
+    <Target Name="DisableProjectReferenceCopy" BeforeTargets="ResolveReferences">
+        <ItemGroup>
+            <ProjectReference>
+                <Private>false</Private> <!-- 禁止复制 -->
+            </ProjectReference>
+        </ItemGroup>
+    </Target>
+
+    <!-- 复制 NuGet DLL 到结构化目录 -->
+    <Target Name="CopyPackageLibs" AfterTargets="ResolvePackageAssets">
+        <ItemGroup>
+            <!-- 收集所有 NuGet 包中的运行时 DLL -->
+            <PackageDlls Include="@(RuntimeCopyLocalItems)" Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' != ''" />
+        </ItemGroup>
+
+        <!-- 按包ID和版本分组 -->
+        <ItemGroup>
+            <PackageGroup Include="@(PackageDlls->'%(NuGetPackageId)')" Version="%(NuGetPackageVersion)" Distinct="true" />
+        </ItemGroup>
+
+        <!-- 创建目标目录并复制文件 -->
+        <MakeDir Directories="@(PackageGroup->'$(PackageLibsOutputPath)%(Identity)-%(Version)')" />
+        <Copy SourceFiles="@(PackageDlls)" DestinationFiles="@(PackageDlls->'$(PackageLibsOutputPath)%(NuGetPackageId)-%(NuGetPackageVersion)\%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    </Target>
+</Project>

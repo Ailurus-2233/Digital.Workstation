@@ -6,6 +6,13 @@
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+        <DebugType>none</DebugType>
+        <GenerateDependencyFile>false</GenerateDependencyFile>
+        <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    </PropertyGroup>
+
     <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\')) ">
         <AssemblyName Condition="'$(AssemblyName)' == ''">DigitalWorkstation.$(MSBuildProjectName)</AssemblyName>
         <RootNamespace Condition="'$(RootNamespace)' == ''">DigitalWorkstation.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
@@ -27,26 +34,12 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\UnitTest\'))">
-        <OutputPath Condition=" '$(Configuration)' == 'Debug' ">$(SolutionDir)UnitTest\Debug\Output\</OutputPath>
-        <OutputPath Condition=" '$(Configuration)' == 'Release' ">$(SolutionDir)UnitTest\Release\Output\</OutputPath>
+        <OutputPath Condition=" '$(Configuration)' == 'Debug' ">$(SolutionDir)UnitTest\Output\Debug\</OutputPath>
+        <OutputPath Condition=" '$(Configuration)' == 'Release' ">$(SolutionDir)UnitTest\Output\Release\</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OutputPath)' == ''">
         <OutputPath Condition=" '$(Configuration)' == 'Debug' ">$(SolutionDir)Output\Debug\</OutputPath>
         <OutputPath Condition=" '$(Configuration)' == 'Release' ">$(SolutionDir)Output\Release\</OutputPath>
     </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)'=='Release'">
-        <DebugType>none</DebugType>
-        <GenerateDependencyFile>false</GenerateDependencyFile>
-        <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
-        <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    </PropertyGroup>
-
-    <PropertyGroup>
-        <!-- 定义 DLL 复制目标路径 -->
-        <NuGetDllOutputPath Condition=" '$(Configuration)' == 'Debug' ">$(SolutionDir)Output\Debug\Libraries\</NuGetDllOutputPath>
-        <NuGetDllOutputPath Condition=" '$(Configuration)' == 'Release' ">$(SolutionDir)Output\Release\Libraries\</NuGetDllOutputPath>
-    </PropertyGroup>
-
 </Project>
