@@ -7,11 +7,11 @@ namespace DigitalWorkstation.Common;
 
 public sealed class AssemblyLoader
 {
-    private static readonly Lazy<AssemblyLoader> _Instance = new(() => new AssemblyLoader());
+    private static readonly Lazy<AssemblyLoader> _instance = new(() => new AssemblyLoader());
 
     private AssemblyLoader() { }
 
-    private static AssemblyLoader Instance => _Instance.Value;
+    private static AssemblyLoader Instance => _instance.Value;
 
     #region Public API
 
@@ -41,7 +41,7 @@ public sealed class AssemblyLoader
     /// </param>
     public static void AddSearchPath(string path)
     {
-        lock (_SearchPathsLock)
+        lock (_searchPathsLock)
             if (!Instance._searchPaths.Contains(path))
             {
                 Instance._searchPaths.Add(path);
@@ -54,7 +54,7 @@ public sealed class AssemblyLoader
     /// </summary>
     public static void ClearSearchPaths()
     {
-        lock (_SearchPathsLock)
+        lock (_searchPathsLock)
             Instance._searchPaths.Clear();
     }
 
@@ -75,7 +75,7 @@ public sealed class AssemblyLoader
     #region Implementation
 
     private static bool _isInitialized;
-    private static readonly object _SearchPathsLock = new();
+    private static readonly object _searchPathsLock = new();
     private readonly List<string> _searchPaths = [];
     private readonly ConcurrentDictionary<string, Assembly> _resolvedCache = new();
 
@@ -106,13 +106,15 @@ public sealed class AssemblyLoader
                 throw new JsonException("Invalid configuration file");
 
 
-            lock (_SearchPathsLock)
+            lock (_searchPathsLock)
             {
                 _searchPaths.Clear();
                 _searchPaths.AddRange(config.AssemblySearchPaths);
                 var subList = new List<string>();
                 _searchPaths.ForEach(path =>
                 {
+                    if (!Path.Exists(path))
+                        return;
                     // 获取当前路径中的子文件夹
                     var subPaths = GetAllSubDirectories(path);
                     subList.AddRange(subPaths);

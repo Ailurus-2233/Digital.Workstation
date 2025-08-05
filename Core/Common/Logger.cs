@@ -5,11 +5,11 @@ namespace DigitalWorkstation.Common;
 
 public class Logger
 {
-    private static readonly Lazy<Logger> _Instance = new(() => new Logger());
+    private static readonly Lazy<Logger> _instance = new(() => new Logger());
 
     private readonly ILogger _logger;
 
-    private static Logger Instance => _Instance.Value;
+    private static Logger Instance => _instance.Value;
 
     private Logger()
     {

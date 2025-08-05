@@ -4,6 +4,17 @@
         <OutputType>Exe</OutputType>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Core\Common\Common.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Config\AssemblyPath.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
 
 </Project>

@@ -4,11 +4,9 @@
         <GenerateDependencyFile>false</GenerateDependencyFile>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-        <TargetFramework>net8.0-windows</TargetFramework>
     </PropertyGroup>
 
     <PropertyGroup>
-        <SelfContained>false</SelfContained>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <SatelliteResourceLanguages>en-US;zh-CN</SatelliteResourceLanguages>
     </PropertyGroup>
