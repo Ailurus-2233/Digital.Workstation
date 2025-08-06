@@ -13,7 +13,7 @@ public static class Logger
     }
 
     
-    private static readonly ReaderWriterLockSlim _Lock = new ReaderWriterLockSlim();
+    private static readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
     private static string BuildMessage(Level level, string sender, string? message = null, Exception? exception = null)
     {
@@ -48,7 +48,7 @@ public static class Logger
 
     private static void Log(Level level, string sender, string? message = null, Exception? exception = null)
     {
-        _Lock.EnterReadLock();
+        _lock.EnterReadLock();
         try
         {
             var logMessage = BuildMessage(level, sender, message, exception);
@@ -56,7 +56,7 @@ public static class Logger
         }
         finally
         {
-            _Lock.ExitReadLock();
+            _lock.ExitReadLock();
         }
     }
 
