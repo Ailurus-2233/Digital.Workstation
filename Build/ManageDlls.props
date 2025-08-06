@@ -1,7 +1,22 @@
 <Project>
+    <ItemDefinitionGroup>
+        <Reference>
+            <Private>false</Private> <!-- 对静态引用DLL关闭复制 -->
+        </Reference>
+        <ProjectReference>
+            <Private>false</Private> <!-- 对项目引用关闭复制 -->
+        </ProjectReference>
+    </ItemDefinitionGroup>
+
+    <PropertyGroup>
+        <!-- 禁用自动复制 NuGet 依赖文件到输出目录 -->
+        <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+        <CopyNuGetImplementations>false</CopyNuGetImplementations>
+    </PropertyGroup>
+    
     <PropertyGroup>
         <!-- 定义 DLL 复制目标路径 -->
-        <LibrariesPath>$(BaseOutputPath)Libraries\</LibrariesPath>
-        <RuntimesPath>$(BaseOutputPath)Runtimes\</RuntimesPath>
+        <LibrariesBaseDir>$(BaseOutputPath)Libraries\</LibrariesBaseDir>
+        <RuntimeBaseDir>$(BaseOutputPath)Runtimes\</RuntimeBaseDir>
     </PropertyGroup>
 </Project>
