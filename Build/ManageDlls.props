@@ -17,6 +17,5 @@
     <PropertyGroup>
         <!-- 定义 DLL 复制目标路径 -->
         <LibrariesBaseDir>$(BaseOutputPath)Libraries\</LibrariesBaseDir>
-        <RuntimeBaseDir>$(BaseOutputPath)Runtimes\</RuntimeBaseDir>
     </PropertyGroup>
 </Project>

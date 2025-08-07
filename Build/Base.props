@@ -1,12 +1,12 @@
 <Project>
     <PropertyGroup>
         <BaseOutputPath>$(SolutionDir)Output\$(Configuration)\</BaseOutputPath>
-        <GenerateDependencyFile>false</GenerateDependencyFile>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     </PropertyGroup>
 
     <PropertyGroup>
+        <SelfContained>false</SelfContained>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <SatelliteResourceLanguages>en-US;zh-CN</SatelliteResourceLanguages>
     </PropertyGroup>

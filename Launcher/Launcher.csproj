@@ -1,20 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
+        <OutputType>WinExe</OutputType>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Core\Common\Common.csproj" />
+        <ProjectReference Include="..\Core\Common\Common.csproj"/>
+        <ProjectReference Include="..\Core\Framework\Framework.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="Config\AssemblyPath.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
+        <None Update="Config\AssemblyPath.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
+
+    <Target Name="CopyMustDllToOutputFolder" BeforeTargets="Build" Condition="'$(Configuration)'=='Debug'">
+        <ItemGroup>
+            <CustomFiles Include="$(LibrariesBaseDir)Avalonia\Avalonia.Base.dll"/>
+            <CustomFiles Include="$(LibrariesBaseDir)Avalonia\Avalonia.Markup.Xaml.dll"/>
+            <CustomFiles Include="$(LibrariesBaseDir)Avalonia\Avalonia.DesignerSupport.dll"/>
+            <CustomFiles Include="$(LibrariesBaseDir)Avalonia\Avalonia.Remote.Protocol.dll"/>
+            <CustomFiles Include="$(LibrariesBaseDir)Avalonia\Avalonia.Controls.dll"/>
+        </ItemGroup>
+
+        <Copy SourceFiles="@(CustomFiles)"
+              DestinationFolder="$(OutputPath)"
+              SkipUnchangedFiles="true"/>
+    </Target>
 
 </Project>
