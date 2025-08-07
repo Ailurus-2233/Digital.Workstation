@@ -9,9 +9,11 @@ public sealed class AssemblyLoader
 {
     private static readonly Lazy<AssemblyLoader> _instance = new(() => new AssemblyLoader());
 
-    private AssemblyLoader() { }
+    private AssemblyLoader()
+    {
+    }
 
-    private static AssemblyLoader Instance => _instance.Value;
+    public static AssemblyLoader Instance => _instance.Value;
 
     #region Public API
 
@@ -27,8 +29,6 @@ public sealed class AssemblyLoader
         if (_isInitialized)
             return;
 
-
-        AppDomain.CurrentDomain.AssemblyResolve += Instance.ResolveAssembly;
         Instance.RefreshRuntimeEnvironmentPath();
         _isInitialized = true;
     }
@@ -145,60 +145,51 @@ public sealed class AssemblyLoader
         return subDirectories;
     }
 
-    private Assembly? ResolveAssembly(object? sender, ResolveEventArgs args)
+    public Assembly? ResolveAssembly(object? sender, ResolveEventArgs args)
     {
         var assemblyName = new AssemblyName(args.Name).Name;
-
-        // 忽略资源请求
-        if (assemblyName != null && assemblyName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
+        
+        if (string.IsNullOrWhiteSpace(assemblyName))
             return null;
 
-
-        if (assemblyName != null && _resolvedCache.TryGetValue(assemblyName, out var cachedAssembly))
+        // 忽略资源请求
+        if (assemblyName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
+            return null;
+        
+        if (_resolvedCache.TryGetValue(assemblyName, out var cachedAssembly))
             return cachedAssembly;
 
 
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
-            var name = asm.GetName()
-                .Name;
+            var name = asm.GetName().Name;
             if (name == null || !name.Equals(assemblyName, StringComparison.OrdinalIgnoreCase))
                 continue;
-
-
+            
             _resolvedCache[assemblyName] = asm;
             return asm;
         }
 
+        var folder = assemblyName.Split('.')[0];
+        var targetFolder = _searchPaths.FirstOrDefault(x => x.Contains(folder));
+
+        if (targetFolder != null)
+        {
+            var result = LoadAssembly(targetFolder, assemblyName);
+            if (result != null)
+            {
+                _resolvedCache[assemblyName] = result;
+                return result;
+            }
+        }
+
         foreach (var path in _searchPaths)
         {
-            try
+            var result = LoadAssembly(path, assemblyName);
+            if (result != null)
             {
-                var fullPath = Path.GetFullPath(path);
-                if (!Directory.Exists(fullPath))
-                    continue;
-
-
-                var extensions = new[] { ".dll", ".exe" };
-                foreach (var ext in extensions)
-                {
-                    var assemblyPath = Path.Combine(fullPath, $"{assemblyName}{ext}");
-                    if (!File.Exists(assemblyPath))
-                        continue;
-
-
-                    var assembly = Assembly.LoadFrom(assemblyPath);
-                    if (assemblyName != null)
-                        _resolvedCache[assemblyName] = assembly;
-
-
-                    return assembly;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Console.WriteLine($"[AssemblyResolver] Error in '{path}': {ex.Message}");
-                Logger.Error(ex, $"Error when load {path}.", nameof(AssemblyLoader));
+                _resolvedCache[assemblyName] = result;
+                return result;
             }
         }
 
@@ -210,6 +201,28 @@ public sealed class AssemblyLoader
 
 
         return null;
+    }
+
+    private Assembly? LoadAssembly(string path, string assemblyName)
+    {
+        try
+        {
+            var fullPath = Path.GetFullPath(path);
+            if (!Directory.Exists(fullPath))
+                return null;
+
+            var extensions = new[] { ".dll", ".exe" };
+            return (from ext in extensions
+                select Path.Combine(fullPath, $"{assemblyName}{ext}")
+                into assemblyPath
+                where File.Exists(assemblyPath)
+                select Assembly.LoadFrom(assemblyPath)).FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, $"Error when load {path}.", nameof(AssemblyLoader));
+            return null;
+        }
     }
 
     private void RefreshRuntimeEnvironmentPath()

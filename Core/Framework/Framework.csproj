@@ -7,16 +7,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Abstractions\Abstractions.csproj" />
-      <ProjectReference Include="..\Common\Common.csproj" />
+        <ProjectReference Include="..\Abstractions\Abstractions.csproj"/>
+        <ProjectReference Include="..\Common\Common.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Avalonia" Version="11.3.3" />
-      <PackageReference Include="Avalonia.Desktop" Version="11.3.3" />
-      <PackageReference Include="Avalonia.Diagnostics" Version="11.3.3" />
-      <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.3" />
-      <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.3" />
+        <PackageReference Include="Avalonia" Version="11.3.3"/>
+        <PackageReference Include="Avalonia.Desktop" Version="11.3.3"/>
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.3"/>
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.3"/>
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.3"/>
     </ItemGroup>
 
 </Project>
