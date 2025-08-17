@@ -1,7 +1,4 @@
 ﻿// See https://aka.ms/new-console-template for more information
-
-using Avalonia;
-
 namespace DigitalWorkstation.Launcher;
 
 public static class Program
@@ -15,6 +12,4 @@ public static class Program
         Launcher.Initialize();
         Launcher.Run(args);
     }
-    
-    public static AppBuilder BuildAvaloniaApp() => Launcher.BuildAvaloniaAppPreview();
 }
