@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Text.Json;
 using DigitalWorkstation.Common.Configuration;
 
-namespace DigitalWorkstation.Common;
+namespace DigitalWorkstation.Common.Tools;
 
 public sealed class AssemblyLoader
 {
@@ -20,7 +20,7 @@ public sealed class AssemblyLoader
     /// <summary>
     ///     初始化程序集解析器并接管 AssemblyResolve 事件
     /// </summary>
-    public static void Initialize(string configPath)
+    internal static void Initialize(string configPath)
     {
         // 确保单例被创建并加载配置
         Instance.LoadConfiguration(configPath);
@@ -28,6 +28,8 @@ public sealed class AssemblyLoader
         // 确保只注册一次事件
         if (_isInitialized)
             return;
+        
+        AppDomain.CurrentDomain.AssemblyResolve += Instance.ResolveAssembly;
 
         Instance.RefreshRuntimeEnvironmentPath();
         _isInitialized = true;
