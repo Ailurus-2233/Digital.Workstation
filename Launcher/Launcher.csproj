@@ -5,16 +5,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <TargetFramework>net8.0</TargetFramework>
+        <AssemblyName>DigitalWorkstation</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Core\Common\Common.csproj"/>
-        <ProjectReference Include="..\Core\Workstation\Workstation.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Update="Config\AssemblyPath.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
+        <ProjectReference Include="..\Core\Workstation\Workstation.csproj"/>
     </ItemGroup>
 </Project>

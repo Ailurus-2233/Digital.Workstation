@@ -6,11 +6,9 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <SelfContained>false</SelfContained>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <SatelliteResourceLanguages>en-US;zh-CN</SatelliteResourceLanguages>
     </PropertyGroup>
-    
+
     <PropertyGroup Condition="'$(Configuration)'=='Release'">
         <DebugType>none</DebugType>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
@@ -26,12 +24,12 @@
         <RootNamespace Condition="'$(RootNamespace)' == ''">DigitalWorkstation.UnitTest.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\Core\'))">
-        <OutputPath>$(BaseOutputPath)Core\</OutputPath>
+    <PropertyGroup Condition="'$(Configuration)'=='Release' and '$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\Core\'))">
+        <OutputPath>$(BaseOutputPath)core\</OutputPath>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\Modules\'))">
-        <OutputPath>$(BaseOutputPath)Modules\</OutputPath>
+    <PropertyGroup Condition="'$(Configuration)'=='Release' and '$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\Modules\'))">
+        <OutputPath>$(BaseOutputPath)modules\</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\UnitTest\'))">
