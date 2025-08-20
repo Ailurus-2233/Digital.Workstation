@@ -2,9 +2,9 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
-namespace Workstation;
+namespace DigitalWorkstation.Workstation;
 
-public partial class App : Application
+public class App : Application
 {
     public override void Initialize()
     {
@@ -13,10 +13,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            desktop.MainWindow = new MainWindow();
-        }
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) desktop.MainWindow = new Starter();
 
         base.OnFrameworkInitializationCompleted();
     }

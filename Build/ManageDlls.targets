@@ -1,13 +1,14 @@
 <Project>
     <Target Name="CopyDependenciesByPackageCategory"
             AfterTargets="ResolvePackageAssets"
-            BeforeTargets="CopyFilesToOutputDirectory">
-        
-        <MakeDir Directories="$(LibrariesBaseDir)" />
-        
+            BeforeTargets="CopyFilesToOutputDirectory"
+            Condition="'$(Configuration)'=='Release'">
+
+        <MakeDir Directories="$(LibrariesBaseDir)"/>
+
         <!-- 收集所有包依赖 -->
         <ItemGroup>
-            <AllPackageDependencies Include="@(RuntimeCopyLocalItems);@(NativeCopyLocalItems)" />
+            <AllPackageDependencies Include="@(RuntimeCopyLocalItems);@(NativeCopyLocalItems)"/>
             <AllPackageDependencies>
                 <PackageId>%(NuGetPackageId)</PackageId>
                 <Category>$([System.String]::Copy('%(NuGetPackageId)').Split('.')[0])</Category>
@@ -16,23 +17,49 @@
 
         <!-- 按分类创建目录 -->
         <MakeDir Directories="@(AllPackageDependencies-> 
-                   '$(LibrariesBaseDir)%(Category)'->Distinct())" />
+                   '$(LibrariesBaseDir)%(Category)'->Distinct())"/>
 
         <!-- 复制文件到分类目录 -->
         <Copy SourceFiles="@(AllPackageDependencies)"
               DestinationFiles="@(AllPackageDependencies-> 
                    '$(LibrariesBaseDir)%(Category)\%(Filename)%(Extension)')"
-              SkipUnchangedFiles="true" />
+              SkipUnchangedFiles="true"/>
 
         <!-- 处理无包信息的文件 -->
         <ItemGroup>
             <UnknownPackageFiles Include="@(ReferenceCopyLocalPaths)"
-                                 Exclude="@(AllPackageDependencies)" />
+                                 Exclude="@(AllPackageDependencies)"/>
         </ItemGroup>
 
-        <MakeDir Directories="$(LibrariesBaseDir)Others\" />
+        <MakeDir Directories="$(LibrariesBaseDir)Others\"/>
         <Copy SourceFiles="@(UnknownPackageFiles)"
               DestinationFolder="$(LibrariesBaseDir)Others\"
-              SkipUnchangedFiles="true" />
+              SkipUnchangedFiles="true"/>
+    </Target>
+
+    <Target Name="ClearDllFiles" AfterTargets="Build" Condition="'$(Configuration)'=='Release'">
+        <ItemGroup>
+            <OutputNugetDllFiles Include="@(ReferenceCopyLocalPaths->'$(OutputPath)%(Filename)%(Extension)')"/>
+        </ItemGroup>
+
+        <!-- 删除 DLL -->
+        <Delete Files="@(OutputNugetDllFiles)"/>
+
+        <PropertyGroup>
+            <!-- 匹配 runtimes 下的所有子文件夹 -->
+            <TargetDir>$(OutputPath)/runtimes</TargetDir>
+        </PropertyGroup>
+
+        <ItemGroup Condition="Exists('$(TargetDir)')">
+            <AllRuntimeDirs Include="$([System.IO.Directory]::GetDirectories('$(TargetDir)', '*', System.IO.SearchOption.TopDirectoryOnly))"/>
+        </ItemGroup>
+
+        <ItemGroup>
+            <!-- 只保留 linux-x64 / osx / win-x64，其他的标记为要删除 -->
+            <RuntimeDirsToDelete Include="@(AllRuntimeDirs)"
+                                 Condition=" '%(Filename)' != 'linux-x64' AND '%(Filename)' != 'osx' AND '%(Filename)' != 'win-x64' "/>
+        </ItemGroup>
+        
+        <RemoveDir Directories="@(RuntimeDirsToDelete)"/>
     </Target>
 </Project>
