@@ -1,5 +1,5 @@
 ﻿using Avalonia;
-using DigitalWorkstation.Common.Tools;
+using DigitalWorkstation.Common;
 using DigitalWorkstation.Workstation;
 
 namespace DigitalWorkstation.Launcher;

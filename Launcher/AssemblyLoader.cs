@@ -123,26 +123,12 @@ public sealed class AssemblyLoader
     /// </summary>
     private static bool IsDesignEnvironment()
     {
-        try
-        {
-            // 1) Avalonia 官方设计时检测（若存在引用）
-            //    直接反射以避免你在非 UI 层硬引用 Avalonia
-            var avaloniaControls = AppDomain.CurrentDomain
-                .GetAssemblies()
-                .FirstOrDefault(a => a.GetName().Name == "Avalonia.Controls");
-            if (avaloniaControls != null)
-            {
-                var designType = avaloniaControls.GetType("Avalonia.Controls.Design");
-                var isDesignProp = designType?.GetProperty("IsDesignMode", BindingFlags.Public | BindingFlags.Static);
-                if (isDesignProp?.GetValue(null) is true) return true;
-            }
-        }
-        catch
-        {
-            /* ignore */
-        }
-
+#if DEBUG
+        return true;
+#endif
+#pragma warning disable CS0162 // 检测到不可到达的代码
         return false;
+#pragma warning restore CS0162 // 检测到不可到达的代码
     }
 
     private void PreloadBootAssemblies(IEnumerable<string> files)
