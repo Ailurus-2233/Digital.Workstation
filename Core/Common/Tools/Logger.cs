@@ -5,9 +5,13 @@ namespace DigitalWorkstation.Common.Tools;
 
 public class Logger
 {
-    private static readonly Lazy<Logger> _instance = new(() => new Logger());
+    #region Singleton
+
+    private static readonly Lazy<Logger> SingleInstance = new(() => new Logger());
 
     private readonly ILogger _logger;
+
+    private static Logger Instance => SingleInstance.Value;
 
     private Logger()
     {
@@ -29,11 +33,11 @@ public class Logger
 #pragma warning restore CS0162 // 检测到不可到达的代码
     }
 
-    private static Logger Instance => _instance.Value;
+    #endregion
 
     #region Public API
 
-    public static ILogger Log => Instance._logger;
+    private static ILogger Log => Instance._logger;
 
     /// <summary>
     ///     发布 Verbose 级别的日志
