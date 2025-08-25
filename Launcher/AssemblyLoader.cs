@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Reflection;
 
 namespace DigitalWorkstation.Launcher;
@@ -14,7 +13,7 @@ public sealed class AssemblyLoader
     /// <summary>
     ///     启动阶段必须加载的程序集文件（绝对路径 / 相对路径都行）。
     /// </summary>
-    private static readonly string[] _bootRequiredAssemblyFiles =
+    private static readonly string[] BootRequiredAssemblyFiles =
     [
         "./Libraries/Serilog/Serilog.dll",
         "./Libraries/Serilog/Serilog.Sinks.Console.dll",
@@ -24,7 +23,7 @@ public sealed class AssemblyLoader
     /// <summary>
     ///     基础搜索路径（动态解析时使用）。
     /// </summary>
-    private static readonly Dictionary<string, int> _baseFolderPath = new()
+    private static readonly Dictionary<string, int> BaseFolderPath = new()
     {
         { Path.GetFullPath("./"), 0 },
         { Path.GetFullPath("./core/"), 0 },
@@ -33,17 +32,17 @@ public sealed class AssemblyLoader
         { Path.GetFullPath("./runtimes/"), 2 }
     };
 
-    private static readonly object _initLock = new();
+    private static readonly object InitLock = new();
 
     /// <summary>
     ///     单例。
     /// </summary>
-    private static readonly Lazy<AssemblyLoader> _instance = new(() => new AssemblyLoader());
+    private static readonly Lazy<AssemblyLoader> SingleInstance = new(() => new AssemblyLoader());
 
-    private static readonly object _searchPathsLock = new();
+    private static readonly object SearchPathsLock = new();
 
 
-    private static readonly string[] sourceArray = [".dll", ".exe"];
+    private static readonly string[] SourceArray = [".dll", ".exe"];
 
     /// <summary>
     ///     已解析缓存。
@@ -64,14 +63,14 @@ public sealed class AssemblyLoader
     {
     }
 
-    public static AssemblyLoader Instance => _instance.Value;
+    public static AssemblyLoader Instance => SingleInstance.Value;
 
     /// <summary>
     ///     初始化：预加载必要程序集 + 注册动态解析。
     /// </summary>
     public static void Initialize()
     {
-        lock (_initLock)
+        lock (InitLock)
         {
             if (Instance._isInitialized) return;
 
@@ -83,7 +82,7 @@ public sealed class AssemblyLoader
             }
 
             // step 1. 预加载关键 DLL（避免 StackOverflowException）
-            Instance.PreloadBootAssemblies(_bootRequiredAssemblyFiles);
+            Instance.PreloadBootAssemblies(BootRequiredAssemblyFiles);
 
             // step 2. 初始化搜索路径
             Instance.InitializeSearchPath();
@@ -119,32 +118,6 @@ public sealed class AssemblyLoader
         {
             /* ignore */
         }
-
-        // 2) 预览器/设计器常用环境变量（不同 IDE 插件略有差异）
-        string[] envKeys =
-        [
-            "AVALONIA_DESIGN_MODE",
-            "AVALONIA_PREVIEWER",
-            "AVALONIA_DESIGNER",
-            "DESIGN_MODE",
-            "DesignerProcess"
-        ];
-        if (envKeys.Select(Environment.GetEnvironmentVariable).Any(v =>
-                !string.IsNullOrEmpty(v) && v.Equals("true", StringComparison.OrdinalIgnoreCase)))
-            return true;
-
-        // 3) 进程名启发式判断（devenv/rider 的设计期子进程等）
-        try
-        {
-            var p = Process.GetCurrentProcess().ProcessName.ToLowerInvariant();
-            if (p.Contains("avalonia") && p.Contains("preview")) return true;
-            if (p.Contains("xpf") && p.Contains("preview")) return true;
-        }
-        catch
-        {
-            /* ignore */
-        }
-
         return false;
     }
 
@@ -167,14 +140,14 @@ public sealed class AssemblyLoader
     /// </summary>
     private void InitializeSearchPath()
     {
-        lock (_searchPathsLock)
+        lock (SearchPathsLock)
         {
             _searchPaths.Clear();
-            _searchPaths.AddRange(_baseFolderPath.Keys);
+            _searchPaths.AddRange(BaseFolderPath.Keys);
 
             // 附带子目录（递归深度 2）
             var subList = new List<string>();
-            foreach (var subPaths in from keyValuePair in _baseFolderPath
+            foreach (var subPaths in from keyValuePair in BaseFolderPath
                      let path = keyValuePair.Key
                      where Path.Exists(path)
                      select GetAllSubDirectories(path, keyValuePair.Value))
@@ -215,21 +188,39 @@ public sealed class AssemblyLoader
         if (assemblyName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) return null;
 
         // step 1. 缓存
-        if (_resolvedCache.TryGetValue(assemblyName, out var cached))
-            return cached;
+        var result = ResolveAssemblyFromCache(assemblyName);
+        if (result != null) return result;
 
         // step 2. 已加载程序集
+        result = ResolveAssemblyFromLoaded(assemblyName);
+        if (result != null) return result;
+
+        // step 3. 搜索路径
+        result = ResolveAssemblyFromSearchPaths(assemblyName);
+        return result != null ? result : null;
+    }
+
+    private Assembly? ResolveAssemblyFromCache(string assemblyName)
+    {
+        return _resolvedCache.GetValueOrDefault(assemblyName);
+    }
+
+    private Assembly? ResolveAssemblyFromLoaded(string assemblyName)
+    {
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
             var name = asm.GetName().Name;
-            if (name != null && name.Equals(assemblyName, StringComparison.OrdinalIgnoreCase))
-            {
-                _resolvedCache[assemblyName] = asm;
-                return asm;
-            }
+            if (name == null || 
+                !name.Equals(assemblyName, StringComparison.OrdinalIgnoreCase)) continue;
+            _resolvedCache[assemblyName] = asm;
+            return asm;
         }
 
-        // step 3. 按名称猜测目录
+        return null;
+    }
+    
+    private Assembly? ResolveAssemblyFromSearchPaths(string assemblyName)
+    {
         var folder = assemblyName.Split('.')[0];
         var targetFolder = _searchPaths.FirstOrDefault(x => x.Contains(folder, StringComparison.OrdinalIgnoreCase));
         if (targetFolder != null)
@@ -241,8 +232,7 @@ public sealed class AssemblyLoader
                 return asm;
             }
         }
-
-        // step 4. 遍历所有目录
+        
         foreach (var asm in _searchPaths.Select(path => LoadAssembly(path, assemblyName)).OfType<Assembly>())
         {
             _resolvedCache[assemblyName] = asm;
@@ -260,7 +250,7 @@ public sealed class AssemblyLoader
         var fullPath = Path.GetFullPath(path);
         if (!Directory.Exists(fullPath)) return null;
 
-        return (from ext in sourceArray
+        return (from ext in SourceArray
             select Path.Combine(fullPath, $"{assemblyName}{ext}")
             into assemblyPath
             where File.Exists(assemblyPath)
