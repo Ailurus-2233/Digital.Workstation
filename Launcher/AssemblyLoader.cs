@@ -32,38 +32,19 @@ public sealed class AssemblyLoader
         { Path.GetFullPath("./runtimes/"), 2 }
     };
 
-    private static readonly object InitLock = new();
+    #region Singleton
 
-    /// <summary>
-    ///     单例。
-    /// </summary>
     private static readonly Lazy<AssemblyLoader> SingleInstance = new(() => new AssemblyLoader());
 
-    private static readonly object SearchPathsLock = new();
-
-
-    private static readonly string[] SourceArray = [".dll", ".exe"];
-
-    /// <summary>
-    ///     已解析缓存。
-    /// </summary>
-    private readonly ConcurrentDictionary<string, Assembly> _resolvedCache = new();
-
-    /// <summary>
-    ///     搜索路径。
-    /// </summary>
-    private readonly List<string> _searchPaths = [];
-
-    /// <summary>
-    ///     是否已初始化。
-    /// </summary>
-    private bool _isInitialized;
+    private static AssemblyLoader Instance => SingleInstance.Value;
 
     private AssemblyLoader()
     {
     }
 
-    public static AssemblyLoader Instance => SingleInstance.Value;
+    #endregion
+
+    #region public API
 
     /// <summary>
     ///     初始化：预加载必要程序集 + 注册动态解析。
@@ -86,7 +67,7 @@ public sealed class AssemblyLoader
 
             // step 2. 初始化搜索路径
             Instance.InitializeSearchPath();
-            Instance.RefreshRuntimeEnvironmentPath();
+            RefreshRuntimeEnvironmentPath();
 
             // step 3. 注册统一解析器
             AppDomain.CurrentDomain.AssemblyResolve += Instance.ResolveAssembly;
@@ -95,6 +76,48 @@ public sealed class AssemblyLoader
         }
     }
 
+    /// <summary>
+    ///     尝试加载指定路径下的程序集。
+    /// </summary>
+    public static Assembly? LoadAssembly(string path, string assemblyName)
+    {
+        var fullPath = Path.GetFullPath(path);
+        if (!Directory.Exists(fullPath)) return null;
+
+        return (from ext in SourceArray
+            select Path.Combine(fullPath, $"{assemblyName}{ext}")
+            into assemblyPath
+            where File.Exists(assemblyPath)
+            select Assembly.LoadFrom(assemblyPath)).FirstOrDefault();
+    }
+
+    /// <summary>
+    ///     刷新 PATH 环境变量，支持本地依赖的 native 库。
+    /// </summary>
+    public static void RefreshRuntimeEnvironmentPath()
+    {
+        var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
+        var paths = currentPath.Split(';').ToList();
+        foreach (var path in Instance._searchPaths.Where(p => !paths.Contains(p)))
+            paths.Add(path);
+        Environment.SetEnvironmentVariable("PATH", string.Join(";", paths));
+    }
+
+    #endregion
+
+    #region Assembly Resolve fields
+    private static readonly object SearchPathsLock = new();
+
+    private static readonly object InitLock = new();
+
+    private static readonly string[] SourceArray = [".dll", ".exe"];
+
+    private readonly ConcurrentDictionary<string, Assembly> _resolvedCache = new();
+
+    private readonly List<string> _searchPaths = [];
+
+    private bool _isInitialized;
+    
     /// <summary>
     ///     检测是否处于 Avalonia 设计时（多重保险）
     /// </summary>
@@ -118,6 +141,7 @@ public sealed class AssemblyLoader
         {
             /* ignore */
         }
+
         return false;
     }
 
@@ -147,10 +171,10 @@ public sealed class AssemblyLoader
 
             // 附带子目录（递归深度 2）
             var subList = new List<string>();
-            foreach (var subPaths in from keyValuePair in BaseFolderPath
-                     let path = keyValuePair.Key
-                     where Path.Exists(path)
-                     select GetAllSubDirectories(path, keyValuePair.Value))
+            foreach (var subPaths in BaseFolderPath
+                         .Select(keyValuePair => new { keyValuePair, path = keyValuePair.Key })
+                         .Where(@t => Path.Exists(@t.path))
+                         .Select(@t => GetAllSubDirectories(@t.path, @t.keyValuePair.Value)))
                 subList.AddRange(subPaths);
 
             _searchPaths.AddRange(subList);
@@ -177,6 +201,9 @@ public sealed class AssemblyLoader
         return subDirectories;
     }
 
+    #endregion
+    
+    #region Resolve Assembly
 
     /// <summary>
     ///     动态程序集解析。
@@ -210,15 +237,14 @@ public sealed class AssemblyLoader
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
             var name = asm.GetName().Name;
-            if (name == null || 
-                !name.Equals(assemblyName, StringComparison.OrdinalIgnoreCase)) continue;
+            if (name == null || !name.Equals(assemblyName, StringComparison.OrdinalIgnoreCase)) continue;
             _resolvedCache[assemblyName] = asm;
             return asm;
         }
 
         return null;
     }
-    
+
     private Assembly? ResolveAssemblyFromSearchPaths(string assemblyName)
     {
         var folder = assemblyName.Split('.')[0];
@@ -232,7 +258,7 @@ public sealed class AssemblyLoader
                 return asm;
             }
         }
-        
+
         foreach (var asm in _searchPaths.Select(path => LoadAssembly(path, assemblyName)).OfType<Assembly>())
         {
             _resolvedCache[assemblyName] = asm;
@@ -242,30 +268,5 @@ public sealed class AssemblyLoader
         return null;
     }
 
-    /// <summary>
-    ///     尝试加载指定路径下的程序集。
-    /// </summary>
-    private Assembly? LoadAssembly(string path, string assemblyName)
-    {
-        var fullPath = Path.GetFullPath(path);
-        if (!Directory.Exists(fullPath)) return null;
-
-        return (from ext in SourceArray
-            select Path.Combine(fullPath, $"{assemblyName}{ext}")
-            into assemblyPath
-            where File.Exists(assemblyPath)
-            select Assembly.LoadFrom(assemblyPath)).FirstOrDefault();
-    }
-
-    /// <summary>
-    ///     刷新 PATH 环境变量，支持本地依赖的 native 库。
-    /// </summary>
-    private void RefreshRuntimeEnvironmentPath()
-    {
-        var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
-        var paths = currentPath.Split(';').ToList();
-        foreach (var path in _searchPaths.Where(p => !paths.Contains(p)))
-            paths.Add(path);
-        Environment.SetEnvironmentVariable("PATH", string.Join(";", paths));
-    }
+    #endregion
 }
