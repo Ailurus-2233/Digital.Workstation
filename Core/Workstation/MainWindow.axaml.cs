@@ -1,5 +1,4 @@
 ﻿using Avalonia.Controls;
-using DigitalWorkstation.DashBoard;
 
 namespace DigitalWorkstation.Workstation;
 
