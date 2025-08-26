@@ -7,14 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\DashBoard\DashBoard.csproj" />
         <ProjectReference Include="..\Framework\Framework.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Update="App.axaml.cs">
-            <DependentUpon>App.axaml</DependentUpon>
-            <SubType>Code</SubType>
-        </Compile>
     </ItemGroup>
 
 </Project>

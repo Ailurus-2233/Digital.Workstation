@@ -7,10 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="DryIoc.Microsoft.DependencyInjection" Version="6.2.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.8" />
+        <PackageReference Include="Prism.Avalonia" Version="9.0.537.11130" />
+        <PackageReference Include="Prism.DryIoc.Avalonia" Version="9.0.537.11130" />
         <PackageReference Include="Serilog" Version="4.3.0"/>
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Abstractions\Abstractions.csproj" />
     </ItemGroup>
 
 </Project>

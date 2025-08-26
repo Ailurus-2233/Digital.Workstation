@@ -106,6 +106,7 @@ public sealed class AssemblyLoader
     #endregion
 
     #region Assembly Resolve fields
+
     private static readonly object SearchPathsLock = new();
 
     private static readonly object InitLock = new();
@@ -117,7 +118,7 @@ public sealed class AssemblyLoader
     private readonly List<string> _searchPaths = [];
 
     private bool _isInitialized;
-    
+
     /// <summary>
     ///     检测是否处于 Avalonia 设计时（多重保险）
     /// </summary>
@@ -188,7 +189,7 @@ public sealed class AssemblyLoader
     }
 
     #endregion
-    
+
     #region Resolve Assembly
 
     /// <summary>

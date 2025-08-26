@@ -16,8 +16,5 @@ public static class Program
         Launcher.Run(args);
     }
 
-    public static AppBuilder BuildAvaloniaApp()
-    {
-        return Launcher.BuildAvaloniaApp();
-    }
+    public static AppBuilder BuildAvaloniaApp() => Launcher.BuildAvaloniaApp();
 }

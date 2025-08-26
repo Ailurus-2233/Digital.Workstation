@@ -44,7 +44,7 @@ public static class Launcher
 
     public static AppBuilder BuildAvaloniaApp()
     {
-        return AppBuilder.Configure<App>()
+        return AppBuilder.Configure<WorkstationApplication>()
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace();
