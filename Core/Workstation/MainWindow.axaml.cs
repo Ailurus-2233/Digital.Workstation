@@ -1,11 +1,13 @@
 ﻿using Avalonia.Controls;
+using DigitalWorkstation.DashBoard;
 
 namespace DigitalWorkstation.Workstation;
 
-public partial class Starter : Window
+public partial class MainWindow : Window
 {
-    public Starter()
+    public MainWindow()
     {
         InitializeComponent();
     }
+    
 }

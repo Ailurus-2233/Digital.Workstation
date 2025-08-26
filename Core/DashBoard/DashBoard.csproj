@@ -6,4 +6,13 @@
         <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Common\Common.csproj" />
+      <ProjectReference Include="..\Framework\Framework.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AvaloniaXaml Remove="DashBoardWindow.axaml" />
+    </ItemGroup>
+
 </Project>
