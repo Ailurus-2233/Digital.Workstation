@@ -12,7 +12,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AvaloniaXaml Remove="DashBoardWindow.axaml" />
+      <Compile Update="Views\Windows\DashBoardWindow.axaml.cs">
+        <DependentUpon>DashBoardWindow.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 
 </Project>

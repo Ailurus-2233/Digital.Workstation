@@ -1,0 +1,15 @@
+﻿<Window
+    Title="DashBoardWindow"
+    d:DataContext="{d:DesignInstance windows:DashBoardWindowViewModel,
+                                     IsDesignTimeCreatable=True}"
+    mc:Ignorable="d"
+    prism:ViewModelLocator.AutoWireViewModel="True"
+    x:Class="DigitalWorkstation.DashBoard.Views.Windows.DashBoardWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:prism="http://prismlibrary.com/"
+    xmlns:windows="clr-namespace:DigitalWorkstation.DashBoard.ViewModels.Windows"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Button Command="{Binding ShowMainWindowCommand}" Content="Show Main Window" />
+</Window>
