@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Common;
+﻿namespace DigitalWorkstation.Core.Common;
 
 public class IoC {
     #region Singleton Implementation

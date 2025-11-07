@@ -1,3 +1,3 @@
-﻿namespace DigitalWorkstation.Models.Events;
+﻿namespace DigitalWorkstation.Core.Models.Events;
 
 public class ShowMainWindowEvent : PubSubEvent;

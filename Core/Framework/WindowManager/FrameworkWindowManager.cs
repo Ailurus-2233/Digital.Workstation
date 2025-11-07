@@ -1,11 +1,10 @@
-﻿using System.Diagnostics;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
-using DigitalWorkstation.Common;
-using DigitalWorkstation.WindowManager;
+using DigitalWorkstation.Core.Abstractions.WindowManager;
+using DigitalWorkstation.Core.Common;
 using Prism.DryIoc;
 
-namespace DigitalWorkstation.Framework.WindowManager;
+namespace DigitalWorkstation.Core.Framework.WindowManager;
 
 public class FrameworkWindowManager : IWindowManager
 {

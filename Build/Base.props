@@ -14,11 +14,16 @@
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\')) ">
+    <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\')) and !$(MSBuildProjectDirectory.Contains('\Core\')) ">
         <AssemblyName Condition="'$(AssemblyName)' == ''">DigitalWorkstation.$(MSBuildProjectName)</AssemblyName>
         <RootNamespace Condition="'$(RootNamespace)' == ''">DigitalWorkstation.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and $(MSBuildProjectDirectory.Contains('\Core\')) ">
+        <AssemblyName Condition="'$(AssemblyName)' == ''">DigitalWorkstation.Core.$(MSBuildProjectName)</AssemblyName>
+        <RootNamespace Condition="'$(RootNamespace)' == ''">DigitalWorkstation.Core.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
+    </PropertyGroup>
+    
     <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and $(MSBuildProjectDirectory.Contains('\UnitTest\')) ">
         <AssemblyName Condition="'$(AssemblyName)' == ''">DigitalWorkstation.UnitTest.$(MSBuildProjectName)</AssemblyName>
         <RootNamespace Condition="'$(RootNamespace)' == ''">DigitalWorkstation.UnitTest.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>

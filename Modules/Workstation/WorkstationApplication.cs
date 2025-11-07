@@ -1,6 +1,6 @@
 ﻿using Avalonia.Styling;
+using DigitalWorkstation.Core.Framework;
 using DigitalWorkstation.DashBoard;
-using DigitalWorkstation.Framework;
 
 namespace DigitalWorkstation.Workstation;
 
