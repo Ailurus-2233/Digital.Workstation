@@ -1,6 +1,6 @@
 ﻿using Avalonia.Controls;
 
-namespace DigitalWorkstation.WindowManager;
+namespace DigitalWorkstation.Core.Abstractions.WindowManager;
 
 public static class WindowManagerExtenstion {
 

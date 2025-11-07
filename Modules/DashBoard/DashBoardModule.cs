@@ -1,5 +1,5 @@
-﻿using DigitalWorkstation.DashBoard.Views.Windows;
-using DigitalWorkstation.WindowManager;
+﻿using DigitalWorkstation.Core.Abstractions.WindowManager;
+using DigitalWorkstation.DashBoard.Views.Windows;
 
 namespace DigitalWorkstation.DashBoard;
 

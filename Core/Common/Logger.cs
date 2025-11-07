@@ -1,7 +1,7 @@
 ﻿using Serilog;
 using Serilog.Events;
 
-namespace DigitalWorkstation.Common;
+namespace DigitalWorkstation.Core.Common;
 
 public class Logger
 {

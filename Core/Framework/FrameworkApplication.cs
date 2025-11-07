@@ -2,13 +2,13 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using DigitalWorkstation.Common;
-using DigitalWorkstation.Framework.WindowManager;
-using DigitalWorkstation.Models.Events;
-using DigitalWorkstation.WindowManager;
+using DigitalWorkstation.Core.Abstractions.WindowManager;
+using DigitalWorkstation.Core.Common;
+using DigitalWorkstation.Core.Framework.WindowManager;
+using DigitalWorkstation.Core.Models.Events;
 using Prism.DryIoc;
 
-namespace DigitalWorkstation.Framework;
+namespace DigitalWorkstation.Core.Framework;
 
 public abstract class FrameworkApplication<TWindow> : PrismApplication where TWindow : Window
 {
