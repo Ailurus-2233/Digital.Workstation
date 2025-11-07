@@ -16,21 +16,20 @@ public class Logger
     private Logger()
     {
         // 初始化 ILogger
+        _logger = new LoggerConfiguration().MinimumLevel.Information() // 设置最小日志级别
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // 过滤第三方日志
+            .Enrich.FromLogContext() // 自动捕获上下文信息
+            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .CreateLogger();
 #if DEBUG
+        // 调试模式下使用更详细的日志级别
         _logger = new LoggerConfiguration().MinimumLevel.Verbose() // 设置最小日志级别
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // 过滤第三方日志
             .Enrich.FromLogContext() // 自动捕获上下文信息
             .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 #endif
-#pragma warning disable CS0162 // 检测到不可到达的代码
-        // ReSharper disable once HeuristicUnreachableCode
-        _logger = new LoggerConfiguration().MinimumLevel.Information() // 设置最小日志级别
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // 过滤第三方日志
-            .Enrich.FromLogContext() // 自动捕获上下文信息
-            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-            .CreateLogger();
-#pragma warning restore CS0162 // 检测到不可到达的代码
+
     }
 
     #endregion

@@ -7,15 +7,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Common\Common.csproj" />
-      <ProjectReference Include="..\Framework\Framework.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Compile Update="Views\Windows\DashBoardWindow.axaml.cs">
         <DependentUpon>DashBoardWindow.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Core\Abstractions\Abstractions.csproj" />
+      <ProjectReference Include="..\..\Core\Framework\Framework.csproj" />
     </ItemGroup>
 
 </Project>

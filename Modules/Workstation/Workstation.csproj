@@ -7,8 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\Core\Framework\Framework.csproj" />
         <ProjectReference Include="..\DashBoard\DashBoard.csproj" />
-        <ProjectReference Include="..\Framework\Framework.csproj"/>
     </ItemGroup>
 
 </Project>
