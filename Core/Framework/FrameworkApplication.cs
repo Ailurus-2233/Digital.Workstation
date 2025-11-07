@@ -3,7 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using DigitalWorkstation.Common;
-using DigitalWorkstation.Common.Events;
+using DigitalWorkstation.Framework.Events;
 using DigitalWorkstation.Framework.WindowManager;
 using DigitalWorkstation.WindowManager;
 using Prism.DryIoc;

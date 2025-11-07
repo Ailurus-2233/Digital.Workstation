@@ -5,10 +5,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <TargetFramework>net8.0</TargetFramework>
-        <AssemblyName>DigitalWorkstation</AssemblyName>
+        <AssemblyName>Launcher</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Core\Workstation\Workstation.csproj"/>
+        <ProjectReference Include="..\Modules\Workstation\Workstation.csproj"/>
     </ItemGroup>
 </Project>

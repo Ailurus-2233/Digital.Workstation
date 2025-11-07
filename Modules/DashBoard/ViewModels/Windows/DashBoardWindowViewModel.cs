@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DigitalWorkstation.Common.Events;
+using DigitalWorkstation.Framework.Events;
 
 namespace DigitalWorkstation.DashBoard.ViewModels.Windows;
 
