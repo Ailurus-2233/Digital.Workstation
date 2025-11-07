@@ -9,13 +9,14 @@
     <ItemGroup>
         <ProjectReference Include="..\Abstractions\Abstractions.csproj"/>
         <ProjectReference Include="..\Common\Common.csproj"/>
+        <ProjectReference Include="..\Models\Models.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Avalonia.Desktop" Version="11.3.8" />
-        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.4" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.4" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.4" />
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.8" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.8" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     </ItemGroup>
 
