@@ -13,7 +13,7 @@ namespace DigitalWorkstation.Core.Framework;
 public abstract class FrameworkApplication<TWindow> : PrismApplication where TWindow : Window
 {
     private IEventAggregator? _eventAggregator;
-    private IWindowManager? _windowManager;
+    private IMainWindowManager? _windowManager;
 
     /// <summary>
     ///     覆盖原有的方法，框架初始化完成时不进行任何操作
@@ -48,7 +48,11 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
     private void RegisterFrameworkServices(IContainerRegistry containerRegistry)
     {
         IoC.Initialize(containerRegistry, Container);
-        containerRegistry.RegisterSingleton<IWindowManager, FrameworkWindowManager>();
+        
+        // 注册窗口管理
+        var windowManager = new FrameworkWindowManager();
+        containerRegistry.RegisterSingleton<IMainWindowManager>(() => windowManager);
+        containerRegistry.RegisterSingleton<IWindowManager>(() => windowManager);
         
         ResolveFrameworkServices();
     }
@@ -57,7 +61,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
     {
         // 解析框架所需的服务
         _eventAggregator = Container.Resolve<IEventAggregator>();
-        _windowManager = Container.Resolve<IWindowManager>();
+        _windowManager = Container.Resolve<IMainWindowManager>();
     }
 
     /// <summary>
