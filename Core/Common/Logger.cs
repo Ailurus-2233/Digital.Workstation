@@ -3,16 +3,31 @@ using Serilog.Events;
 
 namespace DigitalWorkstation.Core.Common;
 
+/// <summary>
+/// 日志记录器静态访问类
+/// </summary>
 public class Logger
 {
     #region Singleton
 
+    /// <summary>
+    /// 单例实例
+    /// </summary>
     private static readonly Lazy<Logger> SingleInstance = new(() => new Logger());
 
+    /// <summary>
+    /// 私有的日志记录器实例
+    /// </summary>
     private readonly ILogger _logger;
 
+    /// <summary>
+    ///  获取单例实例
+    /// </summary>
     private static Logger Instance => SingleInstance.Value;
 
+    /// <summary>
+    /// 私有构造函数，初始化日志记录器
+    /// </summary>
     private Logger()
     {
         // 初始化 ILogger
@@ -36,6 +51,9 @@ public class Logger
 
     #region Public API
 
+    /// <summary>
+    /// 获取日志记录器实例
+    /// </summary>
     private static ILogger Log => Instance._logger;
 
     /// <summary>
