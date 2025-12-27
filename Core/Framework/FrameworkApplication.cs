@@ -2,10 +2,12 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Styling;
 using DigitalWorkstation.Core.Abstractions.WindowManager;
 using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Framework.WindowManager;
 using DigitalWorkstation.Core.Models.Events;
+using DigitalWorkstation.Core.UIPackage;
 using Prism.DryIoc;
 
 namespace DigitalWorkstation.Core.Framework;
@@ -14,6 +16,13 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
 {
     private IEventAggregator? _eventAggregator;
     private IMainWindowManager? _windowManager;
+
+    public override void Initialize()
+    {
+        RequestedThemeVariant = ThemeVariant.Default;
+        Styles.AddRange(new WorkstationTheme());
+        base.Initialize();
+    }
 
     /// <summary>
     ///     覆盖原有的方法，框架初始化完成时不进行任何操作
