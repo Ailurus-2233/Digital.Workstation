@@ -12,3 +12,4 @@
         <ProjectReference Include="..\Modules\Workstation\Workstation.csproj"/>
     </ItemGroup>
 </Project>
+        

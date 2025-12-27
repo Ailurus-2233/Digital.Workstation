@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Core\Framework\Framework.csproj" />
+        <ProjectReference Include="..\..\Core\UIPackage\UIPackage.csproj" />
         <ProjectReference Include="..\DashBoard\DashBoard.csproj" />
     </ItemGroup>
 

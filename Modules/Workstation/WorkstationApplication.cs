@@ -1,5 +1,6 @@
 ﻿using Avalonia.Styling;
 using DigitalWorkstation.Core.Framework;
+using DigitalWorkstation.Core.UIPackage;
 using DigitalWorkstation.DashBoard;
 
 namespace DigitalWorkstation.Workstation;
@@ -10,6 +11,7 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
     {
         // Initialization logic here
         RequestedThemeVariant = ThemeVariant.Default;
+        Styles.AddRange(new WorkstationTheme());
         base.Initialize();
     }
 
