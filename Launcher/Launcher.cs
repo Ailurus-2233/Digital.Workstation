@@ -47,6 +47,7 @@ public static class Launcher
         return AppBuilder.Configure<WorkstationApplication>()
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace();
+            .LogToTrace()
+            .WithDeveloperTools();
     }
 }
