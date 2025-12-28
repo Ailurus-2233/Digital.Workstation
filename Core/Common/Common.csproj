@@ -14,6 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Libraries\Ursa.Avalonia\src\Ursa.PrismExtension\Ursa.PrismExtension.csproj" />
       <ProjectReference Include="..\Abstractions\Abstractions.csproj" />
     </ItemGroup>
 

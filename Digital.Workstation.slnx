@@ -10,6 +10,7 @@
     <Project Path="Libraries/Semi.Avalonia/src/Semi.Avalonia.ColorPicker/Semi.Avalonia.ColorPicker.csproj" />
     <Project Path="Libraries/Semi.Avalonia/src/Semi.Avalonia.DataGrid/Semi.Avalonia.DataGrid.csproj" />
     <Project Path="Libraries/Semi.Avalonia/src/Semi.Avalonia/Semi.Avalonia.csproj" />
+    <Project Path="Libraries/Ursa.Avalonia/src/Ursa.PrismExtension/Ursa.PrismExtension.csproj" />
     <Project Path="Libraries/Ursa.Avalonia/src/Ursa.Themes.Semi/Ursa.Themes.Semi.csproj" />
     <Project Path="Libraries/Ursa.Avalonia/src/Ursa/Ursa.csproj" />
   </Folder>

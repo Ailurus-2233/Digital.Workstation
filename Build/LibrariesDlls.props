@@ -1,0 +1,13 @@
+<Project>
+    <PropertyGroup>
+        <!-- Output root for copying purposes only.
+             NOTE: do not set MSBuild's built-in BaseOutputPath here, otherwise it changes the library project's bin output. -->
+        <WorkstationRootDir Condition="'$(SolutionDir)' != ''">$([MSBuild]::EnsureTrailingSlash('$(SolutionDir)'))</WorkstationRootDir>
+        <WorkstationRootDir Condition="'$(WorkstationRootDir)' == ''">$([MSBuild]::EnsureTrailingSlash($([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\\'))))</WorkstationRootDir>
+        <WorkstationBaseOutputPath>$(WorkstationRootDir)Output\$(Configuration)\</WorkstationBaseOutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <LibrariesBaseDir>$(WorkstationBaseOutputPath)libraries\</LibrariesBaseDir>
+    </PropertyGroup>
+</Project>
