@@ -1,0 +1,37 @@
+<Project>
+    <Target Name="CopyLibrariesProjectDllToOutput"
+            AfterTargets="Build"
+            Condition="'$(Configuration)' == 'Release'">
+
+        <PropertyGroup>
+            <!-- Ensure we have a stable repo root/output path even when a nested Directory.Build.props prevents importing LibrariesDlls.props -->
+            <_WorkstationRootDir Condition="'$(SolutionDir)' != ''">$([MSBuild]::EnsureTrailingSlash('$(SolutionDir)'))</_WorkstationRootDir>
+            <_WorkstationRootDir Condition="'$(_WorkstationRootDir)' == ''">$([MSBuild]::EnsureTrailingSlash($([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\\'))))</_WorkstationRootDir>
+            <_WorkstationBaseOutputPath Condition="'$(WorkstationBaseOutputPath)' != ''">$(WorkstationBaseOutputPath)</_WorkstationBaseOutputPath>
+            <_WorkstationBaseOutputPath Condition="'$(_WorkstationBaseOutputPath)' == ''">$(_WorkstationRootDir)Output\$(Configuration)\</_WorkstationBaseOutputPath>
+
+            <_LibrariesBaseDir Condition="'$(LibrariesBaseDir)' != ''">$(LibrariesBaseDir)</_LibrariesBaseDir>
+            <_LibrariesBaseDir Condition="'$(_LibrariesBaseDir)' == ''">$(_WorkstationBaseOutputPath)libraries\</_LibrariesBaseDir>
+
+            <!-- Group by first segment of dll name: e.g. Semi.Avalonia.dll -> Semi; Ursa.dll -> Ursa -->
+            <_LibrariesCategoryRaw>$([System.String]::Copy('$(TargetName)').Split('.')[0])</_LibrariesCategoryRaw>
+            <_LibrariesCategoryRaw>$([System.String]::Copy('$(_LibrariesCategoryRaw)').Trim())</_LibrariesCategoryRaw>
+            <_LibrariesCategorySanitized>$([System.Text.RegularExpressions.Regex]::Replace('$(_LibrariesCategoryRaw)', '[\\/:*?&quot;&lt;&gt;|]', '_'))</_LibrariesCategorySanitized>
+            <_LibrariesCategory Condition="'$(_LibrariesCategorySanitized)' == ''">Others</_LibrariesCategory>
+            <_LibrariesCategory Condition="'$(_LibrariesCategory)' == ''">$(_LibrariesCategorySanitized)</_LibrariesCategory>
+
+            <LibrariesCategoryDir>$(_LibrariesBaseDir)$(_LibrariesCategory)\</LibrariesCategoryDir>
+        </PropertyGroup>
+
+        <ItemGroup>
+            <_LibraryProjectDll Include="$(TargetPath)"
+                               Condition="'$(TargetExt)' == '.dll' and Exists('$(TargetPath)')" />
+        </ItemGroup>
+
+          <MakeDir Directories="$(LibrariesCategoryDir)" Condition="@(_LibraryProjectDll) != ''"/>
+
+        <Copy SourceFiles="@(_LibraryProjectDll)"
+              DestinationFolder="$(LibrariesCategoryDir)"
+              SkipUnchangedFiles="true" />
+    </Target>
+</Project>

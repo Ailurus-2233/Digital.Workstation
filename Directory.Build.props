@@ -3,4 +3,7 @@
             Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\Libraries\'))"/>
     <Import Project="$(SolutionDir)Build\ManageDlls.props"
             Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\')) and !$(MSBuildProjectDirectory.Contains('\Libraries\'))"/>
+
+    <Import Project="$(SolutionDir)Build\LibrariesDlls.props"
+            Condition=" '$(MSBuildProjectDirectory)' != '' and $(MSBuildProjectDirectory.Contains('\Libraries\'))"/>
 </Project>
