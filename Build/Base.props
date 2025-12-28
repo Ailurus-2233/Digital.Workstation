@@ -10,8 +10,11 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)'=='Release'">
+
+        <!-- 在 Release 的情况下，不输出 PDB 文件、XML 文档和依赖项文件 -->
         <DebugType>none</DebugType>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
+        <GenerateDependencyFile>false</GenerateDependencyFile>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\')) and !$(MSBuildProjectDirectory.Contains('\Core\')) ">
