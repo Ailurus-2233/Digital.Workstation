@@ -6,7 +6,13 @@
     <Project Path="Core/Models/Models.csproj" />
     <Project Path="Core/UIPackage/UIPackage.csproj" />
   </Folder>
-  <Folder Name="/Libraries/" />
+  <Folder Name="/Libraries/">
+    <Project Path="Libraries/Semi.Avalonia/src/Semi.Avalonia.ColorPicker/Semi.Avalonia.ColorPicker.csproj" />
+    <Project Path="Libraries/Semi.Avalonia/src/Semi.Avalonia.DataGrid/Semi.Avalonia.DataGrid.csproj" />
+    <Project Path="Libraries/Semi.Avalonia/src/Semi.Avalonia/Semi.Avalonia.csproj" />
+    <Project Path="Libraries/Ursa.Avalonia/src/Ursa.Themes.Semi/Ursa.Themes.Semi.csproj" />
+    <Project Path="Libraries/Ursa.Avalonia/src/Ursa/Ursa.csproj" />
+  </Folder>
   <Folder Name="/Modules/">
     <Project Path="Modules/DashBoard/DashBoard.csproj" />
     <Project Path="Modules/Workstation/Workstation.csproj" />
@@ -21,6 +27,7 @@
   </Folder>
   <Folder Name="/_docs/">
     <File Path=".gitignore" />
+    <File Path=".gitmodules" />
     <File Path="LICENSE" />
     <File Path="README.md" />
   </Folder>

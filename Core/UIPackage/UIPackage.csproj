@@ -8,12 +8,13 @@
 
     <ItemGroup>
       <PackageReference Include="Avalonia" Version="11.3.10" />
-      <PackageReference Include="Irihi.Ursa" Version="1.14.0" />
-      <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="1.14.0" />
-      <PackageReference Include="Semi.Avalonia" Version="11.3.7.1" />
-      <PackageReference Include="Semi.Avalonia.ColorPicker" Version="11.3.7.1" />
-      <PackageReference Include="Semi.Avalonia.DataGrid" Version="11.3.7.1" />
-      <PackageReference Include="Semi.Avalonia.Dock" Version="11.3.6.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Libraries\Semi.Avalonia\src\Semi.Avalonia.ColorPicker\Semi.Avalonia.ColorPicker.csproj" />
+      <ProjectReference Include="..\..\Libraries\Semi.Avalonia\src\Semi.Avalonia.DataGrid\Semi.Avalonia.DataGrid.csproj" />
+      <ProjectReference Include="..\..\Libraries\Semi.Avalonia\src\Semi.Avalonia\Semi.Avalonia.csproj" />
+      <ProjectReference Include="..\..\Libraries\Ursa.Avalonia\src\Ursa.Themes.Semi\Ursa.Themes.Semi.csproj" />
     </ItemGroup>
 
 </Project>
