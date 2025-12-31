@@ -1,8 +1,8 @@
 [submodule "Libraries/Semi.Avalonia"]
 	path = Libraries/Semi.Avalonia
-	url = git@github.com:Ailurus-2233/Semi.Avalonia.git
+	url = git@github.com:Ailurus-Forge-Tech/Semi.Avalonia.git
 	branch = develop
 [submodule "Libraries/Ursa.Avalonia"]
 	path = Libraries/Ursa.Avalonia
-	url = git@github.com:Ailurus-2233/Ursa.Avalonia.git
+	url = git@github.com:Ailurus-Forge-Tech/Ursa.Avalonia.git
 	branch = develop
