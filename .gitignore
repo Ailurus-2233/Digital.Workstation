@@ -5,3 +5,5 @@
 Output/
 .fake
 **/*.user
+.claude
+.DS_Store

@@ -16,5 +16,9 @@ public static class Program
         Launcher.Run(args);
     }
 
+    /// <summary>
+    ///     Avalonia 设计器/预览器入口：
+    ///     设计时 AssemblyLoader.Initialize() 自动禁用，程序集直接从输出根目录探测。
+    /// </summary>
     public static AppBuilder BuildAvaloniaApp() => Launcher.BuildAvaloniaApp();
 }

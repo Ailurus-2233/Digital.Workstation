@@ -1,8 +1,22 @@
 <Project>
     <PropertyGroup>
+        <!-- 直接用 csproj 单独构建时 SolutionDir 未定义，回退到仓库根目录，保证输出位置一致 -->
+        <SolutionDir Condition="'$(SolutionDir)' == '' or '$(SolutionDir)' == '*Undefined*'">$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..'))</SolutionDir>
+        <!-- 本文件在 Directory.Build.props 阶段（早于 SDK 设默认 Debug）就展开 BaseOutputPath，
+             必须在此先给 Configuration 一个默认值，否则会被固化成 "Output//" -->
+        <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
         <BaseOutputPath>$(SolutionDir)Output\$(Configuration)\</BaseOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+        <!-- MSBuildProjectDirectory 在 Windows 用 '\'、macOS/Linux 用 '/'，
+             两种分隔符都匹配，保证跨平台条件一致 -->
+        <_InCore>$(MSBuildProjectDirectory.Contains('\Core\'))</_InCore>
+        <_InCore Condition="'$(_InCore)' != 'true'">$(MSBuildProjectDirectory.Contains('/Core/'))</_InCore>
+        <_InModules>$(MSBuildProjectDirectory.Contains('\Modules\'))</_InModules>
+        <_InModules Condition="'$(_InModules)' != 'true'">$(MSBuildProjectDirectory.Contains('/Modules/'))</_InModules>
+        <_InUnitTest>$(MSBuildProjectDirectory.Contains('\UnitTest\'))</_InUnitTest>
+        <_InUnitTest Condition="'$(_InUnitTest)' != 'true'">$(MSBuildProjectDirectory.Contains('/UnitTest/'))</_InUnitTest>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -17,30 +31,30 @@
         <GenerateDependencyFile>false</GenerateDependencyFile>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\')) and !$(MSBuildProjectDirectory.Contains('\Core\')) ">
+    <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and '$(_InUnitTest)' != 'true' and '$(_InCore)' != 'true' ">
         <AssemblyName Condition="'$(AssemblyName)' == ''">DigitalWorkstation.$(MSBuildProjectName)</AssemblyName>
         <RootNamespace Condition="'$(RootNamespace)' == ''">DigitalWorkstation.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and $(MSBuildProjectDirectory.Contains('\Core\')) ">
+    <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and '$(_InCore)' == 'true' ">
         <AssemblyName Condition="'$(AssemblyName)' == ''">DigitalWorkstation.Core.$(MSBuildProjectName)</AssemblyName>
         <RootNamespace Condition="'$(RootNamespace)' == ''">DigitalWorkstation.Core.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
     </PropertyGroup>
-    
-    <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and $(MSBuildProjectDirectory.Contains('\UnitTest\')) ">
+
+    <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and '$(_InUnitTest)' == 'true' ">
         <AssemblyName Condition="'$(AssemblyName)' == ''">DigitalWorkstation.UnitTest.$(MSBuildProjectName)</AssemblyName>
         <RootNamespace Condition="'$(RootNamespace)' == ''">DigitalWorkstation.UnitTest.$(MSBuildProjectName.Replace(" ", ""))</RootNamespace>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)'=='Release' and '$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\Core\'))">
+    <PropertyGroup Condition="'$(Configuration)'=='Release' and '$(OutputPath)' == '' and '$(_InCore)' == 'true'">
         <OutputPath>$(BaseOutputPath)core\</OutputPath>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)'=='Release' and '$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\Modules\'))">
+    <PropertyGroup Condition="'$(Configuration)'=='Release' and '$(OutputPath)' == '' and '$(_InModules)' == 'true'">
         <OutputPath>$(BaseOutputPath)modules\</OutputPath>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(OutputPath)' == '' and $(MSBuildProjectDirectory.Contains('\UnitTest\'))">
+    <PropertyGroup Condition="'$(OutputPath)' == '' and '$(_InUnitTest)' == 'true'">
         <OutputPath>$(SolutionDir)UnitTest\Output\$(Configuration)\</OutputPath>
     </PropertyGroup>
 

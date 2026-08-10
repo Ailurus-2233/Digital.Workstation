@@ -1,4 +1,5 @@
-﻿using Avalonia;
+﻿using System.Runtime.CompilerServices;
+using Avalonia;
 using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Workstation;
 
@@ -20,6 +21,11 @@ public static class Launcher
     public static void Initialize()
     {
         AssemblyLoader.Initialize();
+        // Release 下 native 库被归入 runtimes/<rid>/native/，默认 probing 找不到，
+        // 注册 DllImportResolver 并立即预加载，让后续 P/Invoke 命中已加载的 handle。
+        // 此处只引用 Launcher 自身程序集，不会触发 Avalonia/SkiaSharp 加载。
+        AssemblyLoader.RegisterNativeResolvers();
+        AssemblyLoader.PreloadNativeLibraries();
         InitializeCore();
     }
 
@@ -39,7 +45,22 @@ public static class Launcher
     public static void Run(string[] args)
     {
         Logger.Information("Application startup.", nameof(Launcher));
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        RunAvalonia(args);
+    }
+
+    /// <summary>
+    ///     独立方法启动 Avalonia：
+    ///     保证 Avalonia 类型的 JIT 延迟到 AssemblyLoader.Initialize() 之后，
+    ///     此时引导程序集已预加载、AssemblyResolve 已注册。
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void RunAvalonia(string[] args)
+    {
+        var builder = BuildAvaloniaApp();
+        // AppBuilder 构造完毕说明 Avalonia 程序集已全部加载完毕，
+        // 此时引用 SkiaSharp/HarfBuzzSharp 类型是安全的，为它们注册 native 解析器。
+        AssemblyLoader.RegisterNativeResolversForAvalonia();
+        builder.StartWithClassicDesktopLifetime(args);
     }
 
     public static AppBuilder BuildAvaloniaApp()
