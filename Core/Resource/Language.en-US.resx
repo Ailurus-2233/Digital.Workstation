@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SettingsNavigationTitle" xml:space="preserve">
+    <value>Settings</value>
+    <comment>Title of the shell built-in Settings navigation item</comment>
+  </data>
+  <data name="DashBoardNavigationTitle" xml:space="preserve">
+    <value>Launch Pad</value>
+    <comment>Title of the DashBoard navigation item</comment>
+  </data>
+  <data name="PropertiesTabTitle" xml:space="preserve">
+    <value>Properties</value>
+    <comment>Title of the shell built-in AuxiliaryPanel demo tab "Properties"</comment>
+  </data>
+  <data name="OutlineTabTitle" xml:space="preserve">
+    <value>Outline</value>
+    <comment>Title of the shell built-in AuxiliaryPanel demo tab "Outline"</comment>
+  </data>
+  <data name="OutputTabTitle" xml:space="preserve">
+    <value>Output</value>
+    <comment>Title of the shell built-in BottomPanel demo tab "Output"</comment>
+  </data>
+  <data name="LogTabTitle" xml:space="preserve">
+    <value>Log</value>
+    <comment>Title of the shell built-in BottomPanel demo tab "Log"</comment>
+  </data>
+  <data name="DashBoardTasksTabTitle" xml:space="preserve">
+    <value>Tasks</value>
+    <comment>Title of the DashBoard-contributed BottomPanel demo tab "Tasks"</comment>
+  </data>
+  <data name="MenuExitTitle" xml:space="preserve">
+    <value>Exit</value>
+    <comment>Title of the File menu "Exit" item</comment>
+  </data>
+  <data name="MenuAboutTitle" xml:space="preserve">
+    <value>About</value>
+    <comment>Title of the Help menu "About" item</comment>
+  </data>
+  <data name="ToggleSideBarTitle" xml:space="preserve">
+    <value>Toggle Side Bar</value>
+    <comment>Title of the SideBar visibility toggle (shared by View menu and quick tool bar)</comment>
+  </data>
+  <data name="ToggleBottomPanelTitle" xml:space="preserve">
+    <value>Toggle Bottom Panel</value>
+    <comment>Title of the BottomPanel visibility toggle (shared by View menu and quick tool bar)</comment>
+  </data>
+  <data name="ToggleAuxiliaryPanelTitle" xml:space="preserve">
+    <value>Toggle Auxiliary Panel</value>
+    <comment>Title of the AuxiliaryPanel visibility toggle (shared by View menu and quick tool bar)</comment>
+  </data>
+  <data name="StatusReadyTitle" xml:space="preserve">
+    <value>Ready</value>
+    <comment>Text of the shell built-in status bar "Ready" item</comment>
+  </data>
+  <data name="DashBoardOpenWindowMenuTitle" xml:space="preserve">
+    <value>Open Launch Pad</value>
+    <comment>Title of the DashBoard-contributed File menu item that reopens the launch pad window</comment>
+  </data>
+  <data name="DashBoardOverviewToolBarTitle" xml:space="preserve">
+    <value>Overview</value>
+    <comment>Title (ToolTip) of the DashBoard-contributed quick tool bar "Overview" button</comment>
+  </data>
+</root>

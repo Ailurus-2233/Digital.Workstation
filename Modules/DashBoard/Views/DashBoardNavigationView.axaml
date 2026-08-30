@@ -1,0 +1,38 @@
+﻿<UserControl
+    x:Class="DigitalWorkstation.DashBoard.Views.DashBoardNavigationView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="400"
+    mc:Ignorable="d">
+
+    <UserControl.Styles>
+        <!-- SideBar 条目：点击后 MainContent 切换到对应主视图 -->
+        <Style Selector="Button.sidebar-entry">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Margin" Value="8,1" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+        <Style Selector="Button.sidebar-entry:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+        </Style>
+        <Style Selector="Button.sidebar-entry TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Margin="0,4">
+        <Button Classes="sidebar-entry" Click="OpenOverview">
+            <TextBlock Text="概览" />
+        </Button>
+        <Button Classes="sidebar-entry" Click="OpenRecent">
+            <TextBlock Text="最近项目" />
+        </Button>
+    </StackPanel>
+</UserControl>

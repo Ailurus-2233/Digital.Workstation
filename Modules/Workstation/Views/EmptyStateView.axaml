@@ -1,0 +1,77 @@
+﻿<UserControl
+    d:DesignHeight="450"
+    d:DesignWidth="600"
+    mc:Ignorable="d"
+    x:Class="DigitalWorkstation.Workstation.Views.EmptyStateView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Styles>
+        <!--  快捷键键帽  -->
+        <Style Selector="Border.key-chip">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill0}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,2" />
+            <Setter Property="Margin" Value="0,4" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+        <Style Selector="TextBlock.shortcut-desc">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText1}" />
+            <Setter Property="Margin" Value="16,4" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel
+        HorizontalAlignment="Center"
+        Spacing="32"
+        VerticalAlignment="Center">
+        <StackPanel HorizontalAlignment="Center" Spacing="8">
+            <TextBlock
+                FontSize="24"
+                FontWeight="SemiBold"
+                Foreground="{DynamicResource SemiColorText0}"
+                Text="Digital.Workstation" />
+            <TextBlock Foreground="{DynamicResource SemiColorText2}" Text="从左侧 ActivityBar 选择功能域，点击 SideBar 中的条目打开视图" />
+        </StackPanel>
+
+        <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto,Auto">
+            <Border Classes="key-chip" Grid.Row="0">
+                <TextBlock Text="Ctrl+B" />
+            </Border>
+            <TextBlock
+                Classes="shortcut-desc"
+                Grid.Column="1"
+                Grid.Row="0"
+                Text="切换 SideBar" />
+
+            <Border
+                Classes="key-chip"
+                Grid.Column="0"
+                Grid.Row="1">
+                <TextBlock Text="Ctrl+J" />
+            </Border>
+            <TextBlock
+                Classes="shortcut-desc"
+                Grid.Column="1"
+                Grid.Row="1"
+                Text="切换 BottomPanel" />
+
+            <Border
+                Classes="key-chip"
+                Grid.Column="0"
+                Grid.Row="2">
+                <TextBlock Text="Ctrl+Alt+B" />
+            </Border>
+            <TextBlock
+                Classes="shortcut-desc"
+                Grid.Column="1"
+                Grid.Row="2"
+                Text="切换 AuxiliaryPanel" />
+        </Grid>
+    </StackPanel>
+</UserControl>

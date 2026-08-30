@@ -1,0 +1,14 @@
+﻿<UserControl
+    d:DesignHeight="450"
+    d:DesignWidth="400"
+    mc:Ignorable="d"
+    x:Class="DigitalWorkstation.DashBoard.Views.DashBoardTasksView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <TextBlock
+        Foreground="{DynamicResource SemiColorText2}"
+        Margin="12"
+        Text="DashBoard 任务面板（演示模块贡献 BottomPanel tab）" />
+</UserControl>

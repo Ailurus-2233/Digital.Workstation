@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SettingsNavigationTitle" xml:space="preserve">
+    <value>设置</value>
+    <comment>shell 预置"设置"导航项的标题</comment>
+  </data>
+  <data name="DashBoardNavigationTitle" xml:space="preserve">
+    <value>启动台</value>
+    <comment>DashBoard 导航项的标题</comment>
+  </data>
+  <data name="PropertiesTabTitle" xml:space="preserve">
+    <value>属性</value>
+    <comment>shell 预置 AuxiliaryPanel 演示 tab"属性"的标题</comment>
+  </data>
+  <data name="OutlineTabTitle" xml:space="preserve">
+    <value>大纲</value>
+    <comment>shell 预置 AuxiliaryPanel 演示 tab"大纲"的标题</comment>
+  </data>
+  <data name="OutputTabTitle" xml:space="preserve">
+    <value>输出</value>
+    <comment>shell 预置 BottomPanel 演示 tab"输出"的标题</comment>
+  </data>
+  <data name="LogTabTitle" xml:space="preserve">
+    <value>日志</value>
+    <comment>shell 预置 BottomPanel 演示 tab"日志"的标题</comment>
+  </data>
+  <data name="DashBoardTasksTabTitle" xml:space="preserve">
+    <value>任务</value>
+    <comment>DashBoard 贡献给 BottomPanel 的演示 tab"任务"的标题</comment>
+  </data>
+  <data name="MenuExitTitle" xml:space="preserve">
+    <value>退出</value>
+    <comment>文件菜单"退出"项的标题</comment>
+  </data>
+  <data name="MenuAboutTitle" xml:space="preserve">
+    <value>关于</value>
+    <comment>帮助菜单"关于"项的标题</comment>
+  </data>
+  <data name="ToggleSideBarTitle" xml:space="preserve">
+    <value>切换 SideBar</value>
+    <comment>SideBar 显隐切换项的标题（视图菜单与快速工具栏共用）</comment>
+  </data>
+  <data name="ToggleBottomPanelTitle" xml:space="preserve">
+    <value>切换 BottomPanel</value>
+    <comment>BottomPanel 显隐切换项的标题（视图菜单与快速工具栏共用）</comment>
+  </data>
+  <data name="ToggleAuxiliaryPanelTitle" xml:space="preserve">
+    <value>切换 AuxiliaryPanel</value>
+    <comment>AuxiliaryPanel 显隐切换项的标题（视图菜单与快速工具栏共用）</comment>
+  </data>
+  <data name="StatusReadyTitle" xml:space="preserve">
+    <value>就绪</value>
+    <comment>shell 预置状态栏"就绪"项的文本</comment>
+  </data>
+  <data name="DashBoardOpenWindowMenuTitle" xml:space="preserve">
+    <value>打开启动台</value>
+    <comment>DashBoard 贡献给文件菜单的"打开启动台"项的标题</comment>
+  </data>
+  <data name="DashBoardOverviewToolBarTitle" xml:space="preserve">
+    <value>概览</value>
+    <comment>DashBoard 贡献给快速工具栏的"概览"按钮的标题（ToolTip）</comment>
+  </data>
+</root>

@@ -1,12 +1,362 @@
 ﻿<Window
+    Height="800"
+    MinHeight="600"
+    MinWidth="960"
+    Title="Digital.Workstation"
+    Width="1280"
+    d:DesignHeight="800"
+    d:DesignWidth="1280"
+    mc:Ignorable="d"
+    prism:ViewModelLocator.AutoWireViewModel="True"
     x:Class="DigitalWorkstation.Workstation.MainWindow"
     xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="MainWindow"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    mc:Ignorable="d">
-    <TextBlock Text="Welcome Digital.Workstation" />
+    xmlns:prism="http://prismlibrary.com/"
+    xmlns:vm="clr-namespace:DigitalWorkstation.Workstation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Window.Resources>
+        <DataTemplate DataType="vm:NavigationItemViewModel" x:Key="NavigationItemTemplate">
+            <Button
+                AutomationProperties.Name="{Binding Title}"
+                Classes="nav-item"
+                Classes.selected="{Binding IsSelected}"
+                Command="{Binding $parent[ItemsControl].((vm:MainWindowViewModel)DataContext).SelectActivityCommand}"
+                CommandParameter="{Binding}"
+                ToolTip.Tip="{Binding Title}">
+                <PathIcon Data="{Binding Icon}" />
+            </Button>
+        </DataTemplate>
+        <!--  菜单项头部：图标 + 标题  -->
+        <DataTemplate DataType="vm:MenuItemViewModel" x:Key="MenuItemHeaderTemplate">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <PathIcon Data="{Binding Icon}" Height="14" Width="14" />
+                <TextBlock Text="{Binding Title}" />
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Window.Styles>
+        <!--  ActivityBar 导航按钮  -->
+        <Style Selector="Button.nav-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="Margin" Value="6,2" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.nav-item:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+        </Style>
+        <Style Selector="Button.nav-item.selected">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill2}" />
+        </Style>
+        <Style Selector="Button.nav-item PathIcon">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        </Style>
+        <Style Selector="Button.nav-item:pointerover PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
+        </Style>
+        <Style Selector="Button.nav-item.selected PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
+        </Style>
+        <!--  面板 tab  -->
+        <Style Selector="Button.panel-tab">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        </Style>
+        <Style Selector="Button.panel-tab:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+        </Style>
+        <Style Selector="Button.panel-tab.active">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill2}" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
+        </Style>
+
+        <!--  面板收起按钮  -->
+        <Style Selector="Button.panel-collapse">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8,6" />
+        </Style>
+        <Style Selector="Button.panel-collapse:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+        </Style>
+        <Style Selector="Button.panel-collapse PathIcon">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        </Style>
+
+        <!--  区域标题与占位文本  -->
+        <Style Selector="TextBlock.region-title">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+            <Setter Property="Margin" Value="12,8" />
+        </Style>
+        <Style Selector="TextBlock.placeholder">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!--  顶层菜单下的菜单项（容器由 ItemsSource 生成，命令与无障碍名经样式绑定）  -->
+        <Style Selector="MenuItem.chrome-menu MenuItem">
+            <Setter Property="Command" Value="{Binding Command}" />
+            <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+        </Style>
+        <Style Selector="MenuItem.chrome-menu MenuItem PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText1}" />
+        </Style>
+
+        <!--  快速工具栏按钮  -->
+        <Style Selector="Button.toolbar-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="Margin" Value="2,0" />
+        </Style>
+        <Style Selector="Button.toolbar-item:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+        </Style>
+        <Style Selector="Button.toolbar-item PathIcon">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        </Style>
+        <Style Selector="Button.toolbar-item:pointerover PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
+        </Style>
+
+        <!--  状态栏条目  -->
+        <Style Selector="StackPanel.status-item">
+            <Setter Property="Margin" Value="0,0,12,0" />
+        </Style>
+        <Style Selector="StackPanel.status-item PathIcon">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        </Style>
+        <Style Selector="StackPanel.status-item TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        </Style>
+    </Window.Styles>
+    <Window.KeyBindings>
+        <KeyBinding Command="{Binding ToggleSideBarCommand}" Gesture="Ctrl+B" />
+        <KeyBinding Command="{Binding ToggleBottomPanelCommand}" Gesture="Ctrl+J" />
+        <KeyBinding Command="{Binding ToggleAuxiliaryPanelCommand}" Gesture="Ctrl+Alt+B" />
+    </Window.KeyBindings>
+
+    <DockPanel>
+        <!--  菜单栏：文件/视图/帮助顶层菜单为 shell 结构，菜单项全部来自贡献（shell 预置 + 模块）  -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem
+                Classes="chrome-menu"
+                Header="文件"
+                ItemsSource="{Binding FileMenuItems}"
+                ItemTemplate="{StaticResource MenuItemHeaderTemplate}" />
+            <MenuItem
+                Classes="chrome-menu"
+                Header="视图"
+                ItemsSource="{Binding ViewMenuItems}"
+                ItemTemplate="{StaticResource MenuItemHeaderTemplate}" />
+            <MenuItem
+                Classes="chrome-menu"
+                Header="帮助"
+                ItemsSource="{Binding HelpMenuItems}"
+                ItemTemplate="{StaticResource MenuItemHeaderTemplate}" />
+        </Menu>
+
+        <!--  快速工具栏：渲染贡献的图标按钮，ToolTip 为标题  -->
+        <Border
+            Background="{DynamicResource SemiColorBackground2}"
+            BorderBrush="{DynamicResource SemiColorBorder}"
+            BorderThickness="0,0,0,1"
+            DockPanel.Dock="Top"
+            Padding="6,2">
+            <ItemsControl ItemsSource="{Binding ToolBarItems}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button
+                            AutomationProperties.Name="{Binding Title}"
+                            Classes="toolbar-item"
+                            Command="{Binding Command}"
+                            ToolTip.Tip="{Binding Title}">
+                            <PathIcon Data="{Binding Icon}" />
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+        <!--  状态栏：渲染贡献的"图标 + 文本"条目  -->
+        <Border
+            Background="{DynamicResource SemiColorBackground2}"
+            BorderBrush="{DynamicResource SemiColorBorder}"
+            BorderThickness="0,1,0,0"
+            DockPanel.Dock="Bottom"
+            Padding="10,3">
+            <ItemsControl ItemsSource="{Binding StatusBarItems}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Classes="status-item" Orientation="Horizontal" Spacing="4">
+                            <PathIcon Data="{Binding Icon}" />
+                            <TextBlock Text="{Binding Title}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+        <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+            <!--  ActivityBar：顶部为模块贡献的导航项，底部为设置类入口  -->
+            <Border
+                Background="{DynamicResource SemiColorNavBackground}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="0,0,1,0"
+                Width="48">
+                <DockPanel>
+                    <ItemsControl
+                        DockPanel.Dock="Bottom"
+                        ItemTemplate="{StaticResource NavigationItemTemplate}"
+                        ItemsSource="{Binding BottomNavigationItems}" />
+                    <ItemsControl ItemTemplate="{StaticResource NavigationItemTemplate}" ItemsSource="{Binding TopNavigationItems}" />
+                </DockPanel>
+            </Border>
+
+            <!--  SideBar：显示选中导航项的内容  -->
+            <Border
+                Background="{DynamicResource SemiColorBackground1}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="0,0,1,0"
+                Grid.Column="1"
+                IsVisible="{Binding State.SideBar.Visible}"
+                Width="{Binding State.SideBar.Width}">
+                <Grid RowDefinitions="Auto,*">
+                    <TextBlock Classes="region-title" Text="{Binding SideBarTitle}" />
+                    <ContentControl Content="{Binding SideBarContent}" Grid.Row="1" />
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="2" RowDefinitions="*,Auto">
+                <!--  MainContent：单视图切换；默认显示 shell 内置空状态页  -->
+                <Border Background="{DynamicResource SemiColorBackground0}">
+                    <ContentControl Content="{Binding MainContent}" />
+                </Border>
+
+                <!--  BottomPanel：tab 栏 + 内容容器；收起按钮与 Ctrl+J 切换可见性  -->
+                <Border
+                    Background="{DynamicResource SemiColorBackground1}"
+                    BorderBrush="{DynamicResource SemiColorBorder}"
+                    BorderThickness="0,1,0,0"
+                    Grid.Row="1"
+                    Height="{Binding State.BottomPanel.Height}"
+                    IsVisible="{Binding State.BottomPanel.Visible}">
+                    <Grid RowDefinitions="Auto,*">
+                        <Border BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="0,0,0,1">
+                            <DockPanel>
+                                <Button
+                                    AutomationProperties.Name="收起 BottomPanel"
+                                    Classes="panel-collapse"
+                                    Command="{Binding ToggleBottomPanelCommand}"
+                                    DockPanel.Dock="Right"
+                                    ToolTip.Tip="收起面板">
+                                    <PathIcon Data="{Binding CollapseBottomIcon}" />
+                                </Button>
+                                <ItemsControl ItemsSource="{Binding BottomTabs}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button
+                                                AutomationProperties.Name="{Binding Title}"
+                                                Classes="panel-tab"
+                                                Classes.active="{Binding IsActive}"
+                                                Command="{Binding $parent[ItemsControl].((vm:MainWindowViewModel)DataContext).ActivateBottomTabCommand}"
+                                                CommandParameter="{Binding}">
+                                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                                    <PathIcon Data="{Binding Icon}" Height="14" Width="14" />
+                                                    <TextBlock FontSize="12" Text="{Binding Title}" />
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DockPanel>
+                        </Border>
+                        <ContentControl Content="{Binding BottomContent}" Grid.Row="1" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!--  AuxiliaryPanel：tab 栏 + 内容容器；收起按钮与 Ctrl+Alt+B 切换可见性  -->
+            <Border
+                Background="{DynamicResource SemiColorBackground1}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="1,0,0,0"
+                Grid.Column="3"
+                IsVisible="{Binding State.AuxiliaryPanel.Visible}"
+                Width="{Binding State.AuxiliaryPanel.Width}">
+                <Grid RowDefinitions="Auto,*">
+                    <Border BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="0,0,0,1">
+                        <DockPanel>
+                            <Button
+                                AutomationProperties.Name="收起 AuxiliaryPanel"
+                                Classes="panel-collapse"
+                                Command="{Binding ToggleAuxiliaryPanelCommand}"
+                                DockPanel.Dock="Right"
+                                ToolTip.Tip="收起面板">
+                                <PathIcon Data="{Binding CollapseAuxiliaryIcon}" />
+                            </Button>
+                            <ItemsControl ItemsSource="{Binding AuxiliaryTabs}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button
+                                            AutomationProperties.Name="{Binding Title}"
+                                            Classes="panel-tab"
+                                            Classes.active="{Binding IsActive}"
+                                            Command="{Binding $parent[ItemsControl].((vm:MainWindowViewModel)DataContext).ActivateAuxTabCommand}"
+                                            CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <PathIcon Data="{Binding Icon}" Height="14" Width="14" />
+                                                <TextBlock FontSize="12" Text="{Binding Title}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DockPanel>
+                    </Border>
+                    <ContentControl Content="{Binding AuxiliaryContent}" Grid.Row="1" />
+                </Grid>
+            </Border>
+        </Grid>
+    </DockPanel>
 </Window>

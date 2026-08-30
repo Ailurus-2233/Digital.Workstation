@@ -1,9 +1,18 @@
+# ide
 .idea/
 .vs/
+**/*.user
+.vscode/
 **/bin/
 **/obj/
 Output/
 .fake
-**/*.user
+
+# ai
 .claude
+.scratch
+
+# macos
 .DS_Store
+# 本地库源码目录（非子模块，不随仓库分发）
+Libraries/

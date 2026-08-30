@@ -1,0 +1,23 @@
+﻿<UserControl
+    x:Class="DigitalWorkstation.DashBoard.Views.DashBoardRecentView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="600"
+    mc:Ignorable="d">
+    <StackPanel
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center"
+        Spacing="8">
+        <TextBlock
+            FontSize="20"
+            FontWeight="SemiBold"
+            HorizontalAlignment="Center"
+            Text="最近项目" />
+        <TextBlock
+            Foreground="{DynamicResource SemiColorText2}"
+            Text="最近项目视图（演示整体替换，无文档 tabs）" />
+    </StackPanel>
+</UserControl>

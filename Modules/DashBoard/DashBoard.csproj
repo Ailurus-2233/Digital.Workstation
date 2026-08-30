@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -11,11 +11,16 @@
         <DependentUpon>DashBoardWindow.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Update="Views\DashBoardTasksView.axaml.cs">
+        <DependentUpon>DashBoardTasksView.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\..\Core\Abstractions\Abstractions.csproj" />
       <ProjectReference Include="..\..\Core\Framework\Framework.csproj" />
+      <ProjectReference Include="..\..\Core\Resource\Resource.csproj" />
+      <ProjectReference Include="..\..\Core\UIPackage\UIPackage.csproj" />
     </ItemGroup>
 
 </Project>

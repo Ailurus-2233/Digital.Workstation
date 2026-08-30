@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -8,8 +8,21 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Core\Framework\Framework.csproj" />
+        <ProjectReference Include="..\..\Core\Resource\Resource.csproj" />
         <ProjectReference Include="..\..\Core\UIPackage\UIPackage.csproj" />
         <ProjectReference Include="..\DashBoard\DashBoard.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Views\EmptyStateView.axaml.cs">
+        <DependentUpon>EmptyStateView.axaml</DependentUpon>
+      </Compile>
+      <Compile Update="Views\AboutWindow.axaml.cs">
+        <DependentUpon>AboutWindow.axaml</DependentUpon>
+      </Compile>
+      <Compile Update="Views\LogView.axaml.cs">
+        <DependentUpon>LogView.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

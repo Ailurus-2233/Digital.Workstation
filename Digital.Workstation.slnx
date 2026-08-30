@@ -4,6 +4,7 @@
     <Project Path="Core/Common/Common.csproj" />
     <Project Path="Core/Framework/Framework.csproj" />
     <Project Path="Core/Models/Models.csproj" />
+    <Project Path="Core/Resource/Resource.csproj" />
     <Project Path="Core/UIPackage/UIPackage.csproj" />
   </Folder>
   <Folder Name="/Modules/">

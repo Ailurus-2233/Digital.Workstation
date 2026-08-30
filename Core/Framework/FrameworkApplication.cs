@@ -5,6 +5,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
 using DigitalWorkstation.Core.Abstractions.WindowManager;
 using DigitalWorkstation.Core.Common;
+using DigitalWorkstation.Core.Framework.Shell;
 using DigitalWorkstation.Core.Framework.WindowManager;
 using DigitalWorkstation.Core.Models.Events;
 using DigitalWorkstation.Core.UIPackage;
@@ -62,6 +63,9 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
         var windowManager = new FrameworkWindowManager();
         containerRegistry.RegisterSingleton<IMainWindowManager>(() => windowManager);
         containerRegistry.RegisterSingleton<IWindowManager>(() => windowManager);
+        
+        // 注册 shell 贡献收集器
+        containerRegistry.RegisterSingleton<ShellContributionCollector>();
         
         ResolveFrameworkServices();
     }
