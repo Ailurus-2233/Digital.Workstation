@@ -80,6 +80,14 @@
             <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
         </Style>
 
+        <!--  面板分隔条：透明占位，悬停高亮  -->
+        <Style Selector="GridSplitter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="GridSplitter:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill2}" />
+        </Style>
+
         <!--  面板收起按钮  -->
         <Style Selector="Button.panel-collapse">
             <Setter Property="Background" Value="Transparent" />
@@ -257,6 +265,16 @@
                 </Grid>
             </Border>
 
+            <!--  SideBar 右缘分隔条：覆盖在面板右缘，拖动增量经状态转换调整宽度  -->
+            <vm:PanelResizer
+                AutomationProperties.Name="调整 SideBar 宽度"
+                DragDelta="OnSideBarResizerDragDelta"
+                Grid.Column="1"
+                HorizontalAlignment="Right"
+                IsVisible="{Binding State.SideBar.Visible}"
+                ResizeDirection="Columns"
+                Width="4" />
+
             <Grid Grid.Column="2" RowDefinitions="*,Auto">
                 <!--  MainContent：单视图切换；默认显示 shell 内置空状态页  -->
                 <Border Background="{DynamicResource SemiColorBackground0}">
@@ -309,6 +327,16 @@
                         <ContentControl Content="{Binding BottomContent}" Grid.Row="1" />
                     </Grid>
                 </Border>
+
+                <!--  BottomPanel 上缘分隔条：覆盖在面板顶缘，拖动增量经状态转换调整高度  -->
+                <vm:PanelResizer
+                    AutomationProperties.Name="调整 BottomPanel 高度"
+                    DragDelta="OnBottomPanelResizerDragDelta"
+                    Grid.Row="1"
+                    Height="4"
+                    IsVisible="{Binding State.BottomPanel.Visible}"
+                    ResizeDirection="Rows"
+                    VerticalAlignment="Top" />
             </Grid>
 
             <!--  AuxiliaryPanel：tab 栏 + 内容容器；收起按钮与 Ctrl+Alt+B 切换可见性  -->
@@ -357,6 +385,16 @@
                     <ContentControl Content="{Binding AuxiliaryContent}" Grid.Row="1" />
                 </Grid>
             </Border>
+
+            <!--  AuxiliaryPanel 左缘分隔条：覆盖在面板左缘，拖动增量经状态转换调整宽度  -->
+            <vm:PanelResizer
+                AutomationProperties.Name="调整 AuxiliaryPanel 宽度"
+                DragDelta="OnAuxiliaryPanelResizerDragDelta"
+                Grid.Column="3"
+                HorizontalAlignment="Left"
+                IsVisible="{Binding State.AuxiliaryPanel.Visible}"
+                ResizeDirection="Columns"
+                Width="4" />
         </Grid>
     </DockPanel>
 </Window>

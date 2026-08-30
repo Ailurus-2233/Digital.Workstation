@@ -11,6 +11,9 @@
     <Project Path="Modules/DashBoard/DashBoard.csproj" />
     <Project Path="Modules/Workstation/Workstation.csproj" />
   </Folder>
+  <Folder Name="/UnitTest/">
+    <Project Path="UnitTest/Framework/Framework.csproj" />
+  </Folder>
   <Folder Name="/_build/">
     <File Path="Build/Base.props" />
     <File Path="Build/Base.targets" />

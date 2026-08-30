@@ -244,6 +244,15 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
+    ///     分隔条拖拽的唯一路径：增量经状态转换应用并 clamp 到合法区间；
+    ///     BottomPanel 调高度，其余调宽度；面板收起时尺寸记录保留，恢复后不重置
+    /// </summary>
+    public void ResizePanel(PanelResizeTarget target, double delta)
+    {
+        State = State.Resize(target, delta);
+    }
+
+    /// <summary>
     ///     面板显隐切换的唯一路径：快捷键、菜单项、快速工具栏按钮与收起按钮都汇到这里
     /// </summary>
     private void TogglePanel(TogglePanelTarget target)
