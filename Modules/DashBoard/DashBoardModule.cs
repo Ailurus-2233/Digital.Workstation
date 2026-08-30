@@ -1,7 +1,5 @@
 ﻿using DigitalWorkstation.Core.Abstractions.Shell;
-using DigitalWorkstation.Core.Abstractions.WindowManager;
 using DigitalWorkstation.DashBoard.Views;
-using DigitalWorkstation.DashBoard.Views.Windows;
 
 namespace DigitalWorkstation.DashBoard;
 
@@ -24,7 +22,6 @@ public class DashBoardModule : IModule
 
     public void OnInitialized(IContainerProvider containerProvider)
     {
-        var windowManager = containerProvider.Resolve<IWindowManager>();
-        windowManager.ShowWindow<DashBoardWindow>();
+        // 启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004），模块自身不再开窗
     }
 }

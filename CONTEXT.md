@@ -80,7 +80,7 @@ Core/UIPackage 的 `Icons` 静态类，集中提供 StreamGeometry path 字符�
 _Avoid_: 在贡献类中硬编码图标 path
 
 **共享事件（Shared Events）**:
-模块间通信的事件契约（Prism PubSubEvent），集中定义在 Core/Models，如 `ShowMainWindowEvent`。
+模块间通信的事件契约（Prism PubSubEvent），集中定义在 Core/Models，如 `StartupProgressEvent`。
 _Avoid_: 把事件定义在任一业务模块内部
 
 **UI 测试（人工验收）**:

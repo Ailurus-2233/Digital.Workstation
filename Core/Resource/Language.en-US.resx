@@ -118,4 +118,24 @@
     <value>Overview</value>
     <comment>Title (ToolTip) of the DashBoard-contributed quick tool bar "Overview" button</comment>
   </data>
+  <data name="SplashStartingText" xml:space="preserve">
+    <value>Starting…</value>
+    <comment>Initial phase text before the splash shows progress</comment>
+  </data>
+  <data name="SplashPhaseCoreServices" xml:space="preserve">
+    <value>Initializing core services</value>
+    <comment>Splash phase name: initializing core services</comment>
+  </data>
+  <data name="SplashPhaseLoadingModules" xml:space="preserve">
+    <value>Loading modules</value>
+    <comment>Splash phase name: loading modules</comment>
+  </data>
+  <data name="SplashPhaseReady" xml:space="preserve">
+    <value>Ready</value>
+    <comment>Splash phase name: ready</comment>
+  </data>
+  <data name="SplashPhaseFailed" xml:space="preserve">
+    <value>Module failed to load</value>
+    <comment>Splash phase name: module failed to load</comment>
+  </data>
 </root>

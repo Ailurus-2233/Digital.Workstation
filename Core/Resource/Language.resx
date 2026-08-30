@@ -118,4 +118,24 @@
     <value>概览</value>
     <comment>DashBoard 贡献给快速工具栏的"概览"按钮的标题（ToolTip）</comment>
   </data>
+  <data name="SplashStartingText" xml:space="preserve">
+    <value>正在启动…</value>
+    <comment>启动台显示进度前的初始阶段文本</comment>
+  </data>
+  <data name="SplashPhaseCoreServices" xml:space="preserve">
+    <value>初始化核心服务</value>
+    <comment>启动台"初始化核心服务"阶段名</comment>
+  </data>
+  <data name="SplashPhaseLoadingModules" xml:space="preserve">
+    <value>加载模块</value>
+    <comment>启动台"加载模块"阶段名</comment>
+  </data>
+  <data name="SplashPhaseReady" xml:space="preserve">
+    <value>就绪</value>
+    <comment>启动台"就绪"阶段名</comment>
+  </data>
+  <data name="SplashPhaseFailed" xml:space="preserve">
+    <value>模块加载失败</value>
+    <comment>启动台"模块加载失败"阶段名</comment>
+  </data>
 </root>

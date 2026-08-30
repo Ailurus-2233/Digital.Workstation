@@ -91,4 +91,29 @@ public static class Language
     ///     DashBoard 贡献给快速工具栏的"概览"按钮的标题（ToolTip）
     /// </summary>
     public static string DashBoardOverviewToolBarTitle => Get(nameof(DashBoardOverviewToolBarTitle));
+
+    /// <summary>
+    ///     启动台显示进度前的初始阶段文本
+    /// </summary>
+    public static string SplashStartingText => Get(nameof(SplashStartingText));
+
+    /// <summary>
+    ///     启动台"初始化核心服务"阶段名
+    /// </summary>
+    public static string SplashPhaseCoreServices => Get(nameof(SplashPhaseCoreServices));
+
+    /// <summary>
+    ///     启动台"加载模块"阶段名
+    /// </summary>
+    public static string SplashPhaseLoadingModules => Get(nameof(SplashPhaseLoadingModules));
+
+    /// <summary>
+    ///     启动台"就绪"阶段名
+    /// </summary>
+    public static string SplashPhaseReady => Get(nameof(SplashPhaseReady));
+
+    /// <summary>
+    ///     启动台"模块加载失败"阶段名
+    /// </summary>
+    public static string SplashPhaseFailed => Get(nameof(SplashPhaseFailed));
 }

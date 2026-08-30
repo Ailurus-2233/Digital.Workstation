@@ -1,7 +1,9 @@
-﻿using DigitalWorkstation.Core.Abstractions.Shell;
+﻿using Avalonia.Controls;
+using DigitalWorkstation.Core.Abstractions.Shell;
 using DigitalWorkstation.Core.Framework;
 using DigitalWorkstation.Core.Models.Events;
 using DigitalWorkstation.DashBoard;
+using DigitalWorkstation.DashBoard.Views.Windows;
 using DigitalWorkstation.Workstation.Shell;
 using DigitalWorkstation.Workstation.Views;
 
@@ -44,5 +46,12 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
         // "关于"对话框：经窗口管理器按需解析
         containerRegistry.Register<AboutWindow>();
     }
-    
+
+    /// <summary>
+    ///     启动台：DashBoard 模块的进度窗（ADR-0004）；模块逐模块加载前由 shell 直接解析显示
+    /// </summary>
+    protected override Window CreateSplashWindow()
+    {
+        return Container.Resolve<DashBoardWindow>();
+    }
 }
