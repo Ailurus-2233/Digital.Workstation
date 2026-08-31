@@ -60,7 +60,7 @@ ActivityBar 右侧的容器，显示当前选中导航项的内容。可折叠�
 工作区底部的 tab + 容器区域，承载输出/日志类内容。可折叠、可调高。
 
 **贡献（Contribution）**:
-模块向 shell 声明可组合元素的机制：模块实现契约接口（导航项、面板 tab、菜单项、工具栏项、状态栏项），shell 收集并按元数据（图标、标题、排序、Placement）渲染。视图本体由 Prism Region 托管。
+模块向 shell 声明可组合元素的机制：模块实现契约接口（导航项、面板 tab、菜单项、状态栏项），shell 收集并按元数据（图标、标题、排序、Placement）渲染。视图本体由 Prism Region 托管。
 _Avoid_: 模块直接操作 shell 的 UI 元素
 
 **窗口管理器（WindowManager）**:
@@ -69,7 +69,7 @@ _Avoid_: 模块直接操作 shell 的 UI 元素
 ### 横切
 
 **主题包（UIPackage）**:
-把多个第三方主题（Semi、Ursa 等）聚合为单一应用主题的资源包。
+把多个第三方主题（Semi、Ursa 等）聚合为单一应用主题的资源包；`VSCodePalette` 在应用级资源覆盖 Semi 语义色键并提供 chrome 专属色键，整体色调对齐 VS Code Dark+（主题固定 Dark）。
 _Avoid_: 主题集合、样式包
 **资源包（Resource）**:
 Core/Resource，界面文案的集中管理：语言资源文件（中性 resx 为中文，en-US 为英文卫星程序集）+ `Language` 静态访问类（`Get(key)` 通用取值 + 各文案的强类型属性）。C# 中的显示字符串（标题、菜单文本等）一律经 `Language` 获取，不在类中硬编码；Id 类标识符（如导航项 Id）不是文案，仍直接定义在类中。

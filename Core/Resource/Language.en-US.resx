@@ -96,15 +96,15 @@
   </data>
   <data name="ToggleSideBarTitle" xml:space="preserve">
     <value>Toggle Side Bar</value>
-    <comment>Title of the SideBar visibility toggle (shared by View menu and quick tool bar)</comment>
+    <comment>Title of the SideBar visibility toggle (View menu)</comment>
   </data>
   <data name="ToggleBottomPanelTitle" xml:space="preserve">
     <value>Toggle Bottom Panel</value>
-    <comment>Title of the BottomPanel visibility toggle (shared by View menu and quick tool bar)</comment>
+    <comment>Title of the BottomPanel visibility toggle (View menu)</comment>
   </data>
   <data name="ToggleAuxiliaryPanelTitle" xml:space="preserve">
     <value>Toggle Auxiliary Panel</value>
-    <comment>Title of the AuxiliaryPanel visibility toggle (shared by View menu and quick tool bar)</comment>
+    <comment>Title of the AuxiliaryPanel visibility toggle (View menu)</comment>
   </data>
   <data name="StatusReadyTitle" xml:space="preserve">
     <value>Ready</value>
@@ -113,10 +113,6 @@
   <data name="DashBoardOpenWindowMenuTitle" xml:space="preserve">
     <value>Open Launch Pad</value>
     <comment>Title of the DashBoard-contributed File menu item that reopens the launch pad window</comment>
-  </data>
-  <data name="DashBoardOverviewToolBarTitle" xml:space="preserve">
-    <value>Overview</value>
-    <comment>Title (ToolTip) of the DashBoard-contributed quick tool bar "Overview" button</comment>
   </data>
   <data name="SplashStartingText" xml:space="preserve">
     <value>Starting…</value>

@@ -20,8 +20,11 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
 
     public override void Initialize()
     {
-        RequestedThemeVariant = ThemeVariant.Default;
+        // 固定 Dark：当前设计目标为 VS Code Dark+ 单一色调，未做亮色适配
+        RequestedThemeVariant = ThemeVariant.Dark;
         Styles.AddRange(new WorkstationTheme());
+        // VS Code Dark+ 色调：覆盖 Semi 语义色键并提供 chrome 专属色键
+        VSCodePalette.ApplyTo(Resources);
         base.Initialize();
     }
 

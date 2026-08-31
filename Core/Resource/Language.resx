@@ -96,15 +96,15 @@
   </data>
   <data name="ToggleSideBarTitle" xml:space="preserve">
     <value>切换 SideBar</value>
-    <comment>SideBar 显隐切换项的标题（视图菜单与快速工具栏共用）</comment>
+    <comment>SideBar 显隐切换项的标题（视图菜单）</comment>
   </data>
   <data name="ToggleBottomPanelTitle" xml:space="preserve">
     <value>切换 BottomPanel</value>
-    <comment>BottomPanel 显隐切换项的标题（视图菜单与快速工具栏共用）</comment>
+    <comment>BottomPanel 显隐切换项的标题（视图菜单）</comment>
   </data>
   <data name="ToggleAuxiliaryPanelTitle" xml:space="preserve">
     <value>切换 AuxiliaryPanel</value>
-    <comment>AuxiliaryPanel 显隐切换项的标题（视图菜单与快速工具栏共用）</comment>
+    <comment>AuxiliaryPanel 显隐切换项的标题（视图菜单）</comment>
   </data>
   <data name="StatusReadyTitle" xml:space="preserve">
     <value>就绪</value>
@@ -113,10 +113,6 @@
   <data name="DashBoardOpenWindowMenuTitle" xml:space="preserve">
     <value>打开启动台</value>
     <comment>DashBoard 贡献给文件菜单的"打开启动台"项的标题</comment>
-  </data>
-  <data name="DashBoardOverviewToolBarTitle" xml:space="preserve">
-    <value>概览</value>
-    <comment>DashBoard 贡献给快速工具栏的"概览"按钮的标题（ToolTip）</comment>
   </data>
   <data name="SplashStartingText" xml:space="preserve">
     <value>正在启动…</value>

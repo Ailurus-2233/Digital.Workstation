@@ -70,11 +70,6 @@ public partial class MainWindowViewModel : ObservableObject
     public ObservableCollection<MenuItemViewModel> HelpMenuItems { get; } = [];
 
     /// <summary>
-    ///     快速工具栏按钮：shell 预置项与模块贡献项按 Order 统一排序
-    /// </summary>
-    public ObservableCollection<ToolBarItemViewModel> ToolBarItems { get; } = [];
-
-    /// <summary>
     ///     状态栏条目：shell 预置项与模块贡献项按 Order 统一排序
     /// </summary>
     public ObservableCollection<StatusBarItemViewModel> StatusBarItems { get; } = [];
@@ -125,10 +120,6 @@ public partial class MainWindowViewModel : ObservableObject
         LoadChrome(_collector.GetMenuItems(MenuPlacement.File), FileMenuItems);
         LoadChrome(_collector.GetMenuItems(MenuPlacement.View), ViewMenuItems);
         LoadChrome(_collector.GetMenuItems(MenuPlacement.Help), HelpMenuItems);
-        foreach (var item in _collector.GetToolBarItems())
-        {
-            ToolBarItems.Add(new ToolBarItemViewModel(item));
-        }
         foreach (var item in _collector.GetStatusBarItems())
         {
             StatusBarItems.Add(new StatusBarItemViewModel(item));
@@ -253,7 +244,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    ///     面板显隐切换的唯一路径：快捷键、菜单项、快速工具栏按钮与收起按钮都汇到这里
+    ///     面板显隐切换的唯一路径：快捷键、菜单项与收起按钮都汇到这里
     /// </summary>
     private void TogglePanel(TogglePanelTarget target)
     {

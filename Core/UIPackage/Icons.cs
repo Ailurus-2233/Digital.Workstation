@@ -55,17 +55,17 @@ public static class Icons
     /// </summary>
     public const string ChevronRight = "M8.59 16.58 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42Z";
     /// <summary>
-    ///     左侧面板，SideBar 显隐切换（菜单项与快速工具栏按钮）
+    ///     左侧面板，SideBar 显隐切换（视图菜单项）
     /// </summary>
     public const string PanelLeft = "M20 3H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m0 16H9V5h11v14Z";
 
     /// <summary>
-    ///     底部面板，BottomPanel 显隐切换（菜单项与快速工具栏按钮）
+    ///     底部面板，BottomPanel 显隐切换（视图菜单项）
     /// </summary>
     public const string PanelBottom = "M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2m0 2v9h16V5H4Z";
 
     /// <summary>
-    ///     右侧面板，AuxiliaryPanel 显隐切换（菜单项与快速工具栏按钮）
+    ///     右侧面板，AuxiliaryPanel 显隐切换（视图菜单项）
     /// </summary>
     public const string PanelRight = "M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2m0 2v14h11V5H4Z";
 

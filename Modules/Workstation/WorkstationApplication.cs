@@ -31,14 +31,12 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
         containerRegistry.Register<OutlineView>();
         containerRegistry.Register<OutputView>();
         containerRegistry.Register<LogView>();
-        // shell 预置菜单项：文件>退出、帮助>关于；视图>三面板显隐切换（同一元数据同时贡献给快速工具栏）
+        // shell 预置菜单项：文件>退出、帮助>关于；视图>三面板显隐切换
         containerRegistry.RegisterSingleton<IMenuItemContribution, ExitMenuItem>();
         containerRegistry.RegisterSingleton<IMenuItemContribution, AboutMenuItem>();
         foreach (var target in new[] { TogglePanelTarget.SideBar, TogglePanelTarget.BottomPanel, TogglePanelTarget.AuxiliaryPanel })
         {
             containerRegistry.RegisterSingleton(typeof(IMenuItemContribution),
-                provider => new TogglePanelContribution(provider.Resolve<IEventAggregator>(), target));
-            containerRegistry.RegisterSingleton(typeof(IToolBarItemContribution),
                 provider => new TogglePanelContribution(provider.Resolve<IEventAggregator>(), target));
         }
         // shell 预置状态栏项"就绪"

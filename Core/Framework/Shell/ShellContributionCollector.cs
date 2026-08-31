@@ -45,15 +45,6 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
             .ToArray();
     }
     /// <summary>
-    ///     收集全部快速工具栏项，按 <see cref="IToolBarItemContribution.Order" /> 升序
-    /// </summary>
-    public IReadOnlyList<IToolBarItemContribution> GetToolBarItems()
-    {
-        return containerProvider.Resolve<IEnumerable<IToolBarItemContribution>>()
-            .OrderBy(item => item.Order)
-            .ToArray();
-    }
-    /// <summary>
     ///     收集全部状态栏项，按 <see cref="IStatusBarItemContribution.Order" /> 升序
     /// </summary>
     public IReadOnlyList<IStatusBarItemContribution> GetStatusBarItems()

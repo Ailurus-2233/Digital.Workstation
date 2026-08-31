@@ -7,10 +7,10 @@ using DigitalWorkstation.Core.UIPackage;
 namespace DigitalWorkstation.Workstation.Shell;
 
 /// <summary>
-///     shell 预置的面板显隐切换项：同一元数据同时贡献给视图菜单与快速工具栏，
+///     shell 预置的面板显隐切换项：贡献给视图菜单，
 ///     点击发布 <see cref="TogglePanelVisibilityEvent" />，与快捷键走同一状态转换
 /// </summary>
-public class TogglePanelContribution : IMenuItemContribution, IToolBarItemContribution
+public class TogglePanelContribution : IMenuItemContribution
 {
     public TogglePanelContribution(IEventAggregator eventAggregator, TogglePanelTarget target)
     {

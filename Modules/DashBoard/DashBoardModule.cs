@@ -12,7 +12,6 @@ public class DashBoardModule : IModule
         containerRegistry.RegisterSingleton<IMainViewContribution, DashBoardRecentMainView>();
         containerRegistry.RegisterSingleton<IPanelTabContribution, DashBoardTasksPanelTab>();
         containerRegistry.RegisterSingleton<IMenuItemContribution, OpenDashBoardMenuItem>();
-        containerRegistry.RegisterSingleton<IToolBarItemContribution, DashBoardOverviewToolBarItem>();
         containerRegistry.RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>();
         containerRegistry.Register<DashBoardNavigationView>();
         containerRegistry.Register<DashBoardOverviewView>();

@@ -1,7 +1,8 @@
-﻿<Window
+﻿<u:UrsaWindow
     Height="800"
     MinHeight="600"
     MinWidth="960"
+    Padding="0,32,0,0"
     Title="Digital.Workstation"
     Width="1280"
     d:DesignHeight="800"
@@ -13,10 +14,11 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:prism="http://prismlibrary.com/"
+    xmlns:u="https://irihi.tech/ursa"
     xmlns:vm="clr-namespace:DigitalWorkstation.Workstation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Window.Resources>
+    <u:UrsaWindow.Resources>
         <DataTemplate DataType="vm:NavigationItemViewModel" x:Key="NavigationItemTemplate">
             <Button
                 AutomationProperties.Name="{Binding Title}"
@@ -35,16 +37,20 @@
                 <TextBlock Text="{Binding Title}" />
             </StackPanel>
         </DataTemplate>
-    </Window.Resources>
+    </u:UrsaWindow.Resources>
 
-    <Window.Styles>
+    <u:UrsaWindow.Styles>
+        <!--  标题栏底色：VS Code 标题栏灰  -->
+        <Style Selector="u|TitleBar">
+            <Setter Property="Background" Value="{DynamicResource ChromeTitleBarBackground}" />
+        </Style>
         <!--  ActivityBar 导航按钮  -->
         <Style Selector="Button.nav-item">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="10" />
-            <Setter Property="Margin" Value="6,2" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="Margin" Value="6" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
@@ -60,10 +66,10 @@
             <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
         </Style>
         <Style Selector="Button.nav-item:pointerover PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
+            <Setter Property="Foreground" Value="{DynamicResource ChromeActivityBarItemActiveForeground}" />
         </Style>
         <Style Selector="Button.nav-item.selected PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
+            <Setter Property="Foreground" Value="{DynamicResource ChromeActivityBarItemActiveForeground}" />
         </Style>
         <!--  面板 tab  -->
         <Style Selector="Button.panel-tab">
@@ -76,8 +82,7 @@
             <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
         </Style>
         <Style Selector="Button.panel-tab.active">
-            <Setter Property="Background" Value="{DynamicResource SemiColorFill2}" />
-            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
+            <Setter Property="Foreground" Value="{DynamicResource ChromeActivityBarItemActiveForeground}" />
         </Style>
 
         <!--  面板分隔条：透明占位，悬停高亮  -->
@@ -115,6 +120,15 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
+        <!--  标题栏内的顶层菜单：VS Code 式紧凑行高  -->
+        <Style Selector="MenuItem.chrome-menu">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="10,0" />
+        </Style>
+        <!--  顶层菜单弹出层贴合标题栏下缘（模板内边距 8 与默认偏移 -4 相抵后仍留 4px 缝）  -->
+        <Style Selector="MenuItem.chrome-menu /template/ Popup#PART_Popup">
+            <Setter Property="VerticalOffset" Value="-8" />
+        </Style>
         <!--  顶层菜单下的菜单项（容器由 ItemsSource 生成，命令与无障碍名经样式绑定）  -->
         <Style Selector="MenuItem.chrome-menu MenuItem">
             <Setter Property="Command" Value="{Binding Command}" />
@@ -124,49 +138,29 @@
             <Setter Property="Foreground" Value="{DynamicResource SemiColorText1}" />
         </Style>
 
-        <!--  快速工具栏按钮  -->
-        <Style Selector="Button.toolbar-item">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="6" />
-            <Setter Property="Margin" Value="2,0" />
-        </Style>
-        <Style Selector="Button.toolbar-item:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
-        </Style>
-        <Style Selector="Button.toolbar-item PathIcon">
-            <Setter Property="Width" Value="16" />
-            <Setter Property="Height" Value="16" />
-            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
-        </Style>
-        <Style Selector="Button.toolbar-item:pointerover PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
-        </Style>
-
         <!--  状态栏条目  -->
         <Style Selector="StackPanel.status-item">
-            <Setter Property="Margin" Value="0,0,12,0" />
+            <Setter Property="Margin" Value="0,0,8,0" />
         </Style>
         <Style Selector="StackPanel.status-item PathIcon">
             <Setter Property="Width" Value="12" />
             <Setter Property="Height" Value="12" />
-            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+            <Setter Property="Foreground" Value="{DynamicResource ChromeStatusBarForeground}" />
         </Style>
         <Style Selector="StackPanel.status-item TextBlock">
             <Setter Property="FontSize" Value="11" />
-            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+            <Setter Property="Foreground" Value="{DynamicResource ChromeStatusBarForeground}" />
         </Style>
-    </Window.Styles>
-    <Window.KeyBindings>
+    </u:UrsaWindow.Styles>
+    <u:UrsaWindow.KeyBindings>
         <KeyBinding Command="{Binding ToggleSideBarCommand}" Gesture="Ctrl+B" />
         <KeyBinding Command="{Binding ToggleBottomPanelCommand}" Gesture="Ctrl+J" />
         <KeyBinding Command="{Binding ToggleAuxiliaryPanelCommand}" Gesture="Ctrl+Alt+B" />
-    </Window.KeyBindings>
+    </u:UrsaWindow.KeyBindings>
 
-    <DockPanel>
-        <!--  菜单栏：文件/视图/帮助顶层菜单为 shell 结构，菜单项全部来自贡献（shell 预置 + 模块）  -->
-        <Menu DockPanel.Dock="Top">
+    <!--  标题栏与菜单栏合并（VS Code 式）：菜单嵌入标题栏左侧，窗口标题居中  -->
+    <u:UrsaWindow.LeftContent>
+        <Menu VerticalAlignment="Center">
             <MenuItem
                 Classes="chrome-menu"
                 Header="文件"
@@ -183,42 +177,25 @@
                 ItemsSource="{Binding HelpMenuItems}"
                 ItemTemplate="{StaticResource MenuItemHeaderTemplate}" />
         </Menu>
+    </u:UrsaWindow.LeftContent>
+    <u:UrsaWindow.TitleBarContent>
+        <TextBlock
+            FontSize="12"
+            Foreground="{DynamicResource SemiColorText2}"
+            HorizontalAlignment="Center"
+            IsHitTestVisible="False"
+            Text="{Binding $parent[u:UrsaWindow].Title}"
+            VerticalAlignment="Center" />
+    </u:UrsaWindow.TitleBarContent>
 
-        <!--  快速工具栏：渲染贡献的图标按钮，ToolTip 为标题  -->
+    <DockPanel>
+        <!--  状态栏：渲染贡献的"图标 + 文本"条目；VS Code 式紧凑蓝条  -->
         <Border
-            Background="{DynamicResource SemiColorBackground2}"
-            BorderBrush="{DynamicResource SemiColorBorder}"
-            BorderThickness="0,0,0,1"
-            DockPanel.Dock="Top"
-            Padding="6,2">
-            <ItemsControl ItemsSource="{Binding ToolBarItems}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Button
-                            AutomationProperties.Name="{Binding Title}"
-                            Classes="toolbar-item"
-                            Command="{Binding Command}"
-                            ToolTip.Tip="{Binding Title}">
-                            <PathIcon Data="{Binding Icon}" />
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </Border>
-
-        <!--  状态栏：渲染贡献的"图标 + 文本"条目  -->
-        <Border
-            Background="{DynamicResource SemiColorBackground2}"
-            BorderBrush="{DynamicResource SemiColorBorder}"
-            BorderThickness="0,1,0,0"
+            Background="{DynamicResource ChromeStatusBarBackground}"
             DockPanel.Dock="Bottom"
-            Padding="10,3">
-            <ItemsControl ItemsSource="{Binding StatusBarItems}">
+            Height="22"
+            Padding="8,0">
+            <ItemsControl VerticalAlignment="Center" ItemsSource="{Binding StatusBarItems}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal" />
@@ -236,11 +213,9 @@
         </Border>
 
         <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-            <!--  ActivityBar：顶部为模块贡献的导航项，底部为设置类入口  -->
+            <!--  ActivityBar：顶部为模块贡献的导航项，底部为设置类入口；与 SideBar 同色无缝衔接  -->
             <Border
                 Background="{DynamicResource SemiColorNavBackground}"
-                BorderBrush="{DynamicResource SemiColorBorder}"
-                BorderThickness="0,0,1,0"
                 Width="48">
                 <DockPanel>
                     <ItemsControl
@@ -397,4 +372,4 @@
                 Width="4" />
         </Grid>
     </DockPanel>
-</Window>
+</u:UrsaWindow>

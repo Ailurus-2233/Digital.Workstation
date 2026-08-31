@@ -63,17 +63,17 @@ public static class Language
     public static string MenuAboutTitle => Get(nameof(MenuAboutTitle));
 
     /// <summary>
-    ///     SideBar 显隐切换项的标题（视图菜单与快速工具栏共用）
+    ///     SideBar 显隐切换项的标题（视图菜单）
     /// </summary>
     public static string ToggleSideBarTitle => Get(nameof(ToggleSideBarTitle));
 
     /// <summary>
-    ///     BottomPanel 显隐切换项的标题（视图菜单与快速工具栏共用）
+    ///     BottomPanel 显隐切换项的标题（视图菜单）
     /// </summary>
     public static string ToggleBottomPanelTitle => Get(nameof(ToggleBottomPanelTitle));
 
     /// <summary>
-    ///     AuxiliaryPanel 显隐切换项的标题（视图菜单与快速工具栏共用）
+    ///     AuxiliaryPanel 显隐切换项的标题（视图菜单）
     /// </summary>
     public static string ToggleAuxiliaryPanelTitle => Get(nameof(ToggleAuxiliaryPanelTitle));
 
@@ -86,11 +86,6 @@ public static class Language
     ///     DashBoard 贡献给文件菜单的"打开启动台"项的标题
     /// </summary>
     public static string DashBoardOpenWindowMenuTitle => Get(nameof(DashBoardOpenWindowMenuTitle));
-
-    /// <summary>
-    ///     DashBoard 贡献给快速工具栏的"概览"按钮的标题（ToolTip）
-    /// </summary>
-    public static string DashBoardOverviewToolBarTitle => Get(nameof(DashBoardOverviewToolBarTitle));
 
     /// <summary>
     ///     启动台显示进度前的初始阶段文本

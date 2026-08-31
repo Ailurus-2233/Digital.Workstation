@@ -1,10 +1,10 @@
-﻿using Avalonia.Controls;
-using Avalonia.Input;
+﻿using Avalonia.Input;
 using DigitalWorkstation.Core.Framework.Shell;
+using Ursa.Controls;
 
 namespace DigitalWorkstation.Workstation;
 
-public partial class MainWindow : Window
+public partial class MainWindow : UrsaWindow
 {
     public MainWindow()
     {
