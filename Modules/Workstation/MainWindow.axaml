@@ -1,4 +1,4 @@
-﻿<u:UrsaWindow
+<u:UrsaWindow
     Height="800"
     MinHeight="600"
     MinWidth="960"
@@ -40,9 +40,9 @@
     </u:UrsaWindow.Resources>
 
     <u:UrsaWindow.Styles>
-        <!--  标题栏底色：VS Code 标题栏灰  -->
+        <!--  标题栏底色：与窗口背景（面板容器/ActivityBar）同色，视觉融为一体  -->
         <Style Selector="u|TitleBar">
-            <Setter Property="Background" Value="{DynamicResource ChromeTitleBarBackground}" />
+            <Setter Property="Background" Value="{DynamicResource SemiColorNavBackground}" />
         </Style>
         <!--  ActivityBar 导航按钮  -->
         <Style Selector="Button.nav-item">
@@ -51,6 +51,7 @@
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Padding" Value="8" />
             <Setter Property="Margin" Value="6" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
@@ -85,12 +86,15 @@
             <Setter Property="Foreground" Value="{DynamicResource ChromeActivityBarItemActiveForeground}" />
         </Style>
 
-        <!--  面板分隔条：透明占位，悬停高亮  -->
+        <!--  面板分隔条：默认透明不可见，悬停/拖拽时整条高亮为强调蓝（VS Code sash.hoverBorder）  -->
         <Style Selector="GridSplitter">
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="GridSplitter:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SemiColorFill2}" />
+            <Setter Property="Background" Value="{DynamicResource ChromeSashHoverBrush}" />
+        </Style>
+        <Style Selector="GridSplitter:dragging">
+            <Setter Property="Background" Value="{DynamicResource ChromeSashHoverBrush}" />
         </Style>
 
         <!--  面板收起按钮  -->
@@ -189,11 +193,11 @@
     </u:UrsaWindow.TitleBarContent>
 
     <DockPanel>
-        <!--  状态栏：渲染贡献的"图标 + 文本"条目；VS Code 式紧凑蓝条  -->
+        <!--  状态栏：渲染贡献的"图标 + 文本"条目；VS Code 式紧凑蓝条（24px 高度）  -->
         <Border
             Background="{DynamicResource ChromeStatusBarBackground}"
             DockPanel.Dock="Bottom"
-            Height="22"
+            Height="24"
             Padding="8,0">
             <ItemsControl VerticalAlignment="Center" ItemsSource="{Binding StatusBarItems}">
                 <ItemsControl.ItemsPanel>
@@ -211,11 +215,13 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </Border>
-
+        <!--  面板容器：底色与 ActivityBar 一致，四个面板以圆角卡片浮于其上，缝隙透出底色；Padding 2 + 卡片 Margin 2 → 外圈与卡片间间隙恒为 4，与面板显隐无关  -->
+        <Border Background="{DynamicResource SemiColorNavBackground}" Padding="2">
         <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-            <!--  ActivityBar：顶部为模块贡献的导航项，底部为设置类入口；与 SideBar 同色无缝衔接  -->
+            <!--  ActivityBar：顶部为模块贡献的导航项，底部为设置类入口；与 SideBar 同色无缝衔接；右侧 Margin 2 与相邻卡片的 Margin 2 合成 4px 间隙  -->
             <Border
                 Background="{DynamicResource SemiColorNavBackground}"
+                Margin="0,0,2,0"
                 Width="48">
                 <DockPanel>
                     <ItemsControl
@@ -226,13 +232,15 @@
                 </DockPanel>
             </Border>
 
-            <!--  SideBar：显示选中导航项的内容  -->
+            <!--  SideBar：显示选中导航项的内容；VS Code 式圆角卡片，与相邻面板以窄缝隔开  -->
             <Border
                 Background="{DynamicResource SemiColorBackground1}"
                 BorderBrush="{DynamicResource SemiColorBorder}"
-                BorderThickness="0,0,1,0"
+                BorderThickness="1"
+                CornerRadius="8"
                 Grid.Column="1"
                 IsVisible="{Binding State.SideBar.Visible}"
+                Margin="2"
                 Width="{Binding State.SideBar.Width}">
                 <Grid RowDefinitions="Auto,*">
                     <TextBlock Classes="region-title" Text="{Binding SideBarTitle}" />
@@ -240,30 +248,40 @@
                 </Grid>
             </Border>
 
-            <!--  SideBar 右缘分隔条：覆盖在面板右缘，拖动增量经状态转换调整宽度  -->
+            <!--  SideBar 分隔条：8px 拖拽热区居中覆盖 4px 面板间隙（两侧各压卡片边缘 2px，常态透明不可见）；悬停/拖拽时显示蓝色高亮线；ZIndex 保证压过后声明的主区面板描边  -->
             <vm:PanelResizer
                 AutomationProperties.Name="调整 SideBar 宽度"
                 DragDelta="OnSideBarResizerDragDelta"
                 Grid.Column="1"
                 HorizontalAlignment="Right"
                 IsVisible="{Binding State.SideBar.Visible}"
+                Margin="0,0,-4,0"
                 ResizeDirection="Columns"
-                Width="4" />
+                Width="8"
+                CornerRadius="4"
+                ZIndex="1" />
 
             <Grid Grid.Column="2" RowDefinitions="*,Auto">
-                <!--  MainContent：单视图切换；默认显示 shell 内置空状态页  -->
-                <Border Background="{DynamicResource SemiColorBackground0}">
+                <!--  MainContent：单视图切换；默认显示 shell 内置空状态页；VS Code 式圆角卡片  -->
+                <Border
+                    Background="{DynamicResource SemiColorBackground0}"
+                    BorderBrush="{DynamicResource SemiColorBorder}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Margin="2">
                     <ContentControl Content="{Binding MainContent}" />
                 </Border>
 
-                <!--  BottomPanel：tab 栏 + 内容容器；收起按钮与 Ctrl+J 切换可见性  -->
+                <!--  BottomPanel：tab 栏 + 内容容器；收起按钮与 Ctrl+J 切换可见性；VS Code 式圆角卡片  -->
                 <Border
                     Background="{DynamicResource SemiColorBackground1}"
                     BorderBrush="{DynamicResource SemiColorBorder}"
-                    BorderThickness="0,1,0,0"
+                    BorderThickness="1"
+                    CornerRadius="8"
                     Grid.Row="1"
                     Height="{Binding State.BottomPanel.Height}"
-                    IsVisible="{Binding State.BottomPanel.Visible}">
+                    IsVisible="{Binding State.BottomPanel.Visible}"
+                    Margin="2">
                     <Grid RowDefinitions="Auto,*">
                         <Border BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="0,0,0,1">
                             <DockPanel>
@@ -303,24 +321,29 @@
                     </Grid>
                 </Border>
 
-                <!--  BottomPanel 上缘分隔条：覆盖在面板顶缘，拖动增量经状态转换调整高度  -->
+                <!--  BottomPanel 分隔条：负边距外探覆盖上下间隙；悬停/拖拽时显示蓝色高亮线  -->
                 <vm:PanelResizer
                     AutomationProperties.Name="调整 BottomPanel 高度"
                     DragDelta="OnBottomPanelResizerDragDelta"
                     Grid.Row="1"
-                    Height="4"
+                    Height="8"
+                    CornerRadius="4"
                     IsVisible="{Binding State.BottomPanel.Visible}"
+                    Margin="0,-4,0,0"
                     ResizeDirection="Rows"
-                    VerticalAlignment="Top" />
+                    VerticalAlignment="Top"
+                    ZIndex="1" />
             </Grid>
 
-            <!--  AuxiliaryPanel：tab 栏 + 内容容器；收起按钮与 Ctrl+Alt+B 切换可见性  -->
+            <!--  AuxiliaryPanel：tab 栏 + 内容容器；收起按钮与 Ctrl+Alt+B 切换可见性；VS Code 式圆角卡片  -->
             <Border
                 Background="{DynamicResource SemiColorBackground1}"
                 BorderBrush="{DynamicResource SemiColorBorder}"
-                BorderThickness="1,0,0,0"
+                BorderThickness="1"
+                CornerRadius="8"
                 Grid.Column="3"
                 IsVisible="{Binding State.AuxiliaryPanel.Visible}"
+                Margin="2"
                 Width="{Binding State.AuxiliaryPanel.Width}">
                 <Grid RowDefinitions="Auto,*">
                     <Border BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="0,0,0,1">
@@ -361,15 +384,19 @@
                 </Grid>
             </Border>
 
-            <!--  AuxiliaryPanel 左缘分隔条：覆盖在面板左缘，拖动增量经状态转换调整宽度  -->
+            <!--  AuxiliaryPanel 分隔条：负边距外探覆盖两侧面板间隙；悬停/拖拽时显示蓝色高亮线  -->
             <vm:PanelResizer
                 AutomationProperties.Name="调整 AuxiliaryPanel 宽度"
                 DragDelta="OnAuxiliaryPanelResizerDragDelta"
                 Grid.Column="3"
+                CornerRadius="4"
                 HorizontalAlignment="Left"
                 IsVisible="{Binding State.AuxiliaryPanel.Visible}"
+                Margin="-4,0,0,0"
                 ResizeDirection="Columns"
-                Width="4" />
+                Width="8"
+                ZIndex="1" />
         </Grid>
+        </Border>
     </DockPanel>
 </u:UrsaWindow>
