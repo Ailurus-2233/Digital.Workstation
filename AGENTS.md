@@ -1,17 +1,15 @@
-## Git
-
-Agent 不得主动执行 `git commit` 或 `git push`。只有人验收通过并明确指示后，才可以提交和推送。
+# AGENTS.md
 
 ## Agent skills
 
-### Issue tracker
+### 工单跟踪
 
-Issues 作为 markdown 文件存放在本 repo 的 `.scratch/<feature>/` 下。See `docs/agents/issue-tracker.md`.
+工单为本地 markdown 文件，存于 `.scratch/<feature>/issues/`（已被 .gitignore 排除，不进提交）。见 `docs/agents/issue-tracker.md`。
 
-### Triage labels
+### 验证约定
 
-五个 canonical roles，label string 与 role name 相同（`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix`）。See `docs/agents/triage-labels.md`.
+纯桌面端项目：本机 `dotnet run` 启动应用手动验证，不做自动化测试验收，无硬件/仿真器前提。见 `docs/agents/verification.md`。
 
-### Domain docs
+### 领域文档
 
-Single-context：repo root 下一个 `CONTEXT.md` + `docs/adr/`。See `docs/agents/domain.md`.
+Single-context 布局：根部 `CONTEXT.md` + `docs/adr/`，均在实际解决 terms/decisions 时懒创建。见 `docs/agents/domain.md`。
