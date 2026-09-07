@@ -1,0 +1,550 @@
+<Styles
+    xmlns="https://github.com/avaloniaui"
+    xmlns:shell="clr-namespace:DigitalWorkstation.Core.Framework.Shell"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Styles.Resources>
+        <!--  ActivityBar 导航项：图标按钮，Command 宽松绑定到窗口 ViewModel（Framework 不引用具体 ViewModel 类型）  -->
+        <DataTemplate x:Key="NavigationItemTemplate">
+            <Button
+                AutomationProperties.Name="{Binding Title}"
+                Classes="nav-item"
+                Classes.selected="{Binding IsSelected}"
+                Command="{Binding $parent[ItemsControl].DataContext.SelectActivityCommand}"
+                CommandParameter="{Binding}"
+                ToolTip.Tip="{Binding Title}">
+                <PathIcon Data="{Binding Icon}" />
+            </Button>
+        </DataTemplate>
+
+        <!--  共享部件模板：Content="{Binding}" 传入窗口 ViewModel 作为 DataContext  -->
+
+        <!--  ActivityBar：顶部为模块贡献的导航项，底部为设置类入口；与 SideBar 同色无缝衔接；右侧 Margin 2 与相邻卡片的 Margin 2 合成 4px 间隙  -->
+        <DataTemplate x:Key="ShellActivityBar">
+            <Border
+                Background="{DynamicResource SemiColorNavBackground}"
+                Margin="0,0,2,0"
+                Width="48">
+                <DockPanel>
+                    <ItemsControl
+                        DockPanel.Dock="Bottom"
+                        ItemTemplate="{StaticResource NavigationItemTemplate}"
+                        ItemsSource="{Binding BottomNavigationItems}" />
+                    <ItemsControl ItemTemplate="{StaticResource NavigationItemTemplate}" ItemsSource="{Binding TopNavigationItems}" />
+                </DockPanel>
+            </Border>
+        </DataTemplate>
+
+        <!--  SideBar：显示选中导航项的内容；VS Code 式圆角卡片，与相邻面板以窄缝隔开；列宽由布局列定义接管（见布局模板注释）  -->
+        <DataTemplate x:Key="ShellSideBar">
+            <Border
+                Background="{DynamicResource SemiColorBackground1}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="1"
+                CornerRadius="8"
+                IsVisible="{Binding State.SideBar.Visible}"
+                Margin="2">
+                <Grid RowDefinitions="Auto,*">
+                    <TextBlock Classes="region-title" Text="{Binding SideBarTitle}" />
+                    <ContentControl Content="{Binding SideBarContent}" Grid.Row="1" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!--  MainContent：单视图切换；默认显示 shell 内置空状态页；VS Code 式圆角卡片  -->
+        <DataTemplate x:Key="ShellMainContent">
+            <Border
+                Background="{DynamicResource SemiColorBackground0}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Margin="2">
+                <ContentControl Content="{Binding MainContent}" />
+            </Border>
+        </DataTemplate>
+
+        <!--  AuxiliaryPanel：tab 栏 + 内容容器；收起按钮与 Ctrl+Alt+B 切换可见性；VS Code 式圆角卡片  -->
+        <DataTemplate x:Key="ShellAuxiliaryPanel">
+            <Border
+                Background="{DynamicResource SemiColorBackground1}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="1"
+                CornerRadius="8"
+                IsVisible="{Binding State.AuxiliaryPanel.Visible}"
+                Margin="2">
+                <Grid RowDefinitions="Auto,*">
+                    <Border BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="0,0,0,1">
+                        <DockPanel>
+                            <Button
+                                AutomationProperties.Name="收起 AuxiliaryPanel"
+                                Classes="panel-collapse"
+                                Command="{Binding ToggleAuxiliaryPanelCommand}"
+                                DockPanel.Dock="Right"
+                                ToolTip.Tip="收起面板">
+                                <PathIcon Data="{Binding CollapseAuxiliaryIcon}" />
+                            </Button>
+                            <ItemsControl ItemsSource="{Binding AuxiliaryTabs}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button
+                                            AutomationProperties.Name="{Binding Title}"
+                                            Classes="panel-tab"
+                                            Classes.active="{Binding IsActive}"
+                                            Command="{Binding $parent[ItemsControl].DataContext.ActivateAuxTabCommand}"
+                                            CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <PathIcon Data="{Binding Icon}" Height="14" Width="14" />
+                                                <TextBlock FontSize="12" Text="{Binding Title}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DockPanel>
+                    </Border>
+                    <ContentControl Content="{Binding AuxiliaryContent}" Grid.Row="1" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!--  BottomPanel：tab 栏（收起按钮 + tab）+ 内容容器；收起按钮与 Ctrl+J 切换可见性  -->
+        <DataTemplate x:Key="ShellBottomPanel">
+            <Border
+                Background="{DynamicResource SemiColorBackground1}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Height="{Binding State.BottomPanel.Height}"
+                IsVisible="{Binding State.BottomPanel.Visible}"
+                Margin="2">
+                <Grid RowDefinitions="Auto,*">
+                    <Border BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="0,0,0,1">
+                        <DockPanel>
+                            <Button
+                                AutomationProperties.Name="收起 BottomPanel"
+                                Classes="panel-collapse"
+                                Command="{Binding ToggleBottomPanelCommand}"
+                                DockPanel.Dock="Right"
+                                ToolTip.Tip="收起面板">
+                                <PathIcon Data="{Binding CollapseBottomIcon}" />
+                            </Button>
+                            <ItemsControl ItemsSource="{Binding BottomTabs}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button
+                                            AutomationProperties.Name="{Binding Title}"
+                                            Classes="panel-tab"
+                                            Classes.active="{Binding IsActive}"
+                                            Command="{Binding $parent[ItemsControl].DataContext.ActivateBottomTabCommand}"
+                                            CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <PathIcon Data="{Binding Icon}" Height="14" Width="14" />
+                                                <TextBlock FontSize="12" Text="{Binding Title}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DockPanel>
+                    </Border>
+                    <ContentControl Content="{Binding BottomContent}" Grid.Row="1" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!--  状态栏：渲染贡献的"图标 + 文本"条目；VS Code 式紧凑蓝条（24px 高度）  -->
+        <DataTemplate x:Key="ShellStatusBar">
+            <Border
+                Background="{DynamicResource ChromeStatusBarBackground}"
+                Height="24"
+                Padding="8,0">
+                <ItemsControl VerticalAlignment="Center" ItemsSource="{Binding StatusBarItems}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Classes="status-item" Orientation="Horizontal" Spacing="4">
+                                <PathIcon Data="{Binding Icon}" />
+                                <TextBlock Text="{Binding Title}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+        </DataTemplate>
+
+        <!--  四份静态布局：差异为 BottomPanel 及其分隔条的 Grid.Column/ColumnSpan 与侧栏的 Grid.RowSpan，切换档位即整体替换模板。
+              面板容器：底色与 ActivityBar 一致，面板以圆角卡片浮于其上，缝隙透出底色；
+              Padding 2 + 卡片 Margin 2 → 外圈与卡片间间隙恒为 4，与面板显隐无关。
+              列 1/3 宽度由 ViewModel 数据驱动（可见=卡片宽度+4px 间隙，隐藏=0），BottomPanel 跨度随之自然伸缩  -->
+
+        <!--  左对齐：BottomPanel 贴左，横跨列 1-2（SideBar + MainContent 下方）；AuxiliaryPanel 通高到底  -->
+        <DataTemplate x:Key="WindowLayoutLeft">
+            <DockPanel>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellStatusBar}" DockPanel.Dock="Bottom" />
+                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="2">
+                    <Grid RowDefinitions="*,Auto">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="{Binding SideBarColumnWidth}" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="{Binding AuxiliaryColumnWidth}" />
+                        </Grid.ColumnDefinitions>
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellActivityBar}" Grid.RowSpan="2" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellSideBar}" Grid.Column="1" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 SideBar 宽度"
+                            CornerRadius="4"
+                            Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            IsVisible="{Binding State.SideBar.Visible}"
+                            Margin="0,0,-4,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Columns"
+                            Target="SideBar"
+                            Width="8"
+                            ZIndex="1" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellMainContent}" Grid.Column="2" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellAuxiliaryPanel}" Grid.Column="3" Grid.RowSpan="2" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 AuxiliaryPanel 宽度"
+                            CornerRadius="4"
+                            Grid.Column="3"
+                            Grid.RowSpan="2"
+                            HorizontalAlignment="Left"
+                            IsVisible="{Binding State.AuxiliaryPanel.Visible}"
+                            Margin="-4,0,0,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Columns"
+                            Target="AuxiliaryPanel"
+                            Width="8"
+                            ZIndex="1" />
+                        <ContentControl
+                            Content="{Binding}"
+                            ContentTemplate="{StaticResource ShellBottomPanel}"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="2"
+                            Grid.Row="1" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 BottomPanel 高度"
+                            CornerRadius="4"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="2"
+                            Grid.Row="1"
+                            Height="8"
+                            IsVisible="{Binding State.BottomPanel.Visible}"
+                            Margin="0,-4,0,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Rows"
+                            Target="BottomPanel"
+                            VerticalAlignment="Top"
+                            ZIndex="1" />
+                    </Grid>
+                </Border>
+            </DockPanel>
+        </DataTemplate>
+
+        <!--  右对齐：BottomPanel 贴右，横跨列 2-3（MainContent + AuxiliaryPanel 下方）；SideBar 通高到底  -->
+        <DataTemplate x:Key="WindowLayoutRight">
+            <DockPanel>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellStatusBar}" DockPanel.Dock="Bottom" />
+                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="2">
+                    <Grid RowDefinitions="*,Auto">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="{Binding SideBarColumnWidth}" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="{Binding AuxiliaryColumnWidth}" />
+                        </Grid.ColumnDefinitions>
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellActivityBar}" Grid.RowSpan="2" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellSideBar}" Grid.Column="1" Grid.RowSpan="2" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 SideBar 宽度"
+                            CornerRadius="4"
+                            Grid.Column="1"
+                            Grid.RowSpan="2"
+                            HorizontalAlignment="Right"
+                            IsVisible="{Binding State.SideBar.Visible}"
+                            Margin="0,0,-4,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Columns"
+                            Target="SideBar"
+                            Width="8"
+                            ZIndex="1" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellMainContent}" Grid.Column="2" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellAuxiliaryPanel}" Grid.Column="3" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 AuxiliaryPanel 宽度"
+                            CornerRadius="4"
+                            Grid.Column="3"
+                            HorizontalAlignment="Left"
+                            IsVisible="{Binding State.AuxiliaryPanel.Visible}"
+                            Margin="-4,0,0,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Columns"
+                            Target="AuxiliaryPanel"
+                            Width="8"
+                            ZIndex="1" />
+                        <ContentControl
+                            Content="{Binding}"
+                            ContentTemplate="{StaticResource ShellBottomPanel}"
+                            Grid.Column="2"
+                            Grid.ColumnSpan="2"
+                            Grid.Row="1" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 BottomPanel 高度"
+                            CornerRadius="4"
+                            Grid.Column="2"
+                            Grid.ColumnSpan="2"
+                            Grid.Row="1"
+                            Height="8"
+                            IsVisible="{Binding State.BottomPanel.Visible}"
+                            Margin="0,-4,0,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Rows"
+                            Target="BottomPanel"
+                            VerticalAlignment="Top"
+                            ZIndex="1" />
+                    </Grid>
+                </Border>
+            </DockPanel>
+        </DataTemplate>
+
+        <!--  居中（默认）：BottomPanel 仅占列 2（MainContent 下方）；SideBar 与 AuxiliaryPanel 通高到底，= 历史布局  -->
+        <DataTemplate x:Key="WindowLayoutCenter">
+            <DockPanel>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellStatusBar}" DockPanel.Dock="Bottom" />
+                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="2">
+                    <Grid RowDefinitions="*,Auto">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="{Binding SideBarColumnWidth}" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="{Binding AuxiliaryColumnWidth}" />
+                        </Grid.ColumnDefinitions>
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellActivityBar}" Grid.RowSpan="2" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellSideBar}" Grid.Column="1" Grid.RowSpan="2" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 SideBar 宽度"
+                            CornerRadius="4"
+                            Grid.Column="1"
+                            Grid.RowSpan="2"
+                            HorizontalAlignment="Right"
+                            IsVisible="{Binding State.SideBar.Visible}"
+                            Margin="0,0,-4,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Columns"
+                            Target="SideBar"
+                            Width="8"
+                            ZIndex="1" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellMainContent}" Grid.Column="2" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellAuxiliaryPanel}" Grid.Column="3" Grid.RowSpan="2" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 AuxiliaryPanel 宽度"
+                            CornerRadius="4"
+                            Grid.Column="3"
+                            Grid.RowSpan="2"
+                            HorizontalAlignment="Left"
+                            IsVisible="{Binding State.AuxiliaryPanel.Visible}"
+                            Margin="-4,0,0,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Columns"
+                            Target="AuxiliaryPanel"
+                            Width="8"
+                            ZIndex="1" />
+                        <ContentControl
+                            Content="{Binding}"
+                            ContentTemplate="{StaticResource ShellBottomPanel}"
+                            Grid.Column="2"
+                            Grid.Row="1" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 BottomPanel 高度"
+                            CornerRadius="4"
+                            Grid.Column="2"
+                            Grid.Row="1"
+                            Height="8"
+                            IsVisible="{Binding State.BottomPanel.Visible}"
+                            Margin="0,-4,0,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Rows"
+                            Target="BottomPanel"
+                            VerticalAlignment="Top"
+                            ZIndex="1" />
+                    </Grid>
+                </Border>
+            </DockPanel>
+        </DataTemplate>
+
+        <!--  两端对齐：BottomPanel 横跨列 1-3 全宽  -->
+        <DataTemplate x:Key="WindowLayoutJustify">
+            <DockPanel>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellStatusBar}" DockPanel.Dock="Bottom" />
+                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="2">
+                    <Grid RowDefinitions="*,Auto">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="{Binding SideBarColumnWidth}" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="{Binding AuxiliaryColumnWidth}" />
+                        </Grid.ColumnDefinitions>
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellActivityBar}" Grid.RowSpan="2" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellSideBar}" Grid.Column="1" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 SideBar 宽度"
+                            CornerRadius="4"
+                            Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            IsVisible="{Binding State.SideBar.Visible}"
+                            Margin="0,0,-4,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Columns"
+                            Target="SideBar"
+                            Width="8"
+                            ZIndex="1" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellMainContent}" Grid.Column="2" />
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellAuxiliaryPanel}" Grid.Column="3" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 AuxiliaryPanel 宽度"
+                            CornerRadius="4"
+                            Grid.Column="3"
+                            HorizontalAlignment="Left"
+                            IsVisible="{Binding State.AuxiliaryPanel.Visible}"
+                            Margin="-4,0,0,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Columns"
+                            Target="AuxiliaryPanel"
+                            Width="8"
+                            ZIndex="1" />
+                        <ContentControl
+                            Content="{Binding}"
+                            ContentTemplate="{StaticResource ShellBottomPanel}"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="3"
+                            Grid.Row="1" />
+                        <shell:PanelResizer
+                            AutomationProperties.Name="调整 BottomPanel 高度"
+                            CornerRadius="4"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="3"
+                            Grid.Row="1"
+                            Height="8"
+                            IsVisible="{Binding State.BottomPanel.Visible}"
+                            Margin="0,-4,0,0"
+                            ResizeCommand="{Binding ResizePanelCommand}"
+                            ResizeDirection="Rows"
+                            Target="BottomPanel"
+                            VerticalAlignment="Top"
+                            ZIndex="1" />
+                    </Grid>
+                </Border>
+            </DockPanel>
+        </DataTemplate>
+    </Styles.Resources>
+
+    <!--  ActivityBar 导航按钮  -->
+    <Style Selector="Button.nav-item">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="Margin" Value="6" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.nav-item:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+    </Style>
+    <Style Selector="Button.nav-item.selected">
+        <Setter Property="Background" Value="{DynamicResource SemiColorFill2}" />
+    </Style>
+    <Style Selector="Button.nav-item PathIcon">
+        <Setter Property="Width" Value="20" />
+        <Setter Property="Height" Value="20" />
+        <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+    </Style>
+    <Style Selector="Button.nav-item:pointerover PathIcon">
+        <Setter Property="Foreground" Value="{DynamicResource ChromeActivityBarItemActiveForeground}" />
+    </Style>
+    <Style Selector="Button.nav-item.selected PathIcon">
+        <Setter Property="Foreground" Value="{DynamicResource ChromeActivityBarItemActiveForeground}" />
+    </Style>
+    <!--  面板 tab  -->
+    <Style Selector="Button.panel-tab">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+    </Style>
+    <Style Selector="Button.panel-tab:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+    </Style>
+    <Style Selector="Button.panel-tab.active">
+        <Setter Property="Foreground" Value="{DynamicResource ChromeActivityBarItemActiveForeground}" />
+    </Style>
+
+    <!--  面板分隔条：默认透明不可见，悬停/拖拽时整条高亮为强调蓝（VS Code sash.hoverBorder）  -->
+    <Style Selector="GridSplitter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="GridSplitter:pointerover">
+        <Setter Property="Background" Value="{DynamicResource ChromeSashHoverBrush}" />
+    </Style>
+    <Style Selector="GridSplitter:dragging">
+        <Setter Property="Background" Value="{DynamicResource ChromeSashHoverBrush}" />
+    </Style>
+
+    <!--  面板收起按钮  -->
+    <Style Selector="Button.panel-collapse">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8,6" />
+    </Style>
+    <Style Selector="Button.panel-collapse:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+    </Style>
+    <Style Selector="Button.panel-collapse PathIcon">
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+    </Style>
+
+    <!--  区域标题与占位文本  -->
+    <Style Selector="TextBlock.region-title">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        <Setter Property="Margin" Value="12,8" />
+    </Style>
+    <Style Selector="TextBlock.placeholder">
+        <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!--  状态栏条目  -->
+    <Style Selector="StackPanel.status-item">
+        <Setter Property="Margin" Value="0,0,8,0" />
+    </Style>
+    <Style Selector="StackPanel.status-item PathIcon">
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource ChromeStatusBarForeground}" />
+    </Style>
+    <Style Selector="StackPanel.status-item TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource ChromeStatusBarForeground}" />
+    </Style>
+</Styles>

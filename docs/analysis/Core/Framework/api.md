@@ -91,6 +91,8 @@ public sealed record ShellLayoutState
 | `OpenMainView(string view)`（:95） | 仅改 `MainContent.ActiveView` |
 | `Resize(PanelResizeTarget target, double delta)`（:103） | SideBar/AuxiliaryPanel 调 `Width`、BottomPanel 调 `Height`，经私有静态 `Clamp(double value, double min, double max)`（:134，实现为 `Math.Max(min, Math.Min(max, value))`）钳到各 record 的 Min/Max 常量；switch 兜底分支 `_ => this`，未知 target 返回等值状态 |
 
+注意：**面板对齐（PanelAlignment）不在本状态机内**——它是 `FrameworkWindow` 的 StyledProperty（见第 4 节），由窗口依赖属性持有并双向绑定到 ViewModel，布局状态机只管五区域的可见性/尺寸/tab。
+
 ### 区域 record 字段与默认值
 
 | 类型（文件） | 字段（默认） |
@@ -101,9 +103,77 @@ public sealed record ShellLayoutState
 | `MainContentState`（Shell/MainContentState.cs:6） | `ActiveView=null` |
 | `PanelResizeTarget`（Shell/PanelResizeTarget.cs:6） | 枚举：`SideBar` / `AuxiliaryPanel` / `BottomPanel` |
 
-**典型消费**（真实代码）：`Modules/Workstation/MainWindowViewModel.cs:38` `[ObservableProperty] private ShellLayoutState _state = ShellLayoutState.Initial;`，各 RelayCommand 调转换方法后整体替换 `_state`；`Modules/Workstation/PanelResizer.cs` 把 GridSplitter 拖拽增量交给 `Resize`。
+**典型消费**（真实代码）：`Modules/Workstation/MainWindowViewModel.cs:38` `[ObservableProperty] private ShellLayoutState _state = ShellLayoutState.Initial;`，各 RelayCommand 调转换方法后整体替换 `_state`；本模块 `Shell/PanelResizer.cs` 经 `ResizeCommand` 以 `PanelResize` 参数把 GridSplitter 拖拽增量交给 `Resize`（见第 6 节）。
 
-## 4. `ShellContributionCollector`（Shell/ShellContributionCollector.cs:8）
+## 4. `FrameworkWindow`（Shell/FrameworkWindow.cs:14）
+
+```csharp
+public abstract class FrameworkWindow : UrsaWindow
+```
+
+带基础布局的窗口基类：内置 VS Code 式五区 shell（ActivityBar/SideBar/MainContent/AuxiliaryPanel/BottomPanel + 状态栏）。真实子类：`Modules/Workstation/MainWindow`（`MainWindow.axaml.cs:5`，axaml 侧只保留应用级 chrome——菜单、标题、快捷键）。成员：
+
+| 成员 | 签名 | 说明 |
+|---|---|---|
+| `PanelAlignmentProperty` | `public static readonly StyledProperty<PanelAlignment>`（:16） | 布局档位的依赖属性，**默认 `PanelAlignment.Center`**（= 历史布局）；是布局定义的唯一入口，与 ViewModel 双向绑定 |
+| `PanelAlignment` | `public PanelAlignment PanelAlignment`（:39） | CLR 包装；写值触发 `OnPropertyChanged` → `UpdateLayoutTemplate`，**整体替换** `ContentTemplate`，不做动态调整 |
+| `StyleKeyOverride` | `protected override Type StyleKeyOverride => typeof(UrsaWindow)`（:34） | 继承 UrsaWindow 的窗口主题（标题栏 chrome、模板与焦点行为） |
+| 构造函数 | `protected FrameworkWindow()`（:22） | 依次：`Styles.Add(_theme)`（`_theme` 为 `FrameworkWindowTheme` 实例字段，:19）→ `_layoutHost`（ContentControl 布局宿主，:20）的 `Content` 经 `this[!DataContextProperty]` 绑定窗口 DataContext（:26，布局模板以 ViewModel 为绑定源，全部宽松绑定）→ `Content = _layoutHost`（:27）→ `UpdateLayoutTemplate()`（:28） |
+| `OnPropertyChanged` | `protected override void`（:45） | `e.Property == PanelAlignmentProperty` 时调 `UpdateLayoutTemplate()` |
+| `UpdateLayoutTemplate` | `private void`（:54） | 枚举→资源键映射后 `_theme.TryGetResource(key, null, out var template)` 查找并强转 `IDataTemplate` 赋给 `_layoutHost.ContentTemplate`；**缺失抛 `InvalidOperationException($"布局模板资源缺失：{key}")`**（:66），窗口构造期即失败 |
+
+枚举→资源键映射（:56-62）：
+
+| PanelAlignment | 资源键 | BottomPanel 跨度（模板内 `Grid.Column`/`ColumnSpan`） |
+|---|---|---|
+| `Left` | `WindowLayoutLeft` | 列 1 跨 2（SideBar + MainContent 列下方）；AuxiliaryPanel 及其分隔条 `RowSpan=2` 通高到底 |
+| `Right` | `WindowLayoutRight` | 列 2 跨 2（MainContent + AuxiliaryPanel 列下方）；SideBar 及其分隔条 `RowSpan=2` 通高到底 |
+| `Center`（默认，switch 兜底） | `WindowLayoutCenter` | 列 2 跨 1（仅 MainContent 列下方）；SideBar 与 AuxiliaryPanel 及各自分隔条 `RowSpan=2` 通高到底 |
+| `Justify` | `WindowLayoutJustify` | 列 1 跨 3（三列全宽）；侧栏只占第 0 行 |
+
+## 5. `FrameworkWindowTheme`（Shell/FrameworkWindowTheme.cs:12）
+
+```csharp
+public class FrameworkWindowTheme : Styles
+```
+
+FrameworkWindow 的基础布局主题。加载机制：构造函数（:16-24）创建 `StyleInclude`（BaseUri `avares://DigitalWorkstation.Core.Framework/Shell/`，:14；Source 相对 `FrameworkWindowTheme.axaml`，:20），先 `_ = include.Loaded` **强制加载**（:22，保证窗口构造期即可查到布局模板资源）再 `Add(include)`。与 Semi/Ursa 主题同款机制；不用 x:Class code-behind 的原因见 common.md「核心设计逻辑」。
+
+资源清单（`Shell/FrameworkWindowTheme.axaml`，全部在 `Styles.Resources` 内）：
+
+| 资源键 | 位置 | 内容 |
+|---|---|---|
+| `NavigationItemTemplate` | :8 | ActivityBar 导航项按钮 |
+| `ShellActivityBar` / `ShellSideBar` / `ShellMainContent` / `ShellAuxiliaryPanel` / `ShellBottomPanel` / `ShellStatusBar` | :23 / :39 / :55 / :67 / :116 / :166 | 六个共享部件 DataTemplate |
+| `WindowLayoutLeft` / `WindowLayoutRight` / `WindowLayoutCenter` / `WindowLayoutJustify` | :195 / :261 / :327 / :392 | 四份布局 DataTemplate：布局 Grid 列 `Auto,{Binding SideBarColumnWidth},*,{Binding AuxiliaryColumnWidth}`、行 `*,Auto`；差异为 BottomPanel 及分隔条的 `Grid.Column`/`ColumnSpan` 与侧栏的 `Grid.RowSpan`（见上表）；ActivityBar 恒 `RowSpan=2` 通高 |
+
+样式（:458 起）：nav-item/panel-tab/GridSplitter/panel-collapse/region-title/placeholder/status-item 自 Modules/Workstation/MainWindow.axaml 迁入。分隔条改用 `shell:PanelResizer` 的 `Target`+`ResizeCommand` 声明式绑定（如 :208-219）。**所有绑定为宽松反射绑定**——Framework 不引用具体 ViewModel 类型。面板对齐的切换入口不在本主题内（在视图菜单，见 Modules/Workstation 的 `PanelAlignmentContribution`）。
+
+## 6. `PanelAlignment` / `PanelResize` / `PanelResizer` / `SetPanelAlignmentEvent`（Shell/）
+
+```csharp
+public enum PanelAlignment { Left, Right, Center, Justify }                       // PanelAlignment.cs:7
+public readonly record struct PanelResize(PanelResizeTarget Target, double Delta); // PanelResize.cs:6
+public class PanelResizer : GridSplitter                                          // PanelResizer.cs:13
+public class SetPanelAlignmentEvent : PubSubEvent<PanelAlignment>                 // SetPanelAlignmentEvent.cs:8
+```
+
+- `PanelAlignment`：FrameworkWindow 基础布局的档位，决定 BottomPanel 在窗口底部的水平跨度（领域定义见根目录 CONTEXT.md「面板对齐」）。
+- `SetPanelAlignmentEvent`：请求切换布局档位的事件契约（负载 `PanelAlignment`）。发布方：视图菜单对齐项（Workstation 的 `PanelAlignmentContribution`）；订阅方：主窗口 ViewModel，写入 `PanelAlignment` 依赖属性。契约放本模块而非 Core/Models——负载类型定义于此，Models 引用 Framework 会成环（文件注释自述）。
+- `PanelResize`：分隔条命令参数，`Delta` 为**已换算方向**的尺寸增量；消费方直接转交 `ShellLayoutState.Resize(Target, Delta)`。
+- `PanelResizer`（自 Modules/Workstation 迁入并改造）：复用 GridSplitter 的拖拽手势与方向光标，但禁用其原生列重排。成员契约：
+
+| 成员 | 说明 |
+|---|---|
+| `Target`（:31，CLR 属性，`PanelResizeTarget`） | 拖拽调整的目标区域：决定尺寸增量取哪个轴、是否取反 |
+| `ResizeCommandProperty`（:15）/ `ResizeCommand`（:36，`StyledProperty<ICommand?>`） | 拖拽增量的出口：ViewModel 的 ResizePanelCommand |
+| `StyleKeyOverride => typeof(GridSplitter)`（:26） | ControlTheme 按 StyleKey 精确查找：继承 GridSplitter 的主题（模板/尺寸/焦点行为） |
+| `GetParentGrid() => null`（:46） | 使原生 resize 初始化短路：ResizeData 为空，GridSplitter 的所有原生重排路径自动跳过，只剩 Thumb 的 DragDelta 事件 |
+| 构造函数挂 `DragDelta += OnDragDelta`（:20）；`OnDragDelta`（:54） | 方向换算：`SideBar => +e.Vector.X`、`AuxiliaryPanel => -e.Vector.X`、其他（BottomPanel）`=> -e.Vector.Y`，随后 `ResizeCommand?.Execute(new PanelResize(Target, delta))`（:62） |
+
+**调用方式**：布局模板内声明式使用——`<shell:PanelResizer Target="SideBar" ResizeCommand="{Binding ResizePanelCommand}" .../>`（真实用例 `FrameworkWindowTheme.axaml:208-219` 等，每份布局模板三枚：SideBar/AuxiliaryPanel/BottomPanel）。ViewModel 侧契约：提供接受 `PanelResize` 参数的 `ResizePanelCommand`（真实实现 `Modules/Workstation/MainWindowViewModel.cs` 转调 `ShellLayoutState.Resize`）。
+
+## 7. `ShellContributionCollector`（Shell/ShellContributionCollector.cs:8）
 
 ```csharp
 public class ShellContributionCollector(IContainerProvider containerProvider)

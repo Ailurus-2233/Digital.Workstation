@@ -85,4 +85,24 @@ public static class Icons
     /// </summary>
     public const string Ready =
         "M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2m0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8m4.59-12.42L10 14.17l-2.59-2.58L6 13l4 4 8-8-1.41-1.42Z";
+
+    /// <summary>
+    ///     左对齐横线组，面板对齐菜单"左对齐"项与对齐按钮的左对齐态
+    /// </summary>
+    public const string AlignLeft = "M3 3h18v2H3V3m0 4h12v2H3V7m0 4h18v2H3v-2m0 4h12v2H3v-2Z";
+
+    /// <summary>
+    ///     右对齐横线组，面板对齐菜单"右对齐"项与对齐按钮的右对齐态
+    /// </summary>
+    public const string AlignRight = "M3 3h18v2H3V3m6 4h12v2H9V7m-6 4h18v2H3v-2m6 4h12v2H9v-2Z";
+
+    /// <summary>
+    ///     居中横线组，面板对齐菜单"居中"项与对齐按钮的居中态
+    /// </summary>
+    public const string AlignCenter = "M3 3h18v2H3V3m4 4h10v2H7V7m-4 4h18v2H3v-2m4 4h10v2H7v-2Z";
+
+    /// <summary>
+    ///     两端对齐横线组，面板对齐菜单"两端对齐"项与对齐按钮的两端对齐态
+    /// </summary>
+    public const string AlignJustify = "M3 3h18v2H3V3m0 4h18v2H3V7m0 4h18v2H3v-2m0 4h18v2H3v-2Z";
 }

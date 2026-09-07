@@ -2,12 +2,13 @@
 
 ## 模块做什么
 
-Core/Framework 是 Digital.Workstation 桌面应用的**应用框架层**，位于抽象层（Abstractions/Common/Models/UIPackage）之上、业务模块（Modules/*）之下，提供四块能力：
+Core/Framework 是 Digital.Workstation 桌面应用的**应用框架层**，位于抽象层（Abstractions/Common/Models/UIPackage）之上、业务模块（Modules/*）之下，提供五块能力：
 
 1. **应用引导与启动序列**：抽象基类 `FrameworkApplication<TWindow>`（`FrameworkApplication.cs:16`）继承 Prism.DryIoc 的 `PrismApplication`，装载主题、注册框架服务、执行"启动台 → 逐模块异步加载 → 显示主窗口"的三阶段启动序列（ADR-0004）。
 2. **窗口管理实现**：`FrameworkWindowManager`（`WindowManager/FrameworkWindowManager.cs:12`）实现 Abstractions 定义的 `IWindowManager` 与 `IMainWindowManager`，维护"窗口类型 → 窗口实例"映射，负责窗口的显示/对话/隐藏/关闭与主窗口登记。
 3. **Shell 布局状态机**：不可变 record `ShellLayoutState`（`Shell/ShellLayoutState.cs:7`）+ 四个区域状态 record（`SideBarState`、`AuxiliaryPanelState`、`BottomPanelState`、`MainContentState`），以 reducer 风格的纯转换方法描述工作区五区域（ActivityBar/SideBar/MainContent/AuxiliaryPanel/BottomPanel）的布局状态流转。
 4. **Shell 贡献收集**：`ShellContributionCollector`（`Shell/ShellContributionCollector.cs:8`）从 DI 容器收集各模块注册的 shell 贡献（导航项、主视图、面板 tab、菜单项、状态栏项），过滤定位枚举并按 `Order` 排序后交给 shell 渲染。
+5. **窗口基类与基础布局**：抽象基类 `FrameworkWindow`（`Shell/FrameworkWindow.cs:14`，继承 UrsaWindow）+ `FrameworkWindowTheme`（`Shell/FrameworkWindowTheme.cs:12`）内置 VS Code 式五区 shell 的布局模板（四档面板对齐）、共享部件模板与 shell 样式；`PanelResizer`（`Shell/PanelResizer.cs:13`）提供声明式分隔条。Modules/Workstation 的 `MainWindow` 继承之，axaml 只保留应用级 chrome（菜单、标题、快捷键）。
 
 ## 核心设计逻辑
 
@@ -17,6 +18,7 @@ Core/Framework 是 Digital.Workstation 桌面应用的**应用框架层**，位�
 - **一个窗口管理器实例注册两个接口**：`RegisterFrameworkServices`（`FrameworkApplication.cs:142`）中 `new FrameworkWindowManager()` 一次，`RegisterSingleton<IMainWindowManager>(() => windowManager)` 与 `RegisterSingleton<IWindowManager>(() => windowManager)` 共享同一实例（第 147-149 行）。理由：主窗口操作与普通窗口操作共享 `_windowMap` 与 `_mainWindow` 状态，拆成两个实例会出现状态分裂。
 - **固定 Dark 主题**：`Initialize()`（第 21-29 行）硬编码 `RequestedThemeVariant = ThemeVariant.Dark`，注释说明"当前设计目标为 VS Code Dark+ 单一色调，未做亮色适配"。
 - **ViewModel 约定式定位**：`ConfigureViewModelLocator()`（第 205 行）把 `Views` 命名空间替换为 `ViewModels`，`Window`/`Page` 后缀补 `ViewModel`、`View` 后缀补 `Model`，免注册。理由：统一约定消灭样板注册代码；代价是命名/目录偏离约定时定位静默失败（返回 null）。
+- **布局模板整体切换（四档面板对齐）**：`FrameworkWindow.PanelAlignment` 的每个枚举值对应 `FrameworkWindowTheme` 里一份**静态**布局模板（`WindowLayoutLeft/Right/Center/Justify`），切换即整体替换 `ContentTemplate`（`FrameworkWindow.cs:54-67`），不在一份模板上做动态调整。理由：四档差异只在 BottomPanel 及其分隔条的 `Grid.Column`/`ColumnSpan` 和侧栏的 `Grid.RowSpan`（非两端对齐时侧栏通高到底，不留空挡；ActivityBar 恒通高），静态模板直观且零运行时布局逻辑；代价是四份模板结构大量重复，修改五区结构要同步四份。配套的两个解耦决策：① Framework 不引用具体 ViewModel 类型，布局模板全部走宽松反射绑定（`{Binding ResizePanelCommand}` 等），ViewModel 契约靠约定；② 主题不走 x:Class code-behind，改走 `StyleInclude` + 构造时强制 `Loaded`（`FrameworkWindowTheme.cs:22`）——Avalonia.Generators 源生成器在本项目不产出 InitializeComponent（最小探针复现失败，Workstation 项目正常），StyleInclude 是 Semi/Ursa 主题同款机制，可绕过该问题。
 
 ## 状态流转
 
@@ -58,3 +60,4 @@ Avalonia 启动
 4. **要改窗口显示语义**（如允许同类型多实例窗口）：改 `FrameworkWindowManager.InitializeWindow`（`WindowManager/FrameworkWindowManager.cs:45`）的 `_windowMap.TryAdd` 拒绝重复注册逻辑，注意 `CloseWindow`/`HideWindow` 按类型索引的前提会随之失效。
 5. **要支持亮色主题**：改 `FrameworkApplication.Initialize`（第 23-27 行）的硬编码 Dark 与 `VSCodePalette.ApplyTo` 的写死色值（色值在 UIPackage 模块）。
 6. **要改 View/ViewModel 命名约定**：改 `ConfigureViewModelLocator`（`FrameworkApplication.cs:209`）的 `SetDefaultViewTypeToViewModelTypeResolver` 委托。
+7. **要新增/修改布局档位**（面板对齐）：三处同步改——`Shell/PanelAlignment.cs` 枚举加/改档；`Shell/FrameworkWindowTheme.axaml` 加一份 `WindowLayout*` 静态布局模板（仿现有四份，差异点在 BottomPanel 及其分隔条的 `Grid.Column`/`ColumnSpan` 与侧栏的 `Grid.RowSpan`）并同步四份模板的公共结构；`FrameworkWindow.UpdateLayoutTemplate`（`Shell/FrameworkWindow.cs:56-62`）的枚举→资源键映射。注意 Center 是 switch 兜底分支（`_ => "WindowLayoutCenter"`），新档必须显式加分支；消费侧（Modules/Workstation 的 `PanelAlignmentContribution`）还要为新档加 Title/IconPath/Order 的 case 与注册。

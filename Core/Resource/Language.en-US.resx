@@ -106,6 +106,22 @@
     <value>Toggle Auxiliary Panel</value>
     <comment>Title of the AuxiliaryPanel visibility toggle (View menu)</comment>
   </data>
+  <data name="PanelAlignLeftTitle" xml:space="preserve">
+    <value>Align Left</value>
+    <comment>Title of the panel alignment menu item "Align Left"</comment>
+  </data>
+  <data name="PanelAlignRightTitle" xml:space="preserve">
+    <value>Align Right</value>
+    <comment>Title of the panel alignment menu item "Align Right"</comment>
+  </data>
+  <data name="PanelAlignCenterTitle" xml:space="preserve">
+    <value>Align Center</value>
+    <comment>Title of the panel alignment menu item "Align Center"</comment>
+  </data>
+  <data name="PanelAlignJustifyTitle" xml:space="preserve">
+    <value>Justify</value>
+    <comment>Title of the panel alignment menu item "Justify"</comment>
+  </data>
   <data name="StatusReadyTitle" xml:space="preserve">
     <value>Ready</value>
     <comment>Text of the shell built-in status bar "Ready" item</comment>

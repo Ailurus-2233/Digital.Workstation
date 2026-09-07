@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using Avalonia.Controls;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -7,6 +8,7 @@ using DigitalWorkstation.Core.Framework.Shell;
 using DigitalWorkstation.Core.Models.Events;
 using DigitalWorkstation.Core.UIPackage;
 using DigitalWorkstation.Workstation.Views;
+using DigitalWorkstation.Workstation.Shell;
 
 namespace DigitalWorkstation.Workstation;
 
@@ -31,11 +33,20 @@ public partial class MainWindowViewModel : ObservableObject
         _containerProvider = containerProvider;
         eventAggregator.GetEvent<OpenMainViewEvent>().Subscribe(OpenMainView);
         eventAggregator.GetEvent<TogglePanelVisibilityEvent>().Subscribe(TogglePanel);
+        eventAggregator.GetEvent<SetPanelAlignmentEvent>().Subscribe(SetPanelAlignment);
         _mainContent = containerProvider.Resolve<EmptyStateView>();
     }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SideBarColumnWidth), nameof(AuxiliaryColumnWidth))]
     private ShellLayoutState _state = ShellLayoutState.Initial;
+
+    /// <summary>
+    ///     当前窗口布局档位：与 FrameworkWindow.PanelAlignment 双向绑定（窗口依赖属性是布局定义的唯一入口），
+    ///     默认居中 = 历史布局
+    /// </summary>
+    [ObservableProperty]
+    private PanelAlignment _panelAlignment = PanelAlignment.Center;
 
     [ObservableProperty]
     private object? _sideBarContent;
@@ -57,17 +68,17 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary>
     ///     文件菜单项：shell 预置项与模块贡献项按 Order 统一排序
     /// </summary>
-    public ObservableCollection<MenuItemViewModel> FileMenuItems { get; } = [];
+    public ObservableCollection<object> FileMenuItems { get; } = [];
 
     /// <summary>
-    ///     视图菜单项：shell 预置项与模块贡献项按 Order 统一排序
+    ///     视图菜单项：shell 预置项与模块贡献项按 Order 统一排序；面板显隐组与对齐组之间插有 Separator
     /// </summary>
-    public ObservableCollection<MenuItemViewModel> ViewMenuItems { get; } = [];
+    public ObservableCollection<object> ViewMenuItems { get; } = [];
 
     /// <summary>
     ///     帮助菜单项：shell 预置项与模块贡献项按 Order 统一排序
     /// </summary>
-    public ObservableCollection<MenuItemViewModel> HelpMenuItems { get; } = [];
+    public ObservableCollection<object> HelpMenuItems { get; } = [];
 
     /// <summary>
     ///     状态栏条目：shell 预置项与模块贡献项按 Order 统一排序
@@ -96,6 +107,19 @@ public partial class MainWindowViewModel : ObservableObject
     public Geometry CollapseAuxiliaryIcon { get; } = StreamGeometry.Parse(Icons.ChevronRight);
 
     /// <summary>
+    ///     SideBar 列宽：可见时为卡片宽度 + 4px 外边距间隙（布局模板的间隙约定），隐藏时归零，
+    ///     BottomPanel 的跨度随之自然伸缩
+    /// </summary>
+    public GridLength SideBarColumnWidth =>
+        State.SideBar.Visible ? new GridLength(State.SideBar.Width + 4) : new GridLength(0);
+
+    /// <summary>
+    ///     AuxiliaryPanel 列宽：规则同 SideBarColumnWidth
+    /// </summary>
+    public GridLength AuxiliaryColumnWidth =>
+        State.AuxiliaryPanel.Visible ? new GridLength(State.AuxiliaryPanel.Width + 4) : new GridLength(0);
+
+    /// <summary>
     ///     收集模块贡献的导航项。模块在 Prism 模块初始化阶段（晚于 shell 创建）才注册贡献，
     ///     因此由主窗口首次显示时触发，且只收集一次
     /// </summary>
@@ -119,6 +143,15 @@ public partial class MainWindowViewModel : ObservableObject
             content => BottomContent = content, _bottomTabContents);
         LoadChrome(_collector.GetMenuItems(MenuPlacement.File), FileMenuItems);
         LoadChrome(_collector.GetMenuItems(MenuPlacement.View), ViewMenuItems);
+        // 面板显隐组与对齐组之间插分隔符：定位第一个对齐贡献项，其前插入 Separator
+        for (var i = 0; i < ViewMenuItems.Count; i++)
+        {
+            if (ViewMenuItems[i] is MenuItemViewModel { Contribution: PanelAlignmentContribution })
+            {
+                ViewMenuItems.Insert(i, new Separator());
+                break;
+            }
+        }
         LoadChrome(_collector.GetMenuItems(MenuPlacement.Help), HelpMenuItems);
         foreach (var item in _collector.GetStatusBarItems())
         {
@@ -235,12 +268,23 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    ///     分隔条拖拽的唯一路径：增量经状态转换应用并 clamp 到合法区间；
-    ///     BottomPanel 调高度，其余调宽度；面板收起时尺寸记录保留，恢复后不重置
+    ///     面板对齐切换的唯一路径：视图菜单对齐项经 SetPanelAlignmentEvent 汇到这里；
+    ///     布局模板由 FrameworkWindow 监听 PanelAlignment 依赖属性整体替换
     /// </summary>
-    public void ResizePanel(PanelResizeTarget target, double delta)
+    private void SetPanelAlignment(PanelAlignment alignment)
     {
-        State = State.Resize(target, delta);
+        PanelAlignment = alignment;
+    }
+
+    /// <summary>
+    ///     分隔条拖拽的唯一路径：PanelResizer 换算方向后经命令汇到这里；
+    ///     增量经状态转换应用并 clamp 到合法区间；BottomPanel 调高度，其余调宽度；
+    ///     面板收起时尺寸记录保留，恢复后不重置
+    /// </summary>
+    [RelayCommand]
+    private void ResizePanel(PanelResize resize)
+    {
+        State = State.Resize(resize.Target, resize.Delta);
     }
 
     /// <summary>
@@ -257,7 +301,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     private static void LoadChrome(IReadOnlyList<IMenuItemContribution> contributions,
-        ObservableCollection<MenuItemViewModel> target)
+        ObservableCollection<object> target)
     {
         foreach (var contribution in contributions)
         {

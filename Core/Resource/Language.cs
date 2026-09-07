@@ -78,6 +78,26 @@ public static class Language
     public static string ToggleAuxiliaryPanelTitle => Get(nameof(ToggleAuxiliaryPanelTitle));
 
     /// <summary>
+    ///     面板对齐菜单"左对齐"项的标题
+    /// </summary>
+    public static string PanelAlignLeftTitle => Get(nameof(PanelAlignLeftTitle));
+
+    /// <summary>
+    ///     面板对齐菜单"右对齐"项的标题
+    /// </summary>
+    public static string PanelAlignRightTitle => Get(nameof(PanelAlignRightTitle));
+
+    /// <summary>
+    ///     面板对齐菜单"居中"项的标题
+    /// </summary>
+    public static string PanelAlignCenterTitle => Get(nameof(PanelAlignCenterTitle));
+
+    /// <summary>
+    ///     面板对齐菜单"两端对齐"项的标题
+    /// </summary>
+    public static string PanelAlignJustifyTitle => Get(nameof(PanelAlignJustifyTitle));
+
+    /// <summary>
     ///     shell 预置状态栏"就绪"项的文本
     /// </summary>
     public static string StatusReadyTitle => Get(nameof(StatusReadyTitle));

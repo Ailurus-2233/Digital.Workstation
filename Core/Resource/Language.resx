@@ -106,6 +106,22 @@
     <value>切换 AuxiliaryPanel</value>
     <comment>AuxiliaryPanel 显隐切换项的标题（视图菜单）</comment>
   </data>
+  <data name="PanelAlignLeftTitle" xml:space="preserve">
+    <value>左对齐</value>
+    <comment>面板对齐菜单"左对齐"项的标题</comment>
+  </data>
+  <data name="PanelAlignRightTitle" xml:space="preserve">
+    <value>右对齐</value>
+    <comment>面板对齐菜单"右对齐"项的标题</comment>
+  </data>
+  <data name="PanelAlignCenterTitle" xml:space="preserve">
+    <value>居中</value>
+    <comment>面板对齐菜单"居中"项的标题</comment>
+  </data>
+  <data name="PanelAlignJustifyTitle" xml:space="preserve">
+    <value>两端对齐</value>
+    <comment>面板对齐菜单"两端对齐"项的标题</comment>
+  </data>
   <data name="StatusReadyTitle" xml:space="preserve">
     <value>就绪</value>
     <comment>shell 预置状态栏"就绪"项的文本</comment>

@@ -19,6 +19,8 @@
 | **PrismApplication / Prism** | 本框架基类来源（`Prism.DryIoc.PrismApplication`）：提供容器（DryIoc）、模块目录（`IModuleCatalog`/`IModuleManager`）、事件聚合器（`IEventAggregator`）、Region 与 ViewModelLocator 基础设施；本模块大量"空覆盖"都是在改 Prism 默认行为 | `FrameworkApplication.cs:12、16` |
 | **IoC（类）** | Common 模块的静态容器引用持有者；本模块在 `RegisterFrameworkServices` 里完成其一次性初始化，`FrameworkWindowManager.GetWindow` 经 `IoC.Provider` 解析窗口 | `FrameworkApplication.cs:144`、`FrameworkWindowManager.cs:37` |
 | **ViewModel 定位约定** | `ConfigureViewModelLocator` 的命名映射规则：`Views`→`ViewModels` 命名空间替换 + `Window`/`Page`/`View` 后缀补 `ViewModel`/`Model`；View 侧需 `AutoWireViewModel="True"` | `FrameworkApplication.cs:197-233` |
+| **面板对齐（Panel Alignment）** | BottomPanel 在窗口底部的水平跨度，类比文本对齐。四档：左（贴左，横跨 SideBar 与 MainContent 下方，AuxiliaryPanel 通高到底）、右（贴右，横跨 MainContent 与 AuxiliaryPanel 下方，SideBar 通高到底）、居中（仅占 MainContent 下方，默认，两侧栏通高）、两端（横跨三列全宽）。完整领域定义（含与"面板位置"的区分）见根目录 CONTEXT.md | `Shell/PanelAlignment.cs:7` |
+| **FrameworkWindow** | 带基础布局的窗口基类（继承 UrsaWindow）：内置 VS Code 式五区 shell + 状态栏，布局档位由 `PanelAlignment` 依赖属性决定，切换即整体替换布局模板。真实子类：Modules/Workstation 的 `MainWindow`。与"主窗口（MainWindow）"词条的区别：那是**角色**（启动序列登记的那个窗口实例），这是**类型基类** | `Shell/FrameworkWindow.cs:14` |
 
 ## 类名 ↔ 业务概念对照
 
@@ -30,3 +32,6 @@
 | `SideBarState`/`AuxiliaryPanelState`/`BottomPanelState`/`MainContentState` | 各区域的可见性、尺寸、内容/活动项快照 |
 | `PanelResizeTarget` | 分隔条拖拽的目标区域 |
 | `ShellContributionCollector` | shell 装配工：把散落在各模块的贡献按位收齐排序 |
+| `FrameworkWindow` / `FrameworkWindowTheme` | 自带五区骨架的窗口基类 / 它的布局模板与样式包 |
+| `PanelAlignment` | 面板对齐：BottomPanel 的水平跨度档位 |
+| `PanelResize` / `PanelResizer` | 分隔条拖拽的一次增量（命令参数）/ 发出增量的分隔条控件 |

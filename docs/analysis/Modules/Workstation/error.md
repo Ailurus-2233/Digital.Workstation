@@ -28,8 +28,8 @@
 | 症状 | 看哪里 | 常见原因 |
 |---|---|---|
 | 点了导航项 SideBar 没内容 | `SelectActivity`（:142-154）的分支条件：`State.SideBar.Visible` 与 `State.SideBar.ContentFor`；再看该贡献 `ContentViewType` 是否已 `Register` | 视图类型忘在模块/本模块 `RegisterCustomService` 注册 → DryIoc 异常；或 `ShellLayoutState.SelectActivity` 语义是"再点收起" |
-| 发布 `OpenMainViewEvent` 没反应 | `OpenMainView`（:161）的静默 return；核对事件负载字符串与 `IMainViewContribution.Id` 是否逐字符一致 | Id 不匹配（字符串级契约）；或 `EnsureContributionsLoaded` 尚未执行（窗口未 Opened） |
+| 发布 `OpenMainViewEvent` 没反应 | `OpenMainView`（:207）的静默 return；核对事件负载字符串与 `IMainViewContribution.Id` 是否逐字符一致 | Id 不匹配（字符串级契约）；或 `EnsureContributionsLoaded` 尚未执行（窗口未 Opened） |
 | 菜单/面板 tab 顺序不对 | `ShellContributionCollector.Get*` 按 `Order` 升序；核对各贡献类 `Order` 值（矩阵见 api.md 第 5 节） | Order 撞值（如两个 tab 都 10，容器解析顺序决定先后） |
-| 拖拽分隔条面板不动/乱跳 | `PanelResizer.GetParentGrid`（PanelResizer.cs:20）是否仍返回 null；code-behind 方向换算（MainWindow.axaml.cs:28、36 的负号） | `GetParentGrid` 被"修复"成返回 base → GridSplitter 原生重排与 `ShellLayoutState` 打架；Auxiliary/Bottom 忘了取反导致方向反 |
-| 应用启动即崩溃 | `MainWindowViewModel` 构造函数 :34 解析 `EmptyStateView`；`WorkstationApplication.RegisterCustomService` 是否先执行（Framework `RegisterTypes` 保证先 `RegisterFrameworkServices` 后 `RegisterCustomService`） | 注册顺序/遗漏 |
+| 拖拽分隔条面板不动/乱跳 | `PanelResizer.GetParentGrid`（`Core/Framework/Shell/PanelResizer.cs:46`）是否仍返回 null；方向换算取反（同文件 :54-63 的负号） | `GetParentGrid` 被"修复"成返回 base → GridSplitter 原生重排与 `ShellLayoutState` 打架；Auxiliary/Bottom 忘了取反导致方向反 |
+| 应用启动即崩溃 | `MainWindowViewModel` 构造函数 :28-36 解析 `EmptyStateView`；`WorkstationApplication.RegisterCustomService` 是否先执行（Framework `RegisterTypes` 保证先 `RegisterFrameworkServices` 后 `RegisterCustomService`） | 注册顺序/遗漏 |
 | 日志位置 | 本模块不写日志；启动期错误看 Framework `Logger`（Serilog 静态封装）输出 | — |

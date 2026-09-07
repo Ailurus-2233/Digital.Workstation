@@ -15,11 +15,11 @@
 
 | 传递来源 | 用到的能力 | 使用点 |
 |---|---|---|
-| `Core/Abstractions`（经 Framework） | 五个贡献接口与定位枚举：`INavigationItemContribution`/`IMainViewContribution`/`IPanelTabContribution`/`IMenuItemContribution`/`IStatusBarItemContribution`、`NavigationItemPlacement`/`PanelPlacement`/`MenuPlacement`（Abstractions/Shell/）；`IWindowManager`（Abstractions/WindowManager/） | `Shell/` 九个贡献类各实现一个接口；`MainWindowViewModel.cs:110-126` 收集方法参数；`Shell/AboutMenuItem.cs:15-17` 注入 `IWindowManager` |
-| `Core/Models`（经 Framework） | `OpenMainViewEvent`、`TogglePanelVisibilityEvent`、`TogglePanelTarget`（Models/Events/） | `MainWindowViewModel.cs:32-33` 订阅两事件、`:249-256` `TogglePanel` 消费枚举；`WorkstationApplication.cs:37` 遍历枚举注册；`Shell/TogglePanelContribution.cs:19` 发布事件 |
-| Prism（经 Framework：`Prism.DryIoc.Avalonia`） | `IContainerRegistry`/`IContainerProvider`、`IEventAggregator`、`DelegateCommand`、ViewModelLocator | `WorkstationApplication.cs:19、39-40`；`MainWindowViewModel.cs:27-33`；`Shell/ExitMenuItem.cs:26`、`AboutMenuItem.cs:17`、`TogglePanelContribution.cs:18`；`MainWindow.axaml:11` `AutoWireViewModel` |
-| `CommunityToolkit.Mvvm`（经 Framework） | `ObservableObject`、`[ObservableProperty]`、`[RelayCommand]` | `MainWindowViewModel.cs:13、37-46、132 等`；`NavigationItemViewModel.cs:10、29`；`PanelTabViewModel.cs:10、29` |
-| Avalonia / Ursa（经 Framework/UIPackage） | `Window`/`UserControl`/`GridSplitter`/`StreamGeometry`/`ApplicationLifetime`；`UrsaWindow` | 全部 View/code-behind；`PanelResizer.cs:9`；`Shell/ExitMenuItem.cs:27`；`MainWindow.axaml:1` |
+| `Core/Abstractions`（经 Framework） | 五个贡献接口与定位枚举：`INavigationItemContribution`/`IMainViewContribution`/`IPanelTabContribution`/`IMenuItemContribution`/`IStatusBarItemContribution`、`NavigationItemPlacement`/`PanelPlacement`/`MenuPlacement`（Abstractions/Shell/）；`IWindowManager`（Abstractions/WindowManager/） | `Shell/` 九个贡献类各实现一个接口；`MainWindowViewModel.cs:150-175` 收集方法参数；`Shell/AboutMenuItem.cs:15-17` 注入 `IWindowManager` |
+| `Core/Models`（经 Framework） | `OpenMainViewEvent`、`TogglePanelVisibilityEvent`、`TogglePanelTarget`（Models/Events/） | `MainWindowViewModel.cs:33-34` 订阅两事件、`:309-316` `TogglePanel` 消费枚举；`WorkstationApplication.cs:37` 遍历枚举注册；`Shell/TogglePanelContribution.cs:19` 发布事件 |
+| Prism（经 Framework：`Prism.DryIoc.Avalonia`） | `IContainerRegistry`/`IContainerProvider`、`IEventAggregator`、`DelegateCommand`、ViewModelLocator | `WorkstationApplication.cs:19、39-40`；`MainWindowViewModel.cs:28-36`；`Shell/ExitMenuItem.cs:26`、`AboutMenuItem.cs:17`、`TogglePanelContribution.cs:18`；`MainWindow.axaml:12` `AutoWireViewModel` |
+| `CommunityToolkit.Mvvm`（经 Framework） | `ObservableObject`、`[ObservableProperty]`、`[RelayCommand]` | `MainWindowViewModel.cs:14、:38-49、:181 等`；`NavigationItemViewModel.cs:10、29`；`PanelTabViewModel.cs:10、29` |
+| Avalonia / Ursa（经 Framework/UIPackage） | `Window`/`UserControl`/`GridSplitter`/`StreamGeometry`/`ApplicationLifetime`；`UrsaWindow`（经 FrameworkWindow 间接继承） | 全部 View/code-behind；`Core/Framework/Shell/PanelResizer.cs:13`；`Shell/ExitMenuItem.cs:27`；`MainWindow.axaml:1`（根元素 `shell:FrameworkWindow`） |
 
 ### 编译设置
 

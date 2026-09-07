@@ -67,6 +67,10 @@ public static class Icons
     public const string Exit    = "M19 6.41 17.59…";    // 关闭叉号（Icons.cs:75）
     public const string About   = "M11 9h2V7h-2…";      // 信息圆圈（Icons.cs:80）
     public const string Ready   = "M12 2C6.5 2 2 6.5…"; // 勾选圆圈（Icons.cs:86）
+    public const string AlignLeft   = "M3 3h18v2H3V3…";   // 左对齐横线组（Icons.cs:92）
+    public const string AlignRight  = "M3 3h18v2H3V3…";   // 右对齐横线组（Icons.cs:97）
+    public const string AlignCenter = "M3 3h18v2H3V3…";   // 居中横线组（Icons.cs:102）
+    public const string AlignJustify= "M3 3h18v2H3V3…";   // 两端对齐横线组（Icons.cs:107）
 }
 ```
 

@@ -6,7 +6,7 @@
 
 1. **应用主题聚合**：`WorkstationTheme`（`WorkstationThemes.cs:8`）继承 `Avalonia.Styling.Styles`，在构造函数中依次 `Add` 四个第三方主题包——`Semi.Avalonia.SemiTheme`、`Ursa.Themes.Semi.SemiTheme`、`Semi.Avalonia.ColorPicker.ColorPickerSemiTheme`、`Semi.Avalonia.DataGrid.DataGridSemiTheme`，使消费方一行 `Styles.AddRange(new WorkstationTheme())` 即可装齐全部主题（真实调用点：`Core/Framework/FrameworkApplication.cs:25`）。
 2. **产品深色调色板**：`VSCodePalette.ApplyTo(IResourceDictionary)`（`VSCodePalette.cs:16`）以 VS Code Dark+ 的语义分层为蓝本，覆盖 Semi 语义色键（背景/边框/文本/填充三级），并新增 chrome 专属色键（状态栏蓝 `ChromeStatusBarBackground`、`ChromeSashHoverBrush` 等）以及菜单弹出层的密度与配色键（`MenuItemPadding`、`MenuFlyoutBackground` 等）。
-3. **共享图标几何**：`Icons`（`Icons.cs:7`）静态类集中存放 15 个 `public const string` 的 StreamGeometry path 字符串（`Settings`、`DashBoard`、`ChevronDown`……），各模块的贡献类（导航项、面板 tab、菜单项、状态栏项）通过 `IconPath => Icons.Xxx` 引用，不在各自类中硬编码 path。
+3. **共享图标几何**：`Icons`（`Icons.cs:7`）静态类集中存放 19 个 `public const string` 的 StreamGeometry path 字符串（`Settings`、`DashBoard`、`ChevronDown`、`AlignLeft`……），各模块的贡献类（导航项、面板 tab、菜单项、状态栏项）通过 `IconPath => Icons.Xxx` 引用，不在各自类中硬编码 path。
 
 ## 核心设计逻辑
 
