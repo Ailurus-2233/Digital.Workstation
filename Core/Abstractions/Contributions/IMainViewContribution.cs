@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Abstractions.Shell;
+﻿namespace DigitalWorkstation.Core.Abstractions.Contributions;
 
 /// <summary>
 ///     模块向 MainContent 贡献主视图的契约。

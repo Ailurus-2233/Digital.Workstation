@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Abstractions.Shell;
+﻿namespace DigitalWorkstation.Core.Abstractions.Contributions;
 
 /// <summary>
 ///     导航项在 ActivityBar 中的放置位置

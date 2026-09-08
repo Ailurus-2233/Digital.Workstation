@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Abstractions.Shell;
+﻿namespace DigitalWorkstation.Core.Abstractions.Regions;
 
 /// <summary>
 ///     Shell 布局的 Prism Region 名称常量

@@ -1,10 +1,10 @@
 # Abstractions — 对外接口与调用方式
 
-命名空间两组：`DigitalWorkstation.Core.Abstractions.Shell`（Shell/ 目录）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
+命名空间四组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，导航/主视图/面板/状态栏四接口）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，仅 `ShellRegions` 常量）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
 
-## Shell 贡献契约（Shell/）
+## Shell 贡献契约（Contributions/ 与 Menus/，Region 常量在 Regions/）
 
-### `ShellRegions`（static class，Shell/ShellRegions.cs）
+### `ShellRegions`（static class，Regions/ShellRegions.cs）
 
 Prism Region 名称常量，值均经 `nameof` 生成：
 
@@ -16,7 +16,9 @@ Prism Region 名称常量，值均经 `nameof` 生成：
 | `AuxiliaryPanel` | `"AuxiliaryPanel"` | 工作区右侧 tab + 容器区域 |
 | `BottomPanel` | `"BottomPanel"` | 工作区底部 tab + 容器区域 |
 
-### `INavigationItemContribution`（Shell/INavigationItemContribution.cs）
+注意：`ShellRegions` 目前**全仓零消费方**，属存量公共契约；本次目录拆分只挪位置，类型名（`ShellRegions`）与常量值不变。
+
+### `INavigationItemContribution`（Contributions/INavigationItemContribution.cs）
 
 模块向 ActivityBar 贡献导航项。
 
@@ -29,7 +31,7 @@ Prism Region 名称常量，值均经 `nameof` 生成：
 
 配套枚举 `NavigationItemPlacement`（同文件）：`Top` / `Bottom`。
 
-### `IMainViewContribution`（Shell/IMainViewContribution.cs）
+### `IMainViewContribution`（Contributions/IMainViewContribution.cs）
 
 模块向 MainContent 贡献主视图。
 
@@ -38,7 +40,7 @@ Prism Region 名称常量，值均经 `nameof` 生成：
 
 调用链：SideBar 内交互发出 `OpenMainViewEvent`（负载为 `Id`）→ shell 找到对应贡献 → 容器解析 `ViewType` → 替换 MainContent 当前视图。
 
-### `IPanelTabContribution`（Shell/IPanelTabContribution.cs）
+### `IPanelTabContribution`（Contributions/IPanelTabContribution.cs）
 
 模块向 AuxiliaryPanel / BottomPanel 贡献面板 tab。
 
@@ -51,20 +53,49 @@ Prism Region 名称常量，值均经 `nameof` 生成：
 
 配套枚举 `PanelPlacement`（同文件）：`Auxiliary` / `Bottom`。注释声明不变量：面板收起期间其 tab 的激活操作会被 `ShellLayoutState` 拒绝。
 
-### `IMenuItemContribution`（Shell/IMenuItemContribution.cs）
+### `IMenuItemContribution`（Menus/IMenuItemContribution.cs）
 
-模块向菜单栏追加菜单项。文件 `using System.Windows.Input;`。
+模块向菜单栏贡献菜单项的契约（路径/分组模型，见 ADR-0001 `docs/adr/0001-attribute-menu-registration.md`）。文件 `using System.Windows.Input;`。**通常不直接实现本接口**：模块用 `MenuGroupAttribute`/`MenuItemAttribute` 标注普通类（见下两节），经 Framework 侧 `MenuRegistration.RegisterMenus` 扫描后生成本契约的实现注册进容器；shell 收集全部实现后由 `MenuTreeBuilder` 建树（分组排序、组间分隔线）并渲染。
 
-- `string Id { get; }` — 稳定标识，全局唯一
-- `string Title { get; }` — 显示标题
-- `string IconPath { get; }` — 同上图标约定
-- `int Order { get; }` — 同一菜单内排序权重，小者靠前
-- `MenuPlacement Menu { get; }` — 追加到哪个顶层菜单
-- `ICommand Command { get; }` — 点击菜单项执行的命令（`System.Windows.Input.ICommand`）
+| 属性 | 类型 | 语义与排序规则 |
+|---|---|---|
+| `Title` | `string` | 显示标题，**已按当前 UI 区域性解析**（非资源键） |
+| `IconPath` | `string?` | 图标 StreamGeometry path 字符串，由 PathIcon 消费并随主题变色；`null` = 无图标 |
+| `Path` | `string` | 完整菜单路径：`"/"` 分隔，段为 Language 资源键，首段为顶层菜单；支持任意深度子菜单 |
+| `Group` | `string?` | 单段路径：本条目在该菜单内的组；多段路径：末端子菜单节点在其父菜单内的组。`null` = 默认组（排在命名组之前） |
+| `GroupOrder` | `int` | 组的排序权重，小者靠前；同名组多处声明冲突时取最小值 |
+| `NodeOrder` | `int` | 顶层菜单（单段路径）或末端子菜单节点（多段路径）在父级中的排序权重；多处声明取最小值 |
+| `Order` | `int` | 条目在组内的排序权重，小者靠前；同 `Order` 按解析后的 `Title` 字典序（Ordinal） |
+| `Command` | `ICommand` | 点击菜单项执行的命令（`System.Windows.Input.ICommand`） |
 
-配套枚举 `MenuPlacement`（同文件）：`File` / `View` / `Help`。shell 预置项（退出、面板显隐切换、关于）与模块贡献项经同一机制渲染。
+与旧模型的差异（ADR-0001）：删除 `Id`（菜单链路无任何消费方）与「追加到哪个顶层菜单」的封闭枚举定位；定位完全由 `Path` + `Group`/`GroupOrder` + `NodeOrder`/`Order` 表达，可表达多级子菜单、命名分组与组间自动分隔线。建树与排序语义（顶层不分组、子菜单组间插分隔线、位次冲突取最小）在 Framework 侧 `MenuTreeBuilder`，不在本程序集。
 
-### `IStatusBarItemContribution`（Shell/IStatusBarItemContribution.cs）
+### `MenuGroupAttribute`（Menus/MenuGroupAttribute.cs）
+
+`[AttributeUsage(AttributeTargets.Class)]`（第 12 行），声明一个菜单类：类中标注 `MenuItemAttribute` 的公共实例方法成为菜单项，经 `MenuRegistration.RegisterMenus` 扫描注册。主构造参 `string path`（第 13 行）。
+
+| 成员 | 类型 | 语义 |
+|---|---|---|
+| `Path`（构造参，get-only） | `string` | 菜单路径：`"/"` 分隔的多级 Language 资源键，首段为顶层菜单；各段 Trim 后按序精确匹配（Ordinal 大小写敏感） |
+| `Group`（命名属性） | `string?` | 分组名；`null` = 默认组（GroupOrder 视为 0，排在命名组之前） |
+| `GroupOrder`（命名属性） | `int` | 组的排序权重，小者靠前；同名组多处声明冲突时取最小值 |
+| `Order`（命名属性） | `int` | 顶层菜单或末端子菜单节点在父级中的排序权重；多处声明取最小值。**缺省 `int.MaxValue`**（MenuGroupAttribute.cs 第 34 行）：未声明视为「无位次意见」，排最后，且不参与多处声明取最小——防止忘写 `Order` 的类以缺省 0 把所在菜单钉到最前 |
+
+路径段数决定三个命名属性的语义（ADR-0001 第 10 条）：**单段路径**（如 `"MenuFileTitle"`）时 `Group`/`GroupOrder` 描述方法项在该菜单内的分组，`Order` 描述顶层菜单在菜单栏的位次；**多段路径**（如 `"MenuFileTitle/Export"`）时三者描述末端子菜单节点在其父菜单内的分组与位次，方法项进入末端菜单的默认组。一个 attribute 只有一套分组参数，深层子菜单内部分组需拆类声明。含空段（`"A//B"`）的路径整体非法，扫描时记日志跳过。
+
+### `MenuItemAttribute`（Menus/MenuItemAttribute.cs）
+
+`[AttributeUsage(AttributeTargets.Method)]`（第 7 行），声明一个菜单项，标注在菜单类（`MenuGroupAttribute`）的公共实例方法上。主构造参 `string title`（第 8 行）。
+
+| 成员 | 类型 | 语义 |
+|---|---|---|
+| `Title`（构造参，get-only） | `string` | 显示标题的 Language 资源键，运行时解析，缺键回退键名本身 |
+| `Order`（命名属性） | `int` | 同组内的排序权重，小者靠前；同 `Order` 按解析后的标题字典序 |
+| `Icon`（命名属性） | `string?` | 图标的 StreamGeometry path 字符串（取 `Icons` 常量）；`null` = 无图标 |
+
+方法签名仅支持无参 `void M()` 与 `Task M()`；非法签名（带参、返回值非 `void`/`Task`）在扫描时记 `Logger.Warning` 跳过（ADR-0001 第 7 条）。
+
+### `IStatusBarItemContribution`（Contributions/IStatusBarItemContribution.cs）
 
 模块向状态栏追加条目，shell 渲染为「图标 + 文本」的状态指示。
 
@@ -81,9 +112,9 @@ Prism Region 名称常量，值均经 `nameof` 生成：
 
 | 属性名 | 所在接口（文件） | 激活效果 |
 |---|---|---|
-| `ContentViewType` | `INavigationItemContribution`（Shell/INavigationItemContribution.cs） | 选中导航项时 SideBar 显示解析出的视图 |
-| `ContentViewType` | `IPanelTabContribution`（Shell/IPanelTabContribution.cs） | 激活 tab 时面板内容区显示解析出的视图 |
-| `ViewType` | `IMainViewContribution`（Shell/IMainViewContribution.cs） | 打开时**替换** MainContent 当前视图 |
+| `ContentViewType` | `INavigationItemContribution`（Contributions/INavigationItemContribution.cs） | 选中导航项时 SideBar 显示解析出的视图 |
+| `ContentViewType` | `IPanelTabContribution`（Contributions/IPanelTabContribution.cs） | 激活 tab 时面板内容区显示解析出的视图 |
+| `ViewType` | `IMainViewContribution`（Contributions/IMainViewContribution.cs） | 打开时**替换** MainContent 当前视图 |
 
 即：`ContentViewType` 属于 `INavigationItemContribution` 与 `IPanelTabContribution` 两个接口；`ViewType` 只属于 `IMainViewContribution`。其余两个贡献接口（`IMenuItemContribution` 用 `ICommand Command`、`IStatusBarItemContribution` 无行为字段）不携带视图类型。
 
@@ -124,6 +155,6 @@ Prism Region 名称常量，值均经 `nameof` 生成：
 
 ## 调用方式与生命周期
 
-- **贡献接口**：无主动调用方 API。模块实现接口并在 `Prism.Ioc.IContainerRegistry` 注册（生命周期由模块注册方式决定），shell 收集消费。本模块内无调用点——本程序集是纯定义层，典型调用序列发生在 shell 与其他模块（不在本模块范围）。
+- **贡献接口**：无主动调用方 API。模块实现接口并在 `Prism.Ioc.IContainerRegistry` 注册（生命周期由模块注册方式决定），shell 收集消费；菜单例外——`IMenuItemContribution` 通常无手写实现，模块类标注 `MenuGroupAttribute`/`MenuItemAttribute` 后在 `RegisterTypes` 调 `RegisterMenus(Assembly)`，由 Framework 侧扫描生成实现并以接口注册。本模块内无调用点——本程序集是纯定义层，典型调用序列发生在 shell 与其他模块（不在本模块范围）。
 - **窗口管理**：调用方注入 `IWindowManager`/`IMainWindowManager`，调 `ShowWindow<MyDialog>(vm)` 这类泛型扩展或直接 `ShowWindow(typeof(MyDialog), vm)`。窗口实例来源是 DI 容器（`GetWindow` 注释：「从容器中解析得到的窗口实例」）。
 - **数据结构**：本模块不定义任何 DTO/记录类；对外数据完全由上述接口属性承载，字段语义见上。

@@ -14,18 +14,19 @@
 
 间接提及（XML 注释中出现但未直接引用的外部概念，实际引用由 shell 实现侧承担）：
 
-- `Prism.Ioc.IContainerRegistry` — 五个贡献接口注释均声明「模块在 `Prism.Ioc.IContainerRegistry` 中以本接口注册实现」；本程序集本身**未**引用 Prism 程序集，注释中的 `<see cref="Prism.Ioc.IContainerRegistry" />` 无法解析。
-- Prism Region — `ShellRegions`（Shell/ShellRegions.cs）注释「Shell 布局的 Prism Region 名称常量」。
+- `Prism.Ioc.IContainerRegistry` — 导航项/主视图/面板 tab/状态栏四个贡献接口注释均声明「模块在 `Prism.Ioc.IContainerRegistry` 中以本接口注册实现」；本程序集本身**未**引用 Prism 程序集，注释中的 `<see cref="Prism.Ioc.IContainerRegistry" />` 无法解析。
+- Prism Region — `ShellRegions`（Regions/ShellRegions.cs）注释「Shell 布局的 Prism Region 名称常量」。
 - `PathIcon`、`StreamGeometry`（Avalonia）— `IconPath` 的注释约定「由 PathIcon 消费并随主题变色」。
 - `ShellLayoutState`（shell 侧类型）— `IPanelTabContribution` 注释提及「面板收起期间其 tab 的激活操作会被 ShellLayoutState 拒绝」。
 - `OpenMainViewEvent`（shell 侧事件）— `IMainViewContribution` 注释提及「SideBar 内交互请求打开主视图时（OpenMainViewEvent，负载为 Id）」。
+- `MenuRegistration.RegisterMenus`（Framework 侧）— `IMenuItemContribution`/`MenuGroupAttribute` 注释提及的菜单 attribute 扫描注册入口（ADR-0001）。
 
 ## 被依赖关系（外部 → 本模块）
 
 本模块为纯契约层，按设计意图被以下角色依赖（依据接口注释推断；具体实现项目不在本模块目录内，属其他模块文档范围）：
 
-- **Shell 宿主**：实现/消费全部贡献接口（收集注册实现并按 `Order` 渲染到 `ShellRegions` 各 Region），实现 `IWindowManager` 与 `IMainWindowManager`（窗口实例「从容器中解析」）。
-- **各功能模块**：实现 `I*Contribution` 接口向 shell 贡献导航项、主视图、面板 tab、菜单项、状态栏项；注入 `IWindowManager`/`IMainWindowManager` 弹窗。
+- **Shell 宿主**：实现/消费全部贡献接口（收集注册实现并渲染到 `ShellRegions` 各 Region；菜单经 Framework 侧 `MenuTreeBuilder` 建树渲染），实现 `IWindowManager` 与 `IMainWindowManager`（窗口实例「从容器中解析」）。
+- **各功能模块**：实现 `I*Contribution` 接口向 shell 贡献导航项、主视图、面板 tab、状态栏项；菜单项例外——标注 `MenuGroupAttribute`/`MenuItemAttribute` 的菜单类经 `RegisterMenus(Assembly)` 扫描生成实现（ADR-0001）；注入 `IWindowManager`/`IMainWindowManager` 弹窗。
 
 > 待进一步调查：解决方案中具体的 shell 项目与各模块项目名，需在对应模块的深读中确认。
 
@@ -35,33 +36,36 @@
 
 | 类型 | 种类 | 文件 |
 |---|---|---|
-| `ShellRegions` | static class，5 个 `const string` | Core/Abstractions/Shell/ShellRegions.cs |
-| `NavigationItemPlacement` | enum（`Top`/`Bottom`） | Core/Abstractions/Shell/INavigationItemContribution.cs |
+| `ShellRegions` | static class，5 个 `const string` | Core/Abstractions/Regions/ShellRegions.cs |
+| `NavigationItemPlacement` | enum（`Top`/`Bottom`） | Core/Abstractions/Contributions/INavigationItemContribution.cs |
 | `INavigationItemContribution` | interface | 同上 |
-| `IMainViewContribution` | interface | Core/Abstractions/Shell/IMainViewContribution.cs |
-| `PanelPlacement` | enum（`Auxiliary`/`Bottom`） | Core/Abstractions/Shell/IPanelTabContribution.cs |
+| `IMainViewContribution` | interface | Core/Abstractions/Contributions/IMainViewContribution.cs |
+| `PanelPlacement` | enum（`Auxiliary`/`Bottom`） | Core/Abstractions/Contributions/IPanelTabContribution.cs |
 | `IPanelTabContribution` | interface | 同上 |
-| `MenuPlacement` | enum（`File`/`View`/`Help`） | Core/Abstractions/Shell/IMenuItemContribution.cs |
-| `IMenuItemContribution` | interface | 同上 |
-| `IStatusBarItemContribution` | interface | Core/Abstractions/Shell/IStatusBarItemContribution.cs |
+| `IMenuItemContribution` | interface（路径/分组模型，无 `Id`/定位枚举，ADR-0001） | Core/Abstractions/Menus/IMenuItemContribution.cs |
+| `MenuGroupAttribute` | sealed class（`AttributeTargets.Class`，菜单类声明） | Core/Abstractions/Menus/MenuGroupAttribute.cs |
+| `MenuItemAttribute` | sealed class（`AttributeTargets.Method`，菜单项声明） | Core/Abstractions/Menus/MenuItemAttribute.cs |
+| `IStatusBarItemContribution` | interface | Core/Abstractions/Contributions/IStatusBarItemContribution.cs |
 | `IWindowManager` | interface（11 方法） | Core/Abstractions/WindowManager/IWindowManager.cs |
 | `IMainWindowManager` | interface（4 方法） | Core/Abstractions/WindowManager/IMainWindowManager.cs |
 | `WindowManagerExtenstion` | static class（7 个泛型扩展） | Core/Abstractions/WindowManager/IWindowManagerExtenstion.cs |
 
 ### 贡献接口的同构结构
 
-五个 `I*Contribution` 接口共享字段骨架：
+导航项/主视图/面板 tab/状态栏四个 `I*Contribution` 接口共享字段骨架：
 
 ```
 Id (string) + Title (string) + IconPath (string) + Order (int)
-  + 定位字段: Placement / Menu / Panel（IStatusBarItemContribution 无）
+  + 定位字段: Placement / Panel（IStatusBarItemContribution 无）
   + 行为字段: ContentViewType / ViewType / Command（IStatusBarItemContribution 无）
 ```
+
+菜单契约 `IMenuItemContribution` 不适用此骨架（ADR-0001）：无 `Id`、无定位枚举，字段为 `Title`/`IconPath?`/`Path`/`Group?`/`GroupOrder`/`NodeOrder`/`Order`/`Command`，定位由路径/分组模型表达。
 
 差异点（易混，见 glossary.md）：
 
 - `IMainViewContribution` 没有 `Title`/`IconPath`/`Order`，行为字段名是 `ViewType`（其他两个视图型接口是 `ContentViewType`）。
-- `Id` 唯一性约束各不相同：`INavigationItemContribution.Id` 同一模块内唯一；`IMainViewContribution.Id` 跨模块全局唯一（建议模块名前缀）；`IPanelTabContribution.Id` 跨两个面板全局唯一；`IMenuItemContribution.Id`、`IStatusBarItemContribution.Id` 全局唯一。
+- `Id` 唯一性约束各不相同：`INavigationItemContribution.Id` 同一模块内唯一；`IMainViewContribution.Id` 跨模块全局唯一（建议模块名前缀）；`IPanelTabContribution.Id` 跨两个面板全局唯一；`IStatusBarItemContribution.Id` 全局唯一。`IMenuItemContribution` 已无 `Id`（菜单链路无消费方，ADR-0001 第 9 条）。
 
 ### 窗口管理类型的关系
 

@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Abstractions.Shell;
+﻿namespace DigitalWorkstation.Core.Abstractions.Contributions;
 
 /// <summary>
 ///     模块向状态栏追加条目的契约。

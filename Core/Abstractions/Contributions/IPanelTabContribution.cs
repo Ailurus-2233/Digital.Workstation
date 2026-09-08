@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Abstractions.Shell;
+﻿namespace DigitalWorkstation.Core.Abstractions.Contributions;
 
 /// <summary>
 ///     面板 tab 所属的面板
