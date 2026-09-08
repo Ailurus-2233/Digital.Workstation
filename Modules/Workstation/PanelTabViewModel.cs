@@ -1,6 +1,6 @@
 ﻿using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DigitalWorkstation.Core.Abstractions.Shell;
+using DigitalWorkstation.Core.Abstractions.Contributions;
 
 namespace DigitalWorkstation.Workstation;
 

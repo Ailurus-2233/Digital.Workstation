@@ -6,20 +6,20 @@
 
 | 依赖 | 用到的能力 | 本模块使用点 |
 |---|---|---|
-| `Core/Framework` | `FrameworkApplication<TWindow>` 应用入口基类（Framework/FrameworkApplication.cs）；`ShellContributionCollector` 贡献收集器、`ShellLayoutState` 及区域 record、`PanelResizeTarget` 枚举（Framework/Shell/） | `WorkstationApplication.cs:12` 继承；`MainWindowViewModel.cs:15` 注入 collector、`:38` 持有 `ShellLayoutState _state`、`:241` `ResizePanel` 消费 `PanelResizeTarget`；`MainWindow.axaml.cs:20、28、36` 三个拖拽 handler |
-| `Core/Resource` | `Language` 本地化字符串（Resource/Language.cs） | `Shell/` 全部九个贡献类的 `Title` 属性（如 `TogglePanelContribution.cs:31-33`、`ExitMenuItem.cs:18`） |
-| `Core/UIPackage` | `Icons` 图标路径常量（UIPackage/Icons.cs）；Ursa/Semi 主题资源键（`SemiColor*`、`Chrome*`，运行期由 Framework 装载主题后可用） | 贡献类 `IconPath` 属性；`MainWindowViewModel.cs:91、96` 收起按钮图标；`MainWindow.axaml` 全部 `{DynamicResource ...}` |
-| `Modules/DashBoard` | `DashBoardModule`（Prism 模块）、`DashBoardWindow`（启动台窗口） | `WorkstationApplication.cs:16` `AddModule<DashBoardModule>()`、`:53` `CreateSplashWindow()` 返回 `Container.Resolve<DashBoardWindow>()` |
+| `Core/Framework` | `FrameworkApplication<TWindow>` 应用入口基类（Framework/FrameworkApplication.cs）；`FrameworkWindow` 与主题（Framework/Windows/）；`PanelResizer`、`ShellLayoutState` 及区域 record、`PanelAlignment`/`PanelResize`/`PanelResizeTarget`、`SetPanelAlignmentEvent`（Framework/Layout/）；`ShellContributionCollector` 贡献收集器（Framework/Contributions/）；`MenuTreeBuilder`/`MenuRegistration`/`MenuItemViewModel` 菜单建树、扫描注册与呈现模型（Framework/Menus/，ADR-0001） | `WorkstationApplication.cs:12` 继承、`:35` `RegisterMenus`；`MainWindowViewModel.cs:18` 注入 collector、`:43` 持有 `ShellLayoutState _state`、`:137` `MenuTreeBuilder.Build`、`:270` `ResizePanel` 消费 `PanelResizeTarget`（using 见 `MainWindowViewModel.cs:7-9`：Contributions/Layout/Menus）；`MainWindow.axaml.cs:1` `Framework.Windows` |
+| `Core/Resource` | `Language` 本地化字符串（Resource/Language.cs） | 六个贡献类的 `Title` 属性直接调 `Language.*`（如 `SettingsNavigationItem.cs:15`、`ReadyStatusBarItem.cs:14`）；四个 attribute 菜单类不调用 `Language.*`，而是在 `[MenuGroup]`/`[MenuItem]` 里写资源键字符串（`"MenuFileTitle"`/`"MenuViewTitle"`/`"MenuHelpTitle"`/`"MenuExitTitle"`/`"MenuAboutTitle"`/`"ToggleSideBarTitle"` 等），运行时由 Framework 的 `MenuRegistration`/`MenuTreeBuilder` 经 `Language.Get` 解析 |
+| `Core/UIPackage` | `Icons` 图标路径常量（UIPackage/Icons.cs）；Ursa/Semi 主题资源键（`SemiColor*`、`Chrome*`，运行期由 Framework 装载主题后可用） | 贡献类 `IconPath` 属性与菜单类 `[MenuItem(Icon = …)]`；`MainWindowViewModel.cs:95、100` 收起按钮图标；`MainWindow.axaml` 全部 `{DynamicResource ...}` |
+| `Modules/DashBoard` | `DashBoardModule`（Prism 模块）、`DashBoardWindow`（启动台窗口） | `WorkstationApplication.cs:16` `AddModule<DashBoardModule>()`、`:45-48` `CreateSplashWindow()` 返回 `Container.Resolve<DashBoardWindow>()` |
 
 ### 传递依赖（未在 csproj 直接引用，源码 using 其命名空间）
 
 | 传递来源 | 用到的能力 | 使用点 |
 |---|---|---|
-| `Core/Abstractions`（经 Framework） | 五个贡献接口与定位枚举：`INavigationItemContribution`/`IMainViewContribution`/`IPanelTabContribution`/`IMenuItemContribution`/`IStatusBarItemContribution`、`NavigationItemPlacement`/`PanelPlacement`/`MenuPlacement`（Abstractions/Shell/）；`IWindowManager`（Abstractions/WindowManager/） | `Shell/` 九个贡献类各实现一个接口；`MainWindowViewModel.cs:150-175` 收集方法参数；`Shell/AboutMenuItem.cs:15-17` 注入 `IWindowManager` |
-| `Core/Models`（经 Framework） | `OpenMainViewEvent`、`TogglePanelVisibilityEvent`、`TogglePanelTarget`（Models/Events/） | `MainWindowViewModel.cs:33-34` 订阅两事件、`:309-316` `TogglePanel` 消费枚举；`WorkstationApplication.cs:37` 遍历枚举注册；`Shell/TogglePanelContribution.cs:19` 发布事件 |
-| Prism（经 Framework：`Prism.DryIoc.Avalonia`） | `IContainerRegistry`/`IContainerProvider`、`IEventAggregator`、`DelegateCommand`、ViewModelLocator | `WorkstationApplication.cs:19、39-40`；`MainWindowViewModel.cs:28-36`；`Shell/ExitMenuItem.cs:26`、`AboutMenuItem.cs:17`、`TogglePanelContribution.cs:18`；`MainWindow.axaml:12` `AutoWireViewModel` |
-| `CommunityToolkit.Mvvm`（经 Framework） | `ObservableObject`、`[ObservableProperty]`、`[RelayCommand]` | `MainWindowViewModel.cs:14、:38-49、:181 等`；`NavigationItemViewModel.cs:10、29`；`PanelTabViewModel.cs:10、29` |
-| Avalonia / Ursa（经 Framework/UIPackage） | `Window`/`UserControl`/`GridSplitter`/`StreamGeometry`/`ApplicationLifetime`；`UrsaWindow`（经 FrameworkWindow 间接继承） | 全部 View/code-behind；`Core/Framework/Shell/PanelResizer.cs:13`；`Shell/ExitMenuItem.cs:27`；`MainWindow.axaml:1`（根元素 `shell:FrameworkWindow`） |
+| `Core/Abstractions`（经 Framework） | 贡献接口：`INavigationItemContribution`/`IMainViewContribution`/`IPanelTabContribution`/`IStatusBarItemContribution`（Abstractions/Contributions/）；定位枚举 `NavigationItemPlacement`/`PanelPlacement`（Abstractions/Regions/ShellRegions.cs）；`IMenuItemContribution`、`MenuGroupAttribute`/`MenuItemAttribute`（Abstractions/Menus/）；`IWindowManager`（Abstractions/WindowManager/） | `Contributions/` 六个贡献类各实现一个接口（菜单贡献改由 attribute 菜单类承担，不再直接实现 `IMenuItemContribution`）；`MainWindowViewModel.cs:127-136` 收集方法参数；四个菜单类标注两个 attribute（`Abstractions.Menus`）；`Menus/HelpMenus.cs:12` 注入 `IWindowManager` |
+| `Core/Models`（经 Framework） | `OpenMainViewEvent`、`TogglePanelVisibilityEvent`、`TogglePanelTarget`（Models/Events/；`SetPanelAlignmentEvent` 已迁往 `Framework.Layout`） | `MainWindowViewModel.cs:35-36` 订阅两事件、`:278-285` `TogglePanel` 消费枚举；`Menus/ViewPanelMenus.cs` 发布 `TogglePanelVisibilityEvent`（`WorkstationApplication.cs` 不再引用本命名空间） |
+| Prism（经 Framework：`Prism.DryIoc.Avalonia`） | `IContainerRegistry`/`IContainerProvider`、`IEventAggregator`、ViewModelLocator（`DelegateCommand` 不再出现于本模块——菜单命令由 Framework 的反射贡献实现包装） | `WorkstationApplication.cs:19、35`；`MainWindowViewModel.cs:30-39`；`Menus/ViewPanelMenus.cs:12`、`ViewAlignmentMenus.cs:13` 构造注入 `IEventAggregator`；`MainWindow.axaml:12` `AutoWireViewModel` |
+| `CommunityToolkit.Mvvm`（经 Framework） | `ObservableObject`、`[ObservableProperty]`、`[RelayCommand]` | `MainWindowViewModel.cs:16、:41-50、:151 等`；`NavigationItemViewModel.cs:10、29`；`PanelTabViewModel.cs:10、29` |
+| Avalonia / Ursa（经 Framework/UIPackage） | `Window`/`UserControl`/`GridSplitter`/`StreamGeometry`/`ApplicationLifetime`/`Separator`；`UrsaWindow`（经 FrameworkWindow 间接继承） | 全部 View/code-behind；`Core/Framework/Layout/PanelResizer.cs:13`；`Menus/FileMenus.cs:21`（ApplicationLifetime Shutdown）；Framework 的 `Core/Framework/Menus/MenuItemViewModel.cs:43、47`（StreamGeometry 解析图标、Separator 分隔线）；`MainWindow.axaml:1`（根元素 `win:FrameworkWindow`） |
 
 ### 编译设置
 
@@ -36,27 +36,27 @@
 
 ## 核心内部数据结构
 
-### `MainWindowViewModel` 私有字段（MainWindowViewModel.cs:15-25）
+### `MainWindowViewModel` 私有字段（MainWindowViewModel.cs:18-28）
 
 ```csharp
-private readonly ShellContributionCollector _collector;         // :15 贡献收集器（Framework）
-private readonly IContainerProvider _containerProvider;         // :16 视图实例解析源
-private readonly Dictionary<string, NavigationItemViewModel> _itemsById;     // :17 导航项 Id → VM（Top+Bottom 合并）
-private readonly Dictionary<string, IMainViewContribution> _mainViewsById;   // :18 主视图 Id → 贡献
-private readonly Dictionary<string, object> _mainViewContents;             // :19 主视图 Id → 已解析视图实例（缓存）
-private readonly Dictionary<string, object> _sideBarContents;              // :20 导航项 Id → SideBar 内容实例（缓存）
-private readonly Dictionary<string, IPanelTabContribution> _auxTabsById;   // :21 AuxiliaryPanel tab Id → 贡献
-private readonly Dictionary<string, IPanelTabContribution> _bottomTabsById;// :22 BottomPanel tab Id → 贡献
-private readonly Dictionary<string, object> _auxTabContents;               // :23 aux tab Id → 内容实例（缓存）
-private readonly Dictionary<string, object> _bottomTabContents;            // :24 bottom tab Id → 内容实例（缓存）
-private bool _contributionsLoaded;                              // :25 EnsureContributionsLoaded 一次性守卫
+private readonly ShellContributionCollector _collector;         // :18 贡献收集器（Framework）
+private readonly IContainerProvider _containerProvider;         // :19 视图实例解析源
+private readonly Dictionary<string, NavigationItemViewModel> _itemsById;     // :20 导航项 Id → VM（Top+Bottom 合并）
+private readonly Dictionary<string, IMainViewContribution> _mainViewsById;   // :21 主视图 Id → 贡献
+private readonly Dictionary<string, object> _mainViewContents;             // :22 主视图 Id → 已解析视图实例（缓存）
+private readonly Dictionary<string, object> _sideBarContents;              // :23 导航项 Id → SideBar 内容实例（缓存）
+private readonly Dictionary<string, IPanelTabContribution> _auxTabsById;   // :24 AuxiliaryPanel tab Id → 贡献
+private readonly Dictionary<string, IPanelTabContribution> _bottomTabsById;// :25 BottomPanel tab Id → 贡献
+private readonly Dictionary<string, object> _auxTabContents;               // :26 aux tab Id → 内容实例（缓存）
+private readonly Dictionary<string, object> _bottomTabContents;            // :27 bottom tab Id → 内容实例（缓存）
+private bool _contributionsLoaded;                              // :28 EnsureContributionsLoaded 一次性守卫
 ```
 
 关系要点：五个 `*Contents` 缓存字典是视图实例的**唯一持有者**（除此之外只有 XAML `ContentControl` 的 Content 引用），缓存键 = 贡献的字符串 Id，与 `ShellLayoutState` 里的 `ContentFor`/`ActiveTab`/`ActiveView` 对应。字典索引用赋值（`_mainViewsById[id] = contribution`），重复 Id **静默覆盖**（见 pitfalls.md）。
 
-### 贡献类（Shell/）——无字段、无状态，全部数据即属性值
+### 贡献类（Contributions/）与菜单类（Menus/）——无字段、无状态，全部数据即属性值/attribute 值
 
-九个贡献类的属性矩阵见 api.md 第 5 节。跨类关系由字符串 Id 建立：
+六个 `I*Contribution` 实现类的属性矩阵见 api.md 第 5 节（四个 attribute 菜单类不实现贡献接口、无 Id——`IMenuItemContribution` 的 Id 已随 ADR-0001 删除）。跨类关系由字符串 Id 建立：
 
 ```
 SettingsNavigationItem.Id   "shell.settings"            ← State.SelectedActivity / _sideBarContents 键
@@ -64,9 +64,6 @@ PropertiesPanelTab.Id       "shell.properties"  ┐
 OutlinePanelTab.Id          "shell.outline"     ┴← State.AuxiliaryPanel.Tabs/ActiveTab、_auxTabContents 键
 OutputPanelTab.Id           "shell.output"      ┐
 LogPanelTab.Id              "shell.log"         ┴← State.BottomPanel.Tabs/ActiveTab、_bottomTabContents 键
-TogglePanelContribution.Id  "shell.toggle-sidebar|bottompanel|auxiliarypanel"
-ExitMenuItem.Id             "shell.menu.exit"
-AboutMenuItem.Id            "shell.menu.about"
 ReadyStatusBarItem.Id       "shell.status.ready"
 ```
 
@@ -75,8 +72,8 @@ ReadyStatusBarItem.Id       "shell.status.ready"
 | 本模块类型 | 实现/消费的抽象（定义处） |
 |---|---|
 | `WorkstationApplication` | `FrameworkApplication<TWindow>`（Core/Framework/FrameworkApplication.cs:16），最终基类 `Prism.DryIoc.PrismApplication` |
-| 九个 Shell 贡献类 | `I*Contribution` 五接口（Core/Abstractions/Shell/），契约详见 docs/analysis/Core/Abstractions/api.md |
-| `MainWindowViewModel.State` | `ShellLayoutState` 一族 record（Core/Framework/Shell/），转换语义详见 docs/analysis/Core/Framework/api.md 第 3 节 |
-| `MainWindowViewModel` 的事件订阅 | `OpenMainViewEvent`/`TogglePanelVisibilityEvent`（Core/Models/Events/），负载分别为 `string`（= `IMainViewContribution.Id`）与 `TogglePanelTarget` |
-| `AboutMenuItem` 的弹窗 | `IWindowManager`（Core/Abstractions/WindowManager/），实现为 Framework 的 `FrameworkWindowManager`（`ShowDialog` 要求主窗口已设且 IsActive） |
-| 贡献类 `Title`/`IconPath` | `Language`（Core/Resource/Language.cs）/`Icons`（Core/UIPackage/Icons.cs） |
+| 六个预置贡献类（Contributions/）+ 四个 attribute 菜单类（Menus/） | `I*Contribution` 接口（Core/Abstractions/Contributions/）与 `[MenuGroup]`/`[MenuItem]`（Core/Abstractions/Menus/），契约详见 docs/analysis/Core/Abstractions/api.md |
+| `MainWindowViewModel.State` | `ShellLayoutState` 一族 record（Core/Framework/Layout/），转换语义详见 docs/analysis/Core/Framework/api.md 第 3 节 |
+| `MainWindowViewModel` 的事件订阅 | `OpenMainViewEvent`/`TogglePanelVisibilityEvent`（Core/Models/Events/）与 `SetPanelAlignmentEvent`（Core/Framework/Layout/），负载分别为 `string`（= `IMainViewContribution.Id`）、`TogglePanelTarget` 与 `PanelAlignment`（Layout） |
+| `HelpMenus.About` 的弹窗 | `IWindowManager`（Core/Abstractions/WindowManager/），实现为 Framework 的 `FrameworkWindowManager`（`ShowDialog` 要求主窗口已设且 IsActive） |
+| 贡献类 `Title`/`IconPath` 与菜单类 attribute | `Language`（Core/Resource/Language.cs）/`Icons`（Core/UIPackage/Icons.cs）；菜单类 attribute 里是资源键字符串，由 Framework 经 `Language.Get` 解析 |

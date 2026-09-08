@@ -1,4 +1,4 @@
-﻿using DigitalWorkstation.Core.Abstractions.Shell;
+﻿using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Resource;
 using DigitalWorkstation.Core.UIPackage;
 

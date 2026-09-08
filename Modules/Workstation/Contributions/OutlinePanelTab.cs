@@ -1,9 +1,9 @@
-﻿using DigitalWorkstation.Core.Abstractions.Shell;
+﻿using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Resource;
 using DigitalWorkstation.Core.UIPackage;
 using DigitalWorkstation.Workstation.Views;
 
-namespace DigitalWorkstation.Workstation.Shell;
+namespace DigitalWorkstation.Workstation.Contributions;
 
 /// <summary>
 ///     shell 预置的 AuxiliaryPanel 演示 tab"大纲"

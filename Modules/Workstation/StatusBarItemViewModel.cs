@@ -1,5 +1,5 @@
 ﻿using Avalonia.Media;
-using DigitalWorkstation.Core.Abstractions.Shell;
+using DigitalWorkstation.Core.Abstractions.Contributions;
 
 namespace DigitalWorkstation.Workstation;
 

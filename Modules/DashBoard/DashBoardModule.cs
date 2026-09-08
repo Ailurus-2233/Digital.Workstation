@@ -1,4 +1,5 @@
-﻿using DigitalWorkstation.Core.Abstractions.Shell;
+﻿using DigitalWorkstation.Core.Abstractions.Contributions;
+using DigitalWorkstation.Core.Framework.Menus;
 using DigitalWorkstation.DashBoard.Views;
 
 namespace DigitalWorkstation.DashBoard;
@@ -11,7 +12,7 @@ public class DashBoardModule : IModule
         containerRegistry.RegisterSingleton<IMainViewContribution, DashBoardOverviewMainView>();
         containerRegistry.RegisterSingleton<IMainViewContribution, DashBoardRecentMainView>();
         containerRegistry.RegisterSingleton<IPanelTabContribution, DashBoardTasksPanelTab>();
-        containerRegistry.RegisterSingleton<IMenuItemContribution, OpenDashBoardMenuItem>();
+        containerRegistry.RegisterMenus(typeof(DashBoardModule).Assembly);
         containerRegistry.RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>();
         containerRegistry.Register<DashBoardNavigationView>();
         containerRegistry.Register<DashBoardOverviewView>();

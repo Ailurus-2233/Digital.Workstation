@@ -3,12 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DigitalWorkstation.Core.Abstractions.Shell;
-using DigitalWorkstation.Core.Framework.Shell;
+using DigitalWorkstation.Core.Abstractions.Contributions;
+using DigitalWorkstation.Core.Framework.Contributions;
+using DigitalWorkstation.Core.Framework.Layout;
+using DigitalWorkstation.Core.Framework.Menus;
 using DigitalWorkstation.Core.Models.Events;
 using DigitalWorkstation.Core.UIPackage;
 using DigitalWorkstation.Workstation.Views;
-using DigitalWorkstation.Workstation.Shell;
 
 namespace DigitalWorkstation.Workstation;
 
@@ -66,19 +67,11 @@ public partial class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<PanelTabViewModel> BottomTabs { get; } = [];
     /// <summary>
-    ///     文件菜单项：shell 预置项与模块贡献项按 Order 统一排序
+    ///     菜单栏：全部菜单贡献经 MenuTreeBuilder 建树生成（ADR-0001）——顶层不分组不插分隔线，
+    ///     子菜单按 Group/Order 分组排序、组间插分隔线
     /// </summary>
-    public ObservableCollection<object> FileMenuItems { get; } = [];
+    public ObservableCollection<MenuItemViewModel> MenuBarItems { get; } = [];
 
-    /// <summary>
-    ///     视图菜单项：shell 预置项与模块贡献项按 Order 统一排序；面板显隐组与对齐组之间插有 Separator
-    /// </summary>
-    public ObservableCollection<object> ViewMenuItems { get; } = [];
-
-    /// <summary>
-    ///     帮助菜单项：shell 预置项与模块贡献项按 Order 统一排序
-    /// </summary>
-    public ObservableCollection<object> HelpMenuItems { get; } = [];
 
     /// <summary>
     ///     状态栏条目：shell 预置项与模块贡献项按 Order 统一排序
@@ -141,18 +134,10 @@ public partial class MainWindowViewModel : ObservableObject
             content => AuxiliaryContent = content, _auxTabContents);
         LoadPanelTabs(_collector.GetPanelTabs(PanelPlacement.Bottom), BottomTabs, _bottomTabsById,
             content => BottomContent = content, _bottomTabContents);
-        LoadChrome(_collector.GetMenuItems(MenuPlacement.File), FileMenuItems);
-        LoadChrome(_collector.GetMenuItems(MenuPlacement.View), ViewMenuItems);
-        // 面板显隐组与对齐组之间插分隔符：定位第一个对齐贡献项，其前插入 Separator
-        for (var i = 0; i < ViewMenuItems.Count; i++)
+        foreach (var submenu in MenuTreeBuilder.Build(_collector.GetMenuItems()))
         {
-            if (ViewMenuItems[i] is MenuItemViewModel { Contribution: PanelAlignmentContribution })
-            {
-                ViewMenuItems.Insert(i, new Separator());
-                break;
-            }
+            MenuBarItems.Add(MenuItemViewModel.FromSubmenu(submenu));
         }
-        LoadChrome(_collector.GetMenuItems(MenuPlacement.Help), HelpMenuItems);
         foreach (var item in _collector.GetStatusBarItems())
         {
             StatusBarItems.Add(new StatusBarItemViewModel(item));
@@ -298,15 +283,6 @@ public partial class MainWindowViewModel : ObservableObject
             TogglePanelTarget.AuxiliaryPanel => State.ToggleAuxiliaryPanel(),
             _ => State.ToggleBottomPanel()
         };
-    }
-
-    private static void LoadChrome(IReadOnlyList<IMenuItemContribution> contributions,
-        ObservableCollection<object> target)
-    {
-        foreach (var contribution in contributions)
-        {
-            target.Add(new MenuItemViewModel(contribution));
-        }
     }
 
     /// <summary>

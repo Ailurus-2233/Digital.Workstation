@@ -1,4 +1,4 @@
-﻿using DigitalWorkstation.Core.Abstractions.Shell;
+﻿using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.DashBoard.Views;
 
 namespace DigitalWorkstation.DashBoard;

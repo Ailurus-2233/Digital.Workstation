@@ -30,12 +30,12 @@
 
 | 模块 | 文档目录 | 一句话职责 | 依赖 |
 |---|---|---|---|
-| Core/Abstractions | [Core/Abstractions/](Core/Abstractions/common.md) | 纯契约层：5 个 shell 贡献接口（`I*Contribution`）、`ShellRegions` 常量、窗口管理接口（`IWindowManager`/`IMainWindowManager`），零实现 | 无项目依赖（包：Avalonia） |
+| Core/Abstractions | [Core/Abstractions/](Core/Abstractions/common.md) | 纯契约层：贡献接口与定位枚举（`Contributions/`）、菜单契约 `IMenuItemContribution` 与 `MenuGroupAttribute`/`MenuItemAttribute`（`Menus/`）、`ShellRegions` 常量（`Regions/`）、窗口管理接口（`WindowManager/`），零实现 | 无项目依赖（包：Avalonia） |
 | Core/Common | [Core/Common/](Core/Common/common.md) | 基础设施静态门面：Serilog 静态日志 `Logger` 与 Prism 容器静态访问器 `IoC`，进程内单例 | Abstractions（包：Prism.Avalonia/DryIoc、Serilog） |
 | Core/Models | [Core/Models/](Core/Models/common.md) | 跨模块事件契约与负载 DTO 层：启动序列三件套 + 工作区交互两件套，全是空 `PubSubEvent<T>` 子类与 record/枚举 | Common |
 | Core/Resource | [Core/Resource/](Core/Resource/common.md) | UI 文案资源层：静态类 `Language` + 中文中性 `Language.resx` / 英文 `Language.en-US.resx`，键缺失返回键名本身 | 无项目依赖 |
 | Core/UIPackage | [Core/UIPackage/](Core/UIPackage/common.md) | 共享 UI 资源包：`WorkstationTheme` 聚合 4 个第三方主题包、`VSCodePalette` 深色色键、`Icons` 15 个 StreamGeometry path 常量 | 无项目依赖（包：Avalonia/Semi.Avalonia/Ursa） |
-| Core/Framework | [Core/Framework/](Core/Framework/common.md) | 应用框架层：`FrameworkApplication<TWindow>` 引导与三阶段启动序列（ADR-0004）、`FrameworkWindowManager`、`ShellLayoutState` 布局状态机、`ShellContributionCollector` 贡献收集 | Abstractions、Common、Models、UIPackage |
+| Core/Framework | [Core/Framework/](Core/Framework/common.md) | 应用框架层：`FrameworkApplication<TWindow>` 引导与三阶段启动序列（ADR-0004）、`FrameworkWindow` 主题窗口基类（`Windows/`）、`FrameworkWindowManager`（`WindowManager/`）、`ShellLayoutState` 布局状态机（`Layout/`）、`ShellContributionCollector` 贡献收集（`Contributions/`）、`MenuTreeBuilder` 菜单建树与 `RegisterMenus` attribute 菜单注册（`Menus/`） | Abstractions、Common、Models、UIPackage |
 | Modules/DashBoard | [Modules/DashBoard/](Modules/DashBoard/common.md) | 启动台模块：启动进度窗（进度/失败/继续退出决策）+ 向 shell 五个扩展点各贡献一条目的通路验证（tracer bullet） | Abstractions、Framework、Resource、UIPackage |
 | Modules/Workstation | [Modules/Workstation/](Modules/Workstation/common.md) | 应用宿主与 shell：`MainWindow` VS Code 式五区布局、`MainWindowViewModel` 驱动布局状态、`WorkstationApplication` 入口、shell 预置贡献 | Framework、Resource、UIPackage、DashBoard |
 | Launcher | [Launcher/](Launcher/common.md) | 程序入口与运行时引导器（WinExe）：Release 分类目录布局的程序集/native 库解析（`AssemblyLoader`）+ 启动 Avalonia/Prism 应用 | Workstation |
@@ -78,9 +78,9 @@ graph TD
 
 ### 1. 新增一个业务模块并向 shell 贡献导航项/面板 tab/菜单项
 
-1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：5 个 `I*Contribution` 接口的字段骨架（`Id`/`Title`/`IconPath`/`Order` + 定位枚举 + 行为字段）。
+1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：5 个 `I*Contribution` 接口的字段骨架（导航/主视图/面板/状态栏为 `Id`/`Title`/`IconPath`/`Order` + 定位枚举；`IMenuItemContribution` 为 ADR-0001 路径/分组模型，通常不经手写实现而由 `MenuGroupAttribute`/`MenuItemAttribute` + `RegisterMenus` 声明注册）。
 2. [Core/Abstractions/pitfalls.md](Core/Abstractions/pitfalls.md)：`Id` 唯一性分级（主视图 Id 跨模块全局唯一，建议模块名前缀）与 `Order`「小者靠前」的作用域。
-3. [Modules/DashBoard/common.md](Modules/DashBoard/common.md) + [reference.md](Modules/DashBoard/reference.md)：现成模板——DashBoard 是五个扩展点各贡献一条的 tracer bullet，`DashBoardModule.RegisterTypes` 是注册样板，贡献类属性矩阵在 reference.md。
+3. [Modules/DashBoard/common.md](Modules/DashBoard/common.md) + [reference.md](Modules/DashBoard/reference.md)：现成模板——DashBoard 是五个扩展点各贡献一条的 tracer bullet，`DashBoardModule.RegisterTypes` 是注册样板（菜单为一行 `RegisterMenus(typeof(...).Assembly)`，菜单条目是 `DashBoardMenus` 这类 attribute 菜单类），贡献类属性矩阵在 reference.md。
 4. [Core/Resource/common.md](Core/Resource/common.md)：贡献项 `Title` 文案的来源（见场景 2）。
 5. [Core/UIPackage/common.md](Core/UIPackage/common.md)：贡献项 `IconPath` 的来源（`Icons.Xxx` 常量）。
 6. [Modules/Workstation/common.md](Modules/Workstation/common.md)：shell 侧如何收集（`EnsureContributionsLoaded` → `ShellContributionCollector`）并渲染；`WorkstationApplication.ConfigureModuleCatalog` 里 `AddModule<新模块>()`。
@@ -117,7 +117,7 @@ graph TD
 
 ### 6. 新增一种 shell 贡献类型（新扩展点）
 
-1. [Core/Abstractions/common.md](Core/Abstractions/common.md) 场景 1：新建 `IXxxContribution.cs`，仿 `IMenuItemContribution` 字段结构；如需新 Region 在 `ShellRegions.cs` 加常量。**这是破坏性变更**——最底层契约的签名改动会级联全部实现方与收集方。
+1. [Core/Abstractions/common.md](Core/Abstractions/common.md) 场景 1：新建 `IXxxContribution.cs`（放 `Abstractions/Contributions/`），仿现有 `I*Contribution` 字段结构（`Id`/`Title`/`IconPath`/`Order` + 定位枚举；注意 `IMenuItemContribution` 已是路径/分组模型并配 attribute 注册，不宜作通用模板）；如需新 Region 在 `ShellRegions.cs`（`Abstractions/Regions/`）加常量。**这是破坏性变更**——最底层契约的签名改动会级联全部实现方与收集方。
 2. [Core/Framework/common.md](Core/Framework/common.md) 场景 3：`ShellContributionCollector` 加一个 `Get*` 收集方法（Resolve → Where → OrderBy → ToArray 模式）。
 3. [Modules/Workstation/common.md](Modules/Workstation/common.md)：shell 侧消费（`MainWindowViewModel` 的集合、缓存字典、XAML 呈现点）。
 4. [Modules/DashBoard/common.md](Modules/DashBoard/common.md)：模块侧第一个实现样例（含 `RegisterTypes` 注册行）。

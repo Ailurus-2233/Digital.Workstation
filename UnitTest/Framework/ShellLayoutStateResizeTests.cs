@@ -1,4 +1,4 @@
-﻿using DigitalWorkstation.Core.Framework.Shell;
+﻿using DigitalWorkstation.Core.Framework.Layout;
 using Xunit;
 
 namespace DigitalWorkstation.UnitTest.Framework;

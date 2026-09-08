@@ -1,4 +1,4 @@
-<shell:FrameworkWindow
+<win:FrameworkWindow
     Height="800"
     MinHeight="600"
     MinWidth="960"
@@ -15,75 +15,27 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:prism="http://prismlibrary.com/"
-    xmlns:shell="clr-namespace:DigitalWorkstation.Core.Framework.Shell;assembly=DigitalWorkstation.Core.Framework"
+    xmlns:win="clr-namespace:DigitalWorkstation.Core.Framework.Windows;assembly=DigitalWorkstation.Core.Framework"
     xmlns:u="https://irihi.tech/ursa"
-    xmlns:vm="clr-namespace:DigitalWorkstation.Workstation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!--  基础布局（五区 shell + 状态栏）由 FrameworkWindow 提供，见 Core/Framework/Shell/FrameworkWindowTheme.axaml；
-          本文件只保留应用级 chrome：顶层菜单、窗口标题、快捷键  -->
+    <!--  基础布局（五区布局 + 状态栏）与菜单栏由 FrameworkWindow 提供，见 Core/Framework/Windows/FrameworkWindowTheme.axaml；
+          本文件只保留应用级 chrome：窗口标题、快捷键  -->
 
-    <shell:FrameworkWindow.Resources>
-        <!--  菜单项头部：图标 + 标题  -->
-        <DataTemplate DataType="vm:MenuItemViewModel" x:Key="MenuItemHeaderTemplate">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-                <PathIcon Data="{Binding Icon}" Height="14" Width="14" />
-                <TextBlock Text="{Binding Title}" />
-            </StackPanel>
-        </DataTemplate>
-    </shell:FrameworkWindow.Resources>
-
-    <shell:FrameworkWindow.Styles>
+    <win:FrameworkWindow.Styles>
         <!--  标题栏底色：与窗口背景（面板容器/ActivityBar）同色，视觉融为一体  -->
         <Style Selector="u|TitleBar">
             <Setter Property="Background" Value="{DynamicResource SemiColorNavBackground}" />
         </Style>
-        <!--  标题栏内的顶层菜单：VS Code 式紧凑行高  -->
-        <Style Selector="MenuItem.chrome-menu">
-            <Setter Property="MinHeight" Value="30" />
-            <Setter Property="Padding" Value="10,0" />
-        </Style>
-        <!--  顶层菜单弹出层贴合标题栏下缘（模板内边距 8 与默认偏移 -4 相抵后仍留 4px 缝）  -->
-        <Style Selector="MenuItem.chrome-menu /template/ Popup#PART_Popup">
-            <Setter Property="VerticalOffset" Value="-8" />
-        </Style>
-        <!--  顶层菜单下的菜单项（容器由 ItemsSource 生成，命令与无障碍名经样式绑定）  -->
-        <Style Selector="MenuItem.chrome-menu MenuItem">
-            <Setter Property="Command" Value="{Binding Command}" />
-            <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
-        </Style>
-        <Style Selector="MenuItem.chrome-menu MenuItem PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource SemiColorText1}" />
-        </Style>
-    </shell:FrameworkWindow.Styles>
+    </win:FrameworkWindow.Styles>
 
-    <shell:FrameworkWindow.KeyBindings>
+    <win:FrameworkWindow.KeyBindings>
         <KeyBinding Command="{Binding ToggleSideBarCommand}" Gesture="Ctrl+B" />
         <KeyBinding Command="{Binding ToggleBottomPanelCommand}" Gesture="Ctrl+J" />
         <KeyBinding Command="{Binding ToggleAuxiliaryPanelCommand}" Gesture="Ctrl+Alt+B" />
-    </shell:FrameworkWindow.KeyBindings>
+    </win:FrameworkWindow.KeyBindings>
 
-    <!--  标题栏与菜单栏合并（VS Code 式）：菜单嵌入标题栏左侧，窗口标题居中  -->
-    <shell:FrameworkWindow.LeftContent>
-        <Menu VerticalAlignment="Center">
-            <MenuItem
-                Classes="chrome-menu"
-                Header="文件"
-                ItemsSource="{Binding FileMenuItems}"
-                ItemTemplate="{StaticResource MenuItemHeaderTemplate}" />
-            <MenuItem
-                Classes="chrome-menu"
-                Header="视图"
-                ItemsSource="{Binding ViewMenuItems}"
-                ItemTemplate="{StaticResource MenuItemHeaderTemplate}" />
-            <MenuItem
-                Classes="chrome-menu"
-                Header="帮助"
-                ItemsSource="{Binding HelpMenuItems}"
-                ItemTemplate="{StaticResource MenuItemHeaderTemplate}" />
-        </Menu>
-    </shell:FrameworkWindow.LeftContent>
-    <shell:FrameworkWindow.TitleBarContent>
+    <win:FrameworkWindow.TitleBarContent>
         <TextBlock
             FontSize="12"
             Foreground="{DynamicResource SemiColorText2}"
@@ -91,5 +43,5 @@
             IsHitTestVisible="False"
             Text="{Binding $parent[u:UrsaWindow].Title}"
             VerticalAlignment="Center" />
-    </shell:FrameworkWindow.TitleBarContent>
-</shell:FrameworkWindow>
+    </win:FrameworkWindow.TitleBarContent>
+</win:FrameworkWindow>

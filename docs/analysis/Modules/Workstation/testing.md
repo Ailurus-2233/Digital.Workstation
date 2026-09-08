@@ -25,7 +25,7 @@ dotnet test UnitTest/Framework --filter "FullyQualifiedName~ShellLayoutStateResi
 |---|---|
 | 布局状态语义（显隐、clamp、tab 激活拒绝） | 实际逻辑在 `ShellLayoutState`：`dotnet test UnitTest/Framework` 全绿（11 用例，检测点映射见 docs/analysis/Core/Framework/testing.md） |
 | `MainWindowViewModel` 交互逻辑（贡献收集、缓存、命令转发） | 无单元测试覆盖；手动 `dotnet run` 冒烟：启动 → 点 ActivityBar 导航项（SideBar 展开/再点收起）→ Ctrl+B/Ctrl+J/Ctrl+Alt+B → 拖三条分隔条（边界应停在 Min/Max）→ 视图菜单三个切换项 → 文件>退出、帮助>关于 |
-| Shell 贡献类属性（Id/Order/图标/文案） | 手动验证渲染位置与排序；Id 类问题看 error.md 排查表 |
+| Shell 贡献类属性与菜单类 attribute（Id/Order/图标/文案/分组位次） | 手动验证渲染位置与排序；Id 类问题看 error.md 排查表，菜单项缺席看注册日志（非法签名/空段路径被跳过） |
 | MainWindow.axaml 样式/布局 | 纯视觉，启动目验 |
 
 ## 测试约定（若将来为本模块新增测试）

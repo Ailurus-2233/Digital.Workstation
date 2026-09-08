@@ -1,11 +1,10 @@
 ﻿using Avalonia.Controls;
-using DigitalWorkstation.Core.Abstractions.Shell;
+using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Framework;
-using DigitalWorkstation.Core.Framework.Shell;
-using DigitalWorkstation.Core.Models.Events;
+using DigitalWorkstation.Core.Framework.Menus;
 using DigitalWorkstation.DashBoard;
 using DigitalWorkstation.DashBoard.Views.Windows;
-using DigitalWorkstation.Workstation.Shell;
+using DigitalWorkstation.Workstation.Contributions;
 using DigitalWorkstation.Workstation.Views;
 
 namespace DigitalWorkstation.Workstation;
@@ -32,19 +31,8 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
         containerRegistry.Register<OutlineView>();
         containerRegistry.Register<OutputView>();
         containerRegistry.Register<LogView>();
-        // shell 预置菜单项：文件>退出、帮助>关于；视图>三面板显隐切换 + 四档面板对齐
-        containerRegistry.RegisterSingleton<IMenuItemContribution, ExitMenuItem>();
-        containerRegistry.RegisterSingleton<IMenuItemContribution, AboutMenuItem>();
-        foreach (var target in new[] { TogglePanelTarget.SideBar, TogglePanelTarget.BottomPanel, TogglePanelTarget.AuxiliaryPanel })
-        {
-            containerRegistry.RegisterSingleton(typeof(IMenuItemContribution),
-                provider => new TogglePanelContribution(provider.Resolve<IEventAggregator>(), target));
-        }
-        foreach (var alignment in Enum.GetValues<PanelAlignment>())
-        {
-            containerRegistry.RegisterSingleton(typeof(IMenuItemContribution),
-                provider => new PanelAlignmentContribution(provider.Resolve<IEventAggregator>(), alignment));
-        }
+        // shell 预置菜单：文件>退出、帮助>关于；视图>三面板显隐切换 + 四档面板对齐（attribute 扫描注册，ADR-0001）
+        containerRegistry.RegisterMenus(typeof(WorkstationApplication).Assembly);
         // shell 预置状态栏项"就绪"
         containerRegistry.RegisterSingleton<IStatusBarItemContribution, ReadyStatusBarItem>();
         // "关于"对话框：经窗口管理器按需解析

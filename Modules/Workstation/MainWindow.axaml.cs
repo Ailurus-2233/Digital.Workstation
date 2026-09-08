@@ -1,4 +1,4 @@
-﻿using DigitalWorkstation.Core.Framework.Shell;
+﻿using DigitalWorkstation.Core.Framework.Windows;
 
 namespace DigitalWorkstation.Workstation;
 
