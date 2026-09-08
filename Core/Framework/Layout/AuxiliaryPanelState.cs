@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Framework.Shell;
+﻿namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
 ///     AuxiliaryPanel 的布局状态

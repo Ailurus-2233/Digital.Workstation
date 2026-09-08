@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Framework.Shell;
+﻿namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
 ///     BottomPanel 的布局状态

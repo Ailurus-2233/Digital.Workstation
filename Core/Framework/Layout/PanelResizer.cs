@@ -3,7 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 
-namespace DigitalWorkstation.Core.Framework.Shell;
+namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
 ///     面板分隔条：复用 GridSplitter 的拖拽手势与方向光标，但禁用其原生列重排——

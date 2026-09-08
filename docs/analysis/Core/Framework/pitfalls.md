@@ -1,4 +1,4 @@
-# Framework — 不变量与陷阱
+﻿# Framework — 不变量与陷阱
 
 ## 隐含不变量
 
@@ -12,7 +12,7 @@
 4. **窗口类型单实例**：`_windowMap: Dictionary<Type, Window>`（`FrameworkWindowManager.cs:17`）以运行时类型为键，同类型窗口同时只能存在一个注册实例；再次 Show 前必须等上一个实例触发 `Closing`（事件处理器在第 50 行把类型移出映射）。`CloseWindow`/`HideWindow` 按类型索引的前提也由此而来。
 5. **`HandleMainWindow` 只能调一次**：其实现（第 158-167 行）在 `_mainWindow != null && !_windowMap.ContainsKey(type)` 时登记，**否则抛 `InvalidOperationException`**——第二次调用时主窗口已在映射中，走 else 分支抛错。不要把它当幂等的"刷新主窗口引用"用。
 6. **`ShowDialog` 要求主窗口活跃**：`_mainWindow is { IsActive: true }`（第 127、137 行）才允许弹模态；主窗口被 Hide 期间弹对话框会抛异常，而 `ShowWindow` 只要求主窗口非 null。
-7. **布局状态必须整体替换**：`ShellLayoutState` 所有转换返回新实例（非法操作返回 `this`）；消费方若丢弃返回值（`state.Resize(...)` 不赋值回 `_state`）改动静默丢失。`Modules/Workstation/MainWindowViewModel.cs:38` 的 `[ObservableProperty] _state` 是唯一的当前实例持有者。
+7. **布局状态必须整体替换**：`ShellLayoutState` 所有转换返回新实例（非法操作返回 `this`）；消费方若丢弃返回值（`state.Resize(...)` 不赋值回 `_state`）改动静默丢失。`Modules/Workstation/MainWindowViewModel.cs:41` 的 `[ObservableProperty] _state` 是唯一的当前实例持有者。
 8. **UI 线程亲和性**：`FrameworkWindowManager` 的 Show/Hide/Close 与 `ShellContributionCollector` 的容器解析都假定在 UI 线程调用；模块加载被刻意 `Task.Run` 移出 UI 线程（`FrameworkApplication.cs:88`），模块 `Initialize` 里直接操作窗口需自行切回 UI 线程。
 9. **`SideBarState.Visible` 默认 false，两个面板默认 true**：初始布局里 SideBar 收起、AuxiliaryPanel/BottomPanel 展开（`SideBarState.cs:11`、`AuxiliaryPanelState.cs:11`、`BottomPanelState.cs:11`）；改默认值会改变首屏布局且现有测试以 `Initial` 为基准。
 
@@ -26,6 +26,10 @@
 - **在 `RegisterTypes` 之外注册框架服务或在子类重写 `RegisterTypes`**：注释明确"子类不需要重写此方法"（`FrameworkApplication.cs:165-167`），子类入口是 `RegisterCustomService`；重写 `RegisterTypes` 且不调 base 会丢掉 `IoC.Initialize` 与窗口管理器注册，整个应用起不来。
 - **View/ViewModel 命名或目录偏离约定**：`ConfigureViewModelLocator`（第 209-233 行）只做字符串替换与后缀补全，解析不到返回 null（不抛异常）——ViewModel 静默不绑定，界面空白无报错。`Replace("Views", "ViewModels")` 会替换 FullName 中**所有**出现的 "Views"，命名空间里多处含 "Views" 时结果可能意外。
 - **改 `WaitForFailureActionAsync` 去掉 `RunContinuationsAsynchronously`**（第 120 行）：续体会在发布者（启动台 UI 线程）上下文内联执行，可能死锁；去掉 `Unsubscribe`（第 123 行）则每次失败累积一个订阅，第二次失败时旧订阅先 `TrySetResult` 已被释放的 completion（虽无害但泄漏订阅）。
+- **新模块忘记在 `RegisterTypes` 调 `RegisterMenus`**：`MenuRegistration.RegisterMenus`（`Menus/MenuRegistration.cs:20`）只扫**调用方传入的那一个程序集**，刻意不做全局扫描（:16-19 注释）；新模块写了 `[MenuGroup]`/`[MenuItem]` 菜单类但没加 `containerRegistry.RegisterMenus(typeof(XxxModule).Assembly)`（真实调用点 `Modules/Workstation/WorkstationApplication.cs:35`、`Modules/DashBoard/DashBoardModule.cs:15`），菜单**静默缺失**——无任何日志、无异常，建树时容器里根本没有对应的 `IMenuItemContribution`。
+- **菜单方法必须是公共实例无参方法**：`RegisterMenus` 只取 `BindingFlags.Public | Instance | DeclaredOnly` 方法（:37），再校验无参且返回值 `void`/`Task`（:44-45）——**静态方法、非公共方法连候选都进不了**（连跳过日志都没有）；带参/返回值非法的方法只记一条 `Logger.Warning`（:47-50）就跳过，菜单同样静默少一项。同理类路径或条目路径含空段也只是记日志跳过（`MenuRegistration.cs:30-35`、`MenuTreeBuilder.cs:24-29`）。排查"菜单没出现"先翻日志的 Warning。
+- **把菜单项 DataTemplate 挪进 `Styles.Resources`**：无 x:Key 的 `DataTemplate` 放在 Styles 的资源字典里会触发 AVLN3000（资源必须带键）；菜单项模板（`MenuItemViewModel` → 图标+标题）因此在 `FrameworkWindow` 构造函数里代码注册进窗口 `DataTemplates`（`FrameworkWindow.cs:41`）——窗口级模板同时保证子菜单任意深度经模板查找递归复用。配套样式可以留在 axaml（`FrameworkWindowTheme.axaml:551-569`），因为它们带完整 Selector 不需要键。
+- **移动 axaml 主题文件必须同步 `StyleInclude` 的 BaseUri**：avares 路径跟随项目内目录（`FrameworkWindowTheme.cs:14` 的 `avares://DigitalWorkstation.Core.Framework/Windows/`），编译不检查、运行时生效——移了 axaml 没改 BaseUri，编译绿灯但窗口构造期查不到布局模板/样式，主题静默缺失（布局模板缺失会抛"布局模板资源缺失"，样式缺失则连异常都没有）。同理 axaml 内 `xmlns:layout`（`FrameworkWindowTheme.axaml:3`）指向 `PanelResizer` 所在命名空间，移动 PanelResizer 要同步改。
 
 ## 历史踩坑（注释/防御性代码透露）
 

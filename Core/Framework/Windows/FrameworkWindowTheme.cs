@@ -1,7 +1,7 @@
 ﻿using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 
-namespace DigitalWorkstation.Core.Framework.Shell;
+namespace DigitalWorkstation.Core.Framework.Windows;
 
 /// <summary>
 ///     FrameworkWindow 的基础布局主题：四份静态布局模板（WindowLayout* 资源）+ 五区 shell 的样式。
@@ -11,7 +11,7 @@ namespace DigitalWorkstation.Core.Framework.Shell;
 /// </summary>
 public class FrameworkWindowTheme : Styles
 {
-    private static readonly Uri BaseUri = new("avares://DigitalWorkstation.Core.Framework/Shell/");
+    private static readonly Uri BaseUri = new("avares://DigitalWorkstation.Core.Framework/Windows/");
 
     public FrameworkWindowTheme()
     {

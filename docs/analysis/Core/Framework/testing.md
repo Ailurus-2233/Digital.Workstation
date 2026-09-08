@@ -1,4 +1,4 @@
-# Framework — 验证方式
+﻿# Framework — 验证方式
 
 ## 测试在哪、用什么框架
 
@@ -42,7 +42,7 @@ dotnet test UnitTest/Framework --filter "FullyQualifiedName~ResizeSideBar_Clamps
 - **命名**：`方法_场景_期望`，如 `ResizeSideBar_ClampsAtMaxWidth`、`CollapsedSideBar_KeepsResizedWidth_WhenRestored`。
 - **结构**：AAA 三段——从 `ShellLayoutState.Initial` 出发，调转换方法得到 `next`，`Assert.Equal` 比较标量或整个 record（record 值相等使 `Assert.Equal(state.AuxiliaryPanel, next.AuxiliaryPanel)` 可直接用）。
 - **无夹具、无 mock**：被测对象是纯不可变 record 转换，不需要 `IClassFixture`/Moq；clamp 边界直接引用被测 record 的公开 const（`SideBarState.MaxWidth` 等），不硬编码数字。
-- **新增一个测试**：在 `UnitTest/Framework/` 下建 `XxxTests.cs`，`using DigitalWorkstation.Core.Framework.Shell;` + `using Xunit;`，命名空间 `DigitalWorkstation.UnitTest.Framework`，用 `[Fact]` 标注；数据检测类逻辑（如新的状态转换）照此模式即可直接测，不需要任何 UI 宿主。
+- **新增一个测试**：在 `UnitTest/Framework/` 下建 `XxxTests.cs`，`using DigitalWorkstation.Core.Framework.Layout;` + `using Xunit;`，命名空间 `DigitalWorkstation.UnitTest.Framework`，用 `[Fact]` 标注；数据检测类逻辑（如新的状态转换）照此模式即可直接测，不需要任何 UI 宿主。
 
 ## C# 桌面端约定：哪些 UI 部分按约定不测
 

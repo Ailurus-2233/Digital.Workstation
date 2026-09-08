@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Framework.Shell;
+﻿namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
 ///     Shell 布局状态 store：原型验证过的 reducer 的正式实现。

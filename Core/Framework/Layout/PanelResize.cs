@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Framework.Shell;
+﻿namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
 ///     一次面板尺寸调整：目标区域 + 已换算方向的尺寸增量

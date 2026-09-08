@@ -1,4 +1,4 @@
-# Framework — 异常与排查
+﻿# Framework — 异常与排查
 
 ## 模块可能抛出的异常
 
@@ -11,7 +11,7 @@
 | `InvalidOperationException("IoC is already initialized")` | 进程内第二次调用 `IoC.Initialize`（由 Common 模块抛出；正常路径下只有 `RegisterFrameworkServices` 调一次） | 经 `FrameworkApplication.cs:144` 触发，定义在 Core/Common/IoC.cs |
 | `NullReferenceException` | `IoC.Initialize` 之前任何代码访问 `IoC.Provider`/`IoC.Registry`（字段以 `null!` 抑制编译警告） | 经 `FrameworkWindowManager.GetWindow`（第 37 行）等，根源在 Core/Common |
 | 模块加载任意异常 | `moduleManager.LoadModule` 抛出的任何异常 | 不向上抛——`RunStartupSequenceAsync` 的 catch（`FrameworkApplication.cs:90`）捕获 |
-| `InvalidOperationException($"布局模板资源缺失：{key}")` | `FrameworkWindow` 构造或 `PanelAlignment` 切换时，对应档位的 `WindowLayout*` 布局模板经 `TryGetResource` 查不到（模板资源未编译进程序集，或键名与 axaml 漂移）——窗口构造期即失败 | `FrameworkWindow.UpdateLayoutTemplate`，`Shell/FrameworkWindow.cs:66` |
+| `InvalidOperationException($"布局模板资源缺失：{key}")` | `FrameworkWindow` 构造或 `PanelAlignment` 切换时，对应档位的 `WindowLayout*` 布局模板经 `TryGetResource` 查不到（模板资源未编译进程序集，或键名与 axaml 漂移）——窗口构造期即失败 | `FrameworkWindow.UpdateLayoutTemplate`，`Windows/FrameworkWindow.cs:94` |
 
 ## 错误处理路径
 
@@ -51,4 +51,4 @@ RunStartupSequenceAsync
 | 主窗口登记失败但 MainWindow 明明存在 | `HandleMainWindow`（第 158-167 行）——`_mainWindow != null` 且已在 `_windowMap` 也走 else 抛异常 | **重复调用 `HandleMainWindow()`**（第二次调用时主窗口已注册，直接抛） |
 | 面板 tab 点了没反应 | `ShellLayoutState.ActivateAuxTab/ActivateBottomTab` 的 `Visible` 检查（第 71、84 行） | 面板处于收起状态，激活被拒绝是设计行为，先展开面板 |
 | 拖分隔条尺寸不动/跳变 | `Resize` 的 Clamp（第 103-132 行）与各 record 的 Min/Max 常量 | delta 累计后被钳在边界；或消费方未用返回的新实例替换旧状态 |
-| 窗口构造即抛"布局模板资源缺失：{key}" | `FrameworkWindow.UpdateLayoutTemplate`（`Shell/FrameworkWindow.cs:54-67`）的键映射 vs `Shell/FrameworkWindowTheme.axaml` 的 `WindowLayout*` 资源键 | 键名漂移（改了一侧没改另一侧），或 axaml 未作为编译资源进程序集（`FrameworkWindowTheme.cs` 经 `StyleInclude` 从 `avares://` 加载，构造时已强制 `Loaded`） |
+| 窗口构造即抛"布局模板资源缺失：{key}" | `FrameworkWindow.UpdateLayoutTemplate`（`Windows/FrameworkWindow.cs:82-95`）的键映射 vs `Windows/FrameworkWindowTheme.axaml` 的 `WindowLayout*` 资源键 | 键名漂移（改了一侧没改另一侧），或 axaml 未作为编译资源进程序集（`FrameworkWindowTheme.cs` 经 `StyleInclude` 从 `avares://` 加载，构造时已强制 `Loaded`） |

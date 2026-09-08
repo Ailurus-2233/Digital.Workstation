@@ -1,6 +1,6 @@
 <Styles
     xmlns="https://github.com/avaloniaui"
-    xmlns:shell="clr-namespace:DigitalWorkstation.Core.Framework.Shell"
+    xmlns:layout="clr-namespace:DigitalWorkstation.Core.Framework.Layout"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Styles.Resources>
@@ -205,7 +205,7 @@
                         </Grid.ColumnDefinitions>
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellActivityBar}" Grid.RowSpan="2" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellSideBar}" Grid.Column="1" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 SideBar 宽度"
                             CornerRadius="4"
                             Grid.Column="1"
@@ -219,7 +219,7 @@
                             ZIndex="1" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellMainContent}" Grid.Column="2" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellAuxiliaryPanel}" Grid.Column="3" Grid.RowSpan="2" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 AuxiliaryPanel 宽度"
                             CornerRadius="4"
                             Grid.Column="3"
@@ -238,7 +238,7 @@
                             Grid.Column="1"
                             Grid.ColumnSpan="2"
                             Grid.Row="1" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 BottomPanel 高度"
                             CornerRadius="4"
                             Grid.Column="1"
@@ -271,7 +271,7 @@
                         </Grid.ColumnDefinitions>
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellActivityBar}" Grid.RowSpan="2" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellSideBar}" Grid.Column="1" Grid.RowSpan="2" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 SideBar 宽度"
                             CornerRadius="4"
                             Grid.Column="1"
@@ -286,7 +286,7 @@
                             ZIndex="1" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellMainContent}" Grid.Column="2" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellAuxiliaryPanel}" Grid.Column="3" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 AuxiliaryPanel 宽度"
                             CornerRadius="4"
                             Grid.Column="3"
@@ -304,7 +304,7 @@
                             Grid.Column="2"
                             Grid.ColumnSpan="2"
                             Grid.Row="1" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 BottomPanel 高度"
                             CornerRadius="4"
                             Grid.Column="2"
@@ -337,7 +337,7 @@
                         </Grid.ColumnDefinitions>
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellActivityBar}" Grid.RowSpan="2" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellSideBar}" Grid.Column="1" Grid.RowSpan="2" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 SideBar 宽度"
                             CornerRadius="4"
                             Grid.Column="1"
@@ -352,7 +352,7 @@
                             ZIndex="1" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellMainContent}" Grid.Column="2" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellAuxiliaryPanel}" Grid.Column="3" Grid.RowSpan="2" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 AuxiliaryPanel 宽度"
                             CornerRadius="4"
                             Grid.Column="3"
@@ -370,7 +370,7 @@
                             ContentTemplate="{StaticResource ShellBottomPanel}"
                             Grid.Column="2"
                             Grid.Row="1" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 BottomPanel 高度"
                             CornerRadius="4"
                             Grid.Column="2"
@@ -402,7 +402,7 @@
                         </Grid.ColumnDefinitions>
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellActivityBar}" Grid.RowSpan="2" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellSideBar}" Grid.Column="1" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 SideBar 宽度"
                             CornerRadius="4"
                             Grid.Column="1"
@@ -416,7 +416,7 @@
                             ZIndex="1" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellMainContent}" Grid.Column="2" />
                         <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellAuxiliaryPanel}" Grid.Column="3" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 AuxiliaryPanel 宽度"
                             CornerRadius="4"
                             Grid.Column="3"
@@ -434,7 +434,7 @@
                             Grid.Column="1"
                             Grid.ColumnSpan="3"
                             Grid.Row="1" />
-                        <shell:PanelResizer
+                        <layout:PanelResizer
                             AutomationProperties.Name="调整 BottomPanel 高度"
                             CornerRadius="4"
                             Grid.Column="1"
@@ -546,5 +546,25 @@
     <Style Selector="StackPanel.status-item TextBlock">
         <Setter Property="FontSize" Value="11" />
         <Setter Property="Foreground" Value="{DynamicResource ChromeStatusBarForeground}" />
+    </Style>
+
+    <!--  标题栏菜单栏（FrameworkWindow 内置，ADR-0001）：顶层 VS Code 式紧凑行高  -->
+    <Style Selector="Menu.chrome-menu > MenuItem">
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Padding" Value="10,0" />
+    </Style>
+    <!--  顶层菜单弹出层贴合标题栏下缘（模板内边距 8 与默认偏移 -4 相抵后仍留 4px 缝）  -->
+    <Style Selector="Menu.chrome-menu > MenuItem /template/ Popup#PART_Popup">
+        <Setter Property="VerticalOffset" Value="-8" />
+    </Style>
+    <!--  菜单项（容器由 ItemsSource 生成）：子项来源、命令与无障碍名经样式绑定；
+          叶子 Children 为空、节点 Command 为 null，均无副作用  -->
+    <Style Selector="Menu.chrome-menu MenuItem">
+        <Setter Property="ItemsSource" Value="{Binding Children}" />
+        <Setter Property="Command" Value="{Binding Command}" />
+        <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+    </Style>
+    <Style Selector="Menu.chrome-menu MenuItem PathIcon">
+        <Setter Property="Foreground" Value="{DynamicResource SemiColorText1}" />
     </Style>
 </Styles>

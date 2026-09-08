@@ -1,15 +1,15 @@
-# Framework — 术语表
+﻿# Framework — 术语表
 
 | 术语 | 定义 | 首次出现/定义位置 |
 |---|---|---|
-| **Shell** | 应用主窗口的整体 UI 骨架：ActivityBar + SideBar + MainContent + AuxiliaryPanel + BottomPanel 五区域及菜单栏、状态栏。本模块中 `Shell/` 目录承载其布局状态与贡献收集；渲染层在 Modules/Workstation | `Core/Framework/Shell/`（命名空间 `DigitalWorkstation.Core.Framework.Shell`） |
+| **Shell** | 应用主窗口的整体 UI 骨架：ActivityBar + SideBar + MainContent + AuxiliaryPanel + BottomPanel 五区域及菜单栏、状态栏。本模块中相关代码按职责分四个目录：`Layout/`（布局状态机与分隔条）、`Menus/`（菜单建树/注册/呈现模型）、`Contributions/`（贡献收集）、`Windows/`（窗口基类与主题）；类型名保留 Shell 前缀（`ShellLayoutState`、`ShellContributionCollector`、模板资源键 `ShellActivityBar` 等）只是历史命名。渲染层的应用级 chrome 在 Modules/Workstation | `Core/Framework/`（命名空间 `DigitalWorkstation.Core.Framework.{Layout,Menus,Contributions,Windows}`） |
 | **ActivityBar** | 工作区最左侧竖向导航栏，条目来自各模块的 `INavigationItemContribution`；`ShellLayoutState.SelectedActivity` 记录当前选中项 Id | `ShellLayoutState.cs:12`（属性注释）；区域常量定义在 Abstractions `ShellRegions` |
-| **SideBar** | ActivityBar 右侧容器，显示当前选中导航项的内容视图；`SideBarState.ContentFor` 记录内容对应的导航项 Id | `Shell/SideBarState.cs:6` |
-| **MainContent** | 工作区中央主区域，单视图切换（无 tab）；`MainContentState.ActiveView` 为当前视图 Id（对应 `IMainViewContribution.Id`） | `Shell/MainContentState.cs:6` |
-| **AuxiliaryPanel** | 工作区右侧 tab + 容器面板，tab 来自 `IPanelTabContribution`（`PanelPlacement.Auxiliary`） | `Shell/AuxiliaryPanelState.cs:6` |
-| **BottomPanel** | 工作区底部 tab + 容器面板（输出、日志等），唯一调高度（而非宽度）的区域 | `Shell/BottomPanelState.cs:6` |
-| **启动台 / Splash** | 启动期间显示的进度窗口：呈现模块加载进度（i/N）、单模块失败时提供"继续/退出"决策。由子类经 `CreateSplashWindow()` 提供（真实实现：DashBoard 模块的 `DashBoardWindow`）。与通用 "splash screen" 区别：它是**交互式**的（承载失败决策），且可经菜单重开（`OpenDashBoardMenuItem`） | `FrameworkApplication.cs:58`（`CreateSplashWindow` 抽象方法注释） |
-| **贡献（Contribution）** | 模块向 shell 提供的声明式条目（导航项/主视图/面板 tab/菜单项/状态栏项），实现 Abstractions 的 `I*Contribution` 接口并注册到容器；本模块的 `ShellContributionCollector` 负责收集排序。与通用 "插件" 区别：贡献是纯声明 + 视图类型引用，无生命周期钩子 | `Shell/ShellContributionCollector.cs:6-7` |
+| **SideBar** | ActivityBar 右侧容器，显示当前选中导航项的内容视图；`SideBarState.ContentFor` 记录内容对应的导航项 Id | `Layout/SideBarState.cs:6` |
+| **MainContent** | 工作区中央主区域，单视图切换（无 tab）；`MainContentState.ActiveView` 为当前视图 Id（对应 `IMainViewContribution.Id`） | `Layout/MainContentState.cs:6` |
+| **AuxiliaryPanel** | 工作区右侧 tab + 容器面板，tab 来自 `IPanelTabContribution`（`PanelPlacement.Auxiliary`） | `Layout/AuxiliaryPanelState.cs:6` |
+| **BottomPanel** | 工作区底部 tab + 容器面板（输出、日志等），唯一调高度（而非宽度）的区域 | `Layout/BottomPanelState.cs:6` |
+| **启动台 / Splash** | 启动期间显示的进度窗口：呈现模块加载进度（i/N）、单模块失败时提供"继续/退出"决策。由子类经 `CreateSplashWindow()` 提供（真实实现：DashBoard 模块的 `DashBoardWindow`）。与通用 "splash screen" 区别：它是**交互式**的（承载失败决策），且可经菜单重开（DashBoard 模块的 `DashBoardMenus`） | `FrameworkApplication.cs:58`（`CreateSplashWindow` 抽象方法注释） |
+| **贡献（Contribution）** | 模块向 shell 提供的声明式条目（导航项/主视图/面板 tab/菜单项/状态栏项），实现 Abstractions 的 `I*Contribution` 接口并注册到容器；本模块的 `ShellContributionCollector` 负责收集排序。与通用 "插件" 区别：贡献是纯声明 + 视图类型引用，无生命周期钩子 | `Contributions/ShellContributionCollector.cs:6-7` |
 | **启动序列（Startup Sequence）** | ADR-0004 定义的三阶段引导：CoreServices（登记主窗口、显示启动台、校验模块目录）→ LoadingModules（逐模块异步加载并发布进度）→ Ready（关启动台、显示工作区）。取代 Prism 默认的同步模块加载 | `FrameworkApplication.cs:64` `RunStartupSequenceAsync`；阶段枚举 `StartupPhase` 在 Models 模块 |
 | **ADR-0004** | 架构决策记录编号：确立"启动台 + 逐模块异步加载 + 失败可决策"的启动模型，是本模块三个空覆盖与整个 `RunStartupSequenceAsync` 的存在理由 | `FrameworkApplication.cs:32、49、56` 注释 |
 | **主窗口（MainWindow）** | 泛型参数 `TWindow` 经 `CreateShell()` 解析出的工作区窗口（真实代码：`Modules/Workstation/MainWindow`）。`FrameworkWindowManager._mainWindow` 在 `HandleMainWindow()` 时捕获；与启动台是**两个不同窗口** | `FrameworkApplication.cs:16、192-195` |
@@ -19,8 +19,8 @@
 | **PrismApplication / Prism** | 本框架基类来源（`Prism.DryIoc.PrismApplication`）：提供容器（DryIoc）、模块目录（`IModuleCatalog`/`IModuleManager`）、事件聚合器（`IEventAggregator`）、Region 与 ViewModelLocator 基础设施；本模块大量"空覆盖"都是在改 Prism 默认行为 | `FrameworkApplication.cs:12、16` |
 | **IoC（类）** | Common 模块的静态容器引用持有者；本模块在 `RegisterFrameworkServices` 里完成其一次性初始化，`FrameworkWindowManager.GetWindow` 经 `IoC.Provider` 解析窗口 | `FrameworkApplication.cs:144`、`FrameworkWindowManager.cs:37` |
 | **ViewModel 定位约定** | `ConfigureViewModelLocator` 的命名映射规则：`Views`→`ViewModels` 命名空间替换 + `Window`/`Page`/`View` 后缀补 `ViewModel`/`Model`；View 侧需 `AutoWireViewModel="True"` | `FrameworkApplication.cs:197-233` |
-| **面板对齐（Panel Alignment）** | BottomPanel 在窗口底部的水平跨度，类比文本对齐。四档：左（贴左，横跨 SideBar 与 MainContent 下方，AuxiliaryPanel 通高到底）、右（贴右，横跨 MainContent 与 AuxiliaryPanel 下方，SideBar 通高到底）、居中（仅占 MainContent 下方，默认，两侧栏通高）、两端（横跨三列全宽）。完整领域定义（含与"面板位置"的区分）见根目录 CONTEXT.md | `Shell/PanelAlignment.cs:7` |
-| **FrameworkWindow** | 带基础布局的窗口基类（继承 UrsaWindow）：内置 VS Code 式五区 shell + 状态栏，布局档位由 `PanelAlignment` 依赖属性决定，切换即整体替换布局模板。真实子类：Modules/Workstation 的 `MainWindow`。与"主窗口（MainWindow）"词条的区别：那是**角色**（启动序列登记的那个窗口实例），这是**类型基类** | `Shell/FrameworkWindow.cs:14` |
+| **面板对齐（Panel Alignment）** | BottomPanel 在窗口底部的水平跨度，类比文本对齐。四档：左（贴左，横跨 SideBar 与 MainContent 下方，AuxiliaryPanel 通高到底）、右（贴右，横跨 MainContent 与 AuxiliaryPanel 下方，SideBar 通高到底）、居中（仅占 MainContent 下方，默认，两侧栏通高）、两端（横跨三列全宽）。完整领域定义（含与"面板位置"的区分）见根目录 CONTEXT.md | `Layout/PanelAlignment.cs:7` |
+| **FrameworkWindow** | 带基础布局的窗口基类（继承 UrsaWindow）：内置 VS Code 式五区 shell + 状态栏 + 标题栏菜单栏（代码创建的 `Menu` 宽松绑定 ViewModel 的 `MenuBarItems`，ADR-0001），布局档位由 `PanelAlignment` 依赖属性决定，切换即整体替换布局模板。真实子类：Modules/Workstation 的 `MainWindow`。与"主窗口（MainWindow）"词条的区别：那是**角色**（启动序列登记的那个窗口实例），这是**类型基类** | `Windows/FrameworkWindow.cs:19` |
 
 ## 类名 ↔ 业务概念对照
 

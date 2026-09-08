@@ -5,7 +5,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
 using DigitalWorkstation.Core.Abstractions.WindowManager;
 using DigitalWorkstation.Core.Common;
-using DigitalWorkstation.Core.Framework.Shell;
+using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.WindowManager;
 using DigitalWorkstation.Core.Models.Events;
 using DigitalWorkstation.Core.UIPackage;

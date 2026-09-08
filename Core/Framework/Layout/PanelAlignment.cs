@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Framework.Shell;
+﻿namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
 ///     面板对齐：FrameworkWindow 基础布局的档位，决定 BottomPanel 在窗口底部的水平跨度

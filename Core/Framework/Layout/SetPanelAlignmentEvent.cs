@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Framework.Shell;
+﻿namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
 ///     请求切换窗口布局（面板对齐）档位；负载为目标档位（<see cref="PanelAlignment" />）。

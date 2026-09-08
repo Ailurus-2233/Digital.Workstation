@@ -1,13 +1,18 @@
-﻿using Avalonia;
+﻿﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using Avalonia.Data;
+using Avalonia.Layout;
+using DigitalWorkstation.Core.Framework.Layout;
+using DigitalWorkstation.Core.Framework.Menus;
 using Ursa.Controls;
 
-namespace DigitalWorkstation.Core.Framework.Shell;
+namespace DigitalWorkstation.Core.Framework.Windows;
 
 /// <summary>
 ///     带基础布局的窗口基类：内置 VS Code 式五区 shell
-///     （ActivityBar/SideBar/MainContent/AuxiliaryPanel/BottomPanel + 状态栏）。
+///     （ActivityBar/SideBar/MainContent/AuxiliaryPanel/BottomPanel + 状态栏），
+///     以及标题栏左侧的菜单栏（全部菜单贡献建树生成，ADR-0001；宽松绑定 ViewModel 的 MenuBarItems）。
 ///     PanelAlignment 定义当前窗口的布局：每个枚举值对应一份静态布局模板（FrameworkWindowTheme 的 WindowLayout* 资源），
 ///     切换即整体替换模板，不做动态调整
 /// </summary>
@@ -25,7 +30,30 @@ public abstract class FrameworkWindow : UrsaWindow
         // 布局模板以窗口 DataContext（ViewModel）为绑定源；Framework 不引用具体 ViewModel 类型，全部宽松绑定
         _layoutHost[!ContentControl.ContentProperty] = this[!DataContextProperty];
         Content = _layoutHost;
+        // 菜单栏内置于标题栏左侧：Menu 实例与项模板在代码中创建（项模板入窗口 DataTemplates，
+        // 子菜单任意深度经模板查找递归复用），chrome-menu 样式在 FrameworkWindowTheme.axaml
+        LeftContent = new Menu
+        {
+            Classes = { "chrome-menu" },
+            VerticalAlignment = VerticalAlignment.Center,
+            [!ItemsControl.ItemsSourceProperty] = new Binding("MenuBarItems")
+        };
+        DataTemplates.Add(new FuncDataTemplate<MenuItemViewModel>((item, _) => BuildMenuItemHeader(item!)));
         UpdateLayoutTemplate();
+    }
+
+    /// <summary>
+    ///     菜单项头部：图标（null 图标不渲染，不留占位间隙）+ 标题；图标前景色由 chrome-menu 样式接管
+    /// </summary>
+    private static Control BuildMenuItemHeader(MenuItemViewModel item)
+    {
+        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        if (item.Icon is { } icon)
+        {
+            panel.Children.Add(new PathIcon { Data = icon, Width = 14, Height = 14 });
+        }
+        panel.Children.Add(new TextBlock { Text = item.Title });
+        return panel;
     }
 
     /// <summary>
