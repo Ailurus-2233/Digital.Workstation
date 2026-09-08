@@ -22,10 +22,10 @@
 | 消费方 | 引用方式 | 消费内容 |
 |---|---|---|
 | `Core/Framework/Framework.csproj:13` | ProjectReference | `FrameworkApplication.cs:25` `Styles.AddRange(new WorkstationTheme())`；`FrameworkApplication.cs:27` `VSCodePalette.ApplyTo(Resources)`——主题与调色板的唯一装载点 |
-| `Modules/DashBoard/DashBoard.csproj:23` | ProjectReference | `Icons.DashBoard`（`DashBoardNavigationItem.cs:17`、`DashBoardStatusBarItem.cs:17`、`OpenDashBoardMenuItem.cs:25`）、`Icons.Tasks`（`DashBoardTasksPanelTab.cs:17`） |
-| `Modules/Workstation`（经 `Core/Framework` 传递 + using） | using `DigitalWorkstation.Core.UIPackage` | 几乎全部 shell 贡献类：`Icons.Settings`（`SettingsNavigationItem.cs:17`）、`Icons.Properties/Outline/Output/Log`（各 PanelTab）、`Icons.Exit`（`ExitMenuItem.cs:20`）、`Icons.About`（`AboutMenuItem.cs:24`）、`Icons.Ready`（`ReadyStatusBarItem.cs:16`）、`Icons.PanelLeft/PanelRight/PanelBottom`（`TogglePanelContribution.cs:38-40`）、`StreamGeometry.Parse(Icons.ChevronDown/ChevronRight)`（`MainWindowViewModel.cs:91,96`）；`MainWindowViewModel.cs:8` 直接 using 本命名空间 |
+| `Modules/DashBoard/DashBoard.csproj:23` | ProjectReference | `Icons.DashBoard`（`DashBoardNavigationItem.cs:17`、`DashBoardStatusBarItem.cs:17`、`DashBoardMenus.cs:17` 的 `[MenuItem]` `Icon` 命名属性）、`Icons.Tasks`（`DashBoardTasksPanelTab.cs:17`） |
+| `Modules/Workstation`（经 `Core/Framework` 传递 + using） | using `DigitalWorkstation.Core.UIPackage` | 几乎全部 shell 贡献类与 attribute 菜单类：`Icons.Settings`（`Contributions/SettingsNavigationItem.cs:17`）、`Icons.Properties/Outline/Output/Log`（`Contributions/` 各 PanelTab.cs:17）、`Icons.Ready`（`Contributions/ReadyStatusBarItem.cs:16`）、`Icons.Exit`（`Menus/FileMenus.cs:18`）、`Icons.About`（`Menus/HelpMenus.cs:17`）、`Icons.PanelLeft/PanelBottom/PanelRight`（`Menus/ViewPanelMenus.cs:14、20、26`）、`Icons.AlignLeft/AlignRight/AlignCenter/AlignJustify`（`Menus/ViewAlignmentMenus.cs:15、21、27、33`，菜单类均为 `[MenuItem]` 的 `Icon` 命名属性）、`StreamGeometry.Parse(Icons.ChevronDown/ChevronRight)`（`MainWindowViewModel.cs:95、100`）；`MainWindowViewModel.cs:11` 直接 using 本命名空间 |
 
-场景归纳：`WorkstationTheme` 与 `VSCodePalette` 只被 Framework 的应用初始化使用一次；`Icons` 被所有模块的贡献类（导航项/面板 tab/菜单项/状态栏项）广泛引用。
+场景归纳：`WorkstationTheme` 与 `VSCodePalette` 只被 Framework 的应用初始化使用一次；`Icons` 被所有模块的贡献类（导航项/面板 tab/状态栏项的 `IconPath` 属性、菜单项的 `[MenuItem]` `Icon` 命名属性）广泛引用。
 
 ## 核心内部数据结构
 

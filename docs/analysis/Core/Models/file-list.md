@@ -64,4 +64,4 @@ obj/、Output/                  构建产物（不入库语义；obj 下的 Mode
 
 ### Events/TogglePanelVisibilityEvent.cs
 
-`public class TogglePanelVisibilityEvent : PubSubEvent<TogglePanelTarget>;`（第 7 行）——请求翻转指定面板可见性；由视图菜单的面板显隐切换项（`TogglePanelContribution`）发布，主窗口订阅后与快捷键走同一状态转换（`MainWindowViewModel.TogglePanel`）。
+`public class TogglePanelVisibilityEvent : PubSubEvent<TogglePanelTarget>;`（第 7 行）——请求翻转指定面板可见性；由视图菜单的面板显隐切换项（`Modules/Workstation/Menus/ViewPanelMenus.cs` 的三个 `[MenuItem]` 方法）发布，主窗口订阅后与快捷键走同一状态转换（`MainWindowViewModel.TogglePanel`）。

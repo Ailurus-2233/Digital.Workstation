@@ -10,11 +10,11 @@
 
 1. **中性资源 = 中文**。`Language.resx` 不带区域性后缀，是回退兜底资源；`Language.en-US.resx` 是 en-US 卫星资源。这意味着当 `CurrentUICulture` 不是 en-US（或找不到对应卫星程序集）时，`ResourceManager` 自动回退到中文，不需要任何代码干预。设计含义：团队母语是中文，中文文案是"事实源"，英文是翻译层。
 
-2. **静态类 + 单例 `ResourceManager`，不走 DI**。`Language` 是 `public static class`（`Language.cs:9`），内部持有 `private static readonly ResourceManager Manager`（`Language.cs:11-12`），基名硬编码为 `"DigitalWorkstation.Core.Resource.Language"`、绑定 `typeof(Language).Assembly`。理由：文案是无状态全局查询，注入它没有可测试性收益；静态访问让 shell 贡献项（如 `Modules/Workstation/Shell/ExitMenuItem.cs` 的 `Title => Language.MenuExitTitle`）一行即可取值。`ResourceManager` 本身是线程安全的，因此本模块天然线程安全。
+2. **静态类 + 单例 `ResourceManager`，不走 DI**。`Language` 是 `public static class`（`Language.cs:9`），内部持有 `private static readonly ResourceManager Manager`（`Language.cs:11-12`），基名硬编码为 `"DigitalWorkstation.Core.Resource.Language"`、绑定 `typeof(Language).Assembly`。理由：文案是无状态全局查询，注入它没有可测试性收益；静态访问让 shell 贡献项（如 `Modules/Workstation/Contributions/SettingsNavigationItem.cs` 的 `Title => Language.SettingsNavigationTitle`）一行即可取值。`ResourceManager` 本身是线程安全的，因此本模块天然线程安全。
 
 3. **键缺失返回键本身，不抛异常**。`Get(string key)`（`Language.cs:17-20`）的实现是 `Manager.GetString(key) ?? key`。`ResourceManager.GetString` 对缺失键返回 `null`，这里用 `?? key` 兜底——注释明确说明意图是"便于发现遗漏"：界面上直接显示出键名（如 `MenuExitTitle`），一眼能看出资源漏配，而不是空白或崩溃。
 
-4. **强类型门面：`nameof` 保证键与属性同名**。23 个静态属性（`Language.cs:25-133`）每个都是 `=> Get(nameof(XxxTitle))`。`nameof` 让键名与属性名永远一致：重命名属性时编译器会跟着改键名表达式，但 **`.resx` 里的 `data name` 必须手动同步改**（见 pitfalls.md）。
+4. **强类型门面：`nameof` 保证键与属性同名**。26 个静态属性（`Language.cs:25-148`）每个都是 `=> Get(nameof(XxxTitle))`。`nameof` 让键名与属性名永远一致：重命名属性时编译器会跟着改键名表达式，但 **`.resx` 里的 `data name` 必须手动同步改**（见 pitfalls.md）。
 
 5. **注释即真相**。每个 resx 条目的 `<comment>` 和 C# 属性的 XML doc 注释内容一致（如 `SettingsNavigationTitle` 的注释 "shell 预置\"设置\"导航项的标题"），说明该条文案用在哪个 UI 位置。这是本模块唯一的"用途文档"。
 
@@ -48,8 +48,8 @@
 
 2. **改某条文案的措辞**：只改 `Language.resx` 的 `<value>`（中文）和 `Language.en-US.resx` 的 `<value>`（英文）。键名和 `Language.cs` 不动。例如把"启动台"改成"主页"：改 `DashBoardNavigationTitle` 的两个 `<value>`。
 
-3. **重命名一个键**：改 `Language.cs` 中属性名（`nameof` 自动跟随）+ 两个 resx 的 `data name`。注意消费方代码（如 `Modules/Workstation/Shell/AboutMenuItem.cs:22` 的 `Language.MenuAboutTitle`）也要跟着重命名——用 IDE 重命名重构可同时覆盖 C# 侧，但 resx 必须手动。
+3. **重命名一个键**：改 `Language.cs` 中属性名（`nameof` 自动跟随）+ 两个 resx 的 `data name`。注意消费方代码也要跟着改——强类型属性调用（如 `Modules/Workstation/Contributions/SettingsNavigationItem.cs:15` 的 `Language.SettingsNavigationTitle`）用 IDE 重命名重构可同时覆盖，但菜单 Attribute 里的字符串键（如 `Modules/Workstation/Menus/HelpMenus.cs:17` 的 `[MenuItem("MenuAboutTitle", ...)]`）IDE 重构不会跟随，和 resx 一样必须手动同步。
 
-4. **新增一种语言（如 ja-JP）**：新增 `Language.ja-JP.resx`，逐条翻译 19 个键；`Language.cs` 无需改动，`ResourceManager` 按 `CurrentUICulture` 自动选取。新语言的键可以只翻译一部分，缺失的键回退到中文。
+4. **新增一种语言（如 ja-JP）**：新增 `Language.ja-JP.resx`，逐条翻译 26 个键；`Language.cs` 无需改动，`ResourceManager` 按 `CurrentUICulture` 自动选取。新语言的键可以只翻译一部分，缺失的键回退到中文。
 
 5. **排查界面上出现了英文键名（如显示 "SplashPhaseReady"）**：说明该键在两个 resx 中都缺失，或 resx 里 `data name` 与 `nameof` 属性名不一致（拼写/大小写）。对照 `Language.cs` 属性名检查 `Language.resx` 的 `data name`。

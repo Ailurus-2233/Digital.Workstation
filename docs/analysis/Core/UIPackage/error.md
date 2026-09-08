@@ -10,7 +10,7 @@
 |---|---|---|
 | `System.FormatException` | `Color.Parse` 收到非法颜色字符串（如十六进制位数错误、非法字符） | `VSCodePalette.Brush`（`VSCodePalette.cs:47`，`new SolidColorBrush(Color.Parse(color))`），由 `ApplyTo` 间接触发 |
 | 主题包构造期异常（类型由第三方包决定） | 某个 `XxxTheme` 构造失败（通常是包版本不兼容、资源缺失） | `WorkstationTheme` 构造函数的 `Add(new SemiTheme())` 等四行（`WorkstationThemes.cs:12-15`） |
-| `System.FormatException` / 解析异常 | const path 字符串不符合 StreamGeometry 标记语法 | **不在本模块抛出**——在消费方解析时抛出，如 `StreamGeometry.Parse(Icons.ChevronDown)`（`Modules/Workstation/MainWindowViewModel.cs:91`）或 `PathIcon` 绑定求值时 |
+| `System.FormatException` / 解析异常 | const path 字符串不符合 StreamGeometry 标记语法 | **不在本模块抛出**——在消费方解析时抛出，如 `StreamGeometry.Parse(Icons.ChevronDown)`（`Modules/Workstation/MainWindowViewModel.cs:95`）或 `PathIcon` 绑定求值时 |
 
 ## 错误传播路径
 

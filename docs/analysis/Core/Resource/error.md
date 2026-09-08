@@ -16,14 +16,14 @@
 
 - **触发条件**：`CurrentUICulture` 为 en-US 但 `en-US/Resource.resources.dll` 卫星程序集不在输出目录。
 - **抛出位置**：`Manager.GetString(key)`（`Language.cs:19`）内部。
-- **常见原因**：消费方项目（`Modules/Workstation`、`Modules/DashBoard`）的输出目录拷贝不完整；手工裁剪了发布产物中的 `en-US/` 文件夹。
+- **常见原因**：消费方项目（`Core/Framework`、`Modules/Workstation`、`Modules/DashBoard`）的输出目录拷贝不完整；手工裁剪了发布产物中的 `en-US/` 文件夹。
 - **注意**：默认情况下 .NET 对缺失卫星程序集是**回退到中性资源（中文）而非抛异常**；只有显式配置 `<SatelliteResourceLanguages>` 且中性程序集标记 `NeutralResourcesLanguage(UltimateResourceFallbackLocation.Satellite)` 之类才会抛。本模块未设 `NeutralResourcesLanguage` 特性，因此实际行为是**静默回退中文**。
 
 ### 3. 键缺失——**不抛异常**（设计行为）
 
 - `Get`（`Language.cs:17-20`）对缺失键返回键名本身。界面上显示英文键名（如 `SplashPhaseReady`）即是此错误的可见症状。
 - **触发条件**：resx 两个文件都没有该 `data name`（拼写错误、漏加、重命名不同步）。
-- **排查**：对照 `Language.cs` 的属性名逐一核对 `Language.resx` 与 `Language.en-US.resx` 的 `data name`（两者当前各 19 条，必须一一对应）。
+- **排查**：对照 `Language.cs` 的属性名逐一核对 `Language.resx` 与 `Language.en-US.resx` 的 `data name`（两者当前各 26 条，必须一一对应）。
 
 ## 错误处理路径
 

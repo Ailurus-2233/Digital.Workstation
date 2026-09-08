@@ -12,7 +12,7 @@
 
 - **为什么聚合为一个 Styles 子类**：Avalonia 的主题以 `Styles` 为单位挂载。把四个主题包的 `Add` 调用固化进 `WorkstationTheme` 构造函数（`WorkstationThemes.cs:10-16`），消费方无需知道主题包清单与装载顺序，也避免各处重复 `Add` 漏装某一个。
 - **为什么调色板写到应用级资源而非主题内**：`ApplyTo` 的 XML 注释明确说明意图——"把调色板写入应用级资源，使查找先于各主题包命中"（`VSCodePalette.cs:14`）。Avalonia 资源查找沿逻辑树向上先到 `Application.Resources`，再进 `Application.Styles`；把键写进 `Resources`（真实调用 `VSCodePalette.ApplyTo(Resources)`，`FrameworkApplication.cs:27`）即可稳定覆盖主题包自带的同名 Semi 色键，而不必修改第三方主题。
-- **为什么图标用 const string 而不是资源字典**：图标由 `PathIcon` 或 `StreamGeometry.Parse` 消费（如 `Modules/Workstation/MainWindowViewModel.cs:91` 的 `StreamGeometry.Parse(Icons.ChevronDown)`），path 字符串是最小公共表示；`const` 让消费方零依赖资源查找、编译期可得。代价是 const 会被内联进引用程序集（见 pitfalls.md）。
+- **为什么图标用 const string 而不是资源字典**：图标由 `PathIcon`、`[MenuItem]` attribute 或 `StreamGeometry.Parse` 消费（如 `Modules/Workstation/MainWindowViewModel.cs:95` 的 `StreamGeometry.Parse(Icons.ChevronDown)`），path 字符串是最小公共表示；`const` 让消费方零依赖资源查找、编译期可得。代价是 const 会被内联进引用程序集（见 pitfalls.md）。
 - **固定 Dark 主题**：调色板注释写明"随应用固定 Dark 主题启用"（`VSCodePalette.cs:9`）；`FrameworkApplication.cs:24` 先设 `RequestedThemeVariant = ThemeVariant.Dark` 再装载主题与调色板。模块本身不处理亮色变体，所有色值都是深色专用。
 
 ## 状态流转

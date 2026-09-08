@@ -26,11 +26,11 @@
 ## 与同名通用概念的区别
 
 - **`Language.Get` ≠ `ResourceManager.GetString`**：前者包装后者并加了 `?? key` 兜底，永不返回 null；后者键缺失返回 null、资源清单缺失抛异常。
-- **本模块的"就绪（Ready）"有两个键**：`StatusReadyTitle`（状态栏常驻项，`Language.cs:83`）与 `SplashPhaseReady`（启动画面阶段名，`Language.cs:108`），中文值同为"就绪"但用途不同，不能合并。
-- **`Resource`（项目/命名空间名）** 指"本地化文案资源"这一件事，不是泛指图片/图标等资源——图标路径由 `Core/UIPackage` 的 `Icons` 类负责（消费方代码中 `Language.XxxTitle` 与 `Icons.Xxx` 总是成对出现，如 `ExitMenuItem.cs:18-19`）。
+- **本模块的"就绪（Ready）"有两个键**：`StatusReadyTitle`（状态栏常驻项，`Language.cs:118`）与 `SplashPhaseReady`（启动画面阶段名，`Language.cs:143`），中文值同为"就绪"但用途不同，不能合并。
+- **`Resource`（项目/命名空间名）** 指"本地化文案资源"这一件事，不是泛指图片/图标等资源——图标路径由 `Core/UIPackage` 的 `Icons` 类负责（消费方代码中文案键与 `Icons.Xxx` 总是成对出现，如 `Modules/Workstation/Menus/FileMenus.cs:18` 的 `[MenuItem("MenuExitTitle", Order = 100, Icon = Icons.Exit)]`）。
 
 ## 类名 ↔ 业务概念对照
 
 - `Language`（类）↔ "全部界面文案的字典"
-- 19 个属性 ↔ 19 个具体 UI 位置的标题/文本（逐条对应见 api.md 表格）
+- 26 个属性 ↔ 26 个具体 UI 位置的标题/文本（逐条对应见 api.md 表格）
 - `Language.resx` ↔ 中文文案事实源；`Language.en-US.resx` ↔ 英文翻译层

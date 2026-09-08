@@ -30,8 +30,8 @@
 |---|---|---|
 | `Core/Framework`（Framework.csproj 第 12 行直接引用） | 直接 | `FrameworkApplication.cs`：发布 `StartupProgressEvent`（第 69/74/85/104 行）、发布 `ModuleLoadFailedEvent`（第 93-94 行）、在 `WaitForFailureActionAsync` 订阅 `StartupFailureActionEvent`（第 118-125 行）——本模块全部启动事件的唯一发布中枢 |
 | `Modules/DashBoard`（DashBoard.csproj 经 Framework 传递引用） | 传递 | `ViewModels/Windows/DashBoardWindowViewModel.cs`：订阅 `StartupProgressEvent`/`ModuleLoadFailedEvent`（第 19-20 行），发布 `StartupFailureActionEvent`（第 72/81 行）；`Views/DashBoardNavigationView.axaml.cs`：发布 `OpenMainViewEvent`（第 30/35 行） |
-| `Modules/Workstation`（Workstation.csproj 经 Framework 传递引用） | 传递 | `MainWindowViewModel.cs`：订阅 `OpenMainViewEvent`/`TogglePanelVisibilityEvent`（第 32-33 行），`TogglePanel` 消费 `TogglePanelTarget`（第 249-256 行）；`WorkstationApplication.cs` 第 37 行遍历 `TogglePanelTarget` 注册菜单贡献；`Shell/TogglePanelContribution.cs` 发布 `TogglePanelVisibilityEvent`（第 19 行） |
-| `Core/Abstractions` | **注释引用，无编译依赖** | `Shell/IMainViewContribution.cs` 第 6 行注释提及 `OpenMainViewEvent` 负载为 `Id`；Abstractions 不引用 Models，`<see cref>` 无法解析——注释是写给实现侧的约定 |
+| `Modules/Workstation`（Workstation.csproj 经 Framework 传递引用） | 传递 | `MainWindowViewModel.cs`：订阅 `OpenMainViewEvent`/`TogglePanelVisibilityEvent`（第 35-36 行），`TogglePanel` 消费 `TogglePanelTarget`（第 278-286 行）；`Menus/ViewPanelMenus.cs` 发布 `TogglePanelVisibilityEvent`（第 17/23/29 行） |
+| `Core/Abstractions` | **注释引用，无编译依赖** | `Contributions/IMainViewContribution.cs` 第 6 行注释提及 `OpenMainViewEvent` 负载为 `Id`；Abstractions 不引用 Models，`<see cref>` 无法解析——注释是写给实现侧的约定 |
 | `Launcher` | 传递（Launcher → Workstation → Framework → Models） | 不直接消费事件类型 |
 
 `UnitTest/Framework` 不引用也不测试本模块任何类型（全仓 grep 无命中），见 testing.md。
@@ -63,4 +63,4 @@ Prism.Events.PubSubEvent<T>（Prism 包）
 | `TogglePanelVisibilityEvent` | class : `PubSubEvent<TogglePanelTarget>`（无成员体） | Events/TogglePanelVisibilityEvent.cs | 面板显隐请求 |
 | `TogglePanelTarget` | enum（3 成员） | Events/TogglePanelTarget.cs | 目标面板枚举 |
 
-跨程序集耦合点：`OpenMainViewEvent` 的负载 string 与 `Core/Abstractions/Shell/IMainViewContribution.Id` 构成**字符串级契约**——Id 值必须精确匹配（如 `DashBoardOverviewMainView.ViewId`），不匹配则 shell 找不到贡献，静默无反应。
+跨程序集耦合点：`OpenMainViewEvent` 的负载 string 与 `Core/Abstractions/Contributions/IMainViewContribution.Id` 构成**字符串级契约**——Id 值必须精确匹配（如 `DashBoardOverviewMainView.ViewId`），不匹配则 shell 找不到贡献，静默无反应。

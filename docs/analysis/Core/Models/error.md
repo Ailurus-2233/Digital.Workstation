@@ -20,8 +20,8 @@
 |---|---|---|
 | 启动台阶段文案不更新 | 发布点 `FrameworkApplication.cs` 第 74/85/104 行是否被执行；订阅点 `DashBoardWindowViewModel.cs` 第 19 行是否先于首次发布执行 | 订阅晚于首次发布（PubSubEvent 无粘性，错过的历史事件不重放）；`ThreadOption.UIThread` 下 UI 线程阻塞 |
 | 启动台卡在失败界面、按钮无效 | `FrameworkApplication.WaitForFailureActionAsync`（第 118-125 行）在 await `StartupFailureActionEvent`；`DashBoardWindowViewModel` 第 72/81 行是否真的 Publish | 决策事件无人发布 → 启动序列永久挂起（无超时、无取消）；或按钮命令未绑定 |
-| 点 SideBar 项后主视图不切换 | `OpenMainViewEvent` 负载 Id 与 `IMainViewContribution.Id` 是否**精确匹配**（字符串级契约） | Id 拼写/大小写不一致；订阅方（MainWindowViewModel 第 32 行）尚未构造就被发布 |
-| 面板显隐菜单无效 | `TogglePanelContribution` 第 19 行 Publish 与 `MainWindowViewModel.TogglePanel`（第 249 行）之间的 `TogglePanelTarget` 分支 | 新增枚举成员后 switch 落入 `_` 分支（`TogglePanel` 的 `_` 兜底为 BottomPanel），表现成"点任何新面板都翻转底部面板" |
+| 点 SideBar 项后主视图不切换 | `OpenMainViewEvent` 负载 Id 与 `IMainViewContribution.Id` 是否**精确匹配**（字符串级契约） | Id 拼写/大小写不一致；订阅方（MainWindowViewModel 第 35 行）尚未构造就被发布 |
+| 面板显隐菜单无效 | `ViewPanelMenus` 第 17/23/29 行 Publish 与 `MainWindowViewModel.TogglePanel`（第 278 行）之间的 `TogglePanelTarget` 分支 | 新增枚举成员后 switch 落入 `_` 分支（`TogglePanel` 的 `_` 兜底为 BottomPanel），表现成"点任何新面板都翻转底部面板" |
 | 启动台模块名显示空白 | `StartupProgress.ModuleName` 是否为 null；`DashBoardWindowViewModel.OnProgress` 第 48 行的阶段判断 | 非 LoadingModules 阶段按约定 ModuleName 为 null，这是正常约定而非 bug |
 | `PubSubEvent` 编译报错、找不到类型 | `Core/Models/obj/Debug/Models.GlobalUsings.g.cs` 第 6 行的 `global using Prism.Events;` 是否存在；Models.csproj → Common 的引用链是否完好 | 删掉了 Models.csproj 第 10 行的 Common 引用（源码零引用 Common 类型，但 Prism 引用经它传递）；Prism 包版本变更导致 build props 注入的 global using 变化 |
 

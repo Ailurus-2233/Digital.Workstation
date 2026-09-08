@@ -23,7 +23,7 @@ dotnet test UnitTest/Framework/Framework.csproj
    - 改事件类名 → 全部 `GetEvent<T>()` 调用点编译错误；
    - 加 `StartupPhase` 成员 → `DashBoardWindowViewModel.OnProgress` 第 41-47 行的 switch 有 `_` 兜底**不会报错**，需人工检查（见下）。
 2. **数据检测点（桌面端约定：不做 UI 自动化，聚焦数据）**：改完后手动启动应用，观察启动台显示的数据是否正确——阶段文案是否随 `StartupPhase` 切换、模块 i/N 序号是否从 1 起且与总数一致、制造一个模块加载失败后错误详情与"继续/退出"决策是否生效（继续则跳过该模块进工作区，退出则应用终止）。
-3. **枚举扩散检查**：新增 `StartupPhase`/`TogglePanelTarget`/`StartupFailureAction` 成员后，grep 成员名所在枚举的全部 switch 消费点（`DashBoardWindowViewModel.OnProgress`、`MainWindowViewModel.TogglePanel`、`TogglePanelContribution` 的 Title/Icon/Order），凡带 `_` 兜底分支的都是编译放过的盲区。
+3. **枚举扩散检查**：新增 `StartupPhase`/`TogglePanelTarget`/`StartupFailureAction` 成员后，grep 成员名所在枚举的全部 switch 消费点（`DashBoardWindowViewModel.OnProgress`、`MainWindowViewModel.TogglePanel`），凡带 `_` 兜底分支的都是编译放过的盲区；`TogglePanelTarget` 新成员还需在 `ViewPanelMenus` 补对应菜单方法。
 
 ## 测试约定（本仓库现状）
 

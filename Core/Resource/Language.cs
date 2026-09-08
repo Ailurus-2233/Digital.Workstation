@@ -53,6 +53,21 @@ public static class Language
     /// </summary>
     public static string DashBoardTasksTabTitle => Get(nameof(DashBoardTasksTabTitle));
     /// <summary>
+    ///     顶层"文件"菜单的标题
+    /// </summary>
+    public static string MenuFileTitle => Get(nameof(MenuFileTitle));
+
+    /// <summary>
+    ///     顶层"视图"菜单的标题
+    /// </summary>
+    public static string MenuViewTitle => Get(nameof(MenuViewTitle));
+
+    /// <summary>
+    ///     顶层"帮助"菜单的标题
+    /// </summary>
+    public static string MenuHelpTitle => Get(nameof(MenuHelpTitle));
+
+    /// <summary>
     ///     文件菜单"退出"项的标题
     /// </summary>
     public static string MenuExitTitle => Get(nameof(MenuExitTitle));

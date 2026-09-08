@@ -8,10 +8,10 @@
 
 | 签名 | 说明 |
 |---|---|
-### 静态只读属性（23 个，全部以 `Get(nameof(属性名))` 实现，返回 `string`）
+### 静态只读属性（26 个，全部以 `Get(nameof(属性名))` 实现，返回 `string`）
 
 
-定义于 `Language.cs:25-133`。键名 = 属性名，中文值来自 `Language.resx`，英文值来自 `Language.en-US.resx`：
+定义于 `Language.cs:25-148`。键名 = 属性名，中文值来自 `Language.resx`，英文值来自 `Language.en-US.resx`：
 
 | 属性 | 中文值 | 英文值 | 用途（resx comment） |
 |---|---|---|---|
@@ -22,57 +22,73 @@
 | `OutputTabTitle`（:44） | 输出 | Output | shell 预置 BottomPanel 演示 tab"输出"标题 |
 | `LogTabTitle`（:49） | 日志 | Log | shell 预置 BottomPanel 演示 tab"日志"标题 |
 | `DashBoardTasksTabTitle`（:54） | 任务 | Tasks | DashBoard 贡献给 BottomPanel 的演示 tab"任务"标题 |
-| `MenuExitTitle`（:58） | 退出 | Exit | 文件菜单"退出"项标题 |
-| `MenuAboutTitle`（:63） | 关于 | About | 帮助菜单"关于"项标题 |
-| `ToggleSideBarTitle`（:68） | 切换 SideBar | Toggle Side Bar | SideBar 显隐切换项（视图菜单） |
-| `ToggleBottomPanelTitle`（:73） | 切换 BottomPanel | Toggle Bottom Panel | BottomPanel 显隐切换项（视图菜单） |
-| `ToggleAuxiliaryPanelTitle`（:78） | 切换 AuxiliaryPanel | Toggle Auxiliary Panel | AuxiliaryPanel 显隐切换项（视图菜单） |
-| `PanelAlignLeftTitle`（:83） | 左对齐 | Align Left | 面板对齐菜单"左对齐"项标题 |
-| `PanelAlignRightTitle`（:88） | 右对齐 | Align Right | 面板对齐菜单"右对齐"项标题 |
-| `PanelAlignCenterTitle`（:93） | 居中 | Align Center | 面板对齐菜单"居中"项标题 |
-| `PanelAlignJustifyTitle`（:98） | 两端对齐 | Justify | 面板对齐菜单"两端对齐"项标题 |
-| `StatusReadyTitle`（:103） | 就绪 | Ready | shell 预置状态栏"就绪"项文本 |
-| `DashBoardOpenWindowMenuTitle`（:108） | 打开启动台 | Open Launch Pad | DashBoard 贡献给文件菜单的"打开启动台"项标题 |
-| `SplashStartingText`（:113） | 正在启动… | Starting… | 启动台显示进度前的初始阶段文本 |
-| `SplashPhaseCoreServices`（:118） | 初始化核心服务 | Initializing core services | 启动台阶段名 |
-| `SplashPhaseLoadingModules`（:123） | 加载模块 | Loading modules | 启动台阶段名 |
-| `SplashPhaseReady`（:128） | 就绪 | Ready | 启动台阶段名 |
-| `SplashPhaseFailed`（:133） | 模块加载失败 | Module failed to load | 启动台阶段名 |
+| `MenuFileTitle`（:58） | 文件 | File | 顶层"文件"菜单标题 |
+| `MenuViewTitle`（:63） | 视图 | View | 顶层"视图"菜单标题 |
+| `MenuHelpTitle`（:68） | 帮助 | Help | 顶层"帮助"菜单标题 |
+| `MenuExitTitle`（:73） | 退出 | Exit | 文件菜单"退出"项标题 |
+| `MenuAboutTitle`（:78） | 关于 | About | 帮助菜单"关于"项标题 |
+| `ToggleSideBarTitle`（:83） | 切换 SideBar | Toggle Side Bar | SideBar 显隐切换项（视图菜单） |
+| `ToggleBottomPanelTitle`（:88） | 切换 BottomPanel | Toggle Bottom Panel | BottomPanel 显隐切换项（视图菜单） |
+| `ToggleAuxiliaryPanelTitle`（:93） | 切换 AuxiliaryPanel | Toggle Auxiliary Panel | AuxiliaryPanel 显隐切换项（视图菜单） |
+| `PanelAlignLeftTitle`（:98） | 左对齐 | Align Left | 面板对齐菜单"左对齐"项标题 |
+| `PanelAlignRightTitle`（:103） | 右对齐 | Align Right | 面板对齐菜单"右对齐"项标题 |
+| `PanelAlignCenterTitle`（:108） | 居中 | Align Center | 面板对齐菜单"居中"项标题 |
+| `PanelAlignJustifyTitle`（:113） | 两端对齐 | Justify | 面板对齐菜单"两端对齐"项标题 |
+| `StatusReadyTitle`（:118） | 就绪 | Ready | shell 预置状态栏"就绪"项文本 |
+| `DashBoardOpenWindowMenuTitle`（:123） | 打开启动台 | Open Launch Pad | DashBoard 贡献给文件菜单的"打开启动台"项标题 |
+| `SplashStartingText`（:128） | 正在启动… | Starting… | 启动台显示进度前的初始阶段文本 |
+| `SplashPhaseCoreServices`（:133） | 初始化核心服务 | Initializing core services | 启动台阶段名 |
+| `SplashPhaseLoadingModules`（:138） | 加载模块 | Loading modules | 启动台阶段名 |
+| `SplashPhaseReady`（:143） | 就绪 | Ready | 启动台阶段名 |
+| `SplashPhaseFailed`（:148） | 模块加载失败 | Module failed to load | 启动台阶段名 |
 
 
-> 注意：`StatusReadyTitle`（状态栏"就绪"，:103）与 `SplashPhaseReady`（启动画面"就绪"阶段名，:128）**中文值同为"就绪"，但用途不同，是两个独立的键**，不能合并。
+> 注意：`StatusReadyTitle`（状态栏"就绪"，:118）与 `SplashPhaseReady`（启动画面"就绪"阶段名，:143）**中文值同为"就绪"，但用途不同，是两个独立的键**，不能合并。
 ### 内部（非公开）成员
 - `private static readonly ResourceManager Manager`（`Language.cs:11-12`）：基名 `"DigitalWorkstation.Core.Resource.Language"`，绑定 `typeof(Language).Assembly`。
 - `Manager` 每次 `GetString` 都按调用线程的 `CultureInfo.CurrentUICulture` 解析：先找 en-US 卫星资源（`Language.en-US.resx` 编译产物），找不到/未命中则回退中性资源（`Language.resx` 中文）。本模块自身不提供切换语言的 API。
 
 ## 调用方式
-
-**无初始化/生命周期要求**：静态类，`ResourceManager` 首次访问时由运行时惰性初始化。任何线程可随时调用。
-
-典型调用模式——给 shell 贡献项（菜单项/导航项/面板 tab/状态栏项）的 `Title` 属性供值：
+典型调用模式一——给 shell 贡献项（导航项/面板 tab/状态栏项）的 `Title` 属性供值：
 
 ```csharp
 using DigitalWorkstation.Core.Resource;
-// Modules/Workstation/Shell/ExitMenuItem.cs:18
-public string Title => Language.MenuExitTitle;
+// Modules/Workstation/Contributions/SettingsNavigationItem.cs:15
+public string Title => Language.SettingsNavigationTitle;
+```
+
+典型调用模式二——菜单项不再持有 `Title` 属性，改为在 Attribute 里携带 Language 资源键字符串，由 Framework 的 `MenuRegistration`/`MenuTreeBuilder` 经 `Language.Get` 解析（详见 Core/Framework 文档）：
+
+```csharp
+// Modules/Workstation/Menus/FileMenus.cs:18
+[MenuItem("MenuExitTitle", Order = 100, Icon = Icons.Exit)]
+public void Exit() { ... }
 ```
 
 真实调用点（`grep` 全仓库验证）：
 
-- `Modules/Workstation/Shell/SettingsNavigationItem.cs:15` → `Language.SettingsNavigationTitle`
-- `Modules/Workstation/Shell/AboutMenuItem.cs:22` → `Language.MenuAboutTitle`
-- `Modules/Workstation/Shell/ExitMenuItem.cs:18` → `Language.MenuExitTitle`
-- `Modules/Workstation/Shell/ReadyStatusBarItem.cs:14` → `Language.StatusReadyTitle`
-- `Modules/Workstation/Shell/{Properties,Outline,Output,Log}PanelTab.cs:15` → 对应 Tab 标题属性
-- `Modules/Workstation/Shell/TogglePanelContribution.cs:31-33` → switch 表达式按 `TogglePanelTarget` 取标题：`SideBar => Language.ToggleSideBarTitle`、`AuxiliaryPanel => Language.ToggleAuxiliaryPanelTitle`，**BottomPanel 是弃元默认分支 `_ => Language.ToggleBottomPanelTitle`**
+强类型属性：
+
+- `Modules/Workstation/Contributions/SettingsNavigationItem.cs:15` → `Language.SettingsNavigationTitle`
+- `Modules/Workstation/Contributions/ReadyStatusBarItem.cs:14` → `Language.StatusReadyTitle`
+- `Modules/Workstation/Contributions/{Properties,Outline,Output,Log}PanelTab.cs:15` → 对应 Tab 标题属性
 - `Modules/DashBoard/DashBoardNavigationItem.cs:15`、`DashBoardStatusBarItem.cs:15` → `Language.DashBoardNavigationTitle`
 - `Modules/DashBoard/DashBoardTasksPanelTab.cs:15` → `Language.DashBoardTasksTabTitle`
-- `Modules/DashBoard/OpenDashBoardMenuItem.cs:23` → `Language.DashBoardOpenWindowMenuTitle`
 - `Modules/DashBoard/ViewModels/Windows/DashBoardWindowViewModel.cs:24,43-45,56` → Splash 系列 5 个属性（启动画面阶段文案）
-- `Modules/Workstation/Shell/PanelAlignmentContribution.cs:31-34` → 面板对齐菜单系列 4 个属性（`Language.PanelAlign{Left,Right,Center,Justify}Title`，按档位 switch）
 
-所有现有消费方都用强类型属性，**没有消费方直接调用 `Language.Get(string)`**——`Get` 是给将来动态键场景留的后门。
+Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
+
+- `Modules/Workstation/Menus/FileMenus.cs:12,18` → `[MenuGroup("MenuFileTitle", ...)]`、`[MenuItem("MenuExitTitle", ...)]`
+- `Modules/Workstation/Menus/ViewPanelMenus.cs:11,14,20,26` → `MenuViewTitle` + Toggle 系列 3 键
+- `Modules/Workstation/Menus/ViewAlignmentMenus.cs:12,15,21,27,33` → `MenuViewTitle` + PanelAlign 系列 4 键
+- `Modules/Workstation/Menus/HelpMenus.cs:11,17` → `[MenuGroup("MenuHelpTitle", ...)]`、`[MenuItem("MenuAboutTitle", ...)]`
+- `Modules/DashBoard/DashBoardMenus.cs:11,17` → `[MenuGroup("MenuFileTitle", ...)]`、`[MenuItem("DashBoardOpenWindowMenuTitle", ...)]`
+
+`Language.Get(string)` 直接调用点（ADR-0001 菜单重构后首次有了真实消费方，不再只是给将来动态键场景留的后门）：
+
+- `Core/Framework/Menus/MenuRegistration.cs:85` → `Language.Get(item.Title)`：把 `MenuItemAttribute` 携带的 title 键解析为当前 UI 区域性下的显示标题
+- `Core/Framework/Menus/MenuTreeBuilder.cs:59,74,98` → `Language.Get(node.Segment)`：把菜单路径各段键解析为顶层/子菜单标题，并作为顶层与子菜单分组的排序键
 
 ## 对外公开的数据结构
 
-无自定义数据结构。输入输出都是 `string`；语言资源键的"结构"即上表 23 个键，物理载体是两个 resx 文件中的 `<data name="键名"><value>文案</value><comment>用途</comment></data>` 条目（`Language.resx:61-156`、`Language.en-US.resx:61-156`）。
+无自定义数据结构。输入输出都是 `string`；语言资源键的"结构"即上表 26 个键，物理载体是两个 resx 文件中的 `<data name="键名"><value>文案</value><comment>用途</comment></data>` 条目（`Language.resx:61-164`、`Language.en-US.resx:61-164`）。

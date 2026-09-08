@@ -18,7 +18,7 @@
 修改本模块后按以下数据检测点验证：
 
 1. **编译**：`dotnet build Core/Resource/Resource.csproj` 通过（`nameof` 引用不出错）。
-2. **键集合一致性**（最重要，可写成单元测试）：枚举 `typeof(Language)` 的 19 个公开静态属性，对每个属性名断言 `Language.Get(属性名) != 属性名`（即键在两个 resx 中都存在，没有走 `?? key` 兜底）。
+2. **键集合一致性**（最重要，可写成单元测试）：枚举 `typeof(Language)` 的 26 个公开静态属性，对每个属性名断言 `Language.Get(属性名) != 属性名`（即键在两个 resx 中都存在，没有走 `?? key` 兜底）。
 3. **en-US 回退检测**：把 `CultureInfo.CurrentUICulture` 设为 `en-US`，断言每个属性返回英文值（如 `Language.MenuExitTitle == "Exit"`）；设为 `zh-CN` 或未识别区域性，断言返回中文值（如 `Language.MenuExitTitle == "退出"`）。
 4. **缺失键行为**：`Language.Get("不存在的键")` 应返回 `"不存在的键"` 本身而非 `null`/异常。
 5. **冒烟**：启动应用，肉眼确认 shell 菜单/面板/状态栏标题、DashBoard splash 阶段文案显示为目标语言而非键名。

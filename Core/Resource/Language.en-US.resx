@@ -86,6 +86,18 @@
     <value>Tasks</value>
     <comment>Title of the DashBoard-contributed BottomPanel demo tab "Tasks"</comment>
   </data>
+  <data name="MenuFileTitle" xml:space="preserve">
+    <value>File</value>
+    <comment>Title of the top-level "File" menu</comment>
+  </data>
+  <data name="MenuViewTitle" xml:space="preserve">
+    <value>View</value>
+    <comment>Title of the top-level "View" menu</comment>
+  </data>
+  <data name="MenuHelpTitle" xml:space="preserve">
+    <value>Help</value>
+    <comment>Title of the top-level "Help" menu</comment>
+  </data>
   <data name="MenuExitTitle" xml:space="preserve">
     <value>Exit</value>
     <comment>Title of the File menu "Exit" item</comment>
