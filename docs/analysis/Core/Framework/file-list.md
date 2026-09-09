@@ -12,6 +12,8 @@ Core/Framework/
 │   ├── AuxiliaryPanelState.cs             AuxiliaryPanel 区域状态 record
 │   ├── BottomPanelState.cs                BottomPanel 区域状态 record
 │   ├── MainContentState.cs                MainContent 区域状态 record
+│   ├── ShellLayoutDto.cs                  布局持久化落盘 DTO record 族（独立于 ShellLayoutState，ADR-0002）
+│   ├── LayoutPersistence.cs               布局持久化服务：layout.json 读/防抖写/删，全路径容错只记日志
 │   ├── PanelResizeTarget.cs               可调尺寸区域枚举
 │   ├── PanelAlignment.cs                  面板对齐枚举（FrameworkWindow 基础布局四档）
 │   ├── PanelResize.cs                     分隔条命令参数 record struct
@@ -39,13 +41,13 @@ Core/Framework/
 `net10.0`、`ImplicitUsings`+`Nullable` 开启。ProjectReference：`..\Abstractions`、`..\Common`、`..\Models`、`..\UIPackage`、`..\Resource`（第 10-14 行）。PackageReference：`Avalonia.Desktop`/`Avalonia.Fonts.Inter`/`Avalonia.Themes.Fluent` 11.3.20、`AvaloniaUI.DiagnosticsSupport` 2.1.1、`CommunityToolkit.Mvvm` 8.4.0、`Irihi.Ursa` 1.15.1（第 18-23 行，FrameworkWindow 直接继承 UrsaWindow）。
 
 ### `FrameworkApplication.cs`
-定义 `public abstract class FrameworkApplication<TWindow> : PrismApplication where TWindow : Window`（第 16 行，命名空间 `DigitalWorkstation.Core.Framework`）。关键入口：
-- `Initialize()`（第 21 行）：主题装载（Dark + `WorkstationTheme` + `VSCodePalette.ApplyTo`）。
-- `OnFrameworkInitializationCompleted()`（第 35 行）→ `RunStartupSequenceAsync()`（第 64 行）：三阶段启动序列（ADR-0004）。
-- `OnInitialized()`（第 44 行）、`InitializeModules()`（第 51 行）：两个故意的空覆盖。
-- `CreateSplashWindow()`（第 58 行，abstract）/`RegisterCustomService()`（第 183 行，virtual）：子类扩展点。
-- `RegisterTypes()`（第 171 行）→ `RegisterFrameworkServices`（第 142 行）：`IoC.Initialize`、窗口管理器双接口单例、`ShellContributionCollector` 单例注册。
-- `ConfigureViewModelLocator()`（第 205 行）：约定式 ViewModel 定位解析器。
+定义 `public abstract class FrameworkApplication<TWindow> : PrismApplication where TWindow : Window`（第 17 行，命名空间 `DigitalWorkstation.Core.Framework`）。关键入口：
+- `Initialize()`（第 22 行）：主题装载（Dark + `WorkstationTheme` + `VSCodePalette.ApplyTo`）。
+- `OnFrameworkInitializationCompleted()`（第 36 行）→ `RunStartupSequenceAsync()`（第 65 行）：三阶段启动序列（ADR-0004）。
+- `OnInitialized()`（第 45 行）、`InitializeModules()`（第 52 行）：两个故意的空覆盖。
+- `CreateSplashWindow()`（第 59 行，abstract）/`RegisterCustomService()`（第 187 行，virtual）：子类扩展点。
+- `RegisterTypes()`（第 175 行）→ `RegisterFrameworkServices`（第 143 行）：`IoC.Initialize`、窗口管理器双接口单例、`ShellContributionCollector` 单例、`LayoutPersistence` 单例（机制在 Framework、接线在 shell 模块，ADR-0002）。
+- `ConfigureViewModelLocator()`（第 209 行）：约定式 ViewModel 定位解析器。
 
 ### `Layout/ShellLayoutState.cs`
 `public sealed record ShellLayoutState`（第 7 行）：五个区域状态属性 + `static Initial`（第 22 行）。转换方法：`SelectActivity`（:28）、`ToggleSideBar`（:45）、`ToggleAuxiliaryPanel`（:53）、`ToggleBottomPanel`（:61）、`ActivateAuxTab`（:69）、`ActivateBottomTab`（:82）、`OpenMainView`（:95）、`Resize`（:103）、私有 `Clamp`（:134）。注释自述："原型验证过的 reducer 的正式实现"。
@@ -61,6 +63,12 @@ Core/Framework/
 
 ### `Layout/MainContentState.cs`
 `public sealed record MainContentState`（第 6 行）：仅 `ActiveView`（string?），单视图切换。
+
+### `Layout/ShellLayoutDto.cs`
+布局持久化 DTO record 族（ADR-0002）：layout.json 落盘的专用格式，独立于 `ShellLayoutState`（状态机只管流转语义，不管序列化兼容）。`ShellLayoutDto`（第 10 行）：`const CurrentVersion=1`（:15）与 `Version`（:17，不识别的文件由 LayoutPersistence 整体丢弃）、`PanelAlignment`（:22，对齐档位不在状态机内、由 FrameworkWindow 依赖属性持有，一并持久化）、`Placements: Dictionary<string, ToolViewPlacementEntry>`（:29，可移动工具视图 Id → 归属 Bar 与 Bar 内序号；钉住项恒在 ActivityBar 底部段不入表；孤儿条目丢弃、无条目的新工具视图落回 Default）、三个可空子 DTO `SideBar`/`AuxiliaryPanel`/`BottomPanel`（:31-35）。`ToolViewPlacementEntry`（:41）：`Bar`（`ToolViewPlacement`）+ `Index`（Bar 内序号，小者靠前）。`SideBarLayoutDto`（:54）：`Visible`、`Width=240`、`Selected`（收起时也保留，与 `SideBarState.ContentFor` 同语义）。`PanelLayoutDto`（:69）：`Visible=true`、`Width=280`、`ActiveTab`。`BottomPanelLayoutDto`（:81）：`Visible=true`、`Height=160`、`ActiveTab`。
+
+### `Layout/LayoutPersistence.cs`
+`public sealed class LayoutPersistence`（第 12 行）：布局持久化服务（ADR-0002），%AppData%/Digital.Workstation/layout.json 的读/写/删，全部失败路径只记日志不打断应用。成员：`public static readonly string FilePath`（:17-19）；`Load()`（:37，文件缺失返回 null 且无日志——首次启动常态；内容为空/`Version≠CurrentVersion` 记 `Logger.Warning` 后返回 null；`catch (Exception)` 全捕获兜底，:62-67）；`ScheduleSave(ShellLayoutDto)`（:73，`System.Threading.Timer` 防抖 500ms——`DebounceMilliseconds` :21——内的连续布局变更合并为最后一次落盘）；`Delete()`（:86，先在锁内作废 pending 保存——清 `_pending`、停 Timer，:88-92——再 `File.Delete`，否则防抖回调会把文件重建；删除失败记 Warning）；私有 `Flush`（:104，Timer 回调：取出并清空 `_pending` 后 `Directory.CreateDirectory` + 序列化写盘，try/catch 全捕获记 Warning——注释自述"回调里的异常无人处理会拖垮进程"，:118）。序列化选项（:23-28）：`WriteIndented`、camelCase 属性名、`JsonStringEnumConverter`（枚举落成 `"Center"`/`"BottomPanel"` 形态字符串）。线程安全经 `Lock _gate`（:30）。
 
 ### `Layout/PanelResizeTarget.cs`
 `public enum PanelResizeTarget`（第 6 行）：`SideBar` / `AuxiliaryPanel` / `BottomPanel`，`ShellLayoutState.Resize` 的目标参数。

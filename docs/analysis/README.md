@@ -32,10 +32,10 @@
 |---|---|---|---|
 | Core/Abstractions | [Core/Abstractions/](Core/Abstractions/common.md) | 纯契约层：贡献接口与定位枚举（`Contributions/`）、菜单契约 `IMenuItemContribution` 与 `MenuGroupAttribute`/`MenuItemAttribute`（`Menus/`）、`ShellRegions` 常量（`Regions/`）、窗口管理接口（`WindowManager/`），零实现 | 无项目依赖（包：Avalonia） |
 | Core/Common | [Core/Common/](Core/Common/common.md) | 基础设施静态门面：Serilog 静态日志 `Logger` 与 Prism 容器静态访问器 `IoC`，进程内单例 | Abstractions（包：Prism.Avalonia/DryIoc、Serilog） |
-| Core/Models | [Core/Models/](Core/Models/common.md) | 跨模块事件契约与负载 DTO 层：启动序列三件套 + 工作区交互两件套，全是空 `PubSubEvent<T>` 子类与 record/枚举 | Common |
+| Core/Models | [Core/Models/](Core/Models/common.md) | 跨模块事件契约与负载 DTO 层：启动序列三件套 + 工作区交互三件套，全是空 `PubSubEvent<T>` 子类与 record/枚举 | Common |
 | Core/Resource | [Core/Resource/](Core/Resource/common.md) | UI 文案资源层：静态类 `Language` + 中文中性 `Language.resx` / 英文 `Language.en-US.resx`，键缺失返回键名本身 | 无项目依赖 |
 | Core/UIPackage | [Core/UIPackage/](Core/UIPackage/common.md) | 共享 UI 资源包：`WorkstationTheme` 聚合 4 个第三方主题包、`VSCodePalette` 深色色键、`Icons` 15 个 StreamGeometry path 常量 | 无项目依赖（包：Avalonia/Semi.Avalonia/Ursa） |
-| Core/Framework | [Core/Framework/](Core/Framework/common.md) | 应用框架层：`FrameworkApplication<TWindow>` 引导与三阶段启动序列（ADR-0004）、`FrameworkWindow` 主题窗口基类（`Windows/`）、`FrameworkWindowManager`（`WindowManager/`）、`ShellLayoutState` 布局状态机（`Layout/`）、`ShellContributionCollector` 贡献收集（`Contributions/`）、`MenuTreeBuilder` 菜单建树与 `RegisterMenus` attribute 菜单注册（`Menus/`） | Abstractions、Common、Models、UIPackage |
+| Core/Framework | [Core/Framework/](Core/Framework/common.md) | 应用框架层：`FrameworkApplication<TWindow>` 引导与三阶段启动序列（ADR-0004）、`FrameworkWindow` 主题窗口基类（`Windows/`）、`FrameworkWindowManager`（`WindowManager/`）、`ShellLayoutState` 布局状态机与 `LayoutPersistence` 布局持久化（`Layout/`）、`ShellContributionCollector` 贡献收集（`Contributions/`）、`MenuTreeBuilder` 菜单建树与 `RegisterMenus` attribute 菜单注册（`Menus/`） | Abstractions、Common、Models、UIPackage |
 | Modules/DashBoard | [Modules/DashBoard/](Modules/DashBoard/common.md) | 启动台模块：启动进度窗（进度/失败/继续退出决策）+ 向 shell 五个扩展点各贡献一条目的通路验证（tracer bullet） | Abstractions、Framework、Resource、UIPackage |
 | Modules/Workstation | [Modules/Workstation/](Modules/Workstation/common.md) | 应用宿主与 shell：`MainWindow` VS Code 式五区布局、`MainWindowViewModel` 驱动布局状态、`WorkstationApplication` 入口、shell 预置贡献 | Framework、Resource、UIPackage、DashBoard |
 | Launcher | [Launcher/](Launcher/common.md) | 程序入口与运行时引导器（WinExe）：Release 分类目录布局的程序集/native 库解析（`AssemblyLoader`）+ 启动 Avalonia/Prism 应用 | Workstation |
@@ -104,7 +104,7 @@ graph TD
 ### 4. 新增一条跨模块事件契约并发布/订阅
 
 1. [Core/Models/common.md](Core/Models/common.md)：事件定义形态——空 `PubSubEvent<T>` 子类 + record 负载 + 「谁发布、谁订阅」XML 注释；`EventAggregator.GetEvent<T>()` 按类型身份撮合，事件类型只能有唯一定义点（本模块）。
-2. [Core/Models/reference.md](Core/Models/reference.md)：现有 5 个事件的负载结构与字符串级契约（如 `OpenMainViewEvent` 负载 = `IMainViewContribution.Id`，不匹配则静默无反应）。
+2. [Core/Models/reference.md](Core/Models/reference.md)：现有 6 个事件的负载结构与字符串级契约（如 `OpenMainViewEvent` 负载 = `IMainViewContribution.Id`，不匹配则静默无反应）。
 3. 发布/订阅样例：[Core/Framework/common.md](Core/Framework/common.md)（启动序列发布端）、[Modules/DashBoard/common.md](Modules/DashBoard/common.md)（启动台订阅/发布端）、[Modules/Workstation/common.md](Modules/Workstation/common.md)（`MainWindowViewModel` 订阅端）。
 4. 接线：消费方经 `Framework → Models` 传递引用即可解析事件类型，通常无需新增 ProjectReference（[Core/Models/common.md](Core/Models/common.md) 场景 3）。
 

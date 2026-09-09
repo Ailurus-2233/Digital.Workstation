@@ -17,6 +17,7 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly ShellContributionCollector _collector;
     private readonly IContainerProvider _containerProvider;
+    private readonly LayoutPersistence _persistence;
     private readonly Dictionary<string, NavigationItemViewModel> _itemsById = new();
     private readonly Dictionary<string, IMainViewContribution> _mainViewsById = new();
     private readonly Dictionary<string, object> _mainViewContents = new();
@@ -26,15 +27,18 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly Dictionary<string, object> _auxTabContents = new();
     private readonly Dictionary<string, object> _bottomTabContents = new();
     private bool _contributionsLoaded;
+    private IReadOnlyList<ToolViewContribution> _toolViews = [];
 
     public MainWindowViewModel(ShellContributionCollector collector, IContainerProvider containerProvider,
-        IEventAggregator eventAggregator)
+        IEventAggregator eventAggregator, LayoutPersistence persistence)
     {
         _collector = collector;
         _containerProvider = containerProvider;
+        _persistence = persistence;
         eventAggregator.GetEvent<OpenMainViewEvent>().Subscribe(OpenMainView);
         eventAggregator.GetEvent<TogglePanelVisibilityEvent>().Subscribe(TogglePanel);
         eventAggregator.GetEvent<SetPanelAlignmentEvent>().Subscribe(SetPanelAlignment);
+        eventAggregator.GetEvent<ResetLayoutEvent>().Subscribe(ResetLayout);
         _mainContent = containerProvider.Resolve<EmptyStateView>();
     }
 
@@ -124,21 +128,12 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         _contributionsLoaded = true;
-        var toolViews = _collector.GetToolViews();
-        LoadItems(toolViews.Where(view => view.Placement == ToolViewPlacement.ActivityBar && view.AllowMove),
-            TopNavigationItems);
-        LoadItems(toolViews.Where(view => view.Placement == ToolViewPlacement.ActivityBar && !view.AllowMove),
-            BottomNavigationItems);
+        _toolViews = _collector.GetToolViews();
+        LoadToolViews(_persistence.Load());
         foreach (var mainView in _collector.GetMainViews())
         {
             _mainViewsById[mainView.Id] = mainView;
         }
-        LoadPanelTabs(toolViews.Where(view => view.Placement == ToolViewPlacement.AuxiliaryPanel).ToArray(),
-            ToolViewPlacement.AuxiliaryPanel, AuxiliaryTabs, _auxTabsById,
-            content => AuxiliaryContent = content, _auxTabContents);
-        LoadPanelTabs(toolViews.Where(view => view.Placement == ToolViewPlacement.BottomPanel).ToArray(),
-            ToolViewPlacement.BottomPanel, BottomTabs, _bottomTabsById,
-            content => BottomContent = content, _bottomTabContents);
         foreach (var submenu in MenuTreeBuilder.Build(_collector.GetMenuItems()))
         {
             MenuBarItems.Add(MenuItemViewModel.FromSubmenu(submenu));
@@ -149,6 +144,106 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    ///     工具视图分派到三处 Bar 并恢复持久化布局：钉住项（AllowMove=false）恒落 ActivityBar 底部段；
+    ///     可移动项「配置优先、默认兜底」——持久化 placements 优先于 attribute Default，孤儿条目随贡献迭代
+    ///     自然丢弃，无配置条目的新工具视图按 Order 追加到 Default Bar 末尾；layout 为 null（含重置）时全部走默认
+    /// </summary>
+    private void LoadToolViews(ShellLayoutDto? layout)
+    {
+        var placements = layout?.Placements ?? [];
+
+        IReadOnlyList<ToolViewContribution> MovableIn(ToolViewPlacement bar)
+        {
+            var configured = _toolViews
+                .Where(view => view.AllowMove
+                               && placements.TryGetValue(view.Id, out var entry) && entry.Bar == bar)
+                .OrderBy(view => placements[view.Id].Index);
+            var fresh = _toolViews
+                .Where(view => view.AllowMove && !placements.ContainsKey(view.Id) && view.Placement == bar)
+                .OrderBy(view => view.Order);
+            return configured.Concat(fresh).ToArray();
+        }
+
+        LoadItems(MovableIn(ToolViewPlacement.ActivityBar), TopNavigationItems);
+        LoadItems(_toolViews.Where(view => view.Placement == ToolViewPlacement.ActivityBar && !view.AllowMove),
+            BottomNavigationItems);
+        LoadPanelTabs(MovableIn(ToolViewPlacement.AuxiliaryPanel), ToolViewPlacement.AuxiliaryPanel,
+            AuxiliaryTabs, _auxTabsById, layout?.AuxiliaryPanel?.ActiveTab,
+            content => AuxiliaryContent = content, _auxTabContents);
+        LoadPanelTabs(MovableIn(ToolViewPlacement.BottomPanel), ToolViewPlacement.BottomPanel,
+            BottomTabs, _bottomTabsById, layout?.BottomPanel?.ActiveTab,
+            content => BottomContent = content, _bottomTabContents);
+
+        if (layout is not null)
+        {
+            RestoreLayout(layout);
+        }
+    }
+
+    /// <summary>
+    ///     恢复持久化的显隐/尺寸/选中项/对齐档位；尺寸 clamp 到各区域的合法区间，
+    ///     选中项无对应工具视图时丢弃（孤儿）；活动 tab 已在 LoadPanelTabs 按配置恢复
+    /// </summary>
+    private void RestoreLayout(ShellLayoutDto layout)
+    {
+        if (layout.SideBar is { } sideBar)
+        {
+            var selected = sideBar.Selected is { } id && _itemsById.ContainsKey(id) ? id : null;
+            State = State with
+            {
+                SelectedActivity = selected,
+                SideBar = State.SideBar with
+                {
+                    Visible = sideBar.Visible,
+                    Width = Math.Clamp(sideBar.Width, SideBarState.MinWidth, SideBarState.MaxWidth),
+                    ContentFor = selected
+                }
+            };
+            foreach (var navItem in _itemsById.Values)
+            {
+                navItem.IsSelected = navItem.Id == selected;
+            }
+
+            if (selected is not null)
+            {
+                if (!_sideBarContents.TryGetValue(selected, out var content))
+                {
+                    content = _containerProvider.Resolve(_itemsById[selected].Contribution.ViewType);
+                    _sideBarContents[selected] = content;
+                }
+
+                SideBarTitle = _itemsById[selected].Title;
+                SideBarContent = content;
+            }
+        }
+
+        if (layout.AuxiliaryPanel is { } auxiliary)
+        {
+            State = State with
+            {
+                AuxiliaryPanel = State.AuxiliaryPanel with
+                {
+                    Visible = auxiliary.Visible,
+                    Width = Math.Clamp(auxiliary.Width, AuxiliaryPanelState.MinWidth, AuxiliaryPanelState.MaxWidth)
+                }
+            };
+        }
+
+        if (layout.BottomPanel is { } bottom)
+        {
+            State = State with
+            {
+                BottomPanel = State.BottomPanel with
+                {
+                    Visible = bottom.Visible,
+                    Height = Math.Clamp(bottom.Height, BottomPanelState.MinHeight, BottomPanelState.MaxHeight)
+                }
+            };
+        }
+
+        PanelAlignment = layout.PanelAlignment;
+    }
     /// <summary>
     ///     点击导航项：切换选中并驱动 SideBar 展开/收起；内容视图按导航项缓存，收起再展开不丢
     /// </summary>
@@ -161,6 +256,8 @@ public partial class MainWindowViewModel : ObservableObject
         {
             navItem.IsSelected = navItem.Id == State.SelectedActivity;
         }
+
+        ScheduleSave();
 
         if (!State.SideBar.Visible || State.SideBar.ContentFor is not { } contentId)
         {
@@ -211,6 +308,7 @@ public partial class MainWindowViewModel : ObservableObject
         State = next;
         SyncActiveTab(AuxiliaryTabs, _auxTabsById, next.AuxiliaryPanel.ActiveTab,
             content => AuxiliaryContent = content, _auxTabContents);
+        ScheduleSave();
     }
 
     /// <summary>
@@ -228,6 +326,7 @@ public partial class MainWindowViewModel : ObservableObject
         State = next;
         SyncActiveTab(BottomTabs, _bottomTabsById, next.BottomPanel.ActiveTab,
             content => BottomContent = content, _bottomTabContents);
+        ScheduleSave();
     }
 
     /// <summary>
@@ -264,6 +363,7 @@ public partial class MainWindowViewModel : ObservableObject
     private void SetPanelAlignment(PanelAlignment alignment)
     {
         PanelAlignment = alignment;
+        ScheduleSave();
     }
 
     /// <summary>
@@ -275,6 +375,7 @@ public partial class MainWindowViewModel : ObservableObject
     private void ResizePanel(PanelResize resize)
     {
         State = State.Resize(resize.Target, resize.Delta);
+        ScheduleSave();
     }
 
     /// <summary>
@@ -288,14 +389,99 @@ public partial class MainWindowViewModel : ObservableObject
             TogglePanelTarget.AuxiliaryPanel => State.ToggleAuxiliaryPanel(),
             _ => State.ToggleBottomPanel()
         };
+        ScheduleSave();
     }
 
     /// <summary>
-    ///     装载一个面板的 tab：建立索引、默认激活首个 tab 并同步到状态
+    ///     视图菜单"重置布局"项的唯一路径：删除持久化配置，按 attribute 默认立即重建布局
+    ///     （视图实例缓存保留，重建只改归属/顺序/显隐/尺寸/选中）
+    /// </summary>
+    private void ResetLayout()
+    {
+        _persistence.Delete();
+
+        TopNavigationItems.Clear();
+        BottomNavigationItems.Clear();
+        AuxiliaryTabs.Clear();
+        BottomTabs.Clear();
+        _itemsById.Clear();
+        _auxTabsById.Clear();
+        _bottomTabsById.Clear();
+
+        State = ShellLayoutState.Initial;
+        PanelAlignment = PanelAlignment.Center;
+        SideBarContent = null;
+        SideBarTitle = null;
+
+        LoadToolViews(null);
+    }
+
+    /// <summary>
+    ///     把当前布局捕获为持久化 DTO：placements 取三处 Bar 的当前顺序（钉住项不入表），
+    ///     显隐/尺寸/选中/活动 tab 取 State，对齐档位取镜像属性
+    /// </summary>
+    private ShellLayoutDto CaptureLayout()
+    {
+        var placements = new Dictionary<string, ToolViewPlacementEntry>();
+        for (var i = 0; i < TopNavigationItems.Count; i++)
+        {
+            placements[TopNavigationItems[i].Id] = new ToolViewPlacementEntry
+            {
+                Bar = ToolViewPlacement.ActivityBar, Index = i
+            };
+        }
+        for (var i = 0; i < AuxiliaryTabs.Count; i++)
+        {
+            placements[AuxiliaryTabs[i].Id] = new ToolViewPlacementEntry
+            {
+                Bar = ToolViewPlacement.AuxiliaryPanel, Index = i
+            };
+        }
+        for (var i = 0; i < BottomTabs.Count; i++)
+        {
+            placements[BottomTabs[i].Id] = new ToolViewPlacementEntry
+            {
+                Bar = ToolViewPlacement.BottomPanel, Index = i
+            };
+        }
+
+        return new ShellLayoutDto
+        {
+            PanelAlignment = PanelAlignment,
+            Placements = placements,
+            SideBar = new SideBarLayoutDto
+            {
+                Visible = State.SideBar.Visible, Width = State.SideBar.Width, Selected = State.SelectedActivity
+            },
+            AuxiliaryPanel = new PanelLayoutDto
+            {
+                Visible = State.AuxiliaryPanel.Visible,
+                Width = State.AuxiliaryPanel.Width,
+                ActiveTab = State.AuxiliaryPanel.ActiveTab
+            },
+            BottomPanel = new BottomPanelLayoutDto
+            {
+                Visible = State.BottomPanel.Visible,
+                Height = State.BottomPanel.Height,
+                ActiveTab = State.BottomPanel.ActiveTab
+            }
+        };
+    }
+
+    /// <summary>
+    ///     布局变更的统一出口：所有变更点（显隐/尺寸/激活/选中/对齐）汇到这里防抖落盘
+    /// </summary>
+    private void ScheduleSave()
+    {
+        _persistence.ScheduleSave(CaptureLayout());
+    }
+
+    /// <summary>
+    ///     装载一个面板的 tab：建立索引、激活配置指定的活动 tab（无配置或不匹配时默认首个）并同步到状态
     /// </summary>
     private void LoadPanelTabs(IReadOnlyList<ToolViewContribution> contributions, ToolViewPlacement panel,
         ObservableCollection<PanelTabViewModel> target, Dictionary<string, ToolViewContribution> index,
-        Action<object> setContent, Dictionary<string, object> contentCache)
+        string? preferredActiveTab, Action<object> setContent, Dictionary<string, object> contentCache)
     {
         if (contributions.Count == 0)
         {
@@ -310,7 +496,9 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         var tabs = target.Select(tab => tab.Id).ToArray();
-        var activeTab = tabs.FirstOrDefault();
+        var activeTab = preferredActiveTab is { } preferred && tabs.Contains(preferred)
+            ? preferred
+            : tabs.FirstOrDefault();
         State = panel switch
         {
             ToolViewPlacement.AuxiliaryPanel => State with

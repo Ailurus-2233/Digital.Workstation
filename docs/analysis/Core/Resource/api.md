@@ -8,10 +8,10 @@
 
 | 签名 | 说明 |
 |---|---|
-### 静态只读属性（26 个，全部以 `Get(nameof(属性名))` 实现，返回 `string`）
+### 静态只读属性（27 个，全部以 `Get(nameof(属性名))` 实现，返回 `string`）
 
 
-定义于 `Language.cs:25-148`。键名 = 属性名，中文值来自 `Language.resx`，英文值来自 `Language.en-US.resx`：
+定义于 `Language.cs:25-153`。键名 = 属性名，中文值来自 `Language.resx`，英文值来自 `Language.en-US.resx`：
 
 | 属性 | 中文值 | 英文值 | 用途（resx comment） |
 |---|---|---|---|
@@ -34,16 +34,17 @@
 | `PanelAlignRightTitle`（:103） | 右对齐 | Align Right | 面板对齐菜单"右对齐"项标题 |
 | `PanelAlignCenterTitle`（:108） | 居中 | Align Center | 面板对齐菜单"居中"项标题 |
 | `PanelAlignJustifyTitle`（:113） | 两端对齐 | Justify | 面板对齐菜单"两端对齐"项标题 |
-| `StatusReadyTitle`（:118） | 就绪 | Ready | shell 预置状态栏"就绪"项文本 |
-| `DashBoardOpenWindowMenuTitle`（:123） | 打开启动台 | Open Launch Pad | DashBoard 贡献给文件菜单的"打开启动台"项标题 |
-| `SplashStartingText`（:128） | 正在启动… | Starting… | 启动台显示进度前的初始阶段文本 |
-| `SplashPhaseCoreServices`（:133） | 初始化核心服务 | Initializing core services | 启动台阶段名 |
-| `SplashPhaseLoadingModules`（:138） | 加载模块 | Loading modules | 启动台阶段名 |
-| `SplashPhaseReady`（:143） | 就绪 | Ready | 启动台阶段名 |
-| `SplashPhaseFailed`（:148） | 模块加载失败 | Module failed to load | 启动台阶段名 |
+| `ResetLayoutTitle`（:118） | 重置布局 | Reset Layout | 视图菜单"重置布局"项标题 |
+| `StatusReadyTitle`（:123） | 就绪 | Ready | shell 预置状态栏"就绪"项文本 |
+| `DashBoardOpenWindowMenuTitle`（:128） | 打开启动台 | Open Launch Pad | DashBoard 贡献给文件菜单的"打开启动台"项标题 |
+| `SplashStartingText`（:133） | 正在启动… | Starting… | 启动台显示进度前的初始阶段文本 |
+| `SplashPhaseCoreServices`（:138） | 初始化核心服务 | Initializing core services | 启动台阶段名 |
+| `SplashPhaseLoadingModules`（:143） | 加载模块 | Loading modules | 启动台阶段名 |
+| `SplashPhaseReady`（:148） | 就绪 | Ready | 启动台阶段名 |
+| `SplashPhaseFailed`（:153） | 模块加载失败 | Module failed to load | 启动台阶段名 |
 
 
-> 注意：`StatusReadyTitle`（状态栏"就绪"，:118）与 `SplashPhaseReady`（启动画面"就绪"阶段名，:143）**中文值同为"就绪"，但用途不同，是两个独立的键**，不能合并。
+> 注意：`StatusReadyTitle`（状态栏"就绪"，:123）与 `SplashPhaseReady`（启动画面"就绪"阶段名，:148）**中文值同为"就绪"，但用途不同，是两个独立的键**，不能合并。
 ### 内部（非公开）成员
 - `private static readonly ResourceManager Manager`（`Language.cs:11-12`）：基名 `"DigitalWorkstation.Core.Resource.Language"`，绑定 `typeof(Language).Assembly`。
 - `Manager` 每次 `GetString` 都按调用线程的 `CultureInfo.CurrentUICulture` 解析：先找 en-US 卫星资源（`Language.en-US.resx` 编译产物），找不到/未命中则回退中性资源（`Language.resx` 中文）。本模块自身不提供切换语言的 API。
@@ -81,6 +82,7 @@ Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
 - `Modules/Workstation/Menus/FileMenus.cs:12,18` → `[MenuGroup("MenuFileTitle", ...)]`、`[MenuItem("MenuExitTitle", ...)]`
 - `Modules/Workstation/Menus/ViewPanelMenus.cs:11,14,20,26` → `MenuViewTitle` + Toggle 系列 3 键
 - `Modules/Workstation/Menus/ViewAlignmentMenus.cs:12,15,21,27,33` → `MenuViewTitle` + PanelAlign 系列 4 键
+- `Modules/Workstation/Menus/ViewLayoutMenus.cs:10,13` → `MenuViewTitle` + `ResetLayoutTitle`
 - `Modules/Workstation/Menus/HelpMenus.cs:11,17` → `[MenuGroup("MenuHelpTitle", ...)]`、`[MenuItem("MenuAboutTitle", ...)]`
 - `Modules/DashBoard/DashBoardMenus.cs:11,17` → `[MenuGroup("MenuFileTitle", ...)]`、`[MenuItem("DashBoardOpenWindowMenuTitle", ...)]`
 
@@ -91,4 +93,4 @@ Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
 
 ## 对外公开的数据结构
 
-无自定义数据结构。输入输出都是 `string`；语言资源键的"结构"即上表 26 个键，物理载体是两个 resx 文件中的 `<data name="键名"><value>文案</value><comment>用途</comment></data>` 条目（`Language.resx:61-164`、`Language.en-US.resx:61-164`）。
+无自定义数据结构。输入输出都是 `string`；语言资源键的"结构"即上表 27 个键，物理载体是两个 resx 文件中的 `<data name="键名"><value>文案</value><comment>用途</comment></data>` 条目（`Language.resx:61-168`、`Language.en-US.resx:61-168`）。

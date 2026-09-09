@@ -8,21 +8,22 @@
 | **MainContent** | 工作区中央主区域，单视图切换（无 tab）；`MainContentState.ActiveView` 为当前视图 Id（对应 `IMainViewContribution.Id`） | `Layout/MainContentState.cs:6` |
 | **AuxiliaryPanel** | 工作区右侧 tab + 容器面板，tab 来自工具视图（`ToolViewPlacement.AuxiliaryPanel`） | `Layout/AuxiliaryPanelState.cs:6` |
 | **BottomPanel** | 工作区底部 tab + 容器面板（输出、日志等），唯一调高度（而非宽度）的区域 | `Layout/BottomPanelState.cs:6` |
-| **启动台 / Splash** | 启动期间显示的进度窗口：呈现模块加载进度（i/N）、单模块失败时提供"继续/退出"决策。由子类经 `CreateSplashWindow()` 提供（真实实现：DashBoard 模块的 `DashBoardWindow`）。与通用 "splash screen" 区别：它是**交互式**的（承载失败决策），且可经菜单重开（DashBoard 模块的 `DashBoardMenus`） | `FrameworkApplication.cs:58`（`CreateSplashWindow` 抽象方法注释） |
+| **启动台 / Splash** | 启动期间显示的进度窗口：呈现模块加载进度（i/N）、单模块失败时提供"继续/退出"决策。由子类经 `CreateSplashWindow()` 提供（真实实现：DashBoard 模块的 `DashBoardWindow`）。与通用 "splash screen" 区别：它是**交互式**的（承载失败决策），且可经菜单重开（DashBoard 模块的 `DashBoardMenus`） | `FrameworkApplication.cs:59`（`CreateSplashWindow` 抽象方法注释） |
 | **贡献（Contribution）** | 模块向 shell 提供的声明式条目（工具视图/主视图/菜单项/状态栏项）。工具视图在 View 类上标 `ToolViewAttribute` 由 `RegisterToolViews` 扫描生成 `ToolViewContribution`（ADR-0002），其余实现 Abstractions 的 `I*Contribution` 接口并注册到容器；本模块的 `ShellContributionCollector` 负责收集排序。与通用 "插件" 区别：贡献是纯声明 + 视图类型引用，无生命周期钩子 | `Contributions/ShellContributionCollector.cs:6-7` |
 | **工具视图（Tool View）** | 带图标与标题的可停靠界面单元（ADR-0002），由 View 类上的 `ToolViewAttribute` 声明（`Id`/`TitleKey`/`Icon`/`Default`/`Order`/`AllowMove`），Framework 扫描生成 `ToolViewContribution` 元数据；可栖身于三处 Bar：ActivityBar（内容显示在 SideBar）、AuxiliaryPanel、BottomPanel。统一了旧的「导航项」与「面板 tab」两个概念（完整领域定义见根目录 CONTEXT.md） | `Core/Abstractions/Contributions/ToolViewAttribute.cs`；注册端 `Contributions/ToolViewRegistration.cs:14` |
 | **钉住项（Pinned Item）** | `AllowMove = false` 且 `Default = ActivityBar` 的工具视图（如设置），固定渲染在 ActivityBar 底部段，不参与拖拽迁移 | `Core/Abstractions/Contributions/ToolViewAttribute.cs`（`AllowMove` 注释，ADR-0002） |
-| **启动序列（Startup Sequence）** | ADR-0004 定义的三阶段引导：CoreServices（登记主窗口、显示启动台、校验模块目录）→ LoadingModules（逐模块异步加载并发布进度）→ Ready（关启动台、显示工作区）。取代 Prism 默认的同步模块加载 | `FrameworkApplication.cs:64` `RunStartupSequenceAsync`；阶段枚举 `StartupPhase` 在 Models 模块 |
-| **ADR-0004** | 架构决策记录编号：确立"启动台 + 逐模块异步加载 + 失败可决策"的启动模型，是本模块三个空覆盖与整个 `RunStartupSequenceAsync` 的存在理由 | `FrameworkApplication.cs:32、49、56` 注释 |
-| **主窗口（MainWindow）** | 泛型参数 `TWindow` 经 `CreateShell()` 解析出的工作区窗口（真实代码：`Modules/Workstation/MainWindow`）。`FrameworkWindowManager._mainWindow` 在 `HandleMainWindow()` 时捕获；与启动台是**两个不同窗口** | `FrameworkApplication.cs:16、192-195` |
+| **启动序列（Startup Sequence）** | ADR-0004 定义的三阶段引导：CoreServices（登记主窗口、显示启动台、校验模块目录）→ LoadingModules（逐模块异步加载并发布进度）→ Ready（关启动台、显示工作区）。取代 Prism 默认的同步模块加载 | `FrameworkApplication.cs:65` `RunStartupSequenceAsync`；阶段枚举 `StartupPhase` 在 Models 模块 |
+| **ADR-0004** | 架构决策记录编号：确立"启动台 + 逐模块异步加载 + 失败可决策"的启动模型，是本模块三个空覆盖与整个 `RunStartupSequenceAsync` 的存在理由 | `FrameworkApplication.cs:33、50、57` 注释 |
+| **主窗口（MainWindow）** | 泛型参数 `TWindow` 经 `CreateShell()` 解析出的工作区窗口（真实代码：`Modules/Workstation/MainWindow`）。`FrameworkWindowManager._mainWindow` 在 `HandleMainWindow()` 时捕获；与启动台是**两个不同窗口** | `FrameworkApplication.cs:17、196-199` |
 | **窗口注册表（_windowMap）** | `FrameworkWindowManager` 内 `Dictionary<Type, Window>`：同类型窗口单实例的运行时索引，`Closing` 事件自动移除 | `FrameworkWindowManager.cs:17` |
 | **reducer / 状态转换** | `ShellLayoutState` 的方法风格：输入当前状态 + 参数，返回新实例，无原地修改、无副作用；非法操作返回等值状态。借自 Redux 术语但无 action 类型层级，方法是直接挂在 record 上的 | `ShellLayoutState.cs:4-6` 注释 |
 | **clamp** | `Resize` 把区域尺寸钳制在 `[Min, Max]` 区间的操作，区间常量在各自区域 record 上（如 `SideBarState.MinWidth/MaxWidth`） | `ShellLayoutState.cs:134`（私有 `Clamp` 方法） |
-| **PrismApplication / Prism** | 本框架基类来源（`Prism.DryIoc.PrismApplication`）：提供容器（DryIoc）、模块目录（`IModuleCatalog`/`IModuleManager`）、事件聚合器（`IEventAggregator`）、Region 与 ViewModelLocator 基础设施；本模块大量"空覆盖"都是在改 Prism 默认行为 | `FrameworkApplication.cs:12、16` |
-| **IoC（类）** | Common 模块的静态容器引用持有者；本模块在 `RegisterFrameworkServices` 里完成其一次性初始化，`FrameworkWindowManager.GetWindow` 经 `IoC.Provider` 解析窗口 | `FrameworkApplication.cs:144`、`FrameworkWindowManager.cs:37` |
-| **ViewModel 定位约定** | `ConfigureViewModelLocator` 的命名映射规则：`Views`→`ViewModels` 命名空间替换 + `Window`/`Page`/`View` 后缀补 `ViewModel`/`Model`；View 侧需 `AutoWireViewModel="True"` | `FrameworkApplication.cs:197-233` |
+| **PrismApplication / Prism** | 本框架基类来源（`Prism.DryIoc.PrismApplication`）：提供容器（DryIoc）、模块目录（`IModuleCatalog`/`IModuleManager`）、事件聚合器（`IEventAggregator`）、Region 与 ViewModelLocator 基础设施；本模块大量"空覆盖"都是在改 Prism 默认行为 | `FrameworkApplication.cs:13、17` |
+| **IoC（类）** | Common 模块的静态容器引用持有者；本模块在 `RegisterFrameworkServices` 里完成其一次性初始化，`FrameworkWindowManager.GetWindow` 经 `IoC.Provider` 解析窗口 | `FrameworkApplication.cs:145`、`FrameworkWindowManager.cs:37` |
+| **ViewModel 定位约定** | `ConfigureViewModelLocator` 的命名映射规则：`Views`→`ViewModels` 命名空间替换 + `Window`/`Page`/`View` 后缀补 `ViewModel`/`Model`；View 侧需 `AutoWireViewModel="True"` | `FrameworkApplication.cs:209-241` |
 | **面板对齐（Panel Alignment）** | BottomPanel 在窗口底部的水平跨度，类比文本对齐。四档：左（贴左，横跨 SideBar 与 MainContent 下方，AuxiliaryPanel 通高到底）、右（贴右，横跨 MainContent 与 AuxiliaryPanel 下方，SideBar 通高到底）、居中（仅占 MainContent 下方，默认，两侧栏通高）、两端（横跨三列全宽）。完整领域定义（含与"面板位置"的区分）见根目录 CONTEXT.md | `Layout/PanelAlignment.cs:7` |
 | **FrameworkWindow** | 带基础布局的窗口基类（继承 UrsaWindow）：内置 VS Code 式五区 shell + 状态栏 + 标题栏菜单栏（代码创建的 `Menu` 宽松绑定 ViewModel 的 `MenuBarItems`，ADR-0001），布局档位由 `PanelAlignment` 依赖属性决定，切换即整体替换布局模板。真实子类：Modules/Workstation 的 `MainWindow`。与"主窗口（MainWindow）"词条的区别：那是**角色**（启动序列登记的那个窗口实例），这是**类型基类** | `Windows/FrameworkWindow.cs:19` |
+| **布局持久化（Layout Persistence）** | ADR-0002 引入的 shell 布局落盘机制：`%AppData%/Digital.Workstation/layout.json` 记录可移动工具视图归属（`Placements`）、SideBar/两个面板的显隐/尺寸/选中项或活动 tab、面板对齐档位。读容错（缺失/损坏/版本不识别 → 返回 null 静默回默认布局）、写防抖（500ms 合并连续变更）、重置经 `Delete`（先作废 pending 再删文件）。机制在 Framework（`LayoutPersistence` + `ShellLayoutDto` 族），接线在 Modules/Workstation 的 `MainWindowViewModel`；事件契约 `ResetLayoutEvent` 在 Core/Models/Events | `Layout/LayoutPersistence.cs:12`、`Layout/ShellLayoutDto.cs:10` |
 
 ## 类名 ↔ 业务概念对照
 
@@ -38,3 +39,5 @@
 | `PanelAlignment` | 面板对齐：BottomPanel 的水平跨度档位 |
 | `ToolViewRegistration` | 工具视图装配扫描器：attribute 扫描生成元数据并注册 View 类型 |
 | `PanelResize` / `PanelResizer` | 分隔条拖拽的一次增量（命令参数）/ 发出增量的分隔条控件 |
+| `LayoutPersistence` | 布局配置文件的读写门卫：容错读 / 防抖写 / 重置删，全路径只记日志不抛异常 |
+| `ShellLayoutDto` 族 | layout.json 的落盘格式：带版本字段、独立于运行时状态机的 DTO record |

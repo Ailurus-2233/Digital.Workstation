@@ -2,8 +2,8 @@
 
 | 术语 | 定义 | 首次出现/代码位置 |
 |---|---|---|
-| **PubSubEvent&lt;T&gt;** | Prism 事件聚合器的事件基类（`Prism.Events` 命名空间），提供 `Publish`/`Subscribe`/`Unsubscribe`。本模块的 5 个事件类全部是无成员体的空子类，只为贡献类型身份 | 经 obj/Debug/Models.GlobalUsings.g.cs 第 6 行 global using 引入；5 个事件文件第 7 行 |
-| **IEventAggregator** | Prism 发布/订阅中枢；`GetEvent<TEvent>()` 按类型身份返回事件单例，发布方与订阅方借此对接。本模块定义的就是其上流转的事件类型 | 消费方代码（FrameworkApplication.cs:68、MainWindowViewModel.cs:32 等）；本模块注释未直接出现 |
+| **PubSubEvent&lt;T&gt;** | Prism 事件聚合器的事件基类（`Prism.Events` 命名空间），提供 `Publish`/`Subscribe`/`Unsubscribe`。本模块的 6 个事件类全部是无成员体的空子类，只为贡献类型身份（其中 `ResetLayoutEvent` 继承非泛型 `PubSubEvent`，无负载） | 经 obj/Debug/Models.GlobalUsings.g.cs 第 6 行 global using 引入；6 个事件文件第 7 行 |
+| **IEventAggregator** | Prism 发布/订阅中枢；`GetEvent<TEvent>()` 按类型身份返回事件单例，发布方与订阅方借此对接。本模块定义的就是其上流转的事件类型 | 消费方代码（FrameworkApplication.cs:69、MainWindowViewModel.cs:32 等）；本模块注释未直接出现 |
 | **启动台（Splash）** | 启动期间显示的进度窗口，即 DashBoard 模块的 `DashBoardWindow`；订阅 `StartupProgressEvent`/`ModuleLoadFailedEvent` 显示进度，发布 `StartupFailureActionEvent` 回报用户决策 | ModuleLoadFailedEvent.cs、StartupFailureActionEvent.cs 注释；实现在 Modules/DashBoard |
 | **启动序列** | `FrameworkApplication.OnFrameworkInitializationCompleted` 中的三阶段流程：初始化核心服务 → 逐模块异步加载 → 就绪；本模块的启动三事件为它服务 | StartupProgressEvent.cs 注释；实现在 Core/Framework/FrameworkApplication.cs |
 | **ADR-0004** | 架构决策记录编号：抑制 Prism 同步 InitializeModules，模块改由启动序列逐模块异步加载，进度/失败经事件呈现。**文档本体不在仓库中**（悬空引用） | StartupPhase.cs、StartupProgressEvent.cs、ModuleLoadFailedEvent.cs 注释；README 第 47-51 行 |

@@ -2,20 +2,24 @@
 
 ## 隐含不变量
 
-- **贡献收集只发生一次且晚于构造**：`MainWindowViewModel` 构造函数不读任何贡献；`EnsureContributionsLoaded()`（MainWindowViewModel.cs:119-150）由 `MainWindow.axaml.cs:13-17` 的 `Opened` 事件触发，`_contributionsLoaded`（:28）守卫保证只执行一次。推论：**窗口首次显示之后才注册进容器的贡献永远不会出现**；也不能指望构造函数里就有导航项。
-- **`State` 是布局的唯一事实来源（其管辖范围内）**：所有显隐/宽高/选中/tab 状态都必须经 `ShellLayoutState` 转换方法改（`State = State.Xxx(...)`），不许另存布尔或宽度字段。布局 XAML 全部单向绑定 `State.*`（现位于 Framework 的 `FrameworkWindowTheme.axaml`，如 :45、:73、:122-123）。`ResizePanel`（:275-278）是拖拽增量进入状态的唯一路径；`TogglePanel`（:283-291）是显隐切换的唯一路径。**例外：面板对齐档位不在 `State` 里**——`FrameworkWindow.PanelAlignment` 依赖属性是布局定义的唯一入口，`MainWindowViewModel.PanelAlignment`（:50）只是双向绑定的镜像属性。
-- **UI 线程亲和**：全部事件订阅（:35-37）、命令、集合变更都假定 UI 线程；模块从后台线程发布 `OpenMainViewEvent` 时由 Prism 事件聚合器的线程选项决定（默认订阅在发布线程执行——本模块订阅未指定 `ThreadOption`，发布方若在后台线程会直接碰 `ObservableCollection`，调用方责任）。
-- **视图实例寿命 = 应用寿命**：四个 `*Contents` 缓存字典（:22-23、:26-27）永不失效、无 Dispose 路径；视图应假设自己会被长期持有、反复进出可视树。
+- **贡献收集只发生一次且晚于构造**：`MainWindowViewModel` 构造函数不读任何贡献；`EnsureContributionsLoaded()`（MainWindowViewModel.cs:123-145）由 `MainWindow.axaml.cs:13-17` 的 `Opened` 事件触发，`_contributionsLoaded`（:29）守卫保证只执行一次。推论：**窗口首次显示之后才注册进容器的贡献永远不会出现**；也不能指望构造函数里就有导航项。
+- **`State` 是布局的唯一事实来源（其管辖范围内）**：所有显隐/宽高/选中/tab 状态都必须经 `ShellLayoutState` 转换方法改（`State = State.Xxx(...)`），不许另存布尔或宽度字段。布局 XAML 全部单向绑定 `State.*`（现位于 Framework 的 `FrameworkWindowTheme.axaml`，如 :45、:73、:122-123）。`ResizePanel`（:375-379）是拖拽增量进入状态的唯一路径；`TogglePanel`（:384-393）是显隐切换的唯一路径。**例外：面板对齐档位不在 `State` 里**——`FrameworkWindow.PanelAlignment` 依赖属性是布局定义的唯一入口，`MainWindowViewModel.PanelAlignment`（:54）只是双向绑定的镜像属性。
+- **UI 线程亲和**：全部事件订阅（:38-41）、命令、集合变更都假定 UI 线程；模块从后台线程发布 `OpenMainViewEvent` 时由 Prism 事件聚合器的线程选项决定（默认订阅在发布线程执行——本模块订阅未指定 `ThreadOption`，发布方若在后台线程会直接碰 `ObservableCollection`，调用方责任）。
+- **视图实例寿命 = 应用寿命**：四个 `*Contents` 缓存字典（:23-24、:27-28）永不失效、无 Dispose 路径；视图应假设自己会被长期持有、反复进出可视树（`ResetLayout` 也不清这四个缓存，:399-417）。
 - **Id 是字符串级契约**：`OpenMainViewEvent` 负载必须逐字符等于 `IMainViewContribution.Id`。不匹配不报错，静默无反应。（菜单贡献已无 Id——ADR-0001 后菜单项靠路径/分组/Order 定位。）
-- **`LoadPanelTabs` 假设列表同面板**：`LoadPanelTabs`（:296-327）的目标面板由显式传入的 `panel` 参数决定（switch 在 :314-324）——依赖调用方已按 `Placement` 过滤（`EnsureContributionsLoaded` 的 `Where` 保证，:136-141），混入另一面板的工具视图会静默写错状态分支。
+- **`LoadPanelTabs` 假设列表同面板**：`LoadPanelTabs`（:482-515）的目标面板由显式传入的 `panel` 参数决定（switch 在 :502-512）——依赖调用方已按目标 bar 过滤（`LoadToolViews` 的 `MovableIn(bar)` 局部函数保证，:156-166），混入另一面板的工具视图会静默写错状态分支。
+- **布局变更必须经过 `ScheduleSave` 才持久化**：六个变更点（`SelectActivity` :260、`ActivateAuxTab` :311、`ActivateBottomTab` :329、`SetPanelAlignment` :366、`ResizePanel` :378、`TogglePanel` :392）末尾统一调 `ScheduleSave()`（:474-477）经 Framework `LayoutPersistence` 防抖 500ms 落盘。**新增任何布局变更路径（如面板 tab 拖拽排序、新命令）时忘记挂上，该变更就静默不持久化**——重启后回到上次落盘状态，无报错。反过来，纯展示性变更（如 `OpenMainView` 换主视图）本就不入 DTO，不要随手加。
+- **`placements` 不含钉住项**：`CaptureLayout`（:423-470）只遍历 `TopNavigationItems`/`AuxiliaryTabs`/`BottomTabs` 三个可变集合，钉住项（`AllowMove=false`，如 `shell.settings`）恒由 `LoadToolViews` 按贡献迭代落到 ActivityBar 底部段（:169-170），不入表也不受配置影响——不要为钉住项手写 placements 条目指望它生效。
+- **`ResetLayout` 依赖 `_toolViews` 缓存，时序天然安全**：`ResetLayout`（:399-417）全默认重建走 `LoadToolViews(null)`，其数据源是 `EnsureContributionsLoaded` 时缓存的 `_toolViews` 字段（:30、:131）。因为"重置布局"菜单项本身就是菜单贡献、只在贡献装载完成后才存在，事件不可能先于 `_toolViews` 赋值到达——不要在构造函数里给 `ResetLayout` 加"兜底再收集"逻辑，那会破坏"只收集一次"不变量。
+- **防抖窗口内连续变更只落最后一次**：`LayoutPersistence.ScheduleSave` 是 500ms `Timer` 防抖，连续拖拽/连点只落最终态（这是特性）；`Delete()`（重置路径）会先停 Timer、清 pending 再删文件，避免 pending 回调在删完后又把文件写回。
 
 ## 易错改法（看似合理但静默破坏行为）
 
 1. **"修复" `PanelResizer.GetParentGrid` 返回 `base.GetParentGrid()`**：`PanelResizer` 已迁入 Framework（`Core/Framework/Layout/PanelResizer.cs:46-49`）——返回 `null` 是刻意的，`ResizeData` 为空使 GridSplitter 原生重排全部短路，只剩 DragDelta 事件（换算后经 `ResizeCommand` 出口）。一旦返回真实父 Grid，GridSplitter 会直接改 `ColumnDefinitions`/`RowDefinitions`，与布局模板里 `{Binding SideBarColumnWidth}`/`{Binding State.BottomPanel.Height}` 单向绑定打架，拖拽结果不可预测。
-2. **`TogglePanelTarget` 新增枚举成员只改一半**：`MainWindowViewModel.TogglePanel`（:285-290）的 `_` 默认分支调 `State.ToggleBottomPanel()`——新 target 实际切换 BottomPanel，编译与运行均无告警；菜单侧则相反：`ViewPanelMenus` 不会自动出现新项，必须手工加一个 `[MenuItem]` 方法（旧版按枚举循环注册工厂的"自动覆盖"已随 ADR-0001 消失）。改枚举时同步：该 switch、`Menus/ViewPanelMenus.cs` 加方法、`MainWindow.axaml:32-36` 快捷键。
+2. **`TogglePanelTarget` 新增枚举成员只改一半**：`MainWindowViewModel.TogglePanel`（:386-391）的 `_` 默认分支调 `State.ToggleBottomPanel()`——新 target 实际切换 BottomPanel，编译与运行均无告警；菜单侧则相反：`ViewPanelMenus` 不会自动出现新项，必须手工加一个 `[MenuItem]` 方法（旧版按枚举循环注册工厂的"自动覆盖"已随 ADR-0001 消失）。改枚举时同步：该 switch、`Menus/ViewPanelMenus.cs` 加方法、`MainWindow.axaml:32-36` 快捷键。
 2b. **`PanelAlignment` 新增枚举成员只改一半**：菜单侧需手工在 `ViewAlignmentMenus` 加对应 `[MenuItem]` 方法（无默认分支兜底，静默缺项）；且 `FrameworkWindow.UpdateLayoutTemplate` 的兜底分支是 Center（详见 Framework 文档）。改枚举时两处同步：`Menus/ViewAlignmentMenus.cs`、Framework 侧模板与键映射。
-3. **在 `MainWindowViewModel` 构造函数里收集贡献**：模块贡献在 Prism 模块初始化（晚于 shell 创建）才注册——这正是 `OnOpened` 注释（MainWindow.axaml.cs:15）与 `EnsureContributionsLoaded` 注释（:115-118）说明的时序。提前收集会拿到空列表。
-4. **给 `OpenMainView` 加"找不到就抛异常"**：当前契约是静默返回（:184-187），事件发布方（如 DashBoard 导航视图）没有错误处理路径；改语义要先看所有发布点。
+3. **在 `MainWindowViewModel` 构造函数里收集贡献**：模块贡献在 Prism 模块初始化（晚于 shell 创建）才注册——这正是 `OnOpened` 注释（MainWindow.axaml.cs:15）与 `EnsureContributionsLoaded` 注释（:119-122）说明的时序。提前收集会拿到空列表。
+4. **给 `OpenMainView` 加"找不到就抛异常"**：当前契约是静默返回（:281-284），事件发布方（如 DashBoard 导航视图）没有错误处理路径；改语义要先看所有发布点。
 5. **菜单分隔线手工插入或菜单方法乱签名**：分隔线由 Framework 的 `MenuTreeBuilder` 按分组自动生成（组间插入），不要在 ViewModel/XAML 手工插 `Separator`；`[MenuItem]` 方法必须是无参 `void`/`Task`——带参或返回值不合约的方法**编译不报错**，只在注册时记日志跳过，表现为菜单项静默缺席。**工具视图同理**（ADR-0002）：`[ToolView]` 标在抽象类或非 `Control` 上、或同程序集 Id 重复，`ToolViewRegistration` 只记 `Logger.Warning` 跳过（`ToolViewRegistration.cs:31-44`），编译不报错、条目静默缺席；`TitleKey` 是 Language 资源键不是标题本身，写错键名会显示键名（`Language.Get` 缺键回退）。
 6. **菜单项模板/样式在 MainWindow.axaml 里找**：菜单栏已随 ADR-0001 迁入 Framework——`Menu` 实例与项模板由 `FrameworkWindow` 构造函数在代码中创建（`Core/Framework/Windows/FrameworkWindow.cs:35-41`），容器 `MenuItem` 的 `ItemsSource`/`Command`/`AutomationProperties.Name` 经 `Core/Framework/Windows/FrameworkWindowTheme.axaml:562-566` 的样式 setter 绑定（ItemTemplate 只控制 Header 内容）。本模块不再涉及菜单呈现，改菜单样式/模板去 Framework。
 7. **给 Framework 的 `FrameworkWindowTheme.axaml` 加 `x:Class` 配 code-behind**：Framework 项目里 Avalonia.Generators 不为它产出 `InitializeComponent`——该主题经 `FrameworkWindowTheme.cs`（:16-24）的 `StyleInclude` 从编译进程序集的 axaml 资源加载（与 Semi/Ursa 主题同款机制），构造时强制 `Loaded`。加 `x:Class` 指望生成器只会编译失败或加载落空；主题扩展走 `StyleInclude`/`Styles` 体系。

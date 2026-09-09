@@ -15,6 +15,7 @@ Events/
   OpenMainViewEvent.cs         打开主视图请求事件
   TogglePanelTarget.cs         目标面板枚举
   TogglePanelVisibilityEvent.cs 面板显隐请求事件
+  ResetLayoutEvent.cs          重置布局请求事件（ADR-0002，无负载）
 obj/、Output/                  构建产物（不入库语义；obj 下的 Models.GlobalUsings.g.cs 是 Prism global using 的证据）
 ```
 
@@ -65,3 +66,7 @@ obj/、Output/                  构建产物（不入库语义；obj 下的 Mode
 ### Events/TogglePanelVisibilityEvent.cs
 
 `public class TogglePanelVisibilityEvent : PubSubEvent<TogglePanelTarget>;`（第 7 行）——请求翻转指定面板可见性；由视图菜单的面板显隐切换项（`Modules/Workstation/Menus/ViewPanelMenus.cs` 的三个 `[MenuItem]` 方法）发布，主窗口订阅后与快捷键走同一状态转换（`MainWindowViewModel.TogglePanel`）。
+
+### Events/ResetLayoutEvent.cs
+
+`public class ResetLayoutEvent : PubSubEvent;`（第 7 行）——请求重置布局（ADR-0002）：删除持久化布局配置并按 attribute 默认重建 shell 布局。无负载，是模块中唯一继承非泛型 `PubSubEvent` 的事件；由视图菜单的"重置布局"项（`Modules/Workstation/Menus/ViewLayoutMenus.cs` 第 16 行）发布，主窗口（`MainWindowViewModel` 构造函数第 41 行）订阅后重建 State。

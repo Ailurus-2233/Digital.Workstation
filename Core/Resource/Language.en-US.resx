@@ -134,6 +134,10 @@
     <value>Justify</value>
     <comment>Title of the panel alignment menu item "Justify"</comment>
   </data>
+  <data name="ResetLayoutTitle" xml:space="preserve">
+    <value>Reset Layout</value>
+    <comment>Title of the view menu item "Reset Layout"</comment>
+  </data>
   <data name="StatusReadyTitle" xml:space="preserve">
     <value>Ready</value>
     <comment>Text of the shell built-in status bar "Ready" item</comment>

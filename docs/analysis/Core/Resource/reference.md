@@ -32,6 +32,7 @@
 - `Modules/Workstation/Menus/FileMenus.cs:12,18` — `[MenuGroup("MenuFileTitle", ...)]`、`[MenuItem("MenuExitTitle", ...)]`
 - `Modules/Workstation/Menus/ViewPanelMenus.cs:11,14,20,26` — `MenuViewTitle` + 三个面板显隐切换键
 - `Modules/Workstation/Menus/ViewAlignmentMenus.cs:12,15,21,27,33` — `MenuViewTitle` + 四档对齐键
+- `Modules/Workstation/Menus/ViewLayoutMenus.cs:10,13` — `MenuViewTitle` + 重置布局键（`ResetLayoutTitle`）
 - `Modules/Workstation/Menus/HelpMenus.cs:11,17` — `[MenuGroup("MenuHelpTitle", ...)]`、`[MenuItem("MenuAboutTitle", ...)]`
 
 ### 3. `Modules/DashBoard/DashBoard.csproj`（:22）— 启动台模块
@@ -55,7 +56,7 @@
 | `static class Language` | `Core/Resource/Language.cs:9` | 唯一公开类型，命名空间 `DigitalWorkstation.Core.Resource` |
 | `Manager: ResourceManager`（私有静态只读） | `Language.cs:11-12` | 基名 `"DigitalWorkstation.Core.Resource.Language"`；该基名 = 程序集默认命名空间 + resx 文件名（不含扩展名），与 `Language.resx` 的编译逻辑名严格对应 |
 | `Get(string key): string` | `Language.cs:17-20` | 所有取值的唯一 funnel：`Manager.GetString(key) ?? key` |
-| 26 个静态属性 | `Language.cs:25-148` | 每个都是 `Get(nameof(属性名))` 的转发；**键与属性同名是本模块的核心不变量** |
-| 资源条目（26 个 `<data>`） | `Language.resx:61-164`（中性/中文）、`Language.en-US.resx:61-164`（英文） | 两个 resx 的键集合完全一一对应；每条带 `<comment>` 说明用途 |
+| 27 个静态属性 | `Language.cs:25-153` | 每个都是 `Get(nameof(属性名))` 的转发；**键与属性同名是本模块的核心不变量** |
+| 资源条目（27 个 `<data>`） | `Language.resx:61-168`（中性/中文）、`Language.en-US.resx:61-168`（英文） | 两个 resx 的键集合完全一一对应；每条带 `<comment>` 说明用途 |
 
 关系：`Language.属性 → Get → ResourceManager → (en-US 卫星 | 中性回退) → <data> 条目`。命名空间 `DigitalWorkstation.Core.Resource` + 文件名 `Language.resx` 共同决定了 `ResourceManager` 基名，三者任一改动都会破坏资源清单查找（见 pitfalls.md）。

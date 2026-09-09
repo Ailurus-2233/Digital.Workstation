@@ -23,7 +23,7 @@
 
 - `Get`（`Language.cs:17-20`）对缺失键返回键名本身。界面上显示英文键名（如 `SplashPhaseReady`）即是此错误的可见症状。
 - **触发条件**：resx 两个文件都没有该 `data name`（拼写错误、漏加、重命名不同步）。
-- **排查**：对照 `Language.cs` 的属性名逐一核对 `Language.resx` 与 `Language.en-US.resx` 的 `data name`（两者当前各 26 条，必须一一对应）。
+- **排查**：对照 `Language.cs` 的属性名逐一核对 `Language.resx` 与 `Language.en-US.resx` 的 `data name`（两者当前各 27 条，必须一一对应）。
 
 ## 错误处理路径
 

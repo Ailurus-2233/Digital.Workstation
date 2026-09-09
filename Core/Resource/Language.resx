@@ -134,6 +134,10 @@
     <value>两端对齐</value>
     <comment>面板对齐菜单"两端对齐"项的标题</comment>
   </data>
+  <data name="ResetLayoutTitle" xml:space="preserve">
+    <value>重置布局</value>
+    <comment>视图菜单"重置布局"项的标题</comment>
+  </data>
   <data name="StatusReadyTitle" xml:space="preserve">
     <value>就绪</value>
     <comment>shell 预置状态栏"就绪"项的文本</comment>

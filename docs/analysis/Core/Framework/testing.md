@@ -35,7 +35,7 @@ dotnet test UnitTest/Framework --filter "FullyQualifiedName~ResizeSideBar_Clamps
 | Resize 只动目标区域 | `ResizeSideBar_LeavesOtherRegionsUntouched`（断言 AuxiliaryPanel/BottomPanel/MainContent/SelectedActivity 值相等）、`ResizeBottomPanel_LeavesWidthsUntouched` |
 | 收起→恢复后尺寸保留 | `CollapsedSideBar_KeepsResizedWidth_WhenRestored`、`CollapsedBottomPanel_KeepsResizedHeight_WhenRestored`、`CollapsedAuxiliaryPanel_KeepsResizedWidth_WhenRestored` |
 
-改动 `ShellLayoutState` 的任何转换方法、或改动三个区域 record 的 Min/Max/默认值后，必须这 11 个用例全绿（或同步更新断言）。改动 `FrameworkApplication`/`FrameworkWindowManager`/`ShellContributionCollector`/`ToolViewRegistration` 目前**没有任何测试会失败**——它们不在测试覆盖内，靠编译与手工冒烟验证。
+改动 `ShellLayoutState` 的任何转换方法、或改动三个区域 record 的 Min/Max/默认值后，必须这 11 个用例全绿（或同步更新断言）。改动 `FrameworkApplication`/`FrameworkWindowManager`/`ShellContributionCollector`/`ToolViewRegistration`/`ShellLayoutDto`/`LayoutPersistence` 目前**没有任何测试会失败**——它们不在测试覆盖内，靠编译与手工冒烟验证（`LayoutPersistence` 涉及真实文件系统与 Timer 防抖，属下方"按约定不测"一类）。
 
 ## 测试约定（从现有测试归纳）
 

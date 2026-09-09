@@ -113,6 +113,11 @@ public static class Language
     public static string PanelAlignJustifyTitle => Get(nameof(PanelAlignJustifyTitle));
 
     /// <summary>
+    ///     视图菜单"重置布局"项的标题
+    /// </summary>
+    public static string ResetLayoutTitle => Get(nameof(ResetLayoutTitle));
+
+    /// <summary>
     ///     shell 预置状态栏"就绪"项的文本
     /// </summary>
     public static string StatusReadyTitle => Get(nameof(StatusReadyTitle));

@@ -6,6 +6,7 @@ using Avalonia.Styling;
 using DigitalWorkstation.Core.Abstractions.WindowManager;
 using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Framework.Contributions;
+using DigitalWorkstation.Core.Framework.Layout;
 using DigitalWorkstation.Core.Framework.WindowManager;
 using DigitalWorkstation.Core.Models.Events;
 using DigitalWorkstation.Core.UIPackage;
@@ -150,7 +151,10 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
         
         // 注册 shell 贡献收集器
         containerRegistry.RegisterSingleton<ShellContributionCollector>();
-        
+
+        // 注册布局持久化服务（ADR-0002）：layout.json 读/防抖写/删，机制在 Framework、接线在 shell 模块
+        containerRegistry.RegisterSingleton<LayoutPersistence>();
+
         ResolveFrameworkServices();
     }
     

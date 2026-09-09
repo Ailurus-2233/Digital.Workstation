@@ -3,39 +3,43 @@
 ## 隐含不变量
 
 1. **启动序列依赖三个"空覆盖"，缺一不可**（`FrameworkApplication.cs`）：
-   - `OnInitialized()`（:44）必须保持为空——base 会在框架初始化阶段直接显示 MainWindow；
-   - `InitializeModules()`（:51）必须保持为空——base 会同步一次性加载全部模块；
-   - `OnFrameworkInitializationCompleted()`（:35）**不调用 base**——base 会把尚未完成模块加载的 MainWindow 直接设为桌面生命周期主窗口（第 33 行注释）。
+   - `OnInitialized()`（:45）必须保持为空——base 会在框架初始化阶段直接显示 MainWindow；
+   - `InitializeModules()`（:52）必须保持为空——base 会同步一次性加载全部模块；
+   - `OnFrameworkInitializationCompleted()`（:36）**不调用 base**——base 会把尚未完成模块加载的 MainWindow 直接设为桌面生命周期主窗口（第 34 行注释）。
    任何一处"顺手补上 base 调用"都会让主窗口在模块加载完成前出现，启动台与失败决策机制失效。
-2. **调用顺序约束**：`HandleMainWindow()`（`FrameworkWindowManager.cs:158`）必须先于一切 `ShowWindow`/`ShowDialog`——启动序列在阶段 1 第一步就调它（`FrameworkApplication.cs:72`），随后才显示启动台（第 73 行）。模块代码在任何窗口操作前都依赖这个时序。
-3. **`IoC.Initialize` 恰好一次**（`FrameworkApplication.cs:144`）：重复调用抛 `InvalidOperationException`；之前访问 `IoC.Provider` 得 null。`RegisterFrameworkServices` 是进程内唯一调用点，新增第二个调用点会直接炸。
+2. **调用顺序约束**：`HandleMainWindow()`（`FrameworkWindowManager.cs:158`）必须先于一切 `ShowWindow`/`ShowDialog`——启动序列在阶段 1 第一步就调它（`FrameworkApplication.cs:73`），随后才显示启动台（第 74 行）。模块代码在任何窗口操作前都依赖这个时序。
+3. **`IoC.Initialize` 恰好一次**（`FrameworkApplication.cs:145`）：重复调用抛 `InvalidOperationException`；之前访问 `IoC.Provider` 得 null。`RegisterFrameworkServices` 是进程内唯一调用点，新增第二个调用点会直接炸。
 4. **窗口类型单实例**：`_windowMap: Dictionary<Type, Window>`（`FrameworkWindowManager.cs:17`）以运行时类型为键，同类型窗口同时只能存在一个注册实例；再次 Show 前必须等上一个实例触发 `Closing`（事件处理器在第 50 行把类型移出映射）。`CloseWindow`/`HideWindow` 按类型索引的前提也由此而来。
 5. **`HandleMainWindow` 只能调一次**：其实现（第 158-167 行）在 `_mainWindow != null && !_windowMap.ContainsKey(type)` 时登记，**否则抛 `InvalidOperationException`**——第二次调用时主窗口已在映射中，走 else 分支抛错。不要把它当幂等的"刷新主窗口引用"用。
 6. **`ShowDialog` 要求主窗口活跃**：`_mainWindow is { IsActive: true }`（第 127、137 行）才允许弹模态；主窗口被 Hide 期间弹对话框会抛异常，而 `ShowWindow` 只要求主窗口非 null。
-7. **布局状态必须整体替换**：`ShellLayoutState` 所有转换返回新实例（非法操作返回 `this`）；消费方若丢弃返回值（`state.Resize(...)` 不赋值回 `_state`）改动静默丢失。`Modules/Workstation/MainWindowViewModel.cs:41` 的 `[ObservableProperty] _state` 是唯一的当前实例持有者。
-8. **UI 线程亲和性**：`FrameworkWindowManager` 的 Show/Hide/Close 与 `ShellContributionCollector` 的容器解析都假定在 UI 线程调用；模块加载被刻意 `Task.Run` 移出 UI 线程（`FrameworkApplication.cs:88`），模块 `Initialize` 里直接操作窗口需自行切回 UI 线程。
+7. **布局状态必须整体替换**：`ShellLayoutState` 所有转换返回新实例（非法操作返回 `this`）；消费方若丢弃返回值（`state.Resize(...)` 不赋值回 `_state`）改动静默丢失。`Modules/Workstation/MainWindowViewModel.cs:47` 的 `[ObservableProperty] _state` 是唯一的当前实例持有者。
+8. **UI 线程亲和性**：`FrameworkWindowManager` 的 Show/Hide/Close 与 `ShellContributionCollector` 的容器解析都假定在 UI 线程调用；模块加载被刻意 `Task.Run` 移出 UI 线程（`FrameworkApplication.cs:89`），模块 `Initialize` 里直接操作窗口需自行切回 UI 线程。
 9. **`SideBarState.Visible` 默认 false，两个面板默认 true**：初始布局里 SideBar 收起、AuxiliaryPanel/BottomPanel 展开（`SideBarState.cs:11`、`AuxiliaryPanelState.cs:11`、`BottomPanelState.cs:11`）；改默认值会改变首屏布局且现有测试以 `Initial` 为基准。
 
 ## 易错改法
 
 - **在 `Resize` 里"顺便"重置其他区域**：`Resize` 的不变量是只动目标区域（测试 `ResizeSideBar_LeavesOtherRegionsUntouched`、`ResizeBottomPanel_LeavesWidthsUntouched` 显式断言）；看似无害的"归一化"会破坏收起/展开后尺寸保留的语义。
-- **把 `ActivateAuxTab`/`ActivateBottomTab` 的"拒绝"改成"自动展开面板再激活"**：注释明确"面板收起时拒绝（状态不变）"（`ShellLayoutState.cs:67、80`），消费方 `MainWindowViewModel.ActivateAuxTab`（`Modules/Workstation/MainWindowViewModel.cs:177-194`）依赖此行为直接返回；改成自动展开会改变点击已隐藏 tab 的 UX 契约。
+- **把 `ActivateAuxTab`/`ActivateBottomTab` 的"拒绝"改成"自动展开面板再激活"**：注释明确"面板收起时拒绝（状态不变）"（`ShellLayoutState.cs:67、80`），消费方 `MainWindowViewModel.ActivateAuxTab`（`Modules/Workstation/MainWindowViewModel.cs:300-312`）依赖此行为直接返回；改成自动展开会改变点击已隐藏 tab 的 UX 契约。
 - **`SelectActivity` 收起时清空 `SelectedActivity` 或 `ContentFor`**：设计上收起时两者都保留（`ShellLayoutState.cs:10-11`、`SideBarState.cs:15-17`），恢复展开后内容与选中项不丢；清空会导致重新展开后 SideBar 空白。
 - **给 `CloseWindow(Type)` 加"未命中抛异常"**：它当前是刻意的静默 no-op（`FrameworkWindowManager.cs:144-148`），与 `HideWindow` 的抛异常语义不对称——`CloseWindowsExceptMain` 等路径依赖静默语义，对齐两者前先查调用点。
 - **`ShowWindow(Window, object)`/`ShowDialog(Window, object)` 抛异常后窗口仍处注册态**：这两个重载的顺序是 `InitializeWindow` 注册 → 赋 `DataContext` → 检查主窗口（`FrameworkWindowManager.cs:98-111、133-141`）；主窗口缺失/不活跃抛 `InvalidOperationException` 时，窗口已留在 `_windowMap` 且 DataContext 已赋值，**无回滚**。调用方 catch 后若换个类型重试无妨，但若之后 `CloseWindow(type)` 会关掉这个从未显示的窗口；同类型再次 Show 前必须等其 `Closing` 触发移除。
-- **在 `RegisterTypes` 之外注册框架服务或在子类重写 `RegisterTypes`**：注释明确"子类不需要重写此方法"（`FrameworkApplication.cs:165-167`），子类入口是 `RegisterCustomService`；重写 `RegisterTypes` 且不调 base 会丢掉 `IoC.Initialize` 与窗口管理器注册，整个应用起不来。
-- **View/ViewModel 命名或目录偏离约定**：`ConfigureViewModelLocator`（第 209-233 行）只做字符串替换与后缀补全，解析不到返回 null（不抛异常）——ViewModel 静默不绑定，界面空白无报错。`Replace("Views", "ViewModels")` 会替换 FullName 中**所有**出现的 "Views"，命名空间里多处含 "Views" 时结果可能意外。
-- **改 `WaitForFailureActionAsync` 去掉 `RunContinuationsAsynchronously`**（第 120 行）：续体会在发布者（启动台 UI 线程）上下文内联执行，可能死锁；去掉 `Unsubscribe`（第 123 行）则每次失败累积一个订阅，第二次失败时旧订阅先 `TrySetResult` 已被释放的 completion（虽无害但泄漏订阅）。
+- **在 `RegisterTypes` 之外注册框架服务或在子类重写 `RegisterTypes`**：注释明确"子类不需要重写此方法"（`FrameworkApplication.cs:169-171`），子类入口是 `RegisterCustomService`；重写 `RegisterTypes` 且不调 base 会丢掉 `IoC.Initialize` 与窗口管理器注册，整个应用起不来。
+- **View/ViewModel 命名或目录偏离约定**：`ConfigureViewModelLocator`（第 209-241 行）只做字符串替换与后缀补全，解析不到返回 null（不抛异常）——ViewModel 静默不绑定，界面空白无报错。`Replace("Views", "ViewModels")` 会替换 FullName 中**所有**出现的 "Views"，命名空间里多处含 "Views" 时结果可能意外。
+- **改 `WaitForFailureActionAsync` 去掉 `RunContinuationsAsynchronously`**（第 121 行）：续体会在发布者（启动台 UI 线程）上下文内联执行，可能死锁；去掉 `Unsubscribe`（第 124 行）则每次失败累积一个订阅，第二次失败时旧订阅先 `TrySetResult` 已被释放的 completion（虽无害但泄漏订阅）。
 - **新模块忘记在 `RegisterTypes` 调 `RegisterMenus`**：`MenuRegistration.RegisterMenus`（`Menus/MenuRegistration.cs:20`）只扫**调用方传入的那一个程序集**，刻意不做全局扫描（:16-19 注释）；新模块写了 `[MenuGroup]`/`[MenuItem]` 菜单类但没加 `containerRegistry.RegisterMenus(typeof(XxxModule).Assembly)`（真实调用点 `Modules/Workstation/WorkstationApplication.cs:28`、`Modules/DashBoard/DashBoardModule.cs:17`），菜单**静默缺失**——无任何日志、无异常，建树时容器里根本没有对应的 `IMenuItemContribution`。
 - **新模块忘记在 `RegisterTypes` 调 `RegisterToolViews`**：同构的陷阱（ADR-0002）——`ToolViewRegistration.RegisterToolViews`（`Contributions/ToolViewRegistration.cs:20`）同样只扫调用方传入的程序集、不做全局扫描（:12 注释）；View 类标了 `[ToolView]` 但模块没调它，工具视图**静默缺失**（真实调用点 `Modules/Workstation/WorkstationApplication.cs:24`、`Modules/DashBoard/DashBoardModule.cs:14`）。被扫到但不合法也只是记一条 `Logger.Warning` 跳过：类非可实例化 `Control`（:31-36）、`Id` 在程序集内重复（:38-44）。排查"工具视图没出现"先翻日志的 Warning。
 - **菜单方法必须是公共实例无参方法**：`RegisterMenus` 只取 `BindingFlags.Public | Instance | DeclaredOnly` 方法（:37），再校验无参且返回值 `void`/`Task`（:44-45）——**静态方法、非公共方法连候选都进不了**（连跳过日志都没有）；带参/返回值非法的方法只记一条 `Logger.Warning`（:47-50）就跳过，菜单同样静默少一项。同理类路径或条目路径含空段也只是记日志跳过（`MenuRegistration.cs:30-35`、`MenuTreeBuilder.cs:24-29`）。排查"菜单没出现"先翻日志的 Warning。
 - **把菜单项 DataTemplate 挪进 `Styles.Resources`**：无 x:Key 的 `DataTemplate` 放在 Styles 的资源字典里会触发 AVLN3000（资源必须带键）；菜单项模板（`MenuItemViewModel` → 图标+标题）因此在 `FrameworkWindow` 构造函数里代码注册进窗口 `DataTemplates`（`FrameworkWindow.cs:41`）——窗口级模板同时保证子菜单任意深度经模板查找递归复用。配套样式可以留在 axaml（`FrameworkWindowTheme.axaml:551-569`），因为它们带完整 Selector 不需要键。
 - **移动 axaml 主题文件必须同步 `StyleInclude` 的 BaseUri**：avares 路径跟随项目内目录（`FrameworkWindowTheme.cs:14` 的 `avares://DigitalWorkstation.Core.Framework/Windows/`），编译不检查、运行时生效——移了 axaml 没改 BaseUri，编译绿灯但窗口构造期查不到布局模板/样式，主题静默缺失（布局模板缺失会抛"布局模板资源缺失"，样式缺失则连异常都没有）。同理 axaml 内 `xmlns:layout`（`FrameworkWindowTheme.axaml:3`）指向 `PanelResizer` 所在命名空间，移动 PanelResizer 要同步改。
+- **改 `LayoutPersistence.Flush` 收窄 catch 或让异常逃逸**：`Flush` 是 `System.Threading.Timer` 回调（`Layout/LayoutPersistence.cs:104`），注释自述"Timer 回调里的异常无人处理会拖垮进程"（:118）——写入失败必须就地 `catch (Exception)` 记 Warning（:119-127）；改成只 catch IO 异常或直接抛出，会把一次写盘失败升级为进程崩溃。
+- **`Delete` 里"作废 pending"与"删文件"的顺序不能换**：`Delete`（:86-102）先在锁内清 `_pending` 并停 Timer（:88-92）再 `File.Delete`；若先删文件再停 Timer，已在途的防抖回调会把刚删掉的 layout.json **重建**——重置布局静默失效。同理，重置布局必须走 `Delete`，不能绕过它直接删文件。
+- **以为 `Placements` 覆盖全部工具视图**：钉住项（`AllowMove=false`）恒落 ActivityBar 底部段，**不入** placements 表（`ShellLayoutDto.cs:25-27` 注释；写入端 `MainWindowViewModel.CaptureLayout` 只采集 TopNavigationItems/AuxiliaryTabs/BottomTabs 三个可移动集合，`Modules/Workstation/MainWindowViewModel.cs:423` 起）；恢复端的分派也不从表里找钉住项（`LoadToolViews` :169-170 直接按 attribute 过滤）。改持久化格式时不要把钉住项写进表。
+- **手工编辑 layout.json 后"配置被吞"**：枚举值必须是 `"Center"`/`"BottomPanel"` 这类字符串（`JsonStringEnumConverter`，`LayoutPersistence.cs:27`）；非法枚举字符串让 System.Text.Json 抛 `JsonException`，`Load` 的 catch（:62-67）把**整份文件**丢弃回默认布局——这是容错设计，不是 bug。
 
 ## 历史踩坑（注释/防御性代码透露）
 
-- `FrameworkApplication.cs:23`："固定 Dark：当前设计目标为 VS Code Dark+ 单一色调，未做亮色适配"——不要假设主题可切换，`VSCodePalette` 色值全部写死。
-- `FrameworkApplication.cs:31-34` 注释说明不调 base 的原因（ADR-0004）；`OnInitialized`/`InitializeModules` 的空方法体各带"阻止/抑制 base"注释——这三个空方法是**有意的**，不是待实现 TODO。
+- `FrameworkApplication.cs:24`："固定 Dark：当前设计目标为 VS Code Dark+ 单一色调，未做亮色适配"——不要假设主题可切换，`VSCodePalette` 色值全部写死。
+- `FrameworkApplication.cs:32-35` 注释说明不调 base 的原因（ADR-0004）；`OnInitialized`/`InitializeModules` 的空方法体各带"阻止/抑制 base"注释——这三个空方法是**有意的**，不是待实现 TODO。
 - `ShellLayoutState.cs:4` 注释："原型验证过的 reducer 的正式实现"——该状态机先有原型验证，转换语义（收起保留、拒绝非法）是验证过的契约，改语义前先找原型依据。
 - `SideBarState.cs:16`、`BottomPanelState.cs:19`、`AuxiliaryPanelState.cs:19` 注释反复强调"收起时保留"——曾因收起丢内容踩坑，保留语义是修复结果。
 - `FrameworkWindowManager.cs:27` 把错误消息提为 `const NullMainWindowError` 并在四处复用——主窗口缺失是高频错误路径，消息统一便于日志检索。
