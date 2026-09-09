@@ -4,35 +4,40 @@
 
 ## 公开 API 面
 
-### 1. `DashBoardModule : IModule`（DashBoardModule.cs:7）
+### 1. `DashBoardModule : IModule`（DashBoardModule.cs:8）
 
 Prism 模块入口，被模块目录反射调用，**不被业务代码直接调用**。
 
 | 成员 | 签名 | 说明 |
 |---|---|---|
-| `RegisterTypes` | `void RegisterTypes(IContainerRegistry containerRegistry)` | 注册 5 个贡献单例 + attribute 菜单（`RegisterMenus`）+ 4 个视图（见下"注册清单"） |
+| `RegisterTypes` | `void RegisterTypes(IContainerRegistry containerRegistry)` | `RegisterToolViews` 扫描注册 2 个 `[ToolView]` 工具视图 + 3 个接口贡献单例 + attribute 菜单（`RegisterMenus`）+ 2 个主视图（见下"注册清单"） |
 | `OnInitialized` | `void OnInitialized(IContainerProvider containerProvider)` | **空实现**（DashBoardModule.cs:25 注释：启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004），模块自身不再开窗） |
 
-注册清单（DashBoardModule.cs:11-20）：
-- `RegisterSingleton<INavigationItemContribution, DashBoardNavigationItem>()`
-- `RegisterSingleton<IMainViewContribution, DashBoardOverviewMainView>()`
-- `RegisterSingleton<IMainViewContribution, DashBoardRecentMainView>()`
-- `RegisterSingleton<IPanelTabContribution, DashBoardTasksPanelTab>()`
-- `RegisterMenus(typeof(DashBoardModule).Assembly)`（第 15 行，Core/Framework `DigitalWorkstation.Core.Framework.Menus` 扩展）——扫描程序集内 `[MenuGroup]` 类：注册 `DashBoardMenus` 单例，并为每个合法 `[MenuItem]` 方法注册一个 `IMenuItemContribution` 工厂（非法签名/空段路径记 `Logger.Warning` 跳过）
-- `RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>()`
-- `Register<DashBoardNavigationView>()` / `<DashBoardOverviewView>()` / `<DashBoardRecentView>()` / `<DashBoardTasksView>()`（瞬态）
+注册清单（DashBoardModule.cs:14-20）：
+- `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 14 行，Core/Framework `DigitalWorkstation.Core.Framework.Contributions` 扩展，ADR-0002）——扫描程序集内 `[ToolView]` 类（`DashBoardNavigationView`/`DashBoardTasksView`）：对每个合法的（可实例化 `Control`、程序集内 Id 不重复）View 执行 `Register(viewType)` 并注册一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `Language.Get(TitleKey)` 解析）；非法者记 `Logger.Warning` 跳过
+- `RegisterSingleton<IMainViewContribution, DashBoardOverviewMainView>()` / `<IMainViewContribution, DashBoardRecentMainView>()`（第 15-16 行）
+- `RegisterMenus(typeof(DashBoardModule).Assembly)`（第 17 行，Core/Framework `DigitalWorkstation.Core.Framework.Menus` 扩展）——扫描程序集内 `[MenuGroup]` 类：注册 `DashBoardMenus` 单例，并为每个合法 `[MenuItem]` 方法注册一个 `IMenuItemContribution` 工厂（非法签名/空段路径记 `Logger.Warning` 跳过）
+- `RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>()`（第 18 行）
+- `Register<DashBoardOverviewView>()` / `<DashBoardRecentView>()`（第 19-20 行，瞬态；两个工具视图已由 `RegisterToolViews` 一并注册，不在此列）
 
-注意：`DashBoardWindow` 与 `DashBoardWindowViewModel` **不在** `RegisterTypes` 中注册——`DashBoardWindow` 由启动序列在模块加载前经 `Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:53）解析，Prism 容器对未注册的具体类型仍可构造解析（DryIoc 默认行为），ViewModel 由 ViewModelLocator 约定装配。
+注意：`DashBoardWindow` 与 `DashBoardWindowViewModel` **不在** `RegisterTypes` 中注册——`DashBoardWindow` 由启动序列在模块加载前经 `Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:40）解析，Prism 容器对未注册的具体类型仍可构造解析（DryIoc 默认行为），ViewModel 由 ViewModelLocator 约定装配。
 
-### 2. 接口贡献类（五个，均只有属性，供 shell 收集消费）
+### 2. 贡献声明（供 shell 收集消费）
 
-| 类 | 实现接口 | `Id` | `Title` | `IconPath` | `Order` | 定位 | 视图类型 |
-|---|---|---|---|---|---|---|---|
-| `DashBoardNavigationItem`（DashBoardNavigationItem.cs:11） | `INavigationItemContribution` | `"dashboard"` | `Language.DashBoardNavigationTitle` | `Icons.DashBoard` | 0 | `NavigationItemPlacement.Top` | `ContentViewType => typeof(DashBoardNavigationView)` |
-| `DashBoardOverviewMainView`（DashBoardOverviewMainView.cs:9） | `IMainViewContribution` | `ViewId` 常量 `"dashboard.overview"` | —（接口无 Title） | — | — | — | `ViewType => typeof(DashBoardOverviewView)` |
-| `DashBoardRecentMainView`（DashBoardRecentMainView.cs:9） | `IMainViewContribution` | `ViewId` 常量 `"dashboard.recent"` | — | — | — | — | `ViewType => typeof(DashBoardRecentView)` |
-| `DashBoardTasksPanelTab`（DashBoardTasksPanelTab.cs:11） | `IPanelTabContribution` | `"dashboard.tasks"` | `Language.DashBoardTasksTabTitle` | `Icons.Tasks` | 15 | `PanelPlacement.Bottom` | `ContentViewType => typeof(DashBoardTasksView)` |
-| `DashBoardStatusBarItem`（DashBoardStatusBarItem.cs:11） | `IStatusBarItemContribution` | `"dashboard.status"` | `Language.DashBoardNavigationTitle`（复用导航标题） | `Icons.DashBoard` | 20 | — | — |
+**工具视图（`[ToolView]` attribute，ADR-0002；无独立贡献类，元数据由 `RegisterToolViews` 扫描生成为 `ToolViewContribution`）：**
+
+| View 类 | `Id` | `TitleKey` | `Icon` | `Order` | `Default` | `AllowMove` |
+|---|---|---|---|---|---|---|
+| `DashBoardNavigationView`（Views/DashBoardNavigationView.axaml.cs:14-15） | `"dashboard"` | `"DashBoardNavigationTitle"`（扫描时 `Language.Get` 解析） | `Icons.DashBoard` | 0（缺省） | `ToolViewPlacement.ActivityBar` | true（缺省） |
+| `DashBoardTasksView`（Views/DashBoardTasksView.axaml.cs:10-11） | `"dashboard.tasks"` | `"DashBoardTasksTabTitle"` | `Icons.Tasks` | 15 | `ToolViewPlacement.BottomPanel` | true（缺省） |
+
+**接口贡献类（三个，均只有属性）：**
+
+| 类 | 实现接口 | `Id` | `Title` | `IconPath` | `Order` | 视图类型 |
+|---|---|---|---|---|---|---|
+| `DashBoardOverviewMainView`（DashBoardOverviewMainView.cs:9） | `IMainViewContribution` | `ViewId` 常量 `"dashboard.overview"` | —（接口无 Title） | — | — | `ViewType => typeof(DashBoardOverviewView)` |
+| `DashBoardRecentMainView`（DashBoardRecentMainView.cs:9） | `IMainViewContribution` | `ViewId` 常量 `"dashboard.recent"` | — | — | — | `ViewType => typeof(DashBoardRecentView)` |
+| `DashBoardStatusBarItem`（DashBoardStatusBarItem.cs:11） | `IStatusBarItemContribution` | `"dashboard.status"` | `Language.DashBoardNavigationTitle`（复用导航标题） | `Icons.DashBoard` | 20 | — |
 
 菜单贡献不属于上表——它是 attribute 菜单类 `DashBoardMenus`（见下节），不实现接口、无 `Id`，菜单位次由路径/分组声明决定。
 
@@ -92,16 +97,18 @@ public void OpenDashBoard()                                          // 方法�
 | `DashBoardRecentView` | `UserControl` | Views/DashBoardRecentView.axaml(.cs) | 无参 |
 | `DashBoardTasksView` | `UserControl` | Views/DashBoardTasksView.axaml(.cs) | 无参 |
 
+`DashBoardNavigationView` 与 `DashBoardTasksView` 类上标有 `[ToolView]` attribute（声明值见第 2 节表，ADR-0002），由 `RegisterToolViews` 扫描注册进容器；其余三个视图不走工具视图通路。
+
 `DashBoardNavigationView` 的两个私有事件处理器（不是公开 API，但决定行为）：
-- `private void OpenOverview(object? sender, RoutedEventArgs e)`（.axaml.cs:28）→ `Publish OpenMainViewEvent(DashBoardOverviewMainView.ViewId)`
-- `private void OpenRecent(object? sender, RoutedEventArgs e)`（.axaml.cs:33）→ `Publish OpenMainViewEvent(DashBoardRecentMainView.ViewId)`
+- `private void OpenOverview(object? sender, RoutedEventArgs e)`（.axaml.cs:33）→ `Publish OpenMainViewEvent(DashBoardOverviewMainView.ViewId)`
+- `private void OpenRecent(object? sender, RoutedEventArgs e)`（.axaml.cs:38）→ `Publish OpenMainViewEvent(DashBoardRecentMainView.ViewId)`
 
 ## 调用方式与生命周期
 
 **模块没有供业务代码调用的主动 API**；全部交互是"被调用"：
 
-1. 宿主把模块加进目录：`moduleCatalog.AddModule<DashBoardModule>()`（Modules/Workstation/WorkstationApplication.cs:16）。
-2. 启动序列在模块加载前显示启动台：`Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:53，经 `IWindowManager.ShowWindow`）；ViewModel 由 `prism:ViewModelLocator.AutoWireViewModel="True"`（DashBoardWindow.axaml:3）按约定装配，构造时完成事件订阅。
+1. 宿主把模块加进目录：`moduleCatalog.AddModule<DashBoardModule>()`（Modules/Workstation/WorkstationApplication.cs:17）。
+2. 启动序列在模块加载前显示启动台：`Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:40，`CreateSplashWindow` 重写）；ViewModel 由 `prism:ViewModelLocator.AutoWireViewModel="True"`（DashBoardWindow.axaml:3）按约定装配，构造时完成事件订阅。
 3. 启动序列逐模块发布 `StartupProgressEvent`/`ModuleLoadFailedEvent`，ViewModel 回调更新属性；用户点"继续/退出"时 ViewModel 发布 `StartupFailureActionEvent`。
 4. 模块加载时 Prism 调 `RegisterTypes` 注册贡献；shell 收集渲染。
 5. 工作区阶段的用户交互：SideBar 按钮发布 `OpenMainViewEvent`；文件菜单项反射执行 `DashBoardMenus.OpenDashBoard` → `ShowWindow<DashBoardWindow>`。
@@ -112,5 +119,5 @@ public void OpenDashBoard()                                          // 方法�
 
 本模块**不定义**任何 DTO/record/枚举；对外数据完全由以下两类承载：
 
-- 接口贡献类的属性（上表）与 `DashBoardMenus` 的 attribute 声明，字符串 Id（菜单项除外）与 `Type` 引用；
+- `[ToolView]` attribute 声明与接口贡献类的属性（上表）、`DashBoardMenus` 的 attribute 声明，字符串 Id（菜单项除外）与 `Type` 引用；
 - 事件负载（定义在 Core/Models/Events，本模块只消费）：`StartupProgress{Phase, ModuleName, ModuleIndex, ModuleCount}`、`ModuleLoadFailure{ModuleName, ModuleIndex, ModuleCount, ErrorMessage}`、`StartupFailureAction{Continue, Exit}`、`OpenMainViewEvent` 负载为主视图 `Id` 字符串（本模块发出的是 `"dashboard.overview"`/`"dashboard.recent"`）。

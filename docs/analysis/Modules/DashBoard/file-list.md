@@ -8,16 +8,15 @@ DashBoardModule.cs                     Prism 模块入口：DashBoardModule（�
 DashBoardMenus.cs                      文件菜单"打开启动台"项贡献：[MenuGroup]/[MenuItem] attribute 菜单类 DashBoardMenus
 DashBoardOverviewMainView.cs           MainContent 概览主视图贡献：DashBoardOverviewMainView
 DashBoardRecentMainView.cs             MainContent 最近项目主视图贡献：DashBoardRecentMainView
-DashBoardTasksPanelTab.cs              BottomPanel"任务"面板 tab 贡献：DashBoardTasksPanelTab
 DashBoardStatusBarItem.cs              状态栏条目贡献：DashBoardStatusBarItem
 ViewModels/
   Windows/
     DashBoardWindowViewModel.cs        启动台进度窗 ViewModel：DashBoardWindowViewModel
 Views/
-  DashBoardNavigationView.axaml(.cs)   SideBar 内容视图：DashBoardNavigationView（含按钮点击→OpenMainViewEvent）
+  DashBoardNavigationView.axaml(.cs)   SideBar 内容视图：DashBoardNavigationView（[ToolView] ActivityBar"启动台"工具视图；含按钮点击→OpenMainViewEvent）
   DashBoardOverviewView.axaml(.cs)     概览主视图：DashBoardOverviewView（静态占位）
   DashBoardRecentView.axaml(.cs)       最近项目主视图：DashBoardRecentView（静态占位）
-  DashBoardTasksView.axaml(.cs)        任务面板内容视图：DashBoardTasksView（静态占位）
+  DashBoardTasksView.axaml(.cs)        任务面板内容视图：DashBoardTasksView（[ToolView] BottomPanel"任务"工具视图，静态占位）
   Windows/
     DashBoardWindow.axaml(.cs)         启动台进度窗：DashBoardWindow（Window）
 ```
@@ -30,19 +29,12 @@ Views/
 
 ### DashBoardModule.cs
 
-`public class DashBoardModule : IModule`（第 7 行）。`RegisterTypes`（第 9 行）注册 5 个贡献单例（`DashBoardNavigationItem`/`DashBoardOverviewMainView`/`DashBoardRecentMainView`/`DashBoardTasksPanelTab`/`DashBoardStatusBarItem`）、经 `RegisterMenus(typeof(DashBoardModule).Assembly)`（第 15 行，`DigitalWorkstation.Core.Framework.Menus` 扩展，using 在第 2 行）反射注册 attribute 菜单类 `DashBoardMenus`，以及 4 个视图瞬态（`DashBoardNavigationView`/`DashBoardOverviewView`/`DashBoardRecentView`/`DashBoardTasksView`）。`OnInitialized`（第 23 行）空实现，注释说明启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004）。
-
-### DashBoardNavigationItem.cs
-
-`public class DashBoardNavigationItem : INavigationItemContribution`（第 11 行），类注释自称"tracer bullet：验证模块到 shell 的贡献通路"。属性：`Id="dashboard"`、`Title=Language.DashBoardNavigationTitle`、`IconPath=Icons.DashBoard`、`Order=0`、`Placement=NavigationItemPlacement.Top`、`ContentViewType=typeof(DashBoardNavigationView)`。
+`public class DashBoardModule : IModule`（第 8 行）。`RegisterTypes`（第 10 行）：`RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 14 行，`DigitalWorkstation.Core.Framework.Contributions` 扩展，using 在第 2 行）扫描本程序集 `[ToolView]` 类（`DashBoardNavigationView`/`DashBoardTasksView`），为每个合法 View 生成 `ToolViewContribution` 元数据单例并把 View 注册进容器（ADR-0002）；再注册 2 个 `IMainViewContribution` 单例（第 15-16 行）、经 `RegisterMenus(typeof(DashBoardModule).Assembly)`（第 17 行，`DigitalWorkstation.Core.Framework.Menus` 扩展，using 在第 3 行）反射注册 attribute 菜单类 `DashBoardMenus`、1 个 `IStatusBarItemContribution` 单例（第 18 行）、2 个主视图瞬态 `DashBoardOverviewView`/`DashBoardRecentView`（第 19-20 行）。`OnInitialized`（第 23 行）空实现，注释说明启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004）。
 
 ### DashBoardOverviewMainView.cs / DashBoardRecentMainView.cs
 
 两个 `IMainViewContribution` 实现（第 9 行），各含 `public const string ViewId`（`"dashboard.overview"` / `"dashboard.recent"`，第 11 行），`Id => ViewId`，`ViewType` 分别指向 `DashBoardOverviewView`/`DashBoardRecentView`。类注释分别说明演示"SideBar 条目 → MainContent 通路"与"单视图整体替换"。`ViewId` 常量被 `DashBoardNavigationView` 的按钮处理器引用。
 
-### DashBoardTasksPanelTab.cs
-
-`public class DashBoardTasksPanelTab : IPanelTabContribution`（第 11 行）。`Id="dashboard.tasks"`、`Title=Language.DashBoardTasksTabTitle`、`IconPath=Icons.Tasks`、`Order=15`（行内注释：介于 shell 预置"输出"(10) 与"日志"(20) 之间，验证按 Order 排序）、`Panel=PanelPlacement.Bottom`、`ContentViewType=typeof(DashBoardTasksView)`。
 
 ### DashBoardStatusBarItem.cs
 
@@ -87,8 +79,8 @@ attribute 菜单类（ADR-0001 路径/分组模型），**不实现 `IMenuItemCo
 
 SideBar 内容视图。axaml 定义局部样式 `Button.sidebar-entry`（第 11-28 行：透明背景、无框、圆角 4、`Padding=12,8`、左对齐、pointerover 时 `SemiColorFill1`、内嵌 TextBlock 前景 `SemiColorText0`）与两个按钮（第 31-36 行）："概览"（`Click="OpenOverview"`）、"最近项目"（`Click="OpenRecent"`，按钮文本均硬编码中文）。
 
-代码后置：`public partial class DashBoardNavigationView : UserControl`（第 11 行）。双构造（第 18-26 行）：无参转发 `IoC.Provider.Resolve<IEventAggregator>()`（注释：XAML runtime loader 需要无参构造；实际实例由容器经依赖注入构造创建）；注入构造保存 `_eventAggregator` 并 `InitializeComponent()`。处理器 `OpenOverview`（第 28 行）/ `OpenRecent`（第 33 行）分别 `Publish OpenMainViewEvent(DashBoardOverviewMainView.ViewId / DashBoardRecentMainView.ViewId)`。
+代码后置：`[ToolView("dashboard", "DashBoardNavigationTitle", Icon = Icons.DashBoard, Default = ToolViewPlacement.ActivityBar)]`（第 14-15 行，ADR-0002）标注的 `public partial class DashBoardNavigationView : UserControl`（第 16 行）——ActivityBar"启动台"工具视图，元数据由 `RegisterToolViews` 生成。双构造（第 23-31 行）：无参转发 `IoC.Provider.Resolve<IEventAggregator>()`（注释：XAML runtime loader 需要无参构造；实际实例由容器经依赖注入构造创建）；注入构造保存 `_eventAggregator` 并 `InitializeComponent()`。处理器 `OpenOverview`（第 33 行）/ `OpenRecent`（第 38 行）分别 `Publish OpenMainViewEvent(DashBoardOverviewMainView.ViewId / DashBoardRecentMainView.ViewId)`。
 
 ### Views/DashBoardOverviewView.axaml(.cs) / DashBoardRecentView.axaml(.cs) / DashBoardTasksView.axaml(.cs)
 
-三个静态占位 `UserControl`，无 ViewModel、无逻辑。Overview/Recent 为居中标题 + 说明文本（"概览：DashBoard 概览视图（演示 MainContent 单视图切换）"；"最近项目：最近项目视图（演示整体替换，无文档 tabs）"）；Tasks 为单条 `TextBlock`"DashBoard 任务面板（演示模块贡献 BottomPanel tab）"（`Margin=12`、`SemiColorText2`）。代码后置均只有无参构造 `InitializeComponent()`。三者是 shell 按 `ContentViewType`/`ViewType` 经容器解析的目标。
+三个静态占位 `UserControl`，无 ViewModel、无逻辑。Overview/Recent 为居中标题 + 说明文本（"概览：DashBoard 概览视图（演示 MainContent 单视图切换）"；"最近项目：最近项目视图（演示整体替换，无文档 tabs）"）；Tasks 为单条 `TextBlock`"DashBoard 任务面板（演示模块贡献 BottomPanel tab）"（`Margin=12`、`SemiColorText2`）。代码后置均只有无参构造 `InitializeComponent()`；其中 `DashBoardTasksView` 类上标 `[ToolView("dashboard.tasks", "DashBoardTasksTabTitle", Icon = Icons.Tasks, Default = ToolViewPlacement.BottomPanel, Order = 15)]`（.axaml.cs:10-11），由 `RegisterToolViews` 注册。Overview/Recent 是主视图贡献 `ViewType` 经容器解析的目标；Tasks 是工具视图 `ToolViewContribution.ViewType` 的解析目标。

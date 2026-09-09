@@ -1,13 +1,18 @@
-﻿using Avalonia.Controls;
+﻿﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
+using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Models.Events;
+using DigitalWorkstation.Core.UIPackage;
 
 namespace DigitalWorkstation.DashBoard.Views;
 
 /// <summary>
-///     DashBoard 的 SideBar 内容：条目点击经 OpenMainViewEvent 驱动 MainContent 单视图切换
+///     DashBoard 的 SideBar 内容：条目点击经 OpenMainViewEvent 驱动 MainContent 单视图切换；
+///     同时是 ActivityBar 顶部段的"启动台"工具视图（tracer bullet：验证模块到 shell 的贡献通路）
 /// </summary>
+[ToolView("dashboard", "DashBoardNavigationTitle", Icon = Icons.DashBoard,
+    Default = ToolViewPlacement.ActivityBar)]
 public partial class DashBoardNavigationView : UserControl
 {
     private readonly IEventAggregator _eventAggregator;

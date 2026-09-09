@@ -5,9 +5,9 @@
 ```
 Abstractions.csproj
 Contributions/
-├── INavigationItemContribution.cs
+├── ToolViewAttribute.cs
+├── ToolViewContribution.cs
 ├── IMainViewContribution.cs
-├── IPanelTabContribution.cs
 └── IStatusBarItemContribution.cs
 Menus/
 ├── IMenuItemContribution.cs
@@ -31,17 +31,17 @@ WindowManager/
 
 Prism Region 名称常量。定义 `public static class ShellRegions`，含 5 个 `public const string`：`ActivityBar`、`SideBar`、`MainContent`、`AuxiliaryPanel`、`BottomPanel`（值均 `nameof(自身)`）。命名空间 `DigitalWorkstation.Core.Abstractions.Regions`。目前全仓零消费方，属存量公共契约，目录拆分时只挪位置、类型名不变。
 
-### Contributions/INavigationItemContribution.cs
+### Contributions/ToolViewAttribute.cs
 
-定义枚举 `NavigationItemPlacement`（`Top`/`Bottom`）与接口 `INavigationItemContribution`（`Id`/`Title`/`IconPath`/`Order`/`Placement`/`ContentViewType`）——模块向 ActivityBar 贡献导航项、SideBar 显示对应内容的契约。
+定义枚举 `ToolViewPlacement`（`ActivityBar`/`AuxiliaryPanel`/`BottomPanel`）与 `ToolViewAttribute`（`[AttributeUsage(AttributeTargets.Class)]`，主构造参 `id`/`titleKey`，命名属性 `Icon?`/`Default`（缺省 `AuxiliaryPanel`）/`Order`/`AllowMove`（缺省 `true`））——声明一个 View 类是工具视图（Tool View，ADR-0002），经 Framework 侧 `RegisterToolViews(Assembly)` 扫描注册。
+
+### Contributions/ToolViewContribution.cs
+
+定义 `public sealed class ToolViewContribution`（7 个 `required init` 属性：`Id`/`Title`（已解析，非资源键）/`IconPath?`/`Order`/`Placement`/`AllowMove`/`ViewType`）——工具视图的贡献元数据，由 Framework 侧扫描 `ToolViewAttribute` 生成并以单例注册进容器，模块不手写。
 
 ### Contributions/IMainViewContribution.cs
 
 定义接口 `IMainViewContribution`（`Id`/`ViewType`）——模块向 MainContent 贡献主视图的契约；配合 shell 侧 `OpenMainViewEvent`（负载 Id）使用。
-
-### Contributions/IPanelTabContribution.cs
-
-定义枚举 `PanelPlacement`（`Auxiliary`/`Bottom`）与接口 `IPanelTabContribution`（`Id`/`Title`/`IconPath`/`Order`/`Panel`/`ContentViewType`）——模块向右侧 AuxiliaryPanel 或底部 BottomPanel 贡献面板 tab 的契约。
 
 ### Contributions/IStatusBarItemContribution.cs
 

@@ -5,26 +5,26 @@ using DigitalWorkstation.Core.Abstractions.Contributions;
 namespace DigitalWorkstation.Workstation;
 
 /// <summary>
-///     ActivityBar 导航项的呈现模型：包装贡献元数据并解析图标几何
+///     ActivityBar 导航项的呈现模型：包装工具视图元数据并解析图标几何
 /// </summary>
 public partial class NavigationItemViewModel : ObservableObject
 {
-    public NavigationItemViewModel(INavigationItemContribution contribution)
+    public NavigationItemViewModel(ToolViewContribution contribution)
     {
         Contribution = contribution;
-        Icon = StreamGeometry.Parse(contribution.IconPath);
+        Icon = contribution.IconPath is { } path ? StreamGeometry.Parse(path) : null;
     }
 
-    public INavigationItemContribution Contribution { get; }
+    public ToolViewContribution Contribution { get; }
 
     public string Id => Contribution.Id;
 
     public string Title => Contribution.Title;
 
     /// <summary>
-    ///     由 <see cref="INavigationItemContribution.IconPath" /> 解析的图标几何，随主题变色
+    ///     由 <see cref="ToolViewContribution.IconPath" /> 解析的图标几何，随主题变色；null = 无图标
     /// </summary>
-    public Geometry Icon { get; }
+    public Geometry? Icon { get; }
 
     [ObservableProperty]
     private bool _isSelected;

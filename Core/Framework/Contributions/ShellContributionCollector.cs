@@ -9,13 +9,13 @@ namespace DigitalWorkstation.Core.Framework.Contributions;
 public class ShellContributionCollector(IContainerProvider containerProvider)
 {
     /// <summary>
-    ///     收集指定 <paramref name="placement" /> 的全部导航项，按 <see cref="INavigationItemContribution.Order" /> 升序
+    ///     收集全部工具视图贡献（ADR-0002），按 <see cref="ToolViewContribution.Order" /> 升序；
+    ///     三处 Bar 与钉住区的分派由消费方按 Placement/AllowMove 决定
     /// </summary>
-    public IReadOnlyList<INavigationItemContribution> GetNavigationItems(NavigationItemPlacement placement)
+    public IReadOnlyList<ToolViewContribution> GetToolViews()
     {
-        return containerProvider.Resolve<IEnumerable<INavigationItemContribution>>()
-            .Where(item => item.Placement == placement)
-            .OrderBy(item => item.Order)
+        return containerProvider.Resolve<IEnumerable<ToolViewContribution>>()
+            .OrderBy(view => view.Order)
             .ToArray();
     }
     /// <summary>
@@ -26,15 +26,6 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
         return containerProvider.Resolve<IEnumerable<IMainViewContribution>>().ToArray();
     }
     /// <summary>
-    ///     收集指定 <paramref name="panel" /> 的全部面板 tab，按 <see cref="IPanelTabContribution.Order" /> 升序
-    /// </summary>
-    public IReadOnlyList<IPanelTabContribution> GetPanelTabs(PanelPlacement panel)
-    {
-        return containerProvider.Resolve<IEnumerable<IPanelTabContribution>>()
-            .Where(tab => tab.Panel == panel)
-            .OrderBy(tab => tab.Order)
-            .ToArray();
-    }
     ///     收集全部菜单贡献（不过滤不排序；分组排序与建树由 <see cref="Menus.MenuTreeBuilder" /> 负责，ADR-0001）
     /// </summary>
     public IReadOnlyList<IMenuItemContribution> GetMenuItems()

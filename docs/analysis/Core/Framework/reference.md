@@ -6,11 +6,11 @@
 
 | 依赖 | 用到的能力 | 本模块使用点 |
 |---|---|---|
-| `Core/Abstractions` | 窗口管理契约 `IWindowManager`、`IMainWindowManager`（`Abstractions/WindowManager/`）；Shell 贡献契约 `INavigationItemContribution`、`IMainViewContribution`、`IPanelTabContribution`、`IStatusBarItemContribution` 及定位枚举 `NavigationItemPlacement`/`PanelPlacement`（`Abstractions/Contributions/`，枚举分别随前两者同文件定义）；菜单贡献契约 `IMenuItemContribution` 与菜单 attribute `MenuGroupAttribute`/`MenuItemAttribute`（`Abstractions/Menus/`，ADR-0001） | `FrameworkWindowManager.cs:12` 实现两个窗口接口；`Contributions/ShellContributionCollector.cs` 五个 `Get*` 方法解析并过滤贡献；`Menus/MenuRegistration.cs:24、38` 读取两个 attribute 扫描注册菜单 |
+| `Core/Abstractions` | 窗口管理契约 `IWindowManager`、`IMainWindowManager`（`Abstractions/WindowManager/`）；Shell 贡献契约 `ToolViewAttribute`/`ToolViewContribution`/`ToolViewPlacement`（工具视图，ADR-0002）、`IMainViewContribution`、`IStatusBarItemContribution`（`Abstractions/Contributions/`）；菜单贡献契约 `IMenuItemContribution` 与菜单 attribute `MenuGroupAttribute`/`MenuItemAttribute`（`Abstractions/Menus/`，ADR-0001） | `FrameworkWindowManager.cs:12` 实现两个窗口接口；`Contributions/ShellContributionCollector.cs` 四个 `Get*` 方法解析并排序贡献；`Contributions/ToolViewRegistration.cs:25` 读取 `ToolViewAttribute` 扫描注册工具视图；`Menus/MenuRegistration.cs:24、38` 读取两个 attribute 扫描注册菜单 |
 | `Core/Common` | `IoC`（一次性容器引用持有者）、`Logger`（Serilog 静态封装） | `FrameworkApplication.cs:144` `IoC.Initialize(...)`；`FrameworkWindowManager.cs:37` `IoC.Provider.Resolve(type)`；`FrameworkApplication.cs:92、109` `Logger.Error/Fatal` |
 | `Core/Models` | 启动事件三件套：`StartupProgressEvent`/`StartupProgress`/`StartupPhase`、`ModuleLoadFailedEvent`/`ModuleLoadFailure`、`StartupFailureActionEvent`/`StartupFailureAction`（均位于 `Models/Events/`） | `FrameworkApplication.cs:69-104` 发布进度与失败事件；`:117-125` 订阅失败决策事件 |
 | `Core/UIPackage` | `WorkstationTheme`（Semi/Ursa 等四个主题包的 Styles 集合）、`VSCodePalette.ApplyTo`（VS Code Dark+ 色键写入） | `FrameworkApplication.cs:25、27`，全应用唯一主题装载点 |
-| `Core/Resource` | `Language.Get(string)`（按当前 UI 区域性解析资源键） | `Menus/MenuRegistration.cs:85` 解析菜单条目标题；`Menus/MenuTreeBuilder.cs:59、74、98` 解析路径段标题——`Language.Get` 的首批真实消费方（ADR-0001） |
+| `Core/Resource` | `Language.Get(string)`（按当前 UI 区域性解析资源键） | `Menus/MenuRegistration.cs:85` 解析菜单条目标题；`Menus/MenuTreeBuilder.cs:59、74、98` 解析路径段标题（ADR-0001）；`Contributions/ToolViewRegistration.cs:51` 解析工具视图标题（ADR-0002） |
 
 ### NuGet 包（Framework.csproj:18-23）
 
@@ -20,8 +20,8 @@
 
 | 依赖方 | 引用方式 | 用在什么场景 |
 |---|---|---|
-| `Modules/Workstation`（Workstation.csproj:10） | ProjectReference | 应用宿主：`WorkstationApplication.cs:12` `WorkstationApplication : FrameworkApplication<MainWindow>`（实现 `CreateSplashWindow`、配置模块目录；`:35` 调 `RegisterMenus` 扫描注册 shell 预置菜单）；`MainWindowViewModel.cs:28,41` 注入 `ShellContributionCollector` 并持有 `ShellLayoutState _state` 驱动整个工作区布局（菜单经 `MenuTreeBuilder.Build` 建树，`:135`）；`PanelResizer.cs` 把拖拽增量交给 `ShellLayoutState.Resize`；`Menus/HelpMenus.cs:20` 用 `IWindowManager.ShowDialog<AboutWindow>` |
-| `Modules/DashBoard`（DashBoard.csproj:21） | ProjectReference | 启动台模块：`DashBoardWindowViewModel` 订阅 `StartupProgressEvent`/`ModuleLoadFailedEvent` 并发布 `StartupFailureActionEvent`（即启动台 UI 方，事件负载见 Models 文档）；`DashBoardModule.cs:15` 调 `RegisterMenus` 注册菜单；`DashBoardMenus.cs:20` 用 `IWindowManager.ShowWindow<DashBoardWindow>` 重开启动台 |
+| `Modules/Workstation`（Workstation.csproj:10） | ProjectReference | 应用宿主：`WorkstationApplication.cs:13` `WorkstationApplication : FrameworkApplication<MainWindow>`（实现 `CreateSplashWindow`、配置模块目录；`:24` 调 `RegisterToolViews` 扫描注册 shell 预置工具视图，`:28` 调 `RegisterMenus` 扫描注册 shell 预置菜单）；`MainWindowViewModel.cs:30,43` 注入 `ShellContributionCollector` 并持有 `ShellLayoutState _state` 驱动整个工作区布局（`GetToolViews()` 一次后按 `Placement`/`AllowMove` 分派，`:127-141`；菜单经 `MenuTreeBuilder.Build` 建树，`:142`）；`PanelResizer.cs` 把拖拽增量交给 `ShellLayoutState.Resize`；`Menus/HelpMenus.cs:20` 用 `IWindowManager.ShowDialog<AboutWindow>` |
+| `Modules/DashBoard`（DashBoard.csproj:21） | ProjectReference | 启动台模块：`DashBoardWindowViewModel` 订阅 `StartupProgressEvent`/`ModuleLoadFailedEvent` 并发布 `StartupFailureActionEvent`（即启动台 UI 方，事件负载见 Models 文档）；`DashBoardModule.cs:14` 调 `RegisterToolViews` 注册工具视图、`:17` 调 `RegisterMenus` 注册菜单；`DashBoardMenus.cs:20` 用 `IWindowManager.ShowWindow<DashBoardWindow>` 重开启动台 |
 | `UnitTest/Framework`（UnitTest/Framework/Framework.csproj:17） | ProjectReference | 唯一的测试项目，仅测 `ShellLayoutState`（见 testing.md） |
 
 即：Framework 是应用骨架，**唯一直接的消费场景是 Workstation 宿主 + DashBoard 启动台**；其余业务模块不引用 Framework，只引用 Abstractions 的贡献契约。
@@ -48,7 +48,7 @@ ShellLayoutState (Layout/ShellLayoutState.cs:7)
 
 `PanelResizeTarget`（Layout/PanelResizeTarget.cs:6）：`Resize` 的目标枚举，三成员对应三个可调区域。
 
-关系要点：`ShellLayoutState` 只持有数据与转换方法，不感知贡献收集与视图解析；`Tabs` 列表由消费方（MainWindowViewModel）从 `ShellContributionCollector.GetPanelTabs` 的结果填入；`ContentFor`/`ActiveTab`/`ActiveView` 的字符串 Id 与 Abstractions 贡献接口的 `Id` 对应（`SelectedActivity` ↔ `INavigationItemContribution.Id`，`ActiveView` ↔ `IMainViewContribution.Id`，`ActiveTab` ↔ `IPanelTabContribution.Id`）。
+关系要点：`ShellLayoutState` 只持有数据与转换方法，不感知贡献收集与视图解析；`Tabs` 列表由消费方（MainWindowViewModel）从 `ShellContributionCollector.GetToolViews` 的结果按 `Placement` 分派填入；`ContentFor`/`ActiveTab`/`ActiveView` 的字符串 Id 与 Abstractions 贡献类型的 `Id` 对应（`SelectedActivity` ↔ ActivityBar 工具视图的 `ToolViewContribution.Id`，`ActiveView` ↔ `IMainViewContribution.Id`，`ActiveTab` ↔ 面板工具视图的 `ToolViewContribution.Id`）。
 
 ### 窗口注册表（WindowManager/FrameworkWindowManager.cs）
 
@@ -84,6 +84,6 @@ MenuTreeEntry (abstract record, MenuTreeEntry.cs:10)
 | 本模块类型 | 实现/消费的抽象（定义处） |
 |---|---|
 | `FrameworkWindowManager` | `IWindowManager`（Core/Abstractions/WindowManager/IWindowManager.cs）、`IMainWindowManager`（同目录 IMainWindowManager.cs） |
-| `ShellContributionCollector` 的五个返回类型 | `INavigationItemContribution`/`IMainViewContribution`/`IPanelTabContribution`/`IStatusBarItemContribution`（Core/Abstractions/Contributions/）、`IMenuItemContribution`（Core/Abstractions/Menus/） |
+| `ShellContributionCollector` 的四个返回类型 | `ToolViewContribution`/`IMainViewContribution`/`IStatusBarItemContribution`（Core/Abstractions/Contributions/）、`IMenuItemContribution`（Core/Abstractions/Menus/） |
 | `FrameworkApplication<TWindow>` | `Prism.DryIoc.PrismApplication`（Prism.DryIoc.Avalonia 包） |
 | 启动事件负载 | `StartupProgress`/`ModuleLoadFailure`/`StartupPhase`/`StartupFailureAction`（Core/Models/Events/） |

@@ -24,8 +24,8 @@ dotnet test UnitTest/Framework --filter "FullyQualifiedName~ShellLayoutStateResi
 | 改动 | 验证方式 |
 |---|---|
 | 布局状态语义（显隐、clamp、tab 激活拒绝） | 实际逻辑在 `ShellLayoutState`：`dotnet test UnitTest/Framework` 全绿（11 用例，检测点映射见 docs/analysis/Core/Framework/testing.md） |
-| `MainWindowViewModel` 交互逻辑（贡献收集、缓存、命令转发） | 无单元测试覆盖；手动 `dotnet run` 冒烟：启动 → 点 ActivityBar 导航项（SideBar 展开/再点收起）→ Ctrl+B/Ctrl+J/Ctrl+Alt+B → 拖三条分隔条（边界应停在 Min/Max）→ 视图菜单三个切换项 → 文件>退出、帮助>关于 |
-| Shell 贡献类属性与菜单类 attribute（Id/Order/图标/文案/分组位次） | 手动验证渲染位置与排序；Id 类问题看 error.md 排查表，菜单项缺席看注册日志（非法签名/空段路径被跳过） |
+| `MainWindowViewModel` 交互逻辑（贡献收集、缓存、命令转发） | 无单元测试覆盖；手动 `dotnet run` 冒烟：启动 → 点 ActivityBar 导航项（SideBar 展开/再点收起；底部段应只见钉住项"设置"）→ Ctrl+B/Ctrl+J/Ctrl+Alt+B → 拖三条分隔条（边界应停在 Min/Max）→ 视图菜单三个切换项 → 文件>退出、帮助>关于 |
+| 工具视图 `[ToolView]` attribute 与菜单类 attribute（Id/Order/图标/文案/默认位置/分组位次） | 手动验证渲染位置与排序（ActivityBar 顶部段/钉住区/两个面板，ADR-0002）；Id 类问题看 error.md 排查表，条目缺席看注册日志（工具视图：非可实例化 `Control`/同程序集重复 Id 被 `ToolViewRegistration` 记 `Logger.Warning` 跳过；菜单：非法签名/空段路径被跳过） |
 | MainWindow.axaml 样式/布局 | 纯视觉，启动目验 |
 
 ## 测试约定（若将来为本模块新增测试）

@@ -17,7 +17,7 @@
 2. `ModuleText` 条件清空（第 48-50 行）：`LoadingModules` 阶段 `ModuleText == "name（i/N）"`（全角括号，见 `FormatModuleText` 第 61 行）；其余阶段为空字符串。
 3. 失败态转换（`OnModuleFailed` 第 53-59 行）：发布 `ModuleLoadFailure` 后 `IsFailed==true`、`PhaseText==Language.SplashPhaseFailed`、`ErrorMessage==failure.ErrorMessage`；随后再发 `StartupProgress` 断言 `IsFailed` 复位为 `false`（第 40 行）。
 4. 决策回传（`Continue`/`Exit` 第 70、79 行）：订阅 `StartupFailureActionEvent` 后执行 `ContinueCommand`/`ExitCommand`，断言收到对应 `StartupFailureAction`。
-5. 贡献类的声明值：`DashBoardTasksPanelTab.Order==15 && Panel==PanelPlacement.Bottom`、反射读 `DashBoardMenus` 的 `[MenuGroup("MenuFileTitle", Group="General", GroupOrder=100)]` 与 `OpenDashBoard` 的 `[MenuItem("DashBoardOpenWindowMenuTitle", Order=100, ...)]` 等纯声明断言（价值低，防误改排序约定时才有意义）。
+5. 贡献声明的声明值：反射读 `DashBoardTasksView` 的 `[ToolView("dashboard.tasks", "DashBoardTasksTabTitle", Default = ToolViewPlacement.BottomPanel, Order = 15)]`（DashBoardTasksView.axaml.cs:10-11）、`DashBoardMenus` 的 `[MenuGroup("MenuFileTitle", Group="General", GroupOrder=100)]` 与 `OpenDashBoard` 的 `[MenuItem("DashBoardOpenWindowMenuTitle", Order=100, ...)]` 等纯声明断言（价值低，防误改排序约定时才有意义）。
 
 ## 当前的验证方式（手动冒烟）
 

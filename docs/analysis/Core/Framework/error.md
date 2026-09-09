@@ -52,3 +52,4 @@ RunStartupSequenceAsync
 | 面板 tab 点了没反应 | `ShellLayoutState.ActivateAuxTab/ActivateBottomTab` 的 `Visible` 检查（第 71、84 行） | 面板处于收起状态，激活被拒绝是设计行为，先展开面板 |
 | 拖分隔条尺寸不动/跳变 | `Resize` 的 Clamp（第 103-132 行）与各 record 的 Min/Max 常量 | delta 累计后被钳在边界；或消费方未用返回的新实例替换旧状态 |
 | 窗口构造即抛"布局模板资源缺失：{key}" | `FrameworkWindow.UpdateLayoutTemplate`（`Windows/FrameworkWindow.cs:82-95`）的键映射 vs `Windows/FrameworkWindowTheme.axaml` 的 `WindowLayout*` 资源键 | 键名漂移（改了一侧没改另一侧），或 axaml 未作为编译资源进程序集（`FrameworkWindowTheme.cs` 经 `StyleInclude` 从 `avares://` 加载，构造时已强制 `Loaded`） |
+| 工具视图没出现在任何 Bar | 日志找 `Logger.Warning` 的 `工具视图 ... 已跳过`（`Contributions/ToolViewRegistration.cs:33、40`） | 类非可实例化 `Control` 或 `Id` 在程序集内重复被跳过；或模块 `RegisterTypes` 未调 `RegisterToolViews`（扫描不做全局发现，ADR-0002） |

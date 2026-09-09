@@ -1,6 +1,6 @@
 ﻿# Framework — 对外接口与调用方式
 
-命名空间六组：`DigitalWorkstation.Core.Framework`（根）、`.Framework.Layout`（布局状态机与面板分隔条）、`.Framework.Menus`（菜单建树/注册/呈现模型）、`.Framework.Contributions`（贡献收集器）、`.Framework.Windows`（窗口基类与主题）、`.Framework.WindowManager`。类型均 public，例外：`Menus/MenuRegistration.cs` 内由 attribute 扫描生成的 `ReflectedMenuItemContribution` 为 internal（见第 11 节）。
+命名空间六组：`DigitalWorkstation.Core.Framework`（根）、`.Framework.Layout`（布局状态机与面板分隔条）、`.Framework.Menus`（菜单建树/注册/呈现模型）、`.Framework.Contributions`（贡献收集器与工具视图注册）、`.Framework.Windows`（窗口基类与主题）、`.Framework.WindowManager`。类型均 public，例外：`Menus/MenuRegistration.cs` 内由 attribute 扫描生成的 `ReflectedMenuItemContribution` 为 internal（见第 11 节）。
 
 ## 1. `FrameworkApplication<TWindow>`（FrameworkApplication.cs:16）
 
@@ -8,7 +8,7 @@
 public abstract class FrameworkApplication<TWindow> : PrismApplication where TWindow : Window
 ```
 
-应用入口基类。子类（真实代码：`Modules/Workstation/WorkstationApplication.cs:12` 的 `WorkstationApplication : FrameworkApplication<MainWindow>`）必须做的事：泛型参数指定主窗口类型、重写 `CreateSplashWindow()`、可选重写 `RegisterCustomService()`、按 Prism 惯例重写 `ConfigureModuleCatalog`。
+应用入口基类。子类（真实代码：`Modules/Workstation/WorkstationApplication.cs:13` 的 `WorkstationApplication : FrameworkApplication<MainWindow>`）必须做的事：泛型参数指定主窗口类型、重写 `CreateSplashWindow()`、可选重写 `RegisterCustomService()`、按 Prism 惯例重写 `ConfigureModuleCatalog`。
 
 ### 公开/保护成员
 
@@ -180,19 +180,18 @@ public class SetPanelAlignmentEvent : PubSubEvent<PanelAlignment>               
 public class ShellContributionCollector(IContainerProvider containerProvider)
 ```
 
-主构造注入 Prism `IContainerProvider`。注册为单例（`FrameworkApplication.cs:152`）。五个收集方法；除菜单外统一模式：`Resolve<IEnumerable<TContribution>>()` → 按定位枚举 `Where` 过滤 → `OrderBy(Order)` → `ToArray()`；菜单方法自 ADR-0001 起不过滤不排序，建树器负责分组排序：
+主构造注入 Prism `IContainerProvider`。注册为单例（`FrameworkApplication.cs:152`）。四个收集方法；菜单方法自 ADR-0001 起不过滤不排序（建树器负责分组排序），工具视图自 ADR-0002 起不再按定位枚举过滤（三处 Bar 与钉住区的分派由消费方按 `Placement`/`AllowMove` 决定）：
 
 | 方法 | 过滤 | 排序 |
 |---|---|---|
-| `GetNavigationItems(NavigationItemPlacement)` | `item.Placement == placement` | `Order` 升序 |
-| `GetMainViews()` | 无（全部） | 无（保持容器解析顺序） |
-| `GetPanelTabs(PanelPlacement)` | `tab.Panel == panel` | `Order` 升序 |
-| `GetMenuItems()`（:40，**无参数**） | 无（路径/分组模型下不再按定位枚举过滤） | 无（分组排序建树由 `MenuTreeBuilder` 负责，见第 10 节） |
-| `GetStatusBarItems()` | 无 | `Order` 升序 |
+| `GetToolViews()`（:15） | 无（三处 Bar 的分派由消费方决定，ADR-0002） | `Order` 升序 |
+| `GetMainViews()`（:24） | 无（全部） | 无（保持容器解析顺序） |
+| `GetMenuItems()`（:31，**无参数**） | 无（路径/分组模型下不再按定位枚举过滤） | 无（分组排序建树由 `MenuTreeBuilder` 负责，见第 10 节） |
+| `GetStatusBarItems()`（:38） | 无 | `Order` 升序 |
 
-返回类型均为 `IReadOnlyList<T>`（快照数组）。贡献接口中 `INavigationItemContribution`、`IMainViewContribution`、`IPanelTabContribution`、`IStatusBarItemContribution` 与定位枚举（`NavigationItemPlacement`/`PanelPlacement`，随前两者同文件定义）在 Core/Abstractions 的 `Contributions/` 目录；`IMenuItemContribution` 在 `Menus/` 目录，形状已按 ADR-0001 改为路径/分组模型（见 Abstractions 文档）。
+返回类型均为 `IReadOnlyList<T>`（快照数组）。贡献类型中 `ToolViewContribution`（sealed class，由 `RegisterToolViews` 扫描 `[ToolView]` 生成，见第 12 节）、`IMainViewContribution`、`IStatusBarItemContribution` 与枚举 `ToolViewPlacement` 在 Core/Abstractions 的 `Contributions/` 目录；`IMenuItemContribution` 在 `Menus/` 目录，形状已按 ADR-0001 改为路径/分组模型（见 Abstractions 文档）。
 
-**典型消费**：`Modules/Workstation/MainWindowViewModel.cs:28` 构造注入 `ShellContributionCollector`，初始化时调各 `Get*` 方法构建导航/面板/状态栏 ViewModel；菜单走 `MenuTreeBuilder.Build(_collector.GetMenuItems())`（:135）建树后转为菜单 ViewModel。
+**典型消费**：`Modules/Workstation/MainWindowViewModel.cs:30` 构造注入 `ShellContributionCollector`，`EnsureContributionsLoaded()`（:119）先调一次 `GetToolViews()`（:127）再按 `Placement`/`AllowMove` 分派到 ActivityBar 顶部段/底部钉住段/两个面板（:128-141），并收集主视图与状态栏项；菜单走 `MenuTreeBuilder.Build(_collector.GetMenuItems())`（:142）建树后转为菜单 ViewModel。
 
 ## 8. `MenuItemViewModel`（Menus/MenuItemViewModel.cs:13）
 
@@ -262,6 +261,21 @@ attribute 菜单注册扩展（ADR-0001）。模块在自身 `RegisterTypes` 中
 ### `ReflectedMenuItemContribution`（internal，:75）
 
 由 `RegisterMenus` 生成的 `IMenuItemContribution` 实现。构造期（:80-93）把 attribute 元数据落成契约属性：`Title = Language.Get(item.Title)`（注册时即按 UI 区域性解析）、`IconPath = item.Icon`、`Path`/`Group`/`GroupOrder` 取自类级 `MenuGroupAttribute`、`NodeOrder = group.Order`、`Order = item.Order`、`Command = new DelegateCommand(Execute)`。点击时 `Execute` fire-and-forget 调 `ExecuteAsync`（:111-114）：反射 `_method.Invoke(_instance, null)`，返回 `Task` 则 `await`（:120-123）；异常解包 `TargetInvocationException` 后 `Logger.Error` 记录，**不抛出**（:125-132）。
+
+## 12. `ToolViewRegistration.RegisterToolViews`（Contributions/ToolViewRegistration.cs:14）
+
+```csharp
+public static void RegisterToolViews(this IContainerRegistry registry, Assembly assembly); // :20
+```
+
+attribute 工具视图注册扩展（ADR-0002），与 `RegisterMenus` 同构。模块在自身 `RegisterTypes` 中调用并传入本模块程序集，**不做全局程序集扫描**；扫描只在注册时发生一次。规则（:21-59）：
+
+1. 遍历 `assembly.DefinedTypes`，取标注 `ToolViewAttribute` 的类（:23-29）。
+2. 类非可实例化 `Control`（abstract 或非 `Control` 派生）记 `Logger.Warning` 跳过（:31-36）。
+3. `Id` 在**本程序集内**重复（`seenIds` 局部 HashSet，:22）记 `Logger.Warning` 跳过（:38-44）；跨程序集重复不在此处检测。
+4. 合法者：`registry.Register(viewType)` 注册 View 类型本身（:47，供激活时按 `ViewType` 解析），并把 attribute 元数据落成 `ToolViewContribution` 后 `RegisterSingleton(typeof(ToolViewContribution), _ => metadata)`（:48-58）；`Title` 在扫描时经 `Language.Get(attribute.TitleKey)` 解析（:51），`Placement` 取 attribute 的 `Default`（:54）。
+
+真实调用点：`Modules/Workstation/WorkstationApplication.cs:24`、`Modules/DashBoard/DashBoardModule.cs:14`。
 
 ## 容器注册清单（对外可解析的服务）
 

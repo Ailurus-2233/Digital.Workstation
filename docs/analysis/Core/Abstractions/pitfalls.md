@@ -2,16 +2,15 @@
 
 ## 隐含不变量（全部仅由 XML 注释约定，代码无法强制）
 
-1. **`Id` 唯一性分级**（最易错）：
-   - `INavigationItemContribution.Id`（Contributions/INavigationItemContribution.cs）：**同一模块内**唯一即可。
-   - `IMainViewContribution.Id`（Contributions/IMainViewContribution.cs）：**跨模块全局唯一**，注释建议以模块名做前缀（如 `dashboard.overview`），shell 按 Id 索引全部贡献——撞 Id 会被覆盖/错乱。
-   - `IPanelTabContribution.Id`（Contributions/IPanelTabContribution.cs）：**跨两个面板**全局唯一（Auxiliary 与 Bottom 共享 Id 空间）。
-   - `IStatusBarItemContribution.Id`：全局唯一。`IMenuItemContribution` **已无 `Id`**（ADR-0001：菜单链路无消费方，定位完全由路径 + 分组 + 位次表达）。
-2. **`Order` 排序小者靠前**：全部贡献接口一致（「排序权重，小者靠前」），但排序作用域不同——`INavigationItemContribution` 在同一 `Placement` 内、`IPanelTabContribution` 在同一面板内；`IMenuItemContribution` 的 `Order` 只作用于**同一（子）菜单的同一组内**，其上有 `GroupOrder`（组间）与 `NodeOrder`（顶层菜单/末端子菜单节点在父级中）两级位次，冲突时多处声明取最小值（规则全文见 api.md 与 ADR-0001）。
-3. **`IconPath` 格式**：必须是 `StreamGeometry` 的 path 字符串，由 `PathIcon` 消费并随主题变色（五个接口注释一致）；传图像路径/资源 key 会静默不显示。
-4. **视图类型必须注册到 DI 容器**：`ContentViewType`/`ViewType` 注释均为「经容器解析以支持依赖注入」；返回未注册的 `Type` 会在 shell 侧解析时失败。
-5. **注册方式约定**：导航项/主视图/面板 tab/状态栏四个接口注释一致——模块须「在 `Prism.Ioc.IContainerRegistry` 中以本接口注册实现」，以**接口**而非具体类型注册，shell 才能按接口收集。菜单例外（ADR-0001）：`IMenuItemContribution` 通常不手写实现，模块类标注 `MenuGroupAttribute`/`MenuItemAttribute` 后在 `RegisterTypes` 调 `RegisterMenus(Assembly)`，由 Framework 侧扫描生成实现并以接口注册。
-6. **面板收起行为**：「面板收起期间其 tab 的激活操作会被 ShellLayoutState 拒绝」（Contributions/IPanelTabContribution.cs 注释）——激活操作不是异常而是被拒绝，调用方不要依赖激活必然生效。
+1. **`Id` 唯一性均为全局唯一**（最易错）：
+   - `IMainViewContribution.Id`（Contributions/IMainViewContribution.cs 第 14 行）：**跨模块全局唯一**，注释建议以模块名做前缀（如 `dashboard.overview`），shell 按 Id 索引全部贡献——撞 Id 会被覆盖/错乱。
+   - `ToolViewAttribute.Id`（Contributions/ToolViewAttribute.cs 第 35 行）：稳定标识，**全局唯一**，约定模块名前缀（如 `"shell.outline"`）；同一程序集内 Id 重复时 `RegisterToolViews` 记 `Logger.Warning` 并跳过（ADR-0002），跨程序集撞 Id 无防护。
+   - `IStatusBarItemContribution.Id`：全局唯一。`IMenuItemContribution` **无 `Id`**（ADR-0001：菜单链路无消费方，定位完全由路径 + 分组 + 位次表达）。
+2. **`Order` 排序小者靠前**：全部贡献契约一致（「排序权重，小者靠前」），但排序作用域不同——`ToolViewContribution.Order` 在同一 Bar 内（`Placement` 只是默认归属，用户拖拽后以持久化布局为准，ADR-0002）；`IMenuItemContribution` 的 `Order` 只作用于**同一（子）菜单的同一组内**，其上有 `GroupOrder`（组间）与 `NodeOrder`（顶层菜单/末端子菜单节点在父级中）两级位次，冲突时多处声明取最小值（规则全文见 api.md 与 ADR-0001）。
+3. **`IconPath`/`Icon` 格式**：必须是 `StreamGeometry` 的 path 字符串，由 `PathIcon` 消费并随主题变色（`IStatusBarItemContribution.IconPath`、`IMenuItemContribution.IconPath`、`ToolViewContribution.IconPath`、`ToolViewAttribute.Icon` 注释一致）；传图像路径/资源 key 会静默不显示。
+4. **视图类型必须注册到 DI 容器**：`ViewType` 注释为「经容器解析以支持依赖注入」；返回未注册的 `Type` 会在 shell 侧解析时失败。工具视图的 View 类型由 `RegisterToolViews` 扫描时自动 `Register(viewType)`，无需模块另行注册；主视图的 `ViewType` 仍需模块自己注册。
+5. **注册方式约定**：主视图/状态栏两接口注释一致——模块须「在 `Prism.Ioc.IContainerRegistry` 中以本接口注册实现」，以**接口**而非具体类型注册，shell 才能按接口收集。工具视图（ADR-0002）：不手写贡献类，View 类标 `ToolViewAttribute` 后在 `RegisterTypes` 调 `RegisterToolViews(Assembly)`，由 Framework 侧扫描生成 `ToolViewContribution` 元数据（单例注册）并注册 View 类型；非可实例化 `Control` 的标注类记 `Logger.Warning` 跳过。菜单例外（ADR-0001）：`IMenuItemContribution` 通常不手写实现，模块类标注 `MenuGroupAttribute`/`MenuItemAttribute` 后在 `RegisterTypes` 调 `RegisterMenus(Assembly)`，由 Framework 侧扫描生成实现并以接口注册。
+6. **面板收起行为**：「面板收起期间其 tab 的激活操作会被 ShellLayoutState 拒绝」（Contributions/ToolViewContribution.cs 注释）——激活操作不是异常而是被拒绝，调用方不要依赖激活必然生效。
 7. **菜单路径与分组语义**（ADR-0001）：路径段为 Language 资源键，各段 Trim 后按序精确匹配（Ordinal 大小写敏感）；含空段（`"A//B"`）的路径整体非法，扫描时记日志跳过；`MenuGroupAttribute` 的 `Group`/`GroupOrder`/`Order` 在单段路径与多段路径下语义不同（单段=方法项分组 + 顶层位次；多段=末端子菜单节点分组与位次，方法项进默认组）——深层子菜单内部分组必须拆类声明，一个 attribute 装不下两套分组参数。`MenuGroupAttribute.Order` 缺省 `int.MaxValue`（未声明 = 「无位次意见」，排最后且不参与取最小）——不要凭「数值缺省 0」的直觉推断位次，也别指望不写 `Order` 的类能抢前；`GroupOrder` 无此特例，缺省就是 0。
 
 ## 易错改法

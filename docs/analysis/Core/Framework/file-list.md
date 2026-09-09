@@ -23,7 +23,8 @@ Core/Framework/
 │   ├── MenuTreeBuilder.cs                 菜单建树器（纯函数：路径切分、分组排序、插分隔线，ADR-0001）
 │   └── MenuRegistration.cs                attribute 菜单注册扩展 + internal 反射贡献实现
 ├── Contributions/                           命名空间 DigitalWorkstation.Core.Framework.Contributions
-│   └── ShellContributionCollector.cs      shell 贡献收集器
+│   ├── ShellContributionCollector.cs      shell 贡献收集器
+│   └── ToolViewRegistration.cs            attribute 工具视图注册扩展（ADR-0002）
 ├── Windows/                                 命名空间 DigitalWorkstation.Core.Framework.Windows（窗口基类与主题）
 │   ├── FrameworkWindow.cs                 带基础布局的窗口基类（内置 VS Code 式五区 shell + 标题栏菜单栏）
 │   ├── FrameworkWindowTheme.axaml         基础布局主题资源（四份布局模板 + 共享部件模板 + shell 样式 + 菜单样式；PanelResizer 经 xmlns:layout 引用）
@@ -86,7 +87,10 @@ Core/Framework/
 `public class FrameworkWindowTheme : Styles`（第 12 行）：`StyleInclude`（BaseUri `avares://DigitalWorkstation.Core.Framework/Windows/`，:14；Source 相对 `FrameworkWindowTheme.axaml`，:20）加载主题，构造时 `_ = include.Loaded` 强制加载（:22）再 `Add(include)`（:23）。
 
 ### `Contributions/ShellContributionCollector.cs`
-`public class ShellContributionCollector(IContainerProvider containerProvider)`（第 9 行，主构造；命名空间 `DigitalWorkstation.Core.Framework.Contributions`）。五个收集方法：`GetNavigationItems(NavigationItemPlacement)`（:14）、`GetMainViews()`（:24）、`GetPanelTabs(PanelPlacement)`（:31）、`GetMenuItems()`（:40，无参数——不过滤不排序，建树由 `MenuTreeBuilder` 负责，ADR-0001）、`GetStatusBarItems()`（:47）。除菜单外统一模式：容器解析 `IEnumerable<T>` → 定位枚举过滤 → `Order` 升序 → `ToArray()`。
+`public class ShellContributionCollector(IContainerProvider containerProvider)`（第 9 行，主构造；命名空间 `DigitalWorkstation.Core.Framework.Contributions`）。四个收集方法：`GetToolViews()`（:15，`Order` 升序，不按定位枚举过滤——三处 Bar 的分派由消费方按 `Placement`/`AllowMove` 决定，ADR-0002）、`GetMainViews()`（:24）、`GetMenuItems()`（:31，无参数——不过滤不排序，建树由 `MenuTreeBuilder` 负责，ADR-0001）、`GetStatusBarItems()`（:38）。统一模式：容器解析 `IEnumerable<T>` → （可选）`Order` 升序 → `ToArray()`。
+
+### `Contributions/ToolViewRegistration.cs`
+`public static class ToolViewRegistration`（第 14 行）：`RegisterToolViews(this IContainerRegistry, Assembly)` 扩展（:20，ADR-0002）——扫描传入程序集中标注 `ToolViewAttribute` 的类（不做全局扫描），非可实例化 `Control` 或程序集内 `Id` 重复记 `Logger.Warning` 跳过；合法者 `Register(viewType)` 注册 View 类型本身，并把 attribute 元数据（标题经 `Language.Get` 解析）落成 `ToolViewContribution` 注册 singleton。与 `Menus/MenuRegistration.cs` 同构。
 
 ### `Menus/MenuItemViewModel.cs`
 `public class MenuItemViewModel`（第 13 行），自 Modules/Workstation 迁入（命名空间 `DigitalWorkstation.Core.Framework.Menus`，API 不变）。菜单项呈现模型：`Title`（required init，:19）、`Icon: Geometry?`（:24，null 不渲染图标）、`Command: ICommand?`（:26）、`Children: ObservableCollection<object>`（:28，子项为 MenuItemViewModel 或 Avalonia `Separator`）；静态 `FromSubmenu(MenuTreeSubmenu)`（:33）把建树器产物递归转换（`IconPath` 经 `StreamGeometry.Parse` 转几何，:43；分隔线转 `Separator`，:47）。

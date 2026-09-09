@@ -21,8 +21,8 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly Dictionary<string, IMainViewContribution> _mainViewsById = new();
     private readonly Dictionary<string, object> _mainViewContents = new();
     private readonly Dictionary<string, object> _sideBarContents = new();
-    private readonly Dictionary<string, IPanelTabContribution> _auxTabsById = new();
-    private readonly Dictionary<string, IPanelTabContribution> _bottomTabsById = new();
+    private readonly Dictionary<string, ToolViewContribution> _auxTabsById = new();
+    private readonly Dictionary<string, ToolViewContribution> _bottomTabsById = new();
     private readonly Dictionary<string, object> _auxTabContents = new();
     private readonly Dictionary<string, object> _bottomTabContents = new();
     private bool _contributionsLoaded;
@@ -124,15 +124,20 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         _contributionsLoaded = true;
-        LoadItems(_collector.GetNavigationItems(NavigationItemPlacement.Top), TopNavigationItems);
-        LoadItems(_collector.GetNavigationItems(NavigationItemPlacement.Bottom), BottomNavigationItems);
+        var toolViews = _collector.GetToolViews();
+        LoadItems(toolViews.Where(view => view.Placement == ToolViewPlacement.ActivityBar && view.AllowMove),
+            TopNavigationItems);
+        LoadItems(toolViews.Where(view => view.Placement == ToolViewPlacement.ActivityBar && !view.AllowMove),
+            BottomNavigationItems);
         foreach (var mainView in _collector.GetMainViews())
         {
             _mainViewsById[mainView.Id] = mainView;
         }
-        LoadPanelTabs(_collector.GetPanelTabs(PanelPlacement.Auxiliary), AuxiliaryTabs, _auxTabsById,
+        LoadPanelTabs(toolViews.Where(view => view.Placement == ToolViewPlacement.AuxiliaryPanel).ToArray(),
+            ToolViewPlacement.AuxiliaryPanel, AuxiliaryTabs, _auxTabsById,
             content => AuxiliaryContent = content, _auxTabContents);
-        LoadPanelTabs(_collector.GetPanelTabs(PanelPlacement.Bottom), BottomTabs, _bottomTabsById,
+        LoadPanelTabs(toolViews.Where(view => view.Placement == ToolViewPlacement.BottomPanel).ToArray(),
+            ToolViewPlacement.BottomPanel, BottomTabs, _bottomTabsById,
             content => BottomContent = content, _bottomTabContents);
         foreach (var submenu in MenuTreeBuilder.Build(_collector.GetMenuItems()))
         {
@@ -164,7 +169,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         if (!_sideBarContents.TryGetValue(contentId, out var content))
         {
-            content = _containerProvider.Resolve(_itemsById[contentId].Contribution.ContentViewType);
+            content = _containerProvider.Resolve(_itemsById[contentId].Contribution.ViewType);
             _sideBarContents[contentId] = content;
         }
 
@@ -288,8 +293,8 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary>
     ///     装载一个面板的 tab：建立索引、默认激活首个 tab 并同步到状态
     /// </summary>
-    private void LoadPanelTabs(IReadOnlyList<IPanelTabContribution> contributions,
-        ObservableCollection<PanelTabViewModel> target, Dictionary<string, IPanelTabContribution> index,
+    private void LoadPanelTabs(IReadOnlyList<ToolViewContribution> contributions, ToolViewPlacement panel,
+        ObservableCollection<PanelTabViewModel> target, Dictionary<string, ToolViewContribution> index,
         Action<object> setContent, Dictionary<string, object> contentCache)
     {
         if (contributions.Count == 0)
@@ -306,9 +311,9 @@ public partial class MainWindowViewModel : ObservableObject
 
         var tabs = target.Select(tab => tab.Id).ToArray();
         var activeTab = tabs.FirstOrDefault();
-        State = contributions[0].Panel switch
+        State = panel switch
         {
-            PanelPlacement.Auxiliary => State with
+            ToolViewPlacement.AuxiliaryPanel => State with
             {
                 AuxiliaryPanel = State.AuxiliaryPanel with { Tabs = tabs, ActiveTab = activeTab }
             },
@@ -325,7 +330,7 @@ public partial class MainWindowViewModel : ObservableObject
     ///     按活动 tab 同步高亮与内容；内容视图按 tab 缓存
     /// </summary>
     private void SyncActiveTab(ObservableCollection<PanelTabViewModel> tabs,
-        Dictionary<string, IPanelTabContribution> index, string? activeTab,
+        Dictionary<string, ToolViewContribution> index, string? activeTab,
         Action<object> setContent, Dictionary<string, object> contentCache)
     {
         foreach (var tab in tabs)
@@ -340,14 +345,14 @@ public partial class MainWindowViewModel : ObservableObject
 
         if (!contentCache.TryGetValue(activeTab, out var content))
         {
-            content = _containerProvider.Resolve(contribution.ContentViewType);
+            content = _containerProvider.Resolve(contribution.ViewType);
             contentCache[activeTab] = content;
         }
 
         setContent(content);
     }
 
-    private void LoadItems(IEnumerable<INavigationItemContribution> contributions,
+    private void LoadItems(IEnumerable<ToolViewContribution> contributions,
         ObservableCollection<NavigationItemViewModel> target)
     {
         foreach (var contribution in contributions)

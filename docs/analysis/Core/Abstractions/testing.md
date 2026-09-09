@@ -2,13 +2,13 @@
 
 ## 本模块的测试在哪
 
-**本模块没有任何测试。** `Core/Abstractions/` 下只有 10 个文件（1 个 csproj + 9 个 .cs），不存在测试项目、测试目录或以 `*Test*`/`*Tests*` 命名的文件（已通读模块全部文件确认）。模块内无任何测试框架（xUnit/NUnit/MSTest）引用。
+**本模块没有任何测试。** `Core/Abstractions/` 下只有 12 个文件（1 个 csproj + 11 个 .cs），不存在测试项目、测试目录或以 `*Test*`/`*Tests*` 命名的文件（已通读模块全部文件确认）。模块内无任何测试框架（xUnit/NUnit/MSTest）引用。
 
 > 解决方案级是否有其他测试项目引用本模块，超出本模块深读范围（约束：不读其他模块目录），待进一步调查。
 
 ## 为什么可接受
 
-本模块是纯契约层：9 个 .cs 文件中 8 个只含接口/枚举/常量声明，唯一含方法体的 `WindowManagerExtenstion`（WindowManager/IWindowManagerExtenstion.cs）每个方法是一行 `manager.Xxx(typeof(TWindow))` 转发。可测试的数据逻辑（数据读写、转换、校验、计算）为零，符合桌面端「单元测试聚焦数据检测」的约定——这里没有数据逻辑可测。
+本模块是纯契约层：11 个 .cs 文件中 10 个只含接口/枚举/常量/attribute/元数据属性声明，唯一含方法体的 `WindowManagerExtenstion`（WindowManager/IWindowManagerExtenstion.cs）每个方法是一行 `manager.Xxx(typeof(TWindow))` 转发。可测试的数据逻辑（数据读写、转换、校验、计算）为零，符合桌面端「单元测试聚焦数据检测」的约定——这里没有数据逻辑可测。
 
 ## 怎么跑
 
