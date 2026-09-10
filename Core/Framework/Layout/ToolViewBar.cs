@@ -62,6 +62,30 @@ public class ToolViewBar : ItemsControl
         set => SetValue(OrientationProperty, value);
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        ToolViewDragSession.ActiveChanged += OnDragSessionChanged;
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        ToolViewDragSession.ActiveChanged -= OnDragSessionChanged;
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    /// <summary>
+    ///     会话结束兜底：Esc 取消或在窗口外松手等路径下，最后悬停的 Bar 收不到 DragLeave，
+    ///     仅靠 Drop/DragLeave 清除会残留高亮
+    /// </summary>
+    private void OnDragSessionChanged(bool active)
+    {
+        if (!active)
+        {
+            ClearInsertion();
+        }
+    }
+
     /// <summary>
     ///     落放出口：ViewModel 的 MoveTabCommand
     /// </summary>

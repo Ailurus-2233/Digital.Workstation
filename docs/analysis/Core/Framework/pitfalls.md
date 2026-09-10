@@ -38,7 +38,7 @@
 - **自定义控件继承主题用 `StyleKeyOverride` 后，类型选择器全部失效**：Avalonia 样式的类型选择器（`Button.nav-item`、`layout|ToolViewBar`）匹配的是控件的 **StyleKey 而非运行时类型**。`ToolViewButton` override 成 `Button` 是刻意的（继承 nav-item/panel-tab 类样式）；`ToolViewBar` 则**不得** override 成 `ItemsControl`——否则 `layout|ToolViewBar` 选择器与其 ControlTheme 查找（按 StyleKey 作资源键）双双落空，表现为整条带不接收拖放、悬停高亮不显示（真实踩坑，ADR-0002 片段 2）。需要继承基类模板又保留自身类型选择器时，为子类写专属 ControlTheme（模板可从基类主题复制），不要 override StyleKey。
 - **Background=null 的区域不参与命中测试**：拖放/指针事件落不到无背景的容器空白区（真实踩坑：`ToolViewBar` 空条带无法落放）。修复是在 ControlTheme 里 `Background=Transparent`（模板含 `Border Background={TemplateBinding Background}` 才渲染），拖放目标控件务必保证背景非 null。
 - **Avalonia 11.3 起 DnD 是新 API**：`DataObject`/`DragDrop.DoDragDrop`/`DragEventArgs.Data` 均已过时；用 `DataTransfer` + `DataTransferItem.Create(format, value)` + `DragDrop.DoDragDropAsync`，格式用 `DataFormat.CreateStringApplicationFormat`（标识符只允许 ASCII 字母/数字/点/连字符）；`AllowDrop` 变成附加属性，代码里用 `DragDrop.SetAllowDrop(control, true)`。读取侧 `DragEventArgs.DataTransfer.Contains/TryGetValue(format)`。
-- **`DragLeave` 是冒泡路由事件**：指针在条目间移动时会从子元素冒泡到投放目标——在 DragLeave 里清视觉指示前要确认指针真正离开（`ToolViewBar.OnDragLeave` 用 `Bounds.Contains(e.GetPosition(this))` 守卫，`Layout/ToolViewBar.cs:131`），否则插入指示在条目间移动时闪烁消失。
+- **`DragLeave` 是冒泡路由事件**：指针在条目间移动时会从子元素冒泡到投放目标——在 DragLeave 里清视觉指示前要确认指针真正离开（`ToolViewBar.OnDragLeave` 用 `Bounds.Contains(e.GetPosition(this))` 守卫，`Layout/ToolViewBar.cs:149`），否则插入指示在条目间移动时闪烁消失。**反过来，DragLeave 也不足以兜底清除**：Esc 取消拖拽、窗口外松手等路径下最后悬停的 Bar 收不到 DragLeave，`drag-over` 高亮/占位线会残留（真实踩坑）——`ToolViewBar` 因此订阅 `ToolViewDragSession.ActiveChanged`，会话结束（false）时一律 `ClearInsertion`（:81-87；订阅在 OnAttachedToVisualTree/OnDetachedFromVisualTree 配对，:65-76）。
 
 ## 历史踩坑（注释/防御性代码透露）
 
