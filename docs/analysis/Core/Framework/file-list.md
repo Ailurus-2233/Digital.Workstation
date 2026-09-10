@@ -28,12 +28,15 @@ Core/Framework/
 │   ├── MenuTreeEntry.cs                   菜单树条目 record 族（叶子/子菜单/分隔线单例）
 │   ├── MenuTreeBuilder.cs                 菜单建树器（纯函数：路径切分、分组排序、插分隔线，ADR-0001）
 │   └── MenuRegistration.cs                attribute 菜单注册扩展 + internal 反射贡献实现
+├── Commands/                                命名空间 DigitalWorkstation.Core.Framework.Commands（ADR-0005）
+│   └── CommandRegistration.cs             attribute 命令注册扩展（免类级 attribute）+ internal 反射贡献实现
 ├── Contributions/                           命名空间 DigitalWorkstation.Core.Framework.Contributions
 │   ├── ShellContributionCollector.cs      shell 贡献收集器
 │   └── ToolViewRegistration.cs            attribute 工具视图注册扩展（ADR-0002）
 ├── Windows/                                 命名空间 DigitalWorkstation.Core.Framework.Windows（窗口基类与主题）
-│   ├── FrameworkWindow.cs                 带基础布局的窗口基类（内置 VS Code 式五区 shell + 标题栏菜单栏）
-│   ├── FrameworkWindowTheme.axaml         基础布局主题资源（四份布局模板 + 共享部件模板 + shell 样式 + 菜单样式；PanelResizer 经 xmlns:layout 引用）
+│   ├── FrameworkWindow.cs                 带基础布局的窗口基类（内置 VS Code 式五区 shell + 标题栏菜单栏 + 命令面板浮层与 Ctrl+P）
+│   ├── CommandPalette.cs                  命令面板控件（ADR-0005）：自包含检索浮层（过滤/键盘导航/MRU 内存置顶），ItemsSource 宽松绑定 Commands
+│   ├── FrameworkWindowTheme.axaml         基础布局主题资源（四份布局模板 + 共享部件模板 + shell 样式 + 菜单样式 + 命令面板样式；ActivityBar 钉住段 Grid(*,Auto) 分隔；PanelResizer 经 xmlns:layout 引用）
 │   └── FrameworkWindowTheme.cs            主题加载器（StyleInclude 强制加载，BaseUri 指向 Windows/ 目录）
 └── WindowManager/
     └── FrameworkWindowManager.cs          IWindowManager + IMainWindowManager 实现
@@ -99,7 +102,10 @@ Core/Framework/
 `public class ToolViewBar : ItemsControl`（第 19 行，ADR-0002）：工具视图 Bar 的投放目标（ActivityBar 顶部段与两个面板 tab 条；底部钉住段不用本控件，自然禁止光标）。StyledProperty：`TargetBarProperty`（:33）、`OrientationProperty`（:36，决定插入序号轴向与占位线方向）、`MoveCommandProperty`（:39）。构造（:44）：`DragDrop.SetAllowDrop(this, true)` + AddHandler 挂 DragOver/Drop/DragLeave；另在 OnAttachedToVisualTree/OnDetachedFromVisualTree（:65-76）配对订阅 `ToolViewDragSession.ActiveChanged`——会话结束一律 `ClearInsertion`（:81-87），兜底 Esc 取消/窗外松手等收不到 DragLeave 的路径。**不得声明 StyleKeyOverride**——Avalonia 类型选择器匹配 StyleKey 而非运行时类型，override 会让 `layout|ToolViewBar` 选择器与 ControlTheme 查找失效；其 ControlTheme 在 FrameworkWindowTheme.axaml（透明背景使命中测试覆盖整条带、模板含 `PART_InsertionLine`）。`OnApplyTemplate`（:93）按 Orientation 配置占位线横/竖（横向 Bar 竖线 2px、纵向 Bar 横线 2px，`InsertionLineThickness` :26）。`ComputeInsertionIndex`（:157，指针在条目前半→插其前，否则末尾）；`ShowInsertion`（:181，经 `TranslatePoint` 把落点缝隙坐标换算为占位线 Margin）；`OnDragLeave`（:149）有冒泡守卫——指针真正离开本 Bar 才清除。
 
 ### `Windows/FrameworkWindow.cs`
-`public abstract class FrameworkWindow : UrsaWindow`（第 19 行）——带基础布局的窗口基类，内置 VS Code 式五区 shell + 标题栏左侧菜单栏（ADR-0001）。成员：`PanelAlignmentProperty`（:21，StyledProperty，默认 `Center`）与 CLR 包装 `PanelAlignment`（:67）、`StyleKeyOverride => typeof(UrsaWindow)`（:62，继承窗口 chrome 主题）、构造函数（:27，`Styles.Add(_theme)` + ContentControl 布局宿主 + **内置菜单栏**：`LeftContent = new Menu { Classes=chrome-menu, ItemsSource 宽松绑定 "MenuBarItems" }`（:35-40）与 `DataTemplates.Add(FuncDataTemplate<MenuItemViewModel>)` 注册项模板（:41，子菜单任意深度经模板查找递归复用）+ `UpdateLayoutTemplate`）、私有 `BuildMenuItemHeader`（:48，图标 null 不创建 PathIcon 不留占位间隙）、`OnPropertyChanged`（:73，监听 PanelAlignmentProperty）、私有 `UpdateLayoutTemplate`（:82，枚举→资源键映射 + `TryGetResource` 查找，缺失抛异常）。
+`public abstract class FrameworkWindow : UrsaWindow`（第 22 行）——带基础布局的窗口基类，内置 VS Code 式五区 shell + 标题栏左侧菜单栏（ADR-0001）+ 命令面板浮层（ADR-0005）。成员：`PanelAlignmentProperty`（:24，StyledProperty，默认 `Center`）与 CLR 包装 `PanelAlignment`（:79）、`StyleKeyOverride => typeof(UrsaWindow)`（:74，继承窗口 chrome 主题）、构造函数（:31，`Styles.Add(_theme)` + ContentControl 布局宿主 + **内置命令面板**：`_palette` ItemsSource 宽松绑定 `"Commands"`、`Content = new Panel { _layoutHost, _palette }` 叠层、Ctrl+P KeyBinding（:36-44）+ **内置菜单栏**：`LeftContent = new Menu { Classes=chrome-menu, ItemsSource 宽松绑定 "MenuBarItems" }`（:47-52）与 `DataTemplates.Add(FuncDataTemplate<MenuItemViewModel>)` 注册项模板（:53，子菜单任意深度经模板查找递归复用）+ `UpdateLayoutTemplate`）、私有 `BuildMenuItemHeader`（:60，图标 null 不创建 PathIcon 不留占位间隙）、`OnPropertyChanged`（:85，监听 PanelAlignmentProperty）、私有 `UpdateLayoutTemplate`（:94，枚举→资源键映射 + `TryGetResource` 查找，缺失抛异常）、`RegisterCommandGestures`（:114，为带 Gesture 的命令生成窗口级 KeyBinding，`KeyGesture.Parse` 失败记日志跳过）。
+
+### `Windows/CommandPalette.cs`
+`public class CommandPalette : Border`（第 18 行，ADR-0005）：命令面板控件，窗口顶部居中的命令检索浮层。自包含——搜索框（`TextBox.command-input`，水印 `Language.CommandPaletteWatermark`）+ 列表（`ListBox.command-list`，代码创建的 `FuncDataTemplate<ICommandContribution>`：标题 + 右侧 gesture 文本，无图标）+ 空态（`TextBlock.placeholder`，`Language.NoMatchingCommands`）全部代码构建；子串过滤（不区分大小写、匹配本地化标题）、↑↓/Enter/Esc 键盘导航（`OnKeyDown`）、单击执行、面板外点击关闭（Open 时挂 TopLevel PointerPressed Tunnel 监听、Close 摘除）、MRU `_recentIds` 内存置顶（新者在前，重启即清）全部内聚。`ItemsSourceProperty` StyledProperty（:20）接命令数据源（宽松绑定 ViewModel 的 `Commands`）；公开方法 `Open()`（:76）/`Close()`（:89）。未声明 `StyleKeyOverride`——样式选择器 `windows|CommandPalette` 在 FrameworkWindowTheme.axaml:617-649。
 
 ### `Layout/SetPanelAlignmentEvent.cs`
 `public class SetPanelAlignmentEvent : PubSubEvent<PanelAlignment>`（第 8 行）：请求切换布局档位的事件契约。注释自述放本模块而非 Core/Models 的原因（负载类型定义于此，Models 引用 Framework 会成环）。
@@ -111,7 +117,7 @@ Core/Framework/
 `public class FrameworkWindowTheme : Styles`（第 12 行）：`StyleInclude`（BaseUri `avares://DigitalWorkstation.Core.Framework/Windows/`，:14；Source 相对 `FrameworkWindowTheme.axaml`，:20）加载主题，构造时 `_ = include.Loaded` 强制加载（:22）再 `Add(include)`（:23）。
 
 ### `Contributions/ShellContributionCollector.cs`
-`public class ShellContributionCollector(IContainerProvider containerProvider)`（第 9 行，主构造；命名空间 `DigitalWorkstation.Core.Framework.Contributions`）。四个收集方法：`GetToolViews()`（:15，`Order` 升序，不按定位枚举过滤——三处 Bar 的分派由消费方按 `Placement`/`AllowMove` 决定，ADR-0002）、`GetMainViews()`（:24）、`GetMenuItems()`（:31，无参数——不过滤不排序，建树由 `MenuTreeBuilder` 负责，ADR-0001）、`GetStatusBarItems()`（:38）。统一模式：容器解析 `IEnumerable<T>` → （可选）`Order` 升序 → `ToArray()`。
+`public class ShellContributionCollector(IContainerProvider containerProvider)`（第 9 行，主构造；命名空间 `DigitalWorkstation.Core.Framework.Contributions`）。五个收集方法：`GetToolViews()`（:15，`Order` 升序，不按定位枚举过滤——三处 Bar 的分派由消费方按 `Placement`/`AllowMove` 决定，ADR-0002）、`GetMainViews()`（:24）、`GetMenuItems()`（:31，无参数——不过滤不排序，建树由 `MenuTreeBuilder` 负责，ADR-0001）、`GetCommands()`（:41，`Order` 升序 + 同 Order 标题 Ordinal + Id 冲突去重保留先注册者，ADR-0005）、`GetStatusBarItems()`（:62）。统一模式：容器解析 `IEnumerable<T>` → （可选）过滤/排序 → `ToArray()`。
 
 ### `Contributions/ToolViewRegistration.cs`
 `public static class ToolViewRegistration`（第 14 行）：`RegisterToolViews(this IContainerRegistry, Assembly)` 扩展（:20，ADR-0002）——扫描传入程序集中标注 `ToolViewAttribute` 的类（不做全局扫描），非可实例化 `Control` 或程序集内 `Id` 重复记 `Logger.Warning` 跳过；合法者 `Register(viewType)` 注册 View 类型本身，并把 attribute 元数据（标题经 `Language.Get` 解析）落成 `ToolViewContribution` 注册 singleton。与 `Menus/MenuRegistration.cs` 同构。
@@ -127,6 +133,9 @@ Core/Framework/
 
 ### `Menus/MenuRegistration.cs`
 `public static class MenuRegistration`（第 14 行）：`RegisterMenus(this IContainerRegistry, Assembly)` 扩展（:20）——扫描传入程序集中标注 `MenuGroupAttribute` 的类（不做全局扫描），类路径含空段或方法签名非法（带参/返回值非 void/Task）记 `Logger.Warning` 跳过，菜单类 `RegisterSingleton(Type)`，每个合法 `MenuItemAttribute` 方法注册一个 `IMenuItemContribution` 工厂。同文件 `internal sealed class ReflectedMenuItemContribution`（:75）：构造期把 attribute 元数据落成契约属性（`Title` 经 `Language.Get` 解析），点击反射调用、`Task` 等待、异常记日志不抛出。
+
+### `Commands/CommandRegistration.cs`
+`public static class CommandRegistration`（第 13 行，ADR-0005）：`RegisterCommands(this IContainerRegistry, Assembly)` 扩展（:19）——扫描传入程序集中标注 `CommandAttribute` 的方法（免类级 attribute、不做全局扫描），签名非法（带参/返回值非 void/Task）记 `Logger.Warning` 跳过，宿主类 `RegisterSingleton(Type)`，每个合法方法注册一个 `ICommandContribution` 工厂。同文件 `internal sealed class ReflectedCommandContribution`（:60）：构造期把 attribute 元数据落成契约属性（`Id` 默认「声明类全名.方法名」、`Title` 经 `Language.Get` 解析、`Gesture`/`Order` 透传），执行反射调用、`Task` 等待、异常记日志不抛出。与 `Menus/MenuRegistration.cs` 同构。
 
 ### `WindowManager/FrameworkWindowManager.cs`
 `public class FrameworkWindowManager : IWindowManager, IMainWindowManager`（第 12 行，命名空间 `DigitalWorkstation.Core.Framework.WindowManager`）。内部状态 `_windowMap: Dictionary<Type, Window>`（:17）与 `_mainWindow`（:22）。入口：`GetWindow`（:35）、`InitializeWindow`（:45，私有）、`ShowWindow` 四重载（:57-111）、`ShowDialog` 四重载（:113-141）、`CloseWindow`（:144）、`HideWindow`（:150）、`HandleMainWindow`（:158）、`HideMainWindow`/`ShowMainWindow`（:169-170）、`CloseWindowsExceptMain`（:172）。

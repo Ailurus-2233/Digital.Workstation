@@ -8,10 +8,10 @@
 
 | 签名 | 说明 |
 |---|---|
-### 静态只读属性（27 个，全部以 `Get(nameof(属性名))` 实现，返回 `string`）
+### 静态只读属性（29 个，全部以 `Get(nameof(属性名))` 实现，返回 `string`）
 
 
-定义于 `Language.cs:25-153`。键名 = 属性名，中文值来自 `Language.resx`，英文值来自 `Language.en-US.resx`：
+定义于 `Language.cs:25-162`。键名 = 属性名，中文值来自 `Language.resx`，英文值来自 `Language.en-US.resx`：
 
 | 属性 | 中文值 | 英文值 | 用途（resx comment） |
 |---|---|---|---|
@@ -41,7 +41,9 @@
 | `SplashPhaseCoreServices`（:138） | 初始化核心服务 | Initializing core services | 启动台阶段名 |
 | `SplashPhaseLoadingModules`（:143） | 加载模块 | Loading modules | 启动台阶段名 |
 | `SplashPhaseReady`（:148） | 就绪 | Ready | 启动台阶段名 |
-| `SplashPhaseFailed`（:153） | 模块加载失败 | Module failed to load | 启动台阶段名 |
+| `SplashPhaseFailed`（:152） | 模块加载失败 | Module failed to load | 启动台阶段名 |
+| `CommandPaletteWatermark`（:158） | 输入命令以执行 | Type a command to execute | 命令面板输入框水印（ADR-0005） |
+| `NoMatchingCommands`（:162） | 无匹配命令 | No matching commands | 命令面板空态文案（ADR-0005） |
 
 
 > 注意：`StatusReadyTitle`（状态栏"就绪"，:123）与 `SplashPhaseReady`（启动画面"就绪"阶段名，:148）**中文值同为"就绪"，但用途不同，是两个独立的键**，不能合并。
@@ -93,4 +95,4 @@ Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
 
 ## 对外公开的数据结构
 
-无自定义数据结构。输入输出都是 `string`；语言资源键的"结构"即上表 27 个键，物理载体是两个 resx 文件中的 `<data name="键名"><value>文案</value><comment>用途</comment></data>` 条目（`Language.resx:61-168`、`Language.en-US.resx:61-168`）。
+无自定义数据结构。输入输出都是 `string`；语言资源键的"结构"即上表 29 个键，物理载体是两个 resx 文件中的 `<data name="键名"><value>文案</value><comment>用途</comment></data>` 条目（`Language.resx:61-176`、`Language.en-US.resx:61-176`）。

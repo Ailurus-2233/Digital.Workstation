@@ -1,8 +1,11 @@
-﻿﻿using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
+using Avalonia.Input;
 using Avalonia.Layout;
+using DigitalWorkstation.Core.Abstractions.Commands;
+using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Framework.Layout;
 using DigitalWorkstation.Core.Framework.Menus;
 using Ursa.Controls;
@@ -23,13 +26,22 @@ public abstract class FrameworkWindow : UrsaWindow
 
     private readonly FrameworkWindowTheme _theme = new();
     private readonly ContentControl _layoutHost = new();
+    private readonly CommandPalette _palette = new();
 
     protected FrameworkWindow()
     {
         Styles.Add(_theme);
         // 布局模板以窗口 DataContext（ViewModel）为绑定源；Framework 不引用具体 ViewModel 类型，全部宽松绑定
         _layoutHost[!ContentControl.ContentProperty] = this[!DataContextProperty];
-        Content = _layoutHost;
+        // 命令面板（ADR-0005）：顶部浮层代码创建，叠在布局宿主之上（不动四份布局模板）；
+        // ItemsSource 宽松绑定 ViewModel 的 Commands 集合，Ctrl+P 直接开关
+        _palette[!CommandPalette.ItemsSourceProperty] = new Binding("Commands");
+        Content = new Panel { Children = { _layoutHost, _palette } };
+        KeyBindings.Add(new KeyBinding
+        {
+            Gesture = new KeyGesture(Key.P, KeyModifiers.Control),
+            Command = new DelegateCommand(_palette.Open)
+        });
         // 菜单栏内置于标题栏左侧：Menu 实例与项模板在代码中创建（项模板入窗口 DataTemplates，
         // 子菜单任意深度经模板查找递归复用），chrome-menu 样式在 FrameworkWindowTheme.axaml
         LeftContent = new Menu
@@ -92,5 +104,34 @@ public abstract class FrameworkWindow : UrsaWindow
         _layoutHost.ContentTemplate = _theme.TryGetResource(key, null, out var template)
             ? (IDataTemplate)template!
             : throw new InvalidOperationException($"布局模板资源缺失：{key}");
+    }
+
+    /// <summary>
+    ///     为带 <see cref="ICommandContribution.Gesture" /> 的命令生成窗口级 KeyBinding（ADR-0005）：
+    ///     机制在 Framework、接线在 shell 模块（同 LayoutPersistence 惯例），shell 收集命令后调用一次；
+    ///     Gesture 文本无法解析时记日志跳过
+    /// </summary>
+    public void RegisterCommandGestures(IEnumerable<ICommandContribution> commands)
+    {
+        foreach (var command in commands)
+        {
+            if (command.Gesture is not { Length: > 0 } gestureText)
+            {
+                continue;
+            }
+            KeyGesture gesture;
+            try
+            {
+                gesture = KeyGesture.Parse(gestureText);
+            }
+            catch (FormatException exception)
+            {
+                Logger.Warning(
+                    $"命令 \"{command.Title}\" 的快捷键 \"{gestureText}\" 无法解析（{exception.Message}），已跳过",
+                    nameof(FrameworkWindow));
+                continue;
+            }
+            KeyBindings.Add(new KeyBinding { Gesture = gesture, Command = command.Command });
+        }
     }
 }

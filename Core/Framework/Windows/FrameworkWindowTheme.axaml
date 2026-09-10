@@ -1,6 +1,7 @@
 <Styles
     xmlns="https://github.com/avaloniaui"
     xmlns:layout="clr-namespace:DigitalWorkstation.Core.Framework.Layout"
+    xmlns:windows="clr-namespace:DigitalWorkstation.Core.Framework.Windows"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Styles.Resources>
@@ -27,18 +28,20 @@
                 Background="{DynamicResource SemiColorNavBackground}"
                 Margin="0,0,2,0"
                 Width="48">
-                <DockPanel>
-                    <ItemsControl
-                        DockPanel.Dock="Bottom"
-                        ItemTemplate="{StaticResource NavigationItemTemplate}"
-                        ItemsSource="{Binding BottomNavigationItems}" />
+                <!--  Grid（*,Auto）替代 DockPanel：钉住段硬约束在栏内底部——DockPanel 的
+                      bottom dock 会把钉住段排到状态栏区域（溢出约 36px 被裁剪不可见）  -->
+                <Grid RowDefinitions="*,Auto">
                     <layout:ToolViewBar
                         ItemTemplate="{StaticResource NavigationItemTemplate}"
                         ItemsSource="{Binding TopNavigationItems}"
                         MoveCommand="{Binding MoveTabCommand}"
                         Orientation="Vertical"
                         TargetBar="ActivityBar" />
-                </DockPanel>
+                    <ItemsControl
+                        Grid.Row="1"
+                        ItemTemplate="{StaticResource NavigationItemTemplate}"
+                        ItemsSource="{Binding BottomNavigationItems}" />
+                </Grid>
             </Border>
         </DataTemplate>
 
@@ -613,4 +616,37 @@
     <Style Selector="Menu.chrome-menu MenuItem PathIcon">
         <Setter Property="Foreground" Value="{DynamicResource SemiColorText1}" />
     </Style>
+    <!--  命令面板（FrameworkWindow 内置，ADR-0005）：顶部居中浮层，仿 VS Code Quick Open  -->
+    <Style Selector="windows|CommandPalette">
+        <Setter Property="Background" Value="{DynamicResource SemiColorBackground1}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="BoxShadow" Value="0 8 24 0 #80000000" />
+        <Setter Property="Width" Value="600" />
+        <Setter Property="MaxWidth" Value="600" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="Margin" Value="0,48,0,0" />
+        <Setter Property="Padding" Value="4" />
+    </Style>
+    <Style Selector="windows|CommandPalette TextBox.command-input">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Margin" Value="2,2,2,4" />
+    </Style>
+    <Style Selector="windows|CommandPalette ListBox.command-list">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="windows|CommandPalette ListBox.command-list ListBoxItem">
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Margin" Value="2,1" />
+        <Setter Property="CornerRadius" Value="4" />
+    </Style>
+    <Style Selector="windows|CommandPalette TextBlock.gesture">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        <Setter Property="Margin" Value="12,0,0,0" />
+    </Style>
+
 </Styles>

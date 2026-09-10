@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DigitalWorkstation.Core.Abstractions.Commands;
 using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.Layout;
@@ -109,6 +110,12 @@ public partial class MainWindowViewModel : ObservableObject
     public ObservableCollection<StatusBarItemViewModel> StatusBarItems { get; } = [];
 
     /// <summary>
+    ///     全部命令贡献（ADR-0005）：命令面板数据源与手势 KeyBinding 来源，一次性收集
+    /// </summary>
+    [ObservableProperty]
+    private IReadOnlyList<ICommandContribution> _commands = [];
+
+    /// <summary>
     ///     AuxiliaryPanel 当前活动 tab 的内容；视图实例按 tab 缓存，切换再切回不丢
     /// </summary>
     [ObservableProperty]
@@ -168,6 +175,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             StatusBarItems.Add(new StatusBarItemViewModel(item));
         }
+        Commands = _collector.GetCommands();
     }
 
     /// <summary>

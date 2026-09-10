@@ -1,5 +1,7 @@
-﻿using DigitalWorkstation.Core.Abstractions.Contributions;
+﻿﻿using DigitalWorkstation.Core.Abstractions.Commands;
+using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Abstractions.Menus;
+using DigitalWorkstation.Core.Common;
 
 namespace DigitalWorkstation.Core.Framework.Contributions;
 
@@ -31,6 +33,28 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
     public IReadOnlyList<IMenuItemContribution> GetMenuItems()
     {
         return containerProvider.Resolve<IEnumerable<IMenuItemContribution>>().ToArray();
+    }
+    /// <summary>
+    ///     收集全部命令贡献（ADR-0005），按 Order 升序、同 Order 按解析后标题字典序（Ordinal）；
+    ///     Id 冲突时保留先注册者，后者丢弃并记日志
+    /// </summary>
+    public IReadOnlyList<ICommandContribution> GetCommands()
+    {
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        return containerProvider.Resolve<IEnumerable<ICommandContribution>>()
+            .Where(command =>
+            {
+                if (ids.Add(command.Id))
+                {
+                    return true;
+                }
+                Logger.Warning($"命令 Id \"{command.Id}\" 冲突，后注册的 \"{command.Title}\" 已丢弃",
+                    nameof(ShellContributionCollector));
+                return false;
+            })
+            .OrderBy(command => command.Order)
+            .ThenBy(command => command.Title, StringComparer.Ordinal)
+            .ToArray();
     }
     /// <summary>
     ///     收集全部状态栏项，按 <see cref="IStatusBarItemContribution.Order" /> 升序

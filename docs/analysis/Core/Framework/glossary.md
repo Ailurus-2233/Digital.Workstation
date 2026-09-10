@@ -25,7 +25,11 @@
 | **FrameworkWindow** | 带基础布局的窗口基类（继承 UrsaWindow）：内置 VS Code 式五区 shell + 状态栏 + 标题栏菜单栏（代码创建的 `Menu` 宽松绑定 ViewModel 的 `MenuBarItems`，ADR-0001），布局档位由 `PanelAlignment` 依赖属性决定，切换即整体替换布局模板。真实子类：Modules/Workstation 的 `MainWindow`。与"主窗口（MainWindow）"词条的区别：那是**角色**（启动序列登记的那个窗口实例），这是**类型基类** | `Windows/FrameworkWindow.cs:19` |
 | **布局持久化（Layout Persistence）** | ADR-0002 引入的 shell 布局落盘机制：`%AppData%/Digital.Workstation/layout.json` 记录可移动工具视图归属（`Placements`）、SideBar/两个面板的显隐/尺寸/选中项或活动 tab、面板对齐档位。读容错（缺失/损坏/版本不识别 → 返回 null 静默回默认布局）、写防抖（500ms 合并连续变更）、重置经 `Delete`（先作废 pending 再删文件）。机制在 Framework（`LayoutPersistence` + `ShellLayoutDto` 族），接线在 Modules/Workstation 的 `MainWindowViewModel`；事件契约 `ResetLayoutEvent` 在 Core/Models/Events | `Layout/LayoutPersistence.cs:12`、`Layout/ShellLayoutDto.cs:10` |
 | **拖拽会话（Drag Session）** | 一次工具视图拖拽的存续期：`ToolViewButton` 在 `DoDragDropAsync` 期间把 `ToolViewDragSession.IsActive` 置 true 并广播 `ActiveChanged`；shell 借此临时显露隐藏面板作为投放区 | `Layout/ToolViewDragSession.cs:11` |
-| **占位线（Insertion Line）** | 拖拽落点指示：`ToolViewBar` ControlTheme 模板里的 `PART_InsertionLine`（2px、取分隔条悬停高亮色），DragOver 时按指针位置移到落点缝隙——横向 Bar 竖线、纵向 Bar 横线；不改现有 tab 的样式 | `Windows/FrameworkWindowTheme.axaml:479`（ControlTheme）、`Layout/ToolViewBar.cs:163`（`ShowInsertion`） |
+| **命令（Command）** | 以标题与可选快捷键（Gesture）声明的全局动作（ADR-0005）：方法标 `CommandAttribute` 经 `RegisterCommands` 扫描生成 `ICommandContribution`（扁平模型，稳定 `Id` 默认「声明类全名.方法名」），与菜单体系互不相干；完整领域定义见根目录 CONTEXT.md | `Core/Abstractions/Commands/CommandAttribute.cs`；注册端 `Commands/CommandRegistration.cs:14` |
+| **命令面板（Command Palette）** | 窗口顶部居中的命令检索浮层（Ctrl+P 唤起）：子串过滤、↑↓/Enter/Esc 导航、单击执行、失焦关闭、MRU 内存置顶。自包含控件 `CommandPalette`，VM 只暴露 `Commands` 集合（宽松绑定）；`FrameworkWindow` 构造时内置 | `Windows/CommandPalette.cs:18`、`Windows/FrameworkWindow.cs:36-44` |
+| **MRU（最近使用）** | 命令面板内 `_recentIds` 记忆：最近执行的命令 Id（新者在前）浮到列表最前；只在内存中，重启即清（ADR-0005 决策 8，持久化留作后续） | `Windows/CommandPalette.cs:29` |
+| **命令手势（Gesture）** | 命令的快捷键文本（如 `"Ctrl+Shift+P"`）：`CommandAttribute.Gesture` 声明 → shell 收集后 `FrameworkWindow.RegisterCommandGestures` 解析为窗口级 KeyBinding。机制在 Framework、接线在 shell 模块（同 LayoutPersistence 惯例） | `Windows/FrameworkWindow.cs:114` |
+| **占位线（Insertion Line）** | 拖拽落点指示：`ToolViewBar` ControlTheme 模板里的 `PART_InsertionLine`（2px、取分隔条悬停高亮色），DragOver 时按指针位置移到落点缝隙——横向 Bar 竖线、纵向 Bar 横线；不改现有 tab 的样式 | `Windows/FrameworkWindowTheme.axaml:482`（ControlTheme）、`Layout/ToolViewBar.cs:163`（`ShowInsertion`） |
 
 ## 类名 ↔ 业务概念对照
 

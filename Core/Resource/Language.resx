@@ -166,4 +166,12 @@
     <value>模块加载失败</value>
     <comment>启动台"模块加载失败"阶段名</comment>
   </data>
+  <data name="CommandPaletteWatermark" xml:space="preserve">
+    <value>输入命令以执行</value>
+    <comment>命令面板输入框的水印（ADR-0005）</comment>
+  </data>
+  <data name="NoMatchingCommands" xml:space="preserve">
+    <value>无匹配命令</value>
+    <comment>命令面板无匹配结果时的空态文案（ADR-0005）</comment>
+  </data>
 </root>

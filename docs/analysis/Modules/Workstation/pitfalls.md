@@ -21,7 +21,7 @@
 3. **在 `MainWindowViewModel` 构造函数里收集贡献**：模块贡献在 Prism 模块初始化（晚于 shell 创建）才注册——这正是 `OnOpened` 注释（MainWindow.axaml.cs:15）与 `EnsureContributionsLoaded` 注释（:119-122）说明的时序。提前收集会拿到空列表。
 4. **给 `OpenMainView` 加"找不到就抛异常"**：当前契约是静默返回（:281-284），事件发布方（如 DashBoard 导航视图）没有错误处理路径；改语义要先看所有发布点。
 5. **菜单分隔线手工插入或菜单方法乱签名**：分隔线由 Framework 的 `MenuTreeBuilder` 按分组自动生成（组间插入），不要在 ViewModel/XAML 手工插 `Separator`；`[MenuItem]` 方法必须是无参 `void`/`Task`——带参或返回值不合约的方法**编译不报错**，只在注册时记日志跳过，表现为菜单项静默缺席。**工具视图同理**（ADR-0002）：`[ToolView]` 标在抽象类或非 `Control` 上、或同程序集 Id 重复，`ToolViewRegistration` 只记 `Logger.Warning` 跳过（`ToolViewRegistration.cs:31-44`），编译不报错、条目静默缺席；`TitleKey` 是 Language 资源键不是标题本身，写错键名会显示键名（`Language.Get` 缺键回退）。
-6. **菜单项模板/样式在 MainWindow.axaml 里找**：菜单栏已随 ADR-0001 迁入 Framework——`Menu` 实例与项模板由 `FrameworkWindow` 构造函数在代码中创建（`Core/Framework/Windows/FrameworkWindow.cs:35-41`），容器 `MenuItem` 的 `ItemsSource`/`Command`/`AutomationProperties.Name` 经 `Core/Framework/Windows/FrameworkWindowTheme.axaml:562-566` 的样式 setter 绑定（ItemTemplate 只控制 Header 内容）。本模块不再涉及菜单呈现，改菜单样式/模板去 Framework。
+6. **菜单项模板/样式在 MainWindow.axaml 里找**：菜单栏已随 ADR-0001 迁入 Framework——`Menu` 实例与项模板由 `FrameworkWindow` 构造函数在代码中创建（`Core/Framework/Windows/FrameworkWindow.cs:47-52`），容器 `MenuItem` 的 `ItemsSource`/`Command`/`AutomationProperties.Name` 经 `Core/Framework/Windows/FrameworkWindowTheme.axaml:611-615` 的样式 setter 绑定（ItemTemplate 只控制 Header 内容）。本模块不再涉及菜单呈现，改菜单样式/模板去 Framework。
 7. **给 Framework 的 `FrameworkWindowTheme.axaml` 加 `x:Class` 配 code-behind**：Framework 项目里 Avalonia.Generators 不为它产出 `InitializeComponent`——该主题经 `FrameworkWindowTheme.cs`（:16-24）的 `StyleInclude` 从编译进程序集的 axaml 资源加载（与 Semi/Ursa 主题同款机制），构造时强制 `Loaded`。加 `x:Class` 指望生成器只会编译失败或加载落空；主题扩展走 `StyleInclude`/`Styles` 体系。
 8. **重命名 ViewModel 的命令/属性后只看编译结果**：布局模板（`FrameworkWindowTheme.axaml`）与内置菜单栏（`Core/Framework/Windows/FrameworkWindow.cs:39` 的 `new Binding("MenuBarItems")`）里全部是宽松反射绑定（Framework 不引用 `MainWindowViewModel` 类型，`SelectActivityCommand`、`ResizePanelCommand`、`SideBarColumnWidth`/`AuxiliaryColumnWidth`、`State.*`、`MenuBarItems` 等都无编译期检查）。重命名或改签名会**静默失效**（运行时绑定错误日志，界面无反应），改完必须对照 Framework 侧全部绑定点核一遍。
 
@@ -29,9 +29,9 @@
 
 - `MainWindow.axaml.cs:15` 注释："模块贡献在 Prism 模块初始化（晚于 shell 创建）时才注册，首次显示时再收集"——曾踩过收集时机坑。
 - `Core/Framework/Layout/PanelResizer.cs:8-12、42-45` 两段注释详述禁用原生重排的原因与机制——说明"分隔条拖动直接改 Grid 行列"是需要主动防的行为。
-- `Core/Framework/Windows/FrameworkWindowTheme.axaml:189-192` 注释：卡片间隙恒 4px 的合成规则（容器 Padding 2 + 卡片 Margin 2）、分隔条 8px 热区负边距覆盖间隙并压两侧卡片边缘——改任一边距都会破坏对齐。
-- `Core/Framework/Windows/FrameworkWindowTheme.axaml:249`（BottomPanel 分隔条 `Margin="0,-4,0,0"`）与 `:229`（AuxiliaryPanel `Margin="-4,0,0,0"`）：负边距外探方向各不同，照抄会错位。
-- `Core/Framework/Windows/FrameworkWindowTheme.axaml:556` 注释：顶层菜单弹出层 `VerticalOffset=-8` 是为抵消模板内边距 8 与默认偏移 -4 后的 4px 缝——像素级调过的坑（该样式已随菜单栏从 MainWindow.axaml 迁入 Framework）。
+- `Core/Framework/Windows/FrameworkWindowTheme.axaml:191-194` 注释：卡片间隙恒 4px 的合成规则（容器 Padding 2 + 卡片 Margin 2）、分隔条 8px 热区负边距覆盖间隙并压两侧卡片边缘——改任一边距都会破坏对齐。
+- `Core/Framework/Windows/FrameworkWindowTheme.axaml:251`（BottomPanel 分隔条 `Margin="0,-4,0,0"`）与 `:231`（AuxiliaryPanel `Margin="-4,0,0,0"`）：负边距外探方向各不同，照抄会错位。
+- `Core/Framework/Windows/FrameworkWindowTheme.axaml:605` 注释：顶层菜单弹出层 `VerticalOffset=-8` 是为抵消模板内边距 8 与默认偏移 -4 后的 4px 缝——像素级调过的坑（该样式已随菜单栏从 MainWindow.axaml 迁入 Framework）。
 - `Menus/FileMenus.cs:8-11` 注释："`退出`归入 Application 组（GroupOrder 1000）保持在文件菜单末尾，模块贡献的组排在其前"——模块贡献的组 GroupOrder 应小于 1000，改小会破坏菜单布局约定。
 - `Views/AboutWindow.axaml` 标题与正文为**硬编码中文**（"关于 Digital.Workstation"、"模块化 Avalonia 桌面工作站"），未走 `Language` 本地化——与模块内其他文案全部走 `Language`（属性调用或 attribute 资源键）的惯例不一致，en-US 环境下关于窗口仍显示中文。
 - 旧版"视图菜单显隐组与对齐组之间手工插 Separator"的特判已随 ADR-0001 删除——分隔线由建树器按分组生成，见上"易错改法 5"。工具视图的两套旧贡献接口（`IPanelTabContribution`/`INavigationItemContribution`）与手写贡献类已随 ADR-0002 整体删除——不要再新建 `XxxPanelTab`/`XxxNavigationItem` 贡献类，声明归 `[ToolView]`（见 common.md 修改场景 3）。

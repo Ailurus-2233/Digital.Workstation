@@ -16,7 +16,7 @@
 
 ### 1. `Core/Framework/Framework.csproj`（:14）— 框架层（ADR-0001 新增）
 
-场景：Attribute 菜单注册把 Attribute 携带的资源键字符串解析为当前 UI 区域性下的显示文案——`Menus/MenuRegistration.cs:85` 用 `Language.Get(item.Title)` 解析 `MenuItemAttribute` 的 title 键；`Menus/MenuTreeBuilder.cs:59,74,98` 用 `Language.Get(node.Segment)` 解析菜单路径段键（兼作排序键）。**这是 `Language.Get(string)` 的首批真实消费方**，此前没有任何消费方直接调用 `Get`。
+场景：Attribute 菜单/命令注册把 Attribute 携带的资源键字符串解析为当前 UI 区域性下的显示文案——`Menus/MenuRegistration.cs:85` 用 `Language.Get(item.Title)` 解析 `MenuItemAttribute` 的 title 键；`Menus/MenuTreeBuilder.cs:59,74,98` 用 `Language.Get(node.Segment)` 解析菜单路径段键（兼作排序键）；`Commands/CommandRegistration.cs:70` 用 `Language.Get(attribute.Title)` 解析 `CommandAttribute` 的 title 键（ADR-0005）；`Windows/CommandPalette.cs` 直接读 `Language.CommandPaletteWatermark`（输入框水印）与 `Language.NoMatchingCommands`（空态文案）两个属性（ADR-0005）。**这是 `Language.Get(string)` 的首批真实消费方**，此前没有任何消费方直接调用 `Get`。
 
 ### 2. `Modules/Workstation/Workstation.csproj`（:11）— 宿主 shell
 
@@ -33,6 +33,7 @@
 - `Modules/Workstation/Menus/ViewPanelMenus.cs:11,14,20,26` — `MenuViewTitle` + 三个面板显隐切换键
 - `Modules/Workstation/Menus/ViewAlignmentMenus.cs:12,15,21,27,33` — `MenuViewTitle` + 四档对齐键
 - `Modules/Workstation/Menus/ViewLayoutMenus.cs:10,13` — `MenuViewTitle` + 重置布局键（`ResetLayoutTitle`）
+- `Modules/Workstation/Commands/ViewCommands.cs:12,18,24,30` — 四个 `[Command]` 标题键（复用 `ToggleSideBarTitle`/`ToggleBottomPanelTitle`/`ToggleAuxiliaryPanelTitle`/`ResetLayoutTitle`，由 Framework 的 `CommandRegistration` 解析，ADR-0005）
 - `Modules/Workstation/Menus/HelpMenus.cs:11,17` — `[MenuGroup("MenuHelpTitle", ...)]`、`[MenuItem("MenuAboutTitle", ...)]`
 
 ### 3. `Modules/DashBoard/DashBoard.csproj`（:22）— 启动台模块
@@ -43,7 +44,7 @@
 - `Modules/DashBoard/DashBoardTasksPanelTab.cs:15` — BottomPanel"任务"tab
 - `Modules/DashBoard/ViewModels/Windows/DashBoardWindowViewModel.cs:24,43-45,56` — 启动画面：`SplashStartingText` 作 `_phaseText` 初值；按 `StartupPhase` 枚举在 `SplashPhaseCoreServices`/`SplashPhaseLoadingModules`/`SplashPhaseReady` 间切换；失败时置 `SplashPhaseFailed`
 
-菜单键字符串：`Modules/DashBoard/DashBoardMenus.cs:11,17` — `[MenuGroup("MenuFileTitle", ...)]`、`[MenuItem("DashBoardOpenWindowMenuTitle", ...)]`（同 Workstation 场景二，由 Framework 解析）。
+菜单/命令键字符串：`Modules/DashBoard/DashBoardMenus.cs:11,17` — `[MenuGroup("MenuFileTitle", ...)]`、`[MenuItem("DashBoardOpenWindowMenuTitle", ...)]`；`Modules/DashBoard/DashBoardCommands.cs:12` — `[Command("DashBoardOpenWindowMenuTitle", ...)]`（同 Workstation 场景二，由 Framework 解析；命令复用菜单键，ADR-0005）。
 
 `Core/Models`、`Core/Abstractions`、`Core/UIPackage` 均**不**引用本模块。
 
@@ -56,7 +57,7 @@
 | `static class Language` | `Core/Resource/Language.cs:9` | 唯一公开类型，命名空间 `DigitalWorkstation.Core.Resource` |
 | `Manager: ResourceManager`（私有静态只读） | `Language.cs:11-12` | 基名 `"DigitalWorkstation.Core.Resource.Language"`；该基名 = 程序集默认命名空间 + resx 文件名（不含扩展名），与 `Language.resx` 的编译逻辑名严格对应 |
 | `Get(string key): string` | `Language.cs:17-20` | 所有取值的唯一 funnel：`Manager.GetString(key) ?? key` |
-| 27 个静态属性 | `Language.cs:25-153` | 每个都是 `Get(nameof(属性名))` 的转发；**键与属性同名是本模块的核心不变量** |
-| 资源条目（27 个 `<data>`） | `Language.resx:61-168`（中性/中文）、`Language.en-US.resx:61-168`（英文） | 两个 resx 的键集合完全一一对应；每条带 `<comment>` 说明用途 |
+| 29 个静态属性 | `Language.cs:25-162` | 每个都是 `Get(nameof(属性名))` 的转发；**键与属性同名是本模块的核心不变量** |
+| 资源条目（29 个 `<data>`） | `Language.resx:61-176`（中性/中文）、`Language.en-US.resx:61-176`（英文） | 两个 resx 的键集合完全一一对应；每条带 `<comment>` 说明用途 |
 
 关系：`Language.属性 → Get → ResourceManager → (en-US 卫星 | 中性回退) → <data> 条目`。命名空间 `DigitalWorkstation.Core.Resource` + 文件名 `Language.resx` 共同决定了 `ResourceManager` 基名，三者任一改动都会破坏资源清单查找（见 pitfalls.md）。

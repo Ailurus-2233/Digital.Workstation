@@ -1,8 +1,8 @@
 # Abstractions — 对外接口与调用方式
 
-命名空间四组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，仅 `ShellRegions` 常量）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
+命名空间五组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Commands`（Commands/ 目录，命令契约 + 注册 attribute 两类型，ADR-0005）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，仅 `ShellRegions` 常量）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
 
-## Shell 贡献契约（Contributions/ 与 Menus/，Region 常量在 Regions/）
+## Shell 贡献契约（Contributions/、Menus/ 与 Commands/，Region 常量在 Regions/）
 
 ### `ShellRegions`（static class，Regions/ShellRegions.cs）
 
@@ -102,6 +102,33 @@ Prism Region 名称常量，值均经 `nameof` 生成：
 
 方法签名仅支持无参 `void M()` 与 `Task M()`；非法签名（带参、返回值非 `void`/`Task`）在扫描时记 `Logger.Warning` 跳过（ADR-0001 第 7 条）。
 
+### `ICommandContribution`（Commands/ICommandContribution.cs）
+
+模块向全局命令列表贡献命令的契约（扁平模型，见 ADR-0005 `docs/adr/0005-command-registration-palette.md`）。文件 `using System.Windows.Input;`。**通常不直接实现本接口**：模块用 `CommandAttribute` 标注普通类的方法（见下节），经 Framework 侧 `CommandRegistration.RegisterCommands` 扫描后生成本契约的实现注册进容器；shell 收集全部实现后交给命令面板呈现，并为带 `Gesture` 的命令生成窗口级 KeyBinding。
+
+| 属性 | 类型 | 语义与排序规则 |
+|---|---|---|
+| `Id` | `string` | 稳定标识：默认「声明类全名.方法名」，可经 attribute 覆盖；全局唯一，冲突时后注册者被丢弃并记日志。MRU 记忆与键绑定引用的依据 |
+| `Title` | `string` | 显示标题，**已按当前 UI 区域性解析**（非资源键） |
+| `Gesture` | `string?` | 快捷键文本（如 `"Ctrl+Shift+P"`）；`null` = 无快捷键。解析为窗口级 KeyBinding 由 Framework 侧 `FrameworkWindow.RegisterCommandGestures` 负责 |
+| `Order` | `int` | 命令列表中的排序权重，小者靠前；同 `Order` 按解析后的 `Title` 字典序（Ordinal） |
+| `Command` | `ICommand` | 执行命令（`System.Windows.Input.ICommand`），命令面板选中或快捷键触发时调用 |
+
+与菜单契约的差异（ADR-0005 决策 1）：命令是扁平列表成员——有稳定 `Id`、无 `Path`/`Group` 定位、无图标；两套体系互不相干，菜单项不进命令面板。
+
+### `CommandAttribute`（Commands/CommandAttribute.cs）
+
+`[AttributeUsage(AttributeTargets.Method)]`（第 8 行），声明一个命令，标注在**任何类**的公共实例方法上（免类级 attribute，ADR-0005 决策 2）。主构造参 `string title`（第 9 行）。
+
+| 成员 | 类型 | 语义 |
+|---|---|---|
+| `Title`（构造参，get-only） | `string` | 显示标题的 Language 资源键，收集时解析，缺键回退键名本身 |
+| `Id`（命名属性） | `string?` | 稳定标识；`null` = 默认「声明类全名.方法名」 |
+| `Gesture`（命名属性） | `string?` | 快捷键文本（如 `"Ctrl+Shift+P"`）；`null` = 无快捷键 |
+| `Order`（命名属性） | `int` | 命令列表中的排序权重，小者靠前；同 `Order` 按解析后的标题字典序 |
+
+方法签名仅支持无参 `void M()` 与 `Task M()`；非法签名（带参、返回值非 `void`/`Task`）在扫描时记 `Logger.Warning` 跳过（与菜单同规则）。
+
 ### `IStatusBarItemContribution`（Contributions/IStatusBarItemContribution.cs）
 
 模块向状态栏追加条目，shell 渲染为「图标 + 文本」的状态指示。
@@ -161,6 +188,6 @@ Prism Region 名称常量，值均经 `nameof` 生成：
 
 ## 调用方式与生命周期
 
-- **贡献契约**：无主动调用方 API。接口类贡献（`IMainViewContribution`/`IStatusBarItemContribution`）由模块实现接口并在 `Prism.Ioc.IContainerRegistry` 以接口注册（生命周期由模块注册方式决定），shell 收集消费；工具视图与菜单例外——模块在 `RegisterTypes` 分别调 `RegisterToolViews(Assembly)`（View 类标 `ToolViewAttribute`）、`RegisterMenus(Assembly)`（菜单类标 `MenuGroupAttribute`/`MenuItemAttribute`），由 Framework 侧扫描生成 `ToolViewContribution` 元数据/`IMenuItemContribution` 实现并注册。本模块内无调用点——本程序集是纯定义层，典型调用序列发生在 shell 与其他模块（不在本模块范围）。
+- **贡献契约**：无主动调用方 API。接口类贡献（`IMainViewContribution`/`IStatusBarItemContribution`）由模块实现接口并在 `Prism.Ioc.IContainerRegistry` 以接口注册（生命周期由模块注册方式决定），shell 收集消费；工具视图/菜单/命令例外——模块在 `RegisterTypes` 分别调 `RegisterToolViews(Assembly)`（View 类标 `ToolViewAttribute`）、`RegisterMenus(Assembly)`（菜单类标 `MenuGroupAttribute`/`MenuItemAttribute`）、`RegisterCommands(Assembly)`（方法标 `CommandAttribute`，免类级标记），由 Framework 侧扫描生成 `ToolViewContribution` 元数据/`IMenuItemContribution`/`ICommandContribution` 实现并注册。本模块内无调用点——本程序集是纯定义层，典型调用序列发生在 shell 与其他模块（不在本模块范围）。
 - **窗口管理**：调用方注入 `IWindowManager`/`IMainWindowManager`，调 `ShowWindow<MyDialog>(vm)` 这类泛型扩展或直接 `ShowWindow(typeof(MyDialog), vm)`。窗口实例来源是 DI 容器（`GetWindow` 注释：「从容器中解析得到的窗口实例」）。
 - **数据结构**：本模块不定义任何 DTO/记录类；对外数据完全由上述接口属性承载，字段语义见上。

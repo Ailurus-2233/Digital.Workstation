@@ -10,17 +10,18 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 
 | 成员 | 签名 | 说明 |
 |---|---|---|
-| `RegisterTypes` | `void RegisterTypes(IContainerRegistry containerRegistry)` | `RegisterToolViews` 扫描注册 2 个 `[ToolView]` 工具视图 + 3 个接口贡献单例 + attribute 菜单（`RegisterMenus`）+ 2 个主视图（见下"注册清单"） |
-| `OnInitialized` | `void OnInitialized(IContainerProvider containerProvider)` | **空实现**（DashBoardModule.cs:25 注释：启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004），模块自身不再开窗） |
+| `RegisterTypes` | `void RegisterTypes(IContainerRegistry containerRegistry)` | `RegisterToolViews` 扫描注册 2 个 `[ToolView]` 工具视图 + 3 个接口贡献单例 + attribute 菜单（`RegisterMenus`）+ attribute 命令（`RegisterCommands`，ADR-0005）+ 2 个主视图（见下"注册清单"） |
+| `OnInitialized` | `void OnInitialized(IContainerProvider containerProvider)` | **空实现**（DashBoardModule.cs:26 注释：启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004），模块自身不再开窗） |
 
-注册清单（DashBoardModule.cs:14-20）：
-- `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 14 行，Core/Framework `DigitalWorkstation.Core.Framework.Contributions` 扩展，ADR-0002）——扫描程序集内 `[ToolView]` 类（`DashBoardNavigationView`/`DashBoardTasksView`）：对每个合法的（可实例化 `Control`、程序集内 Id 不重复）View 执行 `Register(viewType)` 并注册一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `Language.Get(TitleKey)` 解析）；非法者记 `Logger.Warning` 跳过
-- `RegisterSingleton<IMainViewContribution, DashBoardOverviewMainView>()` / `<IMainViewContribution, DashBoardRecentMainView>()`（第 15-16 行）
-- `RegisterMenus(typeof(DashBoardModule).Assembly)`（第 17 行，Core/Framework `DigitalWorkstation.Core.Framework.Menus` 扩展）——扫描程序集内 `[MenuGroup]` 类：注册 `DashBoardMenus` 单例，并为每个合法 `[MenuItem]` 方法注册一个 `IMenuItemContribution` 工厂（非法签名/空段路径记 `Logger.Warning` 跳过）
-- `RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>()`（第 18 行）
-- `Register<DashBoardOverviewView>()` / `<DashBoardRecentView>()`（第 19-20 行，瞬态；两个工具视图已由 `RegisterToolViews` 一并注册，不在此列）
+注册清单（DashBoardModule.cs:15-23）：
+- `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 15 行，Core/Framework `DigitalWorkstation.Core.Framework.Contributions` 扩展，ADR-0002）——扫描程序集内 `[ToolView]` 类（`DashBoardNavigationView`/`DashBoardTasksView`）：对每个合法的（可实例化 `Control`、程序集内 Id 不重复）View 执行 `Register(viewType)` 并注册一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `Language.Get(TitleKey)` 解析）；非法者记 `Logger.Warning` 跳过
+- `RegisterSingleton<IMainViewContribution, DashBoardOverviewMainView>()` / `<IMainViewContribution, DashBoardRecentMainView>()`（第 16-17 行）
+- `RegisterMenus(typeof(DashBoardModule).Assembly)`（第 18 行，Core/Framework `DigitalWorkstation.Core.Framework.Menus` 扩展）——扫描程序集内 `[MenuGroup]` 类：注册 `DashBoardMenus` 单例，并为每个合法 `[MenuItem]` 方法注册一个 `IMenuItemContribution` 工厂（非法签名/空段路径记 `Logger.Warning` 跳过）
+- `RegisterCommands(typeof(DashBoardModule).Assembly)`（第 20 行，Core/Framework `DigitalWorkstation.Core.Framework.Commands` 扩展，ADR-0005）——扫描程序集内 `[Command]` 方法（免类级 attribute）：注册 `DashBoardCommands` 单例，并为每个合法方法注册一个 `ICommandContribution` 工厂（非法签名记 `Logger.Warning` 跳过）
+- `RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>()`（第 21 行）
+- `Register<DashBoardOverviewView>()` / `<DashBoardRecentView>()`（第 22-23 行，瞬态；两个工具视图已由 `RegisterToolViews` 一并注册，不在此列）
 
-注意：`DashBoardWindow` 与 `DashBoardWindowViewModel` **不在** `RegisterTypes` 中注册——`DashBoardWindow` 由启动序列在模块加载前经 `Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:40）解析，Prism 容器对未注册的具体类型仍可构造解析（DryIoc 默认行为），ViewModel 由 ViewModelLocator 约定装配。
+注意：`DashBoardWindow` 与 `DashBoardWindowViewModel` **不在** `RegisterTypes` 中注册——`DashBoardWindow` 由启动序列在模块加载前经 `Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:43）解析，Prism 容器对未注册的具体类型仍可构造解析（DryIoc 默认行为），ViewModel 由 ViewModelLocator 约定装配。
 
 ### 2. 贡献声明（供 shell 收集消费）
 
@@ -39,7 +40,7 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 | `DashBoardRecentMainView`（DashBoardRecentMainView.cs:9） | `IMainViewContribution` | `ViewId` 常量 `"dashboard.recent"` | — | — | — | `ViewType => typeof(DashBoardRecentView)` |
 | `DashBoardStatusBarItem`（DashBoardStatusBarItem.cs:11） | `IStatusBarItemContribution` | `"dashboard.status"` | `Language.DashBoardNavigationTitle`（复用导航标题） | `Icons.DashBoard` | 20 | — |
 
-菜单贡献不属于上表——它是 attribute 菜单类 `DashBoardMenus`（见下节），不实现接口、无 `Id`，菜单位次由路径/分组声明决定。
+菜单贡献不属于上表——它是 attribute 菜单类 `DashBoardMenus`（见第 3 节），不实现接口、无 `Id`，菜单位次由路径/分组声明决定。命令贡献同理——attribute 命令类 `DashBoardCommands`（见第 4 节，ADR-0005），不实现接口，`Id` 默认「声明类全名.方法名」。
 
 两个 `IMainViewContribution` 实现各暴露一个 `public const string ViewId`（DashBoardOverviewMainView.cs:11、DashBoardRecentMainView.cs:11），`Id => ViewId`；`ViewId` 常量是 `DashBoardNavigationView` 发布 `OpenMainViewEvent` 时的负载来源。
 
@@ -55,7 +56,18 @@ public void OpenDashBoard()                                          // 方法�
 
 （DashBoardMenus.cs:11-21）`MenuGroupAttribute`/`MenuItemAttribute` 定义在 Core/Abstractions/Menus/（ADR-0001）。注册时 `RegisterMenus` 把 `DashBoardMenus` 注册为单例、把 `OpenDashBoard` 包装成 `IMenuItemContribution` 工厂（internal `ReflectedMenuItemContribution`，标题经 `Language.Get` 解析）；点击菜单时其 `Command` 反射调用 `OpenDashBoard()` → `windowManager.ShowWindow<DashBoardWindow>()`（第 20 行），异常记日志不抛出。General 组（`GroupOrder=100`）排在 shell 预置"退出"所属 Application 组（1000）之前，组间由 `MenuTreeBuilder` 插分隔线。
 
-### 4. `DashBoardWindowViewModel : ObservableObject`（ViewModels/Windows/DashBoardWindowViewModel.cs:12）
+### 4. `DashBoardCommands`（attribute 命令类，DashBoardCommands.cs:10，ADR-0005）
+
+```csharp
+public class DashBoardCommands(IWindowManager windowManager)        // 主构造注入
+
+[Command("DashBoardOpenWindowMenuTitle", Order = 500)]              // 方法级：标题 Language 键（复用菜单键）、列表位次；无 Gesture
+public void OpenDashBoard()                                          // 方法体即命令行为，与菜单项同通路
+```
+
+`CommandAttribute` 定义在 Core/Abstractions/Commands/（ADR-0005）。注册时 `RegisterCommands` 把 `DashBoardCommands` 注册为单例、把 `OpenDashBoard` 包装成 `ICommandContribution` 工厂（internal `ReflectedCommandContribution`，标题收集时经 `Language.Get` 解析，`Id` 默认 `DigitalWorkstation.DashBoard.DashBoardCommands.OpenDashBoard`）；命令面板选中或其快捷键触发时 `Command` 反射调用 `OpenDashBoard()` → `windowManager.ShowWindow<DashBoardWindow>()`（第 15 行），异常记日志不抛出。与文件菜单"打开启动台"项是**同一动作的两套独立声明**（ADR-0005 决策 1：菜单项不进命令面板）。
+
+### 5. `DashBoardWindowViewModel : ObservableObject`（ViewModels/Windows/DashBoardWindowViewModel.cs:12）
 
 启动台进度窗的 ViewModel，由 Prism ViewModelLocator 按约定装配（不在容器中显式注册）。
 
@@ -87,7 +99,7 @@ public void OpenDashBoard()                                          // 方法�
 
 > 上游调查备注：Core/Framework 深读验证期间曾以 `SetProgress` 指称本类的进度回调方法。在 main @ 04cfd02 及全部 git 历史中（`git log -S SetProgress` 无结果），该类**从未存在**名为 `SetProgress` 的成员；真实的进度回调方法名是 `OnProgress`，失败回调是 `OnModuleFailed`。
 
-### 5. 视图类型（五个公开类，均为 `partial`，无行为成员）
+### 6. 视图类型（五个公开类，均为 `partial`，无行为成员）
 
 | 类 | 基类 | 文件 | 构造 |
 |---|---|---|---|

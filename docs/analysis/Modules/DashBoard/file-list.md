@@ -6,6 +6,7 @@
 DashBoard.csproj                       项目文件：net10.0，引用 Abstractions/Framework/Resource/UIPackage
 DashBoardModule.cs                     Prism 模块入口：DashBoardModule（注册贡献与视图）
 DashBoardMenus.cs                      文件菜单"打开启动台"项贡献：[MenuGroup]/[MenuItem] attribute 菜单类 DashBoardMenus
+DashBoardCommands.cs                   命令面板"打开启动台"命令贡献：[Command] attribute 命令类 DashBoardCommands（ADR-0005）
 DashBoardOverviewMainView.cs           MainContent 概览主视图贡献：DashBoardOverviewMainView
 DashBoardRecentMainView.cs             MainContent 最近项目主视图贡献：DashBoardRecentMainView
 DashBoardStatusBarItem.cs              状态栏条目贡献：DashBoardStatusBarItem
@@ -29,7 +30,7 @@ Views/
 
 ### DashBoardModule.cs
 
-`public class DashBoardModule : IModule`（第 8 行）。`RegisterTypes`（第 10 行）：`RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 14 行，`DigitalWorkstation.Core.Framework.Contributions` 扩展，using 在第 2 行）扫描本程序集 `[ToolView]` 类（`DashBoardNavigationView`/`DashBoardTasksView`），为每个合法 View 生成 `ToolViewContribution` 元数据单例并把 View 注册进容器（ADR-0002）；再注册 2 个 `IMainViewContribution` 单例（第 15-16 行）、经 `RegisterMenus(typeof(DashBoardModule).Assembly)`（第 17 行，`DigitalWorkstation.Core.Framework.Menus` 扩展，using 在第 3 行）反射注册 attribute 菜单类 `DashBoardMenus`、1 个 `IStatusBarItemContribution` 单例（第 18 行）、2 个主视图瞬态 `DashBoardOverviewView`/`DashBoardRecentView`（第 19-20 行）。`OnInitialized`（第 23 行）空实现，注释说明启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004）。
+`public class DashBoardModule : IModule`（第 9 行）。`RegisterTypes`（第 11 行）：`RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 15 行，`DigitalWorkstation.Core.Framework.Contributions` 扩展，using 在第 3 行）扫描本程序集 `[ToolView]` 类（`DashBoardNavigationView`/`DashBoardTasksView`），为每个合法 View 生成 `ToolViewContribution` 元数据单例并把 View 注册进容器（ADR-0002）；再注册 2 个 `IMainViewContribution` 单例（第 16-17 行）、经 `RegisterMenus(typeof(DashBoardModule).Assembly)`（第 18 行，`DigitalWorkstation.Core.Framework.Menus` 扩展，using 在第 4 行）反射注册 attribute 菜单类 `DashBoardMenus`、经 `RegisterCommands(typeof(DashBoardModule).Assembly)`（第 20 行，`DigitalWorkstation.Core.Framework.Commands` 扩展，using 在第 2 行）反射注册 attribute 命令类 `DashBoardCommands`（ADR-0005）、1 个 `IStatusBarItemContribution` 单例（第 21 行）、2 个主视图瞬态 `DashBoardOverviewView`/`DashBoardRecentView`（第 22-23 行）。`OnInitialized`（第 24 行）空实现，注释说明启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004）。
 
 ### DashBoardOverviewMainView.cs / DashBoardRecentMainView.cs
 
@@ -43,6 +44,10 @@ Views/
 ### DashBoardMenus.cs
 
 attribute 菜单类（ADR-0001 路径/分组模型），**不实现 `IMenuItemContribution`**。类级 `[MenuGroup("MenuFileTitle", Group = "General", GroupOrder = 100)]`（第 11 行）：单段路径，`MenuFileTitle` 为顶层"文件"菜单的 Language 资源键，`General` 组 `GroupOrder=100` 排在 shell 预置"退出"所属 Application 组（1000）之前（类注释第 8-10 行说明此意图）。主构造 `DashBoardMenus(IWindowManager windowManager)`（第 12 行）注入窗口管理器。唯一菜单方法 `[MenuItem("DashBoardOpenWindowMenuTitle", Order = 100, Icon = Icons.DashBoard)] public void OpenDashBoard()`（第 17-21 行）：标题为 Language 资源键（注册时经 `Language.Get` 解析），`Order=100` 为 General 组内位次，方法体调 `windowManager.ShowWindow<DashBoardWindow>()`。由 `DashBoardModule.RegisterTypes` 的 `RegisterMenus` 扫描注册——`DashBoardMenus` 本身注册为单例，方法被包装成一个 `IMenuItemContribution` 工厂。
+
+### DashBoardCommands.cs
+
+attribute 命令类（ADR-0005），**不实现 `ICommandContribution`**、免类级 attribute。主构造 `DashBoardCommands(IWindowManager windowManager)`（第 10 行）注入窗口管理器。唯一命令方法 `[Command("DashBoardOpenWindowMenuTitle", Order = 500)] public void OpenDashBoard()`（第 12-16 行）：标题为 Language 资源键（复用菜单键，收集时经 `Language.Get` 解析），无 Gesture；`Id` 默认「声明类全名.方法名」；方法体调 `windowManager.ShowWindow<DashBoardWindow>()`，与文件菜单"打开启动台"项是同一动作的两套独立声明。由 `DashBoardModule.RegisterTypes` 的 `RegisterCommands` 扫描注册——`DashBoardCommands` 本身注册为单例，方法被包装成一个 `ICommandContribution` 工厂。
 
 ### ViewModels/Windows/DashBoardWindowViewModel.cs
 

@@ -26,7 +26,7 @@
 
 | 依赖方 | 引用方式 | 用在什么场景 |
 |---|---|---|
-| `Modules/Workstation`（Workstation.csproj） | ProjectReference | 应用宿主：`WorkstationApplication.cs:17` `moduleCatalog.AddModule<DashBoardModule>()` 注册模块；`WorkstationApplication.cs:38-41` `CreateSplashWindow()` 重写返回 `Container.Resolve<DashBoardWindow>()`——启动序列逐模块加载前直接解析显示启动台（ADR-0004） |
+| `Modules/Workstation`（Workstation.csproj） | ProjectReference | 应用宿主：`WorkstationApplication.cs:18` `moduleCatalog.AddModule<DashBoardModule>()` 注册模块；`WorkstationApplication.cs:41-44` `CreateSplashWindow()` 重写返回 `Container.Resolve<DashBoardWindow>()`——启动序列逐模块加载前直接解析显示启动台（ADR-0004） |
 | `Digital.Workstation.slnx`（第 11 行） | 解决方案成员 | `/Modules/` 文件夹下两个项目之一（另一个是 Workstation） |
 
 除 Workstation 宿主外**无任何项目引用 DashBoard**；shell（Workstation 内）对贡献的消费全部经 Abstractions 接口完成，不引用本模块程序集。`UnitTest/` 下无 DashBoard 测试项目（见 testing.md）。

@@ -146,9 +146,18 @@ public static class Language
     ///     启动台"就绪"阶段名
     /// </summary>
     public static string SplashPhaseReady => Get(nameof(SplashPhaseReady));
-
     /// <summary>
     ///     启动台"模块加载失败"阶段名
     /// </summary>
     public static string SplashPhaseFailed => Get(nameof(SplashPhaseFailed));
+
+    /// <summary>
+    ///     命令面板输入框的水印（ADR-0005）
+    /// </summary>
+    public static string CommandPaletteWatermark => Get(nameof(CommandPaletteWatermark));
+
+    /// <summary>
+    ///     命令面板无匹配结果时的空态文案（ADR-0005）
+    /// </summary>
+    public static string NoMatchingCommands => Get(nameof(NoMatchingCommands));
 }

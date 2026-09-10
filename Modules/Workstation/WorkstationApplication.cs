@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Framework;
+using DigitalWorkstation.Core.Framework.Commands;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.Menus;
 using DigitalWorkstation.DashBoard;
@@ -26,6 +27,8 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
         containerRegistry.Register<EmptyStateView>();
         // shell 预置菜单：文件>退出、帮助>关于；视图>三面板显隐切换 + 四档面板对齐（attribute 扫描注册，ADR-0001）
         containerRegistry.RegisterMenus(typeof(WorkstationApplication).Assembly);
+        // shell 预置命令：三面板显隐切换 + 重置布局（attribute 扫描注册，ADR-0005）
+        containerRegistry.RegisterCommands(typeof(WorkstationApplication).Assembly);
         // shell 预置状态栏项"就绪"
         containerRegistry.RegisterSingleton<IStatusBarItemContribution, ReadyStatusBarItem>();
         // "关于"对话框：经窗口管理器按需解析

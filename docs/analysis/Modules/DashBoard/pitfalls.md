@@ -11,7 +11,7 @@
 
 ## 易错改法
 
-1. **在 `DashBoardModule.OnInitialized` 里开窗**：方法体为空是**有意的**（DashBoardModule.cs:25 注释，ADR-0004）。在模块初始化时显示启动台已经太晚（启动进度窗的用途是显示模块加载进度本身），且会再造一个窗口实例。
+1. **在 `DashBoardModule.OnInitialized` 里开窗**：方法体为空是**有意的**（DashBoardModule.cs:26 注释，ADR-0004）。在模块初始化时显示启动台已经太晚（启动进度窗的用途是显示模块加载进度本身），且会再造一个窗口实例。
 2. **把 `FormatModuleText` 的全角括号改成半角**：`$"{moduleName}（{index}/{count}）"`（DashBoardWindowViewModel.cs:63）用全角"（）"是刻意的显示格式；README 第 24 行与文档均以"模块名 + i/N"描述。改格式属 UI 行为变更，不是"修正"。
 3. **删除 `OnProgress` 中的 `IsFailed = false`（第 40 行）**：该复位让"失败后继续"的启动序列恢复进度显示（错误区隐藏、进度条恢复滚动）；删掉后失败 UI 会粘住。同理，`ModuleText` 在非 `LoadingModules` 阶段赋 `string.Empty`（第 50 行）是刻意的清空，删掉会残留上一个模块名。
 4. **改 `OnProgress` switch 的默认分支**：`_ => PhaseText`（第 46 行）对未知阶段保持原文案；改成抛异常或清空会让未来新增的 `StartupPhase` 值闪空。
@@ -23,7 +23,7 @@
 
 ## 历史踩坑线索
 
-- `DashBoardModule.cs:25` 注释「启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004），模块自身不再开窗」——"不再"二字暗示模块历史上（或 Prism 默认模式下）曾自己开窗，迁到启动序列后留下防线注释。ADR-0004 文档本体不在仓库中（悬空引用，见 docs/analysis/Core/Models/pitfalls.md），决策细节只能从注释还原。
+- `DashBoardModule.cs:26` 注释「启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004），模块自身不再开窗」——"不再"二字暗示模块历史上（或 Prism 默认模式下）曾自己开窗，迁到启动序列后留下防线注释。ADR-0004 文档本体不在仓库中（悬空引用，见 docs/analysis/Core/Models/pitfalls.md），决策细节只能从注释还原。
 - `DashBoardNavigationView.axaml.cs:20-22` 注释「XAML runtime loader 需要无参构造；实际实例由容器经依赖注入构造创建」——双构造是对 XAML loader 限制的妥协记录；保留两个构造是契约。
 - 贡献声明的注释普遍自带"验证"字样（`DashBoardNavigationView` 的 tracer bullet、`DashBoardTasksView`/状态栏的"验证贡献通路"），说明本模块第一优先级是**架构通路的探针**；删除这些"演示"贡献等于拆除 shell 贡献机制的活体验证。
 - 上游文档备注：Core/Framework 深读期间曾以 `SetProgress` 指称启动台 ViewModel 的进度回调；该名在本模块全部 git 历史中不存在（`git log -S SetProgress` 无结果），真实方法名为 `OnProgress`/`OnModuleFailed`。引用旧名属过时记录。

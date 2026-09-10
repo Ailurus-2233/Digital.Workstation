@@ -1,4 +1,5 @@
-﻿﻿using DigitalWorkstation.Core.Abstractions.Contributions;
+﻿using DigitalWorkstation.Core.Abstractions.Contributions;
+using DigitalWorkstation.Core.Framework.Commands;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.Menus;
 using DigitalWorkstation.DashBoard.Views;
@@ -15,6 +16,8 @@ public class DashBoardModule : IModule
         containerRegistry.RegisterSingleton<IMainViewContribution, DashBoardOverviewMainView>();
         containerRegistry.RegisterSingleton<IMainViewContribution, DashBoardRecentMainView>();
         containerRegistry.RegisterMenus(typeof(DashBoardModule).Assembly);
+        // 命令（ADR-0005，attribute 扫描）：打开启动台
+        containerRegistry.RegisterCommands(typeof(DashBoardModule).Assembly);
         containerRegistry.RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>();
         containerRegistry.Register<DashBoardOverviewView>();
         containerRegistry.Register<DashBoardRecentView>();

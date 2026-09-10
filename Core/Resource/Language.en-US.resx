@@ -166,4 +166,12 @@
     <value>Module failed to load</value>
     <comment>Splash phase name: module failed to load</comment>
   </data>
+  <data name="CommandPaletteWatermark" xml:space="preserve">
+    <value>Type a command to execute</value>
+    <comment>Watermark of the command palette input box (ADR-0005)</comment>
+  </data>
+  <data name="NoMatchingCommands" xml:space="preserve">
+    <value>No matching commands</value>
+    <comment>Empty-state text of the command palette when nothing matches (ADR-0005)</comment>
+  </data>
 </root>
