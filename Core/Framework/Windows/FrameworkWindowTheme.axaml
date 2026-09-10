@@ -6,15 +6,17 @@
     <Styles.Resources>
         <!--  ActivityBar 导航项：图标按钮，Command 宽松绑定到窗口 ViewModel（Framework 不引用具体 ViewModel 类型）  -->
         <DataTemplate x:Key="NavigationItemTemplate">
-            <Button
+            <layout:ToolViewButton
                 AutomationProperties.Name="{Binding Title}"
+                CanDrag="{Binding Contribution.AllowMove}"
                 Classes="nav-item"
                 Classes.selected="{Binding IsSelected}"
                 Command="{Binding $parent[ItemsControl].DataContext.SelectActivityCommand}"
                 CommandParameter="{Binding}"
+                DragTabId="{Binding Id}"
                 ToolTip.Tip="{Binding Title}">
                 <PathIcon Data="{Binding Icon}" />
-            </Button>
+            </layout:ToolViewButton>
         </DataTemplate>
 
         <!--  共享部件模板：Content="{Binding}" 传入窗口 ViewModel 作为 DataContext  -->
@@ -30,7 +32,12 @@
                         DockPanel.Dock="Bottom"
                         ItemTemplate="{StaticResource NavigationItemTemplate}"
                         ItemsSource="{Binding BottomNavigationItems}" />
-                    <ItemsControl ItemTemplate="{StaticResource NavigationItemTemplate}" ItemsSource="{Binding TopNavigationItems}" />
+                    <layout:ToolViewBar
+                        ItemTemplate="{StaticResource NavigationItemTemplate}"
+                        ItemsSource="{Binding TopNavigationItems}"
+                        MoveCommand="{Binding MoveTabCommand}"
+                        Orientation="Vertical"
+                        TargetBar="ActivityBar" />
                 </DockPanel>
             </Border>
         </DataTemplate>
@@ -70,7 +77,7 @@
                 BorderBrush="{DynamicResource SemiColorBorder}"
                 BorderThickness="1"
                 CornerRadius="8"
-                IsVisible="{Binding State.AuxiliaryPanel.Visible}"
+                IsVisible="{Binding AuxiliaryPanelRevealed}"
                 Margin="2">
                 <Grid RowDefinitions="Auto,*">
                     <Border BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="0,0,0,1">
@@ -83,7 +90,11 @@
                                 ToolTip.Tip="收起面板">
                                 <PathIcon Data="{Binding CollapseAuxiliaryIcon}" />
                             </Button>
-                            <ItemsControl ItemsSource="{Binding AuxiliaryTabs}">
+                            <layout:ToolViewBar
+                                ItemsSource="{Binding AuxiliaryTabs}"
+                                MoveCommand="{Binding MoveTabCommand}"
+                                Orientation="Horizontal"
+                                TargetBar="AuxiliaryPanel">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <StackPanel Orientation="Horizontal" />
@@ -91,20 +102,22 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Button
+                                        <layout:ToolViewButton
                                             AutomationProperties.Name="{Binding Title}"
+                                            CanDrag="{Binding Contribution.AllowMove}"
                                             Classes="panel-tab"
                                             Classes.active="{Binding IsActive}"
                                             Command="{Binding $parent[ItemsControl].DataContext.ActivateAuxTabCommand}"
-                                            CommandParameter="{Binding}">
+                                            CommandParameter="{Binding}"
+                                            DragTabId="{Binding Id}">
                                             <StackPanel Orientation="Horizontal" Spacing="5">
                                                 <PathIcon Data="{Binding Icon}" Height="14" Width="14" />
                                                 <TextBlock FontSize="12" Text="{Binding Title}" />
                                             </StackPanel>
-                                        </Button>
+                                        </layout:ToolViewButton>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            </layout:ToolViewBar>
                         </DockPanel>
                     </Border>
                     <ContentControl Content="{Binding AuxiliaryContent}" Grid.Row="1" />
@@ -120,7 +133,7 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 Height="{Binding State.BottomPanel.Height}"
-                IsVisible="{Binding State.BottomPanel.Visible}"
+                IsVisible="{Binding BottomPanelRevealed}"
                 Margin="2">
                 <Grid RowDefinitions="Auto,*">
                     <Border BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="0,0,0,1">
@@ -133,7 +146,11 @@
                                 ToolTip.Tip="收起面板">
                                 <PathIcon Data="{Binding CollapseBottomIcon}" />
                             </Button>
-                            <ItemsControl ItemsSource="{Binding BottomTabs}">
+                            <layout:ToolViewBar
+                                ItemsSource="{Binding BottomTabs}"
+                                MoveCommand="{Binding MoveTabCommand}"
+                                Orientation="Horizontal"
+                                TargetBar="BottomPanel">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <StackPanel Orientation="Horizontal" />
@@ -141,20 +158,22 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Button
+                                        <layout:ToolViewButton
                                             AutomationProperties.Name="{Binding Title}"
+                                            CanDrag="{Binding Contribution.AllowMove}"
                                             Classes="panel-tab"
                                             Classes.active="{Binding IsActive}"
                                             Command="{Binding $parent[ItemsControl].DataContext.ActivateBottomTabCommand}"
-                                            CommandParameter="{Binding}">
+                                            CommandParameter="{Binding}"
+                                            DragTabId="{Binding Id}">
                                             <StackPanel Orientation="Horizontal" Spacing="5">
                                                 <PathIcon Data="{Binding Icon}" Height="14" Width="14" />
                                                 <TextBlock FontSize="12" Text="{Binding Title}" />
                                             </StackPanel>
-                                        </Button>
+                                        </layout:ToolViewButton>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            </layout:ToolViewBar>
                         </DockPanel>
                     </Border>
                     <ContentControl Content="{Binding BottomContent}" Grid.Row="1" />
@@ -452,6 +471,29 @@
                 </Border>
             </DockPanel>
         </DataTemplate>
+        <!--  ToolViewBar 的 ControlTheme：模板仿 Fluent 的 ItemsControl 主题，Background=Transparent
+              让整条带（含空 Bar）参与命中测试——Background=null 的区域不接收拖放。
+              PART_InsertionLine 是拖拽落点的蓝色占位线，由控件按指针位置移动（不改现有 tab 样式）。
+              注意 ToolViewBar 不得声明 StyleKeyOverride：Avalonia 类型选择器匹配 StyleKey 而非
+              运行时类型，override 成 ItemsControl 会让 layout|ToolViewBar 选择器（含本主题查找）失效  -->
+        <ControlTheme x:Key="{x:Type layout:ToolViewBar}" TargetType="layout:ToolViewBar">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}">
+                        <Panel>
+                            <ItemsPresenter ItemsPanel="{TemplateBinding ItemsPanel}" />
+                            <Border
+                                Name="PART_InsertionLine"
+                                Background="{DynamicResource ChromeSashHoverBrush}"
+                                IsVisible="False" />
+                        </Panel>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </ControlTheme>
+
+
     </Styles.Resources>
 
     <!--  ActivityBar 导航按钮  -->
@@ -494,6 +536,10 @@
     </Style>
     <Style Selector="Button.panel-tab.active">
         <Setter Property="Foreground" Value="{DynamicResource ChromeActivityBarItemActiveForeground}" />
+    </Style>
+    <!--  拖拽悬停整 Bar 高亮：与 PART_InsertionLine 占位线配合标识投放区  -->
+    <Style Selector="layout|ToolViewBar.drag-over">
+        <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
     </Style>
 
     <!--  面板分隔条：默认透明不可见，悬停/拖拽时整条高亮为强调蓝（VS Code sash.hoverBorder）  -->

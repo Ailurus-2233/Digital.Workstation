@@ -1,4 +1,6 @@
-﻿namespace DigitalWorkstation.Core.Framework.Layout;
+﻿using DigitalWorkstation.Core.Abstractions.Contributions;
+
+namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
 ///     Shell 布局状态 store：原型验证过的 reducer 的正式实现。
@@ -10,6 +12,12 @@ public sealed record ShellLayoutState
     ///     当前选中的 ActivityBar 导航项 Id；SideBar 收起时保留
     /// </summary>
     public string? SelectedActivity { get; init; }
+
+    /// <summary>
+    ///     ActivityBar 顶部段导航项 Id 的有序列表（ADR-0002）；钉住项（AllowMove=false）在底部段，
+    ///     不参与拖拽，不入此列
+    /// </summary>
+    public IReadOnlyList<string> ActivityBarItems { get; init; } = [];
 
     public SideBarState SideBar { get; init; } = new();
 
@@ -87,6 +95,139 @@ public sealed record ShellLayoutState
         }
 
         return this with { BottomPanel = BottomPanel with { ActiveTab = tab } };
+    }
+
+    /// <summary>
+    ///     拖拽迁移/重排工具视图（ADR-0002）：从源 Bar 移除、按 index 插入目标 Bar。
+    ///     跨 Bar 时目标 tab 激活（目标是面板 → 强制展开并激活；目标是 ActivityBar →
+    ///     选中该导航项并展开 SideBar），源面板拖空则收起、活动 tab 被拖走则回退到其前一个 tab；
+    ///     源为 ActivityBar 且被拖走的是选中项时，顶部段仍有项则改选中其前一项并保持 SideBar
+    ///     展开（内容实例随 tab 走，SideBar 换显示前一项的内容），顶部段拖空才收起 SideBar。
+    ///     同 Bar 为纯重排（index 按移除前的列表计，源位置在 index 之前时内部自动修正），
+    ///     不改变激活状态。tabId 不属于任何 Bar（如钉住项）或原地落放时拒绝，返回等值状态
+    /// </summary>
+    public ShellLayoutState MoveTab(string tabId, ToolViewPlacement targetBar, int index)
+    {
+        var activityItems = ActivityBarItems.ToList();
+        var auxTabs = AuxiliaryPanel.Tabs.ToList();
+        var bottomTabs = BottomPanel.Tabs.ToList();
+
+        ToolViewPlacement? sourceBar = null;
+        var sourceIndex = -1;
+        if ((sourceIndex = activityItems.IndexOf(tabId)) >= 0)
+        {
+            sourceBar = ToolViewPlacement.ActivityBar;
+            activityItems.RemoveAt(sourceIndex);
+        }
+        else if ((sourceIndex = auxTabs.IndexOf(tabId)) >= 0)
+        {
+            sourceBar = ToolViewPlacement.AuxiliaryPanel;
+            auxTabs.RemoveAt(sourceIndex);
+        }
+        else if ((sourceIndex = bottomTabs.IndexOf(tabId)) >= 0)
+        {
+            sourceBar = ToolViewPlacement.BottomPanel;
+            bottomTabs.RemoveAt(sourceIndex);
+        }
+
+        if (sourceBar is null)
+        {
+            return this;
+        }
+
+        var target = targetBar switch
+        {
+            ToolViewPlacement.ActivityBar => activityItems,
+            ToolViewPlacement.AuxiliaryPanel => auxTabs,
+            _ => bottomTabs
+        };
+
+        // 同 Bar 重排：index 以移除前列表计，源位置在 index 之前则因移除而前移一位
+        if (sourceBar == targetBar && sourceIndex < index)
+        {
+            index--;
+        }
+
+        index = Math.Clamp(index, 0, target.Count);
+        if (sourceBar == targetBar && index == sourceIndex)
+        {
+            return this;
+        }
+
+        target.Insert(index, tabId);
+
+        var selectedActivity = SelectedActivity;
+        var sideBar = SideBar;
+        var auxiliaryPanel = AuxiliaryPanel with { Tabs = auxTabs };
+        var bottomPanel = BottomPanel with { Tabs = bottomTabs };
+
+        if (sourceBar == ToolViewPlacement.ActivityBar && targetBar != ToolViewPlacement.ActivityBar
+            && SelectedActivity == tabId)
+        {
+            // 选中项被拖走：顶部段还有其他项则改选中其前一项（原首位则取移除后的首项），
+            // SideBar 保持展开并切换内容；仅当顶部段拖空时才取消选中并收起 SideBar
+            var fallback = sourceIndex > 0 ? activityItems[sourceIndex - 1] : activityItems.FirstOrDefault();
+            if (fallback is null)
+            {
+                selectedActivity = null;
+                sideBar = sideBar with { Visible = false, ContentFor = null };
+            }
+            else
+            {
+                selectedActivity = fallback;
+                sideBar = sideBar with { ContentFor = fallback };
+            }
+        }
+
+        // 活动 tab 被拖走的回退与 ActivityBar 选中项一致：选中其前一个（原首位取移除后首个）；
+        // 面板拖空则收起
+        if (sourceBar == ToolViewPlacement.AuxiliaryPanel && targetBar != ToolViewPlacement.AuxiliaryPanel)
+        {
+            auxiliaryPanel = auxiliaryPanel with
+            {
+                Visible = auxTabs.Count > 0 && auxiliaryPanel.Visible,
+                ActiveTab = auxiliaryPanel.ActiveTab == tabId
+                    ? sourceIndex > 0 ? auxTabs[sourceIndex - 1] : auxTabs.FirstOrDefault()
+                    : auxiliaryPanel.ActiveTab
+            };
+        }
+
+        if (sourceBar == ToolViewPlacement.BottomPanel && targetBar != ToolViewPlacement.BottomPanel)
+        {
+            bottomPanel = bottomPanel with
+            {
+                Visible = bottomTabs.Count > 0 && bottomPanel.Visible,
+                ActiveTab = bottomPanel.ActiveTab == tabId
+                    ? sourceIndex > 0 ? bottomTabs[sourceIndex - 1] : bottomTabs.FirstOrDefault()
+                    : bottomPanel.ActiveTab
+            };
+        }
+
+        if (sourceBar != targetBar)
+        {
+            switch (targetBar)
+            {
+                case ToolViewPlacement.ActivityBar:
+                    selectedActivity = tabId;
+                    sideBar = sideBar with { Visible = true, ContentFor = tabId };
+                    break;
+                case ToolViewPlacement.AuxiliaryPanel:
+                    auxiliaryPanel = auxiliaryPanel with { Visible = true, ActiveTab = tabId };
+                    break;
+                default:
+                    bottomPanel = bottomPanel with { Visible = true, ActiveTab = tabId };
+                    break;
+            }
+        }
+
+        return this with
+        {
+            ActivityBarItems = activityItems,
+            AuxiliaryPanel = auxiliaryPanel,
+            BottomPanel = bottomPanel,
+            SideBar = sideBar,
+            SelectedActivity = selectedActivity
+        };
     }
 
     /// <summary>

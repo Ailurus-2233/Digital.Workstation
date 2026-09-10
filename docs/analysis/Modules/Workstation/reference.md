@@ -36,7 +36,7 @@
 
 ## 核心内部数据结构
 
-### `MainWindowViewModel` 私有字段（MainWindowViewModel.cs:18-30）
+### `MainWindowViewModel` 私有字段（MainWindowViewModel.cs:18-35）
 
 ```csharp
 private readonly ShellContributionCollector _collector;         // :18 贡献收集器（Framework）
@@ -45,27 +45,25 @@ private readonly LayoutPersistence _persistence;                // :20 布局落
 private readonly Dictionary<string, NavigationItemViewModel> _itemsById;     // :21 导航项 Id → VM（Top+Bottom 合并）
 private readonly Dictionary<string, IMainViewContribution> _mainViewsById;   // :22 主视图 Id → 贡献
 private readonly Dictionary<string, object> _mainViewContents;             // :23 主视图 Id → 已解析视图实例（缓存）
-private readonly Dictionary<string, object> _sideBarContents;              // :24 导航项 Id → SideBar 内容实例（缓存）
-private readonly Dictionary<string, ToolViewContribution> _auxTabsById;     // :25 AuxiliaryPanel tab Id → 工具视图元数据
-private readonly Dictionary<string, ToolViewContribution> _bottomTabsById;  // :26 BottomPanel tab Id → 工具视图元数据
-private readonly Dictionary<string, object> _auxTabContents;               // :27 aux tab Id → 内容实例（缓存）
-private readonly Dictionary<string, object> _bottomTabContents;            // :28 bottom tab Id → 内容实例（缓存）
-private bool _contributionsLoaded;                              // :29 EnsureContributionsLoaded 一次性守卫
-private IReadOnlyList<ToolViewContribution> _toolViews;         // :30 工具视图贡献缓存（装载时一次拉出，ResetLayout 重建复用）
+private readonly Dictionary<string, ToolViewContribution> _contributionsById; // :27 全部工具视图（含钉住项）Id → 元数据（归属随拖拽变，索引不变）
+private readonly Dictionary<string, PanelTabViewModel> _tabsById;          // :28 面板 tab Id → VM（跨面板迁移复用）
+private readonly Dictionary<string, object> _toolViewContents;             // :33 工具视图 Id → 内容实例（统一单实例缓存，ADR-0002；跨 Bar 迁移实例随 tab 走）
+private bool _contributionsLoaded;                              // :34 EnsureContributionsLoaded 一次性守卫
+private IReadOnlyList<ToolViewContribution> _toolViews;         // :35 工具视图贡献缓存（装载时一次拉出，ResetLayout 重建复用）
 ```
 
-关系要点：四个 `*Contents` 缓存字典是视图实例的**唯一持有者**（除此之外只有 XAML `ContentControl` 的 Content 引用），缓存键 = 贡献的字符串 Id，与 `ShellLayoutState` 里的 `ContentFor`/`ActiveTab`/`ActiveView` 对应。字典索引用赋值（`_mainViewsById[id] = contribution`），重复 Id **静默覆盖**（见 pitfalls.md）。`_toolViews` 只在 `EnsureContributionsLoaded` 赋值一次（:131），是 `LoadToolViews` 与 `ResetLayout` 重建的共同数据源。
+关系要点：`_toolViewContents` 与 `_mainViewContents` 两个缓存字典是视图实例的**唯一持有者**（除此之外只有 XAML `ContentControl` 的 Content 引用），缓存键 = 贡献的字符串 Id，与 `ShellLayoutState` 里的 `ContentFor`/`ActiveTab`/`ActiveView`/`ActivityBarItems` 对应。字典索引用赋值（`_mainViewsById[id] = contribution`），重复 Id **静默覆盖**（见 pitfalls.md）。`_toolViews` 只在 `EnsureContributionsLoaded` 赋值一次（:157），是 `LoadToolViews` 与 `ResetLayout` 重建的共同数据源。
 
 ### 工具视图 attribute（Views/）、贡献类（Contributions/）与菜单类（Menus/）——无字段、无状态，全部数据即 attribute 值/属性值
 
 五个 `[ToolView]` View 的 attribute 矩阵与 `ReadyStatusBarItem` 的属性矩阵见 api.md 第 5 节（五个 attribute 菜单类不实现贡献接口、无 Id——`IMenuItemContribution` 的 Id 已随 ADR-0001 删除；工具视图 Id 即 `[ToolView]` 主构造参数，ADR-0002）。跨类关系由字符串 Id 建立：
 
 ```
-SettingsView   [ToolView("shell.settings",…)]    ← State.SelectedActivity / _sideBarContents 键（钉住项）
+SettingsView   [ToolView("shell.settings",…)]    ← State.SelectedActivity / _toolViewContents 键（钉住项，恒在底部段）
 PropertiesView [ToolView("shell.properties",…)]  ┐
-OutlineView    [ToolView("shell.outline",…)]     ┴← State.AuxiliaryPanel.Tabs/ActiveTab、_auxTabContents 键
-OutputView     [ToolView("shell.output",…)]      ┐
-LogView        [ToolView("shell.log",…)]         ┴← State.BottomPanel.Tabs/ActiveTab、_bottomTabContents 键
+OutlineView    [ToolView("shell.outline",…)]     ┐  默认归属仅决定首次/重置布局；
+OutputView     [ToolView("shell.output",…)]      ┐  实际归属是 State.ActivityBarItems /
+LogView        [ToolView("shell.log",…)]         ┘  AuxiliaryPanel.Tabs / BottomPanel.Tabs（拖拽可迁，持久化优先）
 ReadyStatusBarItem.Id       "shell.status.ready"
 ```
 

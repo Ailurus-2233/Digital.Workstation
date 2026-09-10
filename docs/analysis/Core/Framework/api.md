@@ -70,6 +70,7 @@ public class FrameworkWindowManager : IWindowManager, IMainWindowManager
 public sealed record ShellLayoutState
 {
     public string? SelectedActivity { get; init; }
+    public IReadOnlyList<string> ActivityBarItems { get; init; } = [];  // 顶部段有序 Id（钉住项不入列，ADR-0002）
     public SideBarState SideBar { get; init; } = new();
     public AuxiliaryPanelState AuxiliaryPanel { get; init; } = new();
     public BottomPanelState BottomPanel { get; init; } = new();
@@ -82,14 +83,15 @@ public sealed record ShellLayoutState
 
 | 方法 | 语义 |
 |---|---|
-| `SelectActivity(string id)`（ShellLayoutState.cs:28） | 已选中该 id 且 SideBar 可见 → 收起 SideBar（`SelectedActivity` 保留）；否则选中该 id、展开 SideBar 并置 `ContentFor = id`。不改 MainContent |
-| `ToggleSideBar()`（:45） | 独立翻转 `SideBar.Visible`，不影响选中项与内容 |
-| `ToggleAuxiliaryPanel()`（:53） | 独立翻转 `AuxiliaryPanel.Visible`，不影响活动 tab |
-| `ToggleBottomPanel()`（:61） | 独立翻转 `BottomPanel.Visible`，不影响活动 tab |
-| `ActivateAuxTab(string tab)`（:69） | AuxiliaryPanel 收起时**拒绝，返回 `this`**；面板可见时以 with 表达式更新 `AuxiliaryPanel.ActiveTab` 返回新实例 |
-| `ActivateBottomTab(string tab)`（:82） | BottomPanel 收起时拒绝返回 `this`；面板可见时以 with 表达式更新 `BottomPanel.ActiveTab` 返回新实例 |
-| `OpenMainView(string view)`（:95） | 仅改 `MainContent.ActiveView` |
-| `Resize(PanelResizeTarget target, double delta)`（:103） | SideBar/AuxiliaryPanel 调 `Width`、BottomPanel 调 `Height`，经私有静态 `Clamp(double value, double min, double max)`（:134，实现为 `Math.Max(min, Math.Min(max, value))`）钳到各 record 的 Min/Max 常量；switch 兜底分支 `_ => this`，未知 target 返回等值状态 |
+| `SelectActivity(string id)`（ShellLayoutState.cs:36） | 已选中该 id 且 SideBar 可见 → 收起 SideBar（`SelectedActivity` 保留）；否则选中该 id、展开 SideBar 并置 `ContentFor = id`。不改 MainContent |
+| `ToggleSideBar()`（:53） | 独立翻转 `SideBar.Visible`，不影响选中项与内容 |
+| `ToggleAuxiliaryPanel()`（:61） | 独立翻转 `AuxiliaryPanel.Visible`，不影响活动 tab |
+| `ToggleBottomPanel()`（:69） | 独立翻转 `BottomPanel.Visible`，不影响活动 tab |
+| `ActivateAuxTab(string tab)`（:77） | AuxiliaryPanel 收起时**拒绝，返回 `this`**；面板可见时以 with 表达式更新 `AuxiliaryPanel.ActiveTab` 返回新实例 |
+| `ActivateBottomTab(string tab)`（:90） | BottomPanel 收起时拒绝返回 `this`；面板可见时以 with 表达式更新 `BottomPanel.ActiveTab` 返回新实例 |
+| `MoveTab(string tabId, ToolViewPlacement targetBar, int index)`（:109，ADR-0002） | 跨 Bar 迁移/同 Bar 重排：从源 Bar 移除、按 index 插入目标。跨 Bar：目标面板强制 `Visible=true` 且激活该 tab（目标 ActivityBar → 选中该导航项、展开 SideBar 并置 `ContentFor`）；源面板拖空 → `Visible=false`；源面板活动 tab 被拖走 → 回退到其**前一个** tab（原首位取移除后首个）；源为 ActivityBar 且被拖走的是选中项 → 顶部段仍有项则改选中其前一项、SideBar 保持展开，顶部段拖空才取消选中并收起。同 Bar 为纯重排（index 按移除前列表计，`sourceIndex < index` 时内部减一修正），不改激活状态。tabId 不属于任何 Bar（如钉住项）或原地落放 → 拒绝返回 `this` |
+| `OpenMainView(string view)`（:236） | 仅改 `MainContent.ActiveView` |
+| `Resize(PanelResizeTarget target, double delta)`（:244） | SideBar/AuxiliaryPanel 调 `Width`、BottomPanel 调 `Height`，经私有静态 `Clamp(double value, double min, double max)`（:275，实现为 `Math.Max(min, Math.Min(max, value))`）钳到各 record 的 Min/Max 常量；switch 兜底分支 `_ => this`，未知 target 返回等值状态 |
 
 注意：**面板对齐（PanelAlignment）不在本状态机内**——它是 `FrameworkWindow` 的 StyledProperty（见第 4 节），由窗口依赖属性持有并双向绑定到 ViewModel，布局状态机只管五区域的可见性/尺寸/tab。
 
@@ -101,9 +103,7 @@ public sealed record ShellLayoutState
 | `AuxiliaryPanelState`（Layout/AuxiliaryPanelState.cs:6） | `MinWidth=120`、`MaxWidth=480`（const）；`Visible=true`、`Width=280`、`Tabs=[]`、`ActiveTab=null` |
 | `BottomPanelState`（Layout/BottomPanelState.cs:6） | `MinHeight=80`、`MaxHeight=480`（const）；`Visible=true`、`Height=160`、`Tabs=[]`、`ActiveTab=null` |
 | `MainContentState`（Layout/MainContentState.cs:6） | `ActiveView=null` |
-| `PanelResizeTarget`（Layout/PanelResizeTarget.cs:6） | 枚举：`SideBar` / `AuxiliaryPanel` / `BottomPanel` |
-
-**典型消费**（真实代码）：`Modules/Workstation/MainWindowViewModel.cs:47` `[ObservableProperty] private ShellLayoutState _state = ShellLayoutState.Initial;`，各 RelayCommand 调转换方法后整体替换 `_state`；本模块 `Layout/PanelResizer.cs` 经 `ResizeCommand` 以 `PanelResize` 参数把 GridSplitter 拖拽增量交给 `Resize`（见第 6 节）。
+**典型消费**（真实代码）：`Modules/Workstation/MainWindowViewModel.cs:55` `[ObservableProperty] private ShellLayoutState _state = ShellLayoutState.Initial;`，各 RelayCommand 调转换方法后整体替换 `_state`；本模块 `Layout/PanelResizer.cs` 经 `ResizeCommand` 以 `PanelResize` 参数把 GridSplitter 拖拽增量交给 `Resize`（见第 6 节），`Layout/ToolViewBar.cs` 经 `MoveCommand` 以 `ToolViewMove` 参数把拖拽落点交给 `MoveTab`（见第 6 节）。
 
 ## 4. `FrameworkWindow`（Windows/FrameworkWindow.cs:19）
 
@@ -144,11 +144,12 @@ FrameworkWindow 的基础布局主题。加载机制：构造函数（:16-24）�
 
 | 资源键 | 位置 | 内容 |
 |---|---|---|
-| `NavigationItemTemplate` | :8 | ActivityBar 导航项按钮 |
-| `ShellActivityBar` / `ShellSideBar` / `ShellMainContent` / `ShellAuxiliaryPanel` / `ShellBottomPanel` / `ShellStatusBar` | :23 / :39 / :55 / :67 / :116 / :166 | 六个共享部件 DataTemplate |
-| `WindowLayoutLeft` / `WindowLayoutRight` / `WindowLayoutCenter` / `WindowLayoutJustify` | :195 / :261 / :327 / :392 | 四份布局 DataTemplate：布局 Grid 列 `Auto,{Binding SideBarColumnWidth},*,{Binding AuxiliaryColumnWidth}`、行 `*,Auto`；差异为 BottomPanel 及分隔条的 `Grid.Column`/`ColumnSpan` 与侧栏的 `Grid.RowSpan`（见上表）；ActivityBar 恒 `RowSpan=2` 通高 |
+| `NavigationItemTemplate` | :8 | ActivityBar 导航项按钮（ToolViewButton，绑 CanDrag/DragTabId，ADR-0002） |
+| `ShellActivityBar` / `ShellSideBar` / `ShellMainContent` / `ShellAuxiliaryPanel` / `ShellBottomPanel` / `ShellStatusBar` | :25 / :46 / :62 / :74 / :129 / :185 | 六个共享部件 DataTemplate（三处可投放 Bar 用 ToolViewBar 承载，底部钉住段保持普通 ItemsControl） |
+| `WindowLayoutLeft` / `WindowLayoutRight` / `WindowLayoutCenter` / `WindowLayoutJustify` | :214 / :280 / :346 / :411 | 四份布局 DataTemplate：布局 Grid 列 `Auto,{Binding SideBarColumnWidth},*,{Binding AuxiliaryColumnWidth}`、行 `*,Auto`；差异为 BottomPanel 及分隔条的 `Grid.Column`/`ColumnSpan` 与侧栏的 `Grid.RowSpan`（见上表）；ActivityBar 恒 `RowSpan=2` 通高 |
+| `{x:Type layout:ToolViewBar}` | :479 | ToolViewBar 的 ControlTheme（ADR-0002）：Background=Transparent 使整条带参与命中测试；模板为 Border + Panel(ItemsPresenter + `PART_InsertionLine` 拖拽占位线） |
 
-样式（:458 起）：nav-item/panel-tab/GridSplitter/panel-collapse/region-title/placeholder/status-item 自 Modules/Workstation/MainWindow.axaml 迁入；末尾新增 4 个标题栏菜单样式（:551-569，ADR-0001 菜单栏内置配套）：`Menu.chrome-menu > MenuItem` 紧凑行高（MinHeight=30、Padding=10,0，:552-555）、`Popup#PART_Popup` VerticalOffset=-8 让弹出层贴合标题栏下缘（:557-559）、`Menu.chrome-menu MenuItem` 的 `ItemsSource={Binding Children}`/`Command={Binding Command}`/`AutomationProperties.Name={Binding Title}` 样式绑定（:562-566，叶子 Children 为空、节点 Command 为 null，均无副作用）、`PathIcon` 前景色 SemiColorText1（:567-569）。**菜单项的内容模板不在本主题内**——无 x:Key 的 DataTemplate 不能放 `Styles.Resources`（AVLN3000），故由 `FrameworkWindow` 构造时在窗口 `DataTemplates` 代码注册（见第 4 节）。分隔条改用 `layout:PanelResizer` 的 `Target`+`ResizeCommand` 声明式绑定（如 :208-219；axaml 以 `xmlns:layout="clr-namespace:DigitalWorkstation.Core.Framework.Layout"` 引入，:3）。**所有绑定为宽松反射绑定**——Framework 不引用具体 ViewModel 类型。面板对齐的切换入口不在本主题内（在视图菜单，见 Modules/Workstation 的 `Menus/ViewAlignmentMenus.cs`）。
+样式（:500 起）：nav-item/panel-tab/GridSplitter/panel-collapse/region-title/placeholder/status-item 自 Modules/Workstation/MainWindow.axaml 迁入；`layout|ToolViewBar.drag-over`（:541，拖拽悬停整 Bar 高亮，ADR-0002）；末尾新增 4 个标题栏菜单样式（:598-616，ADR-0001 菜单栏内置配套）：`Menu.chrome-menu > MenuItem` 紧凑行高（MinHeight=30、Padding=10,0，:599-602）、`Popup#PART_Popup` VerticalOffset=-8 让弹出层贴合标题栏下缘（:603-606）、`Menu.chrome-menu MenuItem` 的 `ItemsSource={Binding Children}`/`Command={Binding Command}`/`AutomationProperties.Name={Binding Title}` 样式绑定（:608-612，叶子 Children 为空、节点 Command 为 null，均无副作用）、`PathIcon` 前景色 SemiColorText1（:613-616）。**菜单项的内容模板不在本主题内**——无 x:Key 的 DataTemplate 不能放 `Styles.Resources`（AVLN3000），故由 `FrameworkWindow` 构造时在窗口 `DataTemplates` 代码注册（见第 4 节）。分隔条改用 `layout:PanelResizer` 的 `Target`+`ResizeCommand` 声明式绑定（如 :227-238；axaml 以 `xmlns:layout="clr-namespace:DigitalWorkstation.Core.Framework.Layout"` 引入，:3）。**所有绑定为宽松反射绑定**——Framework 不引用具体 ViewModel 类型。面板对齐的切换入口不在本主题内（在视图菜单，见 Modules/Workstation 的 `Menus/ViewAlignmentMenus.cs`）。
 
 ## 6. `PanelAlignment` / `PanelResize` / `SetPanelAlignmentEvent` / `PanelResizer`（均位于 Layout/）
 
@@ -170,9 +171,24 @@ public class SetPanelAlignmentEvent : PubSubEvent<PanelAlignment>               
 | `ResizeCommandProperty`（:15）/ `ResizeCommand`（:36，`StyledProperty<ICommand?>`） | 拖拽增量的出口：ViewModel 的 ResizePanelCommand |
 | `StyleKeyOverride => typeof(GridSplitter)`（:26） | ControlTheme 按 StyleKey 精确查找：继承 GridSplitter 的主题（模板/尺寸/焦点行为） |
 | `GetParentGrid() => null`（:46） | 使原生 resize 初始化短路：ResizeData 为空，GridSplitter 的所有原生重排路径自动跳过，只剩 Thumb 的 DragDelta 事件 |
-| 构造函数挂 `DragDelta += OnDragDelta`（:20）；`OnDragDelta`（:54） | 方向换算：`SideBar => +e.Vector.X`、`AuxiliaryPanel => -e.Vector.X`、其他（BottomPanel）`=> -e.Vector.Y`，随后 `ResizeCommand?.Execute(new PanelResize(Target, delta))`（:62） |
+**调用方式**：布局模板内声明式使用——`<layout:PanelResizer Target="SideBar" ResizeCommand="{Binding ResizePanelCommand}" .../>`（真实用例 `Windows/FrameworkWindowTheme.axaml:227-238` 等，每份布局模板三枚：SideBar/AuxiliaryPanel/BottomPanel）。ViewModel 侧契约：提供接受 `PanelResize` 参数的 `ResizePanelCommand`（真实实现 `Modules/Workstation/MainWindowViewModel.cs` 转调 `ShellLayoutState.Resize`）。
 
-**调用方式**：布局模板内声明式使用——`<layout:PanelResizer Target="SideBar" ResizeCommand="{Binding ResizePanelCommand}" .../>`（真实用例 `Windows/FrameworkWindowTheme.axaml:208-219` 等，每份布局模板三枚：SideBar/AuxiliaryPanel/BottomPanel）。ViewModel 侧契约：提供接受 `PanelResize` 参数的 `ResizePanelCommand`（真实实现 `Modules/Workstation/MainWindowViewModel.cs` 转调 `ShellLayoutState.Resize`）。
+### 工具视图拖拽控件（ToolViewButton / ToolViewBar / ToolViewMove / ToolViewDragSession，均位于 Layout/，ADR-0002）
+
+```csharp
+public class ToolViewButton : Button                                    // ToolViewButton.cs:14
+public class ToolViewBar : ItemsControl                                 // ToolViewBar.cs:19
+public sealed record ToolViewMove(string TabId, ToolViewPlacement TargetBar, int Index); // ToolViewMove.cs:12
+public static class ToolViewDragSession                                 // ToolViewDragSession.cs:11
+```
+
+- `ToolViewButton`（拖拽源）：`DragTabId`（StyledProperty，负载视图 Id）与 `CanDrag`（StyledProperty，默认 true；钉住项绑 `Contribution.AllowMove`=false → 不发起拖拽、保持普通点击）。左键按下后位移超 4px 经 `DragDrop.DoDragDropAsync`（Avalonia 11.3 DataTransfer API，负载为 `ToolViewDragSession.TabIdFormat` 应用格式）发起拖拽，前后 `ToolViewDragSession.Begin/End`。`StyleKeyOverride => typeof(Button)` 使 `Button.nav-item`/`Button.panel-tab` 类样式命中。
+- `ToolViewBar`（投放目标）：`TargetBar`（ToolViewPlacement）、`Orientation`（横向面板条/纵向 ActivityBar，决定插入序号轴向与占位线方向）、`MoveCommand`（ICommand）。构造置 `DragDrop.SetAllowDrop(true)` 并挂 DragOver/Drop/DragLeave：DragOver 按指针位置算插入序号（条目前半→插其前）并把模板内 `PART_InsertionLine` 占位线（2px 蓝线）移到落点缝隙，Drop 执行 `MoveCommand(new ToolViewMove(id, TargetBar, index))`；DragLeave 有冒泡守卫（指针真正离开才清除指示）。**不得声明 StyleKeyOverride**：Avalonia 类型选择器匹配 StyleKey，其 ControlTheme（透明背景使整条带可命中）在 FrameworkWindowTheme.axaml:479。
+- `ToolViewMove`：落点参数；`Index` 按目标 Bar 移除前的列表计，同 Bar 重排的修正在 `ShellLayoutState.MoveTab` 内部。
+- `ToolViewDragSession`：`IsActive` + `ActiveChanged` 静态信号；拖拽进行中 shell 临时显露隐藏面板作为投放区（「向隐藏面板拖入则自动显示」的先决条件）。
+
+**调用方式**：主题模板内声明式使用——导航项/tab 头用 `<layout:ToolViewButton DragTabId="{Binding Id}" CanDrag="{Binding Contribution.AllowMove}" .../>`，三处可投放 Bar 用 `<layout:ToolViewBar TargetBar="..." Orientation="..." MoveCommand="{Binding MoveTabCommand}">`（真实用例 `Windows/FrameworkWindowTheme.axaml:35-40、92-119、148-175`）。ViewModel 侧契约：提供接受 `ToolViewMove` 参数的 `MoveTabCommand`（真实实现 `Modules/Workstation/MainWindowViewModel.cs:417`）与 `AuxiliaryPanelRevealed`/`BottomPanelRevealed` 布尔属性。
+
 
 ## 7. `ShellLayoutDto` 族与 `LayoutPersistence`（均位于 Layout/，ADR-0002）
 
@@ -207,7 +223,7 @@ public sealed class LayoutPersistence        // LayoutPersistence.cs:12
 | 写盘失败（`Flush`） | 记 Warning，静默放弃本次保存 |
 | 删文件失败（`Delete`） | 记 Warning；pending 保存已作废 |
 
-**典型消费**（真实代码）：`Modules/Workstation/MainWindowViewModel.cs:32-33` 构造注入；`EnsureContributionsLoaded` 里 `_toolViews = _collector.GetToolViews(); LoadToolViews(_persistence.Load());`（:131-132）——`LoadToolViews`（:152）按「钉住项恒落 ActivityBar 底部段、可移动项配置优先默认兜底」分派三处 Bar，layout 非 null 再调 `RestoreLayout`（:188）恢复显隐/尺寸（clamp 到各区域 record 常量）/选中项/对齐档位，layout 为 null 即全默认（重置布局复用此路径）；`ResetLayout`（:399，订阅 `ResetLayoutEvent`）先 `_persistence.Delete()` 再 `LoadToolViews(null)` 重建默认；`CaptureLayout`（:423）+ `ScheduleSave()`（:474）在 `SelectActivity`/`ActivateAuxTab`/`ActivateBottomTab`/`SetPanelAlignment`/`ResizePanel`/`TogglePanel` 末尾调度防抖保存。事件契约 `ResetLayoutEvent`（无负载）在 Core/Models/Events，由视图菜单「重置布局」项发布（`Modules/Workstation/Menus/ViewLayoutMenus.cs`）。
+**典型消费**（真实代码）：`Modules/Workstation/MainWindowViewModel.cs:37-39` 构造注入；`EnsureContributionsLoaded` 里 `_toolViews = _collector.GetToolViews(); LoadToolViews(_persistence.Load());`（:157-158）——`LoadToolViews`（:178）按「钉住项恒落 ActivityBar 底部段、可移动项配置优先默认兜底」分派三处 Bar，layout 非 null 再调 `RestoreLayout`（:220）恢复显隐/尺寸（clamp 到各区域 record 常量）/选中项/对齐档位，layout 为 null 即全默认（重置布局复用此路径）；`ResetLayout`（:480，订阅 `ResetLayoutEvent`）先 `_persistence.Delete()` 再 `LoadToolViews(null)` 重建默认；`CaptureLayout`（:504）+ `ScheduleSave()`（:555）在 `SelectActivity`/`ActivateAuxTab`/`ActivateBottomTab`/`SetPanelAlignment`/`ResizePanel`/`TogglePanel`/`MoveTab`（拖拽落放，:417）末尾调度防抖保存。事件契约 `ResetLayoutEvent`（无负载）在 Core/Models/Events，由视图菜单「重置布局」项发布（`Modules/Workstation/Menus/ViewLayoutMenus.cs`）。
 
 ## 8. `ShellContributionCollector`（Contributions/ShellContributionCollector.cs:9）
 
@@ -226,7 +242,7 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
 
 返回类型均为 `IReadOnlyList<T>`（快照数组）。贡献类型中 `ToolViewContribution`（sealed class，由 `RegisterToolViews` 扫描 `[ToolView]` 生成，见第 13 节）、`IMainViewContribution`、`IStatusBarItemContribution` 与枚举 `ToolViewPlacement` 在 Core/Abstractions 的 `Contributions/` 目录；`IMenuItemContribution` 在 `Menus/` 目录，形状已按 ADR-0001 改为路径/分组模型（见 Abstractions 文档）。
 
-**典型消费**：`Modules/Workstation/MainWindowViewModel.cs:32-33` 构造注入 `ShellContributionCollector`，`EnsureContributionsLoaded()`（:123）先调一次 `GetToolViews()`（:131）存 `_toolViews`，再 `LoadToolViews(_persistence.Load())`（:132）把分派与持久化恢复交给 `LoadToolViews`（:152-182：钉住项恒落 ActivityBar 底部段，可移动项持久化 placements 优先、attribute `Default` 兜底），并收集主视图与状态栏项；菜单走 `MenuTreeBuilder.Build(_collector.GetMenuItems())`（:137）建树后转为菜单 ViewModel。
+**典型消费**：`Modules/Workstation/MainWindowViewModel.cs:37-39` 构造注入 `ShellContributionCollector`，`EnsureContributionsLoaded()`（:149）先调一次 `GetToolViews()`（:157）存 `_toolViews`，再 `LoadToolViews(_persistence.Load())`（:158）把分派与持久化恢复交给 `LoadToolViews`（:178-208：钉住项恒落 ActivityBar 底部段，可移动项持久化 placements 优先、attribute `Default` 兜底），并收集主视图与状态栏项；菜单走 `MenuTreeBuilder.Build(_collector.GetMenuItems())`（:163）建树后转为菜单 ViewModel。
 
 ## 9. `MenuItemViewModel`（Menus/MenuItemViewModel.cs:13）
 
@@ -244,7 +260,7 @@ public class MenuItemViewModel
 | `Children` | `public ObservableCollection<object> Children { get; }`（:28） | 子项（`MenuItemViewModel` 或 `Separator`） |
 | `FromSubmenu` | `public static MenuItemViewModel FromSubmenu(MenuTreeSubmenu)`（:33） | 递归转换：`MenuTreeItem` → 叶子（`IconPath` 经 `StreamGeometry.Parse` 转几何，:43）、`MenuTreeSubmenu` → 递归、分隔线 → `new Separator()`（:38-48） |
 
-**消费约定**：shell 宿主窗口的 ViewModel 暴露 `MenuBarItems` 顶层集合（宽松绑定约定），`FrameworkWindow` 内置的 `Menu` 直接绑定它（见第 4 节）；真实实现 `Modules/Workstation/MainWindowViewModel.cs:77`。
+**消费约定**：shell 宿主窗口的 ViewModel 暴露 `MenuBarItems` 顶层集合（宽松绑定约定），`FrameworkWindow` 内置的 `Menu` 直接绑定它（见第 4 节）；真实实现 `Modules/Workstation/MainWindowViewModel.cs:103`。
 
 ## 10. 菜单树数据结构 `MenuTreeEntry` 族（Menus/MenuTreeEntry.cs:10）
 

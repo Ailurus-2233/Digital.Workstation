@@ -3,7 +3,7 @@
 | 术语 | 定义 | 首次出现/定义位置 |
 |---|---|---|
 | **Shell** | 应用主窗口的整体 UI 骨架：ActivityBar + SideBar + MainContent + AuxiliaryPanel + BottomPanel 五区域及菜单栏、状态栏。本模块中相关代码按职责分四个目录：`Layout/`（布局状态机与分隔条）、`Menus/`（菜单建树/注册/呈现模型）、`Contributions/`（贡献收集）、`Windows/`（窗口基类与主题）；类型名保留 Shell 前缀（`ShellLayoutState`、`ShellContributionCollector`、模板资源键 `ShellActivityBar` 等）只是历史命名。渲染层的应用级 chrome 在 Modules/Workstation | `Core/Framework/`（命名空间 `DigitalWorkstation.Core.Framework.{Layout,Menus,Contributions,Windows}`） |
-| **ActivityBar** | 工作区最左侧竖向导航栏，条目来自各模块的工具视图（`[ToolView]` View 类，`ToolViewPlacement.ActivityBar`，ADR-0002）；`ShellLayoutState.SelectedActivity` 记录当前选中项 Id | `ShellLayoutState.cs:12`（属性注释）；区域常量定义在 Abstractions `ShellRegions` |
+| **ActivityBar** | 工作区最左侧竖向导航栏，条目来自各模块的工具视图（`[ToolView]` View 类，`ToolViewPlacement.ActivityBar`，ADR-0002）；`ShellLayoutState.SelectedActivity` 记录当前选中项 Id，`ActivityBarItems` 记录顶部段有序 Id（钉住项在底部段、不入列） | `ShellLayoutState.cs:14、20`（属性注释）；区域常量定义在 Abstractions `ShellRegions` |
 | **SideBar** | ActivityBar 右侧容器，显示当前选中工具视图的内容视图；`SideBarState.ContentFor` 记录内容对应的工具视图 Id | `Layout/SideBarState.cs:6` |
 | **MainContent** | 工作区中央主区域，单视图切换（无 tab）；`MainContentState.ActiveView` 为当前视图 Id（对应 `IMainViewContribution.Id`） | `Layout/MainContentState.cs:6` |
 | **AuxiliaryPanel** | 工作区右侧 tab + 容器面板，tab 来自工具视图（`ToolViewPlacement.AuxiliaryPanel`） | `Layout/AuxiliaryPanelState.cs:6` |
@@ -24,6 +24,8 @@
 | **面板对齐（Panel Alignment）** | BottomPanel 在窗口底部的水平跨度，类比文本对齐。四档：左（贴左，横跨 SideBar 与 MainContent 下方，AuxiliaryPanel 通高到底）、右（贴右，横跨 MainContent 与 AuxiliaryPanel 下方，SideBar 通高到底）、居中（仅占 MainContent 下方，默认，两侧栏通高）、两端（横跨三列全宽）。完整领域定义（含与"面板位置"的区分）见根目录 CONTEXT.md | `Layout/PanelAlignment.cs:7` |
 | **FrameworkWindow** | 带基础布局的窗口基类（继承 UrsaWindow）：内置 VS Code 式五区 shell + 状态栏 + 标题栏菜单栏（代码创建的 `Menu` 宽松绑定 ViewModel 的 `MenuBarItems`，ADR-0001），布局档位由 `PanelAlignment` 依赖属性决定，切换即整体替换布局模板。真实子类：Modules/Workstation 的 `MainWindow`。与"主窗口（MainWindow）"词条的区别：那是**角色**（启动序列登记的那个窗口实例），这是**类型基类** | `Windows/FrameworkWindow.cs:19` |
 | **布局持久化（Layout Persistence）** | ADR-0002 引入的 shell 布局落盘机制：`%AppData%/Digital.Workstation/layout.json` 记录可移动工具视图归属（`Placements`）、SideBar/两个面板的显隐/尺寸/选中项或活动 tab、面板对齐档位。读容错（缺失/损坏/版本不识别 → 返回 null 静默回默认布局）、写防抖（500ms 合并连续变更）、重置经 `Delete`（先作废 pending 再删文件）。机制在 Framework（`LayoutPersistence` + `ShellLayoutDto` 族），接线在 Modules/Workstation 的 `MainWindowViewModel`；事件契约 `ResetLayoutEvent` 在 Core/Models/Events | `Layout/LayoutPersistence.cs:12`、`Layout/ShellLayoutDto.cs:10` |
+| **拖拽会话（Drag Session）** | 一次工具视图拖拽的存续期：`ToolViewButton` 在 `DoDragDropAsync` 期间把 `ToolViewDragSession.IsActive` 置 true 并广播 `ActiveChanged`；shell 借此临时显露隐藏面板作为投放区 | `Layout/ToolViewDragSession.cs:11` |
+| **占位线（Insertion Line）** | 拖拽落点指示：`ToolViewBar` ControlTheme 模板里的 `PART_InsertionLine`（2px、取分隔条悬停高亮色），DragOver 时按指针位置移到落点缝隙——横向 Bar 竖线、纵向 Bar 横线；不改现有 tab 的样式 | `Windows/FrameworkWindowTheme.axaml:479`（ControlTheme）、`Layout/ToolViewBar.cs:163`（`ShowInsertion`） |
 
 ## 类名 ↔ 业务概念对照
 
@@ -41,3 +43,5 @@
 | `PanelResize` / `PanelResizer` | 分隔条拖拽的一次增量（命令参数）/ 发出增量的分隔条控件 |
 | `LayoutPersistence` | 布局配置文件的读写门卫：容错读 / 防抖写 / 重置删，全路径只记日志不抛异常 |
 | `ShellLayoutDto` 族 | layout.json 的落盘格式：带版本字段、独立于运行时状态机的 DTO record |
+| `ToolViewButton` / `ToolViewBar` | 工具视图的拖拽源按钮（tab 头/导航项）/ Bar 投放目标（算落点、显示占位线、发出 `ToolViewMove`） |
+| `ToolViewMove` / `ToolViewDragSession` | 一次拖拽落点的命令参数 / 拖拽进行中的全局信号 |
