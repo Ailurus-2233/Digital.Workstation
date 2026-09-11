@@ -1,8 +1,8 @@
 # Abstractions — 对外接口与调用方式
 
-命名空间五组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Commands`（Commands/ 目录，命令契约 + 注册 attribute 两类型，ADR-0005）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，仅 `ShellRegions` 常量）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
+命名空间五组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Commands`（Commands/ 目录，命令契约 + 注册 attribute 两类型，ADR-0005）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，`ShellRegions` 与 `WellKnownViews` 两个常量类）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
 
-## Shell 贡献契约（Contributions/、Menus/ 与 Commands/，Region 常量在 Regions/）
+## Shell 贡献契约（Contributions/、Menus/ 与 Commands/，Region 与主视图 Id 常量在 Regions/）
 
 ### `ShellRegions`（static class，Regions/ShellRegions.cs）
 
@@ -17,6 +17,14 @@ Prism Region 名称常量，值均经 `nameof` 生成：
 | `BottomPanel` | `"BottomPanel"` | 工作区底部 tab + 容器区域 |
 
 注意：`ShellRegions` 目前**全仓零消费方**，属存量公共契约；本次目录拆分只挪位置，类型名（`ShellRegions`）与常量值不变。
+
+### `WellKnownViews`（static class，Regions/WellKnownViews.cs）
+
+shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell 侧导航按钮与贡献主视图的模块都引用本常量，从而互不依赖。与 `ShellRegions` 的 `nameof` 惯例不同，值为字面量字符串（主视图 Id 不是代码标识符）：
+
+| 常量 | 值 | 语义 |
+|---|---|---|
+| `Settings` | `"settings.main"`（第 13 行） | 设置页主视图 Id：由 Settings 模块以 `IMainViewContribution` 贡献，shell 左下角"设置"导航按钮经 `OpenMainViewEvent` 以本 Id 打开 |
 
 ### `ToolViewPlacement`（enum，Contributions/ToolViewAttribute.cs 第 6-22 行）
 
@@ -42,7 +50,7 @@ Prism Region 名称常量，值均经 `nameof` 生成：
 - `string Id { get; }` — 稳定标识，**跨模块全局唯一**；shell 按 Id 索引全部贡献；注释建议以模块名做前缀（如 `dashboard.overview`）
 - `Type ViewType { get; }` — 打开时 MainContent 显示的视图类型，经容器解析
 
-调用链：SideBar 内交互发出 `OpenMainViewEvent`（负载为 `Id`）→ shell 找到对应贡献 → 容器解析 `ViewType` → 替换 MainContent 当前视图。
+调用链：SideBar 内交互或 shell"设置"导航按钮发出 `OpenMainViewEvent`（负载为 `Id`，设置按钮用 `WellKnownViews.Settings`，ADR-0006 决策 6）→ shell 找到对应贡献 → 容器解析 `ViewType` → 替换 MainContent 当前视图。
 
 ### `ToolViewContribution`（sealed class，Contributions/ToolViewContribution.cs）
 

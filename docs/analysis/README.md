@@ -37,7 +37,8 @@
 | Core/UIPackage | [Core/UIPackage/](Core/UIPackage/common.md) | 共享 UI 资源包：`WorkstationTheme` 聚合 4 个第三方主题包、`VSCodePalette` 深色色键、`Icons` 15 个 StreamGeometry path 常量 | 无项目依赖（包：Avalonia/Semi.Avalonia/Ursa） |
 | Core/Framework | [Core/Framework/](Core/Framework/common.md) | 应用框架层：`FrameworkApplication<TWindow>` 引导与三阶段启动序列（ADR-0004）、`FrameworkWindow` 主题窗口基类（`Windows/`）、`CommandPalette` 命令面板控件（ADR-0005）、`FrameworkWindowManager`（`WindowManager/`）、`ShellLayoutState` 布局状态机与 `LayoutPersistence` 布局持久化（`Layout/`）、`ShellContributionCollector` 贡献收集（`Contributions/`）、`MenuTreeBuilder` 菜单建树与 `RegisterMenus`/`RegisterCommands` attribute 菜单/命令注册（`Menus/`、`Commands/`） | Abstractions、Common、Models、UIPackage |
 | Modules/DashBoard | [Modules/DashBoard/](Modules/DashBoard/common.md) | 启动台模块：启动进度窗（进度/失败/继续退出决策）+ 向 shell 五个扩展点各贡献一条目的通路验证（tracer bullet） | Abstractions、Framework、Resource、UIPackage |
-| Modules/Workstation | [Modules/Workstation/](Modules/Workstation/common.md) | 应用宿主与 shell：`MainWindow` VS Code 式五区布局、`MainWindowViewModel` 驱动布局状态（含命令收集与手势 KeyBinding 接线，ADR-0005）、`WorkstationApplication` 入口、shell 预置贡献 | Framework、Resource、UIPackage、DashBoard |
+| Modules/Settings | 尚无，待 deep-read 生成 | 设置页模块：向 MainContent 贡献设置页主视图占位骨架（`IMainViewContribution`，Id 取 `WellKnownViews.Settings`，ADR-0006） | Abstractions、Framework、Resource、UIPackage |
+| Modules/Workstation | [Modules/Workstation/](Modules/Workstation/common.md) | 应用宿主与 shell：`MainWindow` VS Code 式五区布局、`MainWindowViewModel` 驱动布局状态（含命令收集与手势 KeyBinding 接线，ADR-0005；ActivityBar 左下角"设置"纯导航按钮，ADR-0006 决策 6）、`WorkstationApplication` 入口、shell 预置贡献 | Framework、Resource、UIPackage、DashBoard、Settings |
 | Launcher | [Launcher/](Launcher/common.md) | 程序入口与运行时引导器（WinExe）：Release 分类目录布局的程序集/native 库解析（`AssemblyLoader`）+ 启动 Avalonia/Prism 应用 | Workstation |
 
 另有 `UnitTest/Framework`（xUnit 测试项目，仅测 `ShellLayoutState`，引用 Framework），不是被索引模块；其内容见 [Core/Framework/testing.md](Core/Framework/testing.md)。
@@ -53,10 +54,15 @@ graph TD
   WS --> Res["Core/Resource"]
   WS --> UIP["Core/UIPackage"]
   WS --> DB["Modules/DashBoard"]
+  WS --> ST["Modules/Settings"]
   DB --> Abs["Core/Abstractions"]
   DB --> FW
   DB --> Res
   DB --> UIP
+  ST --> Abs
+  ST --> FW
+  ST --> Res
+  ST --> UIP
   FW --> Abs
   FW --> Com["Core/Common"]
   FW --> Mod["Core/Models"]
@@ -68,8 +74,8 @@ graph TD
 要点（细节见各 `reference.md`）：
 
 - **业务模块不引用 shell**：DashBoard 只引用 Core 层项目，对 shell 的集成全靠实现 Abstractions 的贡献接口 + Models 的事件（`Modules/DashBoard/common.md`「依赖面收窄到 Core」）。
-- **Models 经 Framework 传递到达消费方**：DashBoard/Workstation 不直接引用 Models，经 `Framework → Models` 传递引用获得事件类型（`Core/Models/reference.md` 被依赖关系表）。
-- **Resource/UIPackage 是 Core 层最底**：无任何项目依赖，被 Framework 与两个 Modules 项目直接引用。
+- **Models 经 Framework 传递到达消费方**：DashBoard/Settings/Workstation 不直接引用 Models，经 `Framework → Models` 传递引用获得事件类型（`Core/Models/reference.md` 被依赖关系表）。
+- **Resource/UIPackage 是 Core 层最底**：无任何项目依赖，被 Framework 与三个 Modules 项目直接引用。
 - 包依赖（非项目依赖）：Abstractions 仅 Avalonia；Common 为 Prism.Avalonia/Prism.DryIoc.Avalonia/Serilog；UIPackage 为 Avalonia/Semi.Avalonia 系列/Irihi.Ursa.Themes.Semi。
 
 ## 跨模块场景指南

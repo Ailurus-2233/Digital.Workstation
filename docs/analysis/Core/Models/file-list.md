@@ -57,7 +57,7 @@ obj/、Output/                  构建产物（不入库语义；obj 下的 Mode
 
 ### Events/OpenMainViewEvent.cs
 
-`public class OpenMainViewEvent : PubSubEvent<string>;`（第 7 行）——请求 MainContent 打开指定主视图，负载为主视图 Id（`IMainViewContribution.Id`）。注释明确边界：**仅由 SideBar 内交互发布；ActivityBar 导航切换不发布本事件，MainContent 保持不变**。
+`public class OpenMainViewEvent : PubSubEvent<string>;`（第 7 行）——请求 MainContent 打开指定主视图，负载为主视图 Id（`IMainViewContribution.Id`）。注释明确边界：**由 SideBar 内交互与 shell 的"设置"导航按钮（ADR-0006 决策 6）发布；ActivityBar 导航切换不发布本事件，MainContent 保持不变**。
 
 ### Events/TogglePanelTarget.cs
 

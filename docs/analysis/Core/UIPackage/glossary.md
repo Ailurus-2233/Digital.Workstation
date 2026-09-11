@@ -13,7 +13,7 @@
 | **ActivityBar** | VS Code 式窗口最左侧的窄图标栏（导航项容器）；`ChromeActivityBarItemActiveForeground` 服务于此 | `VSCodePalette.cs:20,26,34` |
 | **StreamGeometry path 字符串** | SVG path 标记语法文本（`M…L…Z`），`Icons` 常量的值类型；可被 `StreamGeometry.Parse` 解析或由 `PathIcon.Data` 消费 | `Icons.cs:4,12` |
 | **PathIcon** | Avalonia 控件，用几何数据渲染图标并随前景色（主题）变色——图标"随主题变色"的机制 | `Icons.cs:4`（类注释） |
-| **贡献类（Contribution）** | 模块向 shell 贡献导航项/面板 tab/菜单项/状态栏项的类（如 `SettingsNavigationItem`），经 `IconPath => Icons.Xxx` 消费本模块图标 | `Icons.cs:5`（类注释） |
+| **贡献类（Contribution）** | 模块向 shell 贡献界面条目的类或 attribute 声明（如 `ReadyStatusBarItem`、`Views/` 下的 `[ToolView]` View 类），经 `IconPath => Icons.Xxx` 或 attribute 的 `Icon` 命名属性消费本模块图标 | `Icons.cs:5`（类注释） |
 
 ## 与同名通用概念的区别
 

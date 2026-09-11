@@ -1,6 +1,6 @@
 # Abstractions — 文件结构与功能
 
-相对 `Core/Abstractions/` 的目录树（共 14 个文件，含 csproj；无子目录嵌套超过一层，无测试、无资源文件）：
+相对 `Core/Abstractions/` 的目录树（共 15 个文件，含 csproj；无子目录嵌套超过一层，无测试、无资源文件）：
 
 ```
 Abstractions.csproj
@@ -17,7 +17,8 @@ Menus/
 ├── MenuGroupAttribute.cs
 └── MenuItemAttribute.cs
 Regions/
-└── ShellRegions.cs
+├── ShellRegions.cs
+└── WellKnownViews.cs
 WindowManager/
 ├── IWindowManager.cs
 ├── IMainWindowManager.cs
@@ -41,6 +42,10 @@ WindowManager/
 ### Regions/ShellRegions.cs
 
 Prism Region 名称常量。定义 `public static class ShellRegions`，含 5 个 `public const string`：`ActivityBar`、`SideBar`、`MainContent`、`AuxiliaryPanel`、`BottomPanel`（值均 `nameof(自身)`）。命名空间 `DigitalWorkstation.Core.Abstractions.Regions`。目前全仓零消费方，属存量公共契约，目录拆分时只挪位置、类型名不变。
+
+### Regions/WellKnownViews.cs
+
+shell 与模块共知的主视图 Id 常量（ADR-0006 决策 5）。定义 `public static class WellKnownViews`（第 7 行），目前含 1 个 `public const string`：`Settings = "settings.main"`（第 13 行）——设置页主视图 Id，由 Settings 模块以 `IMainViewContribution` 贡献、shell 左下角"设置"导航按钮经 `OpenMainViewEvent` 引用，双方借本常量互不依赖。命名空间 `DigitalWorkstation.Core.Abstractions.Regions`。与 `ShellRegions` 的 `nameof` 惯例不同，值为字面量字符串。
 
 ### Contributions/ToolViewAttribute.cs
 

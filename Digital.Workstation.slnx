@@ -9,6 +9,7 @@
   </Folder>
   <Folder Name="/Modules/">
     <Project Path="Modules/DashBoard/DashBoard.csproj" />
+    <Project Path="Modules/Settings/Settings.csproj" />
     <Project Path="Modules/Workstation/Workstation.csproj" />
   </Folder>
   <Folder Name="/UnitTest/">

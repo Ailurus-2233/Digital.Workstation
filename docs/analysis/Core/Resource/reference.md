@@ -22,10 +22,8 @@
 
 场景一：shell 预置的界面贡献项取标题文案。`using DigitalWorkstation.Core.Resource;` 出现在：
 
-- `Modules/Workstation/Contributions/SettingsNavigationItem.cs:15` — 设置导航项
+- `Modules/Workstation/MainWindowViewModel.cs:151` — ActivityBar 底部"设置"导航按钮标题（`SettingsTitle` 属性，ADR-0006）
 - `Modules/Workstation/Contributions/ReadyStatusBarItem.cs:14` — 状态栏"就绪"
-- `Modules/Workstation/Contributions/PropertiesPanelTab.cs:15`、`OutlinePanelTab.cs:15` — AuxiliaryPanel 演示 tab
-- `Modules/Workstation/Contributions/OutputPanelTab.cs:15`、`LogPanelTab.cs:15` — BottomPanel 演示 tab
 
 场景二：菜单类在 Attribute 里携带 Language 资源键字符串（不 `using` 本模块、不直接访问 `Language` 属性，键由 Framework 的 `MenuRegistration`/`MenuTreeBuilder` 解析）：
 
@@ -35,16 +33,16 @@
 - `Modules/Workstation/Menus/ViewLayoutMenus.cs:10,13` — `MenuViewTitle` + 重置布局键（`ResetLayoutTitle`）
 - `Modules/Workstation/Commands/ViewCommands.cs:12,18,24,30` — 四个 `[Command]` 标题键（复用 `ToggleSideBarTitle`/`ToggleBottomPanelTitle`/`ToggleAuxiliaryPanelTitle`/`ResetLayoutTitle`，由 Framework 的 `CommandRegistration` 解析，ADR-0005）
 - `Modules/Workstation/Menus/HelpMenus.cs:11,17` — `[MenuGroup("MenuHelpTitle", ...)]`、`[MenuItem("MenuAboutTitle", ...)]`
+- `Modules/Workstation/Views/{Properties,Outline,Output,Log}View.axaml.cs:10` — `[ToolView("shell.xxx", "PropertiesTabTitle"/"OutlineTabTitle"/"OutputTabTitle"/"LogTabTitle", ...)]` 工具视图标题键（ADR-0002，由 Framework 的 `ToolViewRegistration` 解析）
 
 ### 3. `Modules/DashBoard/DashBoard.csproj`（:22）— 启动台模块
 
 场景：DashBoard 模块贡献的界面项标题 + 启动画面（splash）阶段文案：
 
-- `Modules/DashBoard/DashBoardNavigationItem.cs:15`、`DashBoardStatusBarItem.cs:15` — 导航项/状态栏项"启动台"
-- `Modules/DashBoard/DashBoardTasksPanelTab.cs:15` — BottomPanel"任务"tab
+- `Modules/DashBoard/DashBoardStatusBarItem.cs:15` — 状态栏项"启动台"
 - `Modules/DashBoard/ViewModels/Windows/DashBoardWindowViewModel.cs:24,43-45,56` — 启动画面：`SplashStartingText` 作 `_phaseText` 初值；按 `StartupPhase` 枚举在 `SplashPhaseCoreServices`/`SplashPhaseLoadingModules`/`SplashPhaseReady` 间切换；失败时置 `SplashPhaseFailed`
 
-菜单/命令键字符串：`Modules/DashBoard/DashBoardMenus.cs:11,17` — `[MenuGroup("MenuFileTitle", ...)]`、`[MenuItem("DashBoardOpenWindowMenuTitle", ...)]`；`Modules/DashBoard/DashBoardCommands.cs:12` — `[Command("DashBoardOpenWindowMenuTitle", ...)]`（同 Workstation 场景二，由 Framework 解析；命令复用菜单键，ADR-0005）。
+菜单/命令/工具视图键字符串：`Modules/DashBoard/DashBoardMenus.cs:11,17` — `[MenuGroup("MenuFileTitle", ...)]`、`[MenuItem("DashBoardOpenWindowMenuTitle", ...)]`；`Modules/DashBoard/DashBoardCommands.cs:12` — `[Command("DashBoardOpenWindowMenuTitle", ...)]`（同 Workstation 场景二，由 Framework 解析；命令复用菜单键，ADR-0005）；`Modules/DashBoard/Views/DashBoardNavigationView.axaml.cs:14`、`DashBoardTasksView.axaml.cs:10` — `[ToolView("dashboard", "DashBoardNavigationTitle", ...)]`、`[ToolView("dashboard.tasks", "DashBoardTasksTabTitle", ...)]`（ADR-0002）
 
 `Core/Models`、`Core/Abstractions`、`Core/UIPackage` 均**不**引用本模块。
 

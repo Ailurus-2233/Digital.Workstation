@@ -1,0 +1,32 @@
+<UserControl
+    x:Class="DigitalWorkstation.Settings.Views.SettingsPageView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <!--  设置页骨架（占位）：左侧设置分组树、右侧选中项编辑器；具体设置项与编辑器由后续工单实现  -->
+    <Grid ColumnDefinitions="240,*" Margin="12">
+        <Border
+            Background="{DynamicResource SemiColorBackground1}"
+            BorderBrush="{DynamicResource SemiColorBorder}"
+            BorderThickness="1"
+            CornerRadius="8" />
+        <StackPanel
+            Grid.Column="1"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Spacing="8">
+            <TextBlock
+                FontSize="20"
+                FontWeight="SemiBold"
+                HorizontalAlignment="Center"
+                Text="设置" />
+            <TextBlock
+                Foreground="{DynamicResource SemiColorText2}"
+                Text="设置分组树与编辑器将在后续工单实现" />
+        </StackPanel>
+    </Grid>
+</UserControl>

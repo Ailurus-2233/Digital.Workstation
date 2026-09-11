@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+      <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Update="Views\SettingsPageView.axaml.cs">
+        <DependentUpon>SettingsPageView.axaml</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Core\Abstractions\Abstractions.csproj" />
+      <ProjectReference Include="..\..\Core\Framework\Framework.csproj" />
+      <ProjectReference Include="..\..\Core\Resource\Resource.csproj" />
+      <ProjectReference Include="..\..\Core\UIPackage\UIPackage.csproj" />
+    </ItemGroup>
+
+</Project>

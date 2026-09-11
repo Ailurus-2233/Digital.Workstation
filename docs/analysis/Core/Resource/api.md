@@ -52,12 +52,12 @@
 - `Manager` 每次 `GetString` 都按调用线程的 `CultureInfo.CurrentUICulture` 解析：先找 en-US 卫星资源（`Language.en-US.resx` 编译产物），找不到/未命中则回退中性资源（`Language.resx` 中文）。本模块自身不提供切换语言的 API。
 
 ## 调用方式
-典型调用模式一——给 shell 贡献项（导航项/面板 tab/状态栏项）的 `Title` 属性供值：
+典型调用模式一——给 shell 内置条目（状态栏项/设置导航按钮）的 `Title` 属性供值：
 
 ```csharp
 using DigitalWorkstation.Core.Resource;
-// Modules/Workstation/Contributions/SettingsNavigationItem.cs:15
-public string Title => Language.SettingsNavigationTitle;
+// Modules/Workstation/MainWindowViewModel.cs:151
+public string SettingsTitle => Language.SettingsNavigationTitle;
 ```
 
 典型调用模式二——菜单项不再持有 `Title` 属性，改为在 Attribute 里携带 Language 资源键字符串，由 Framework 的 `MenuRegistration`/`MenuTreeBuilder` 经 `Language.Get` 解析（详见 Core/Framework 文档）：
@@ -72,11 +72,9 @@ public void Exit() { ... }
 
 强类型属性：
 
-- `Modules/Workstation/Contributions/SettingsNavigationItem.cs:15` → `Language.SettingsNavigationTitle`
+- `Modules/Workstation/MainWindowViewModel.cs:151` → `Language.SettingsNavigationTitle`（ActivityBar 底部"设置"导航按钮标题，ADR-0006）
 - `Modules/Workstation/Contributions/ReadyStatusBarItem.cs:14` → `Language.StatusReadyTitle`
-- `Modules/Workstation/Contributions/{Properties,Outline,Output,Log}PanelTab.cs:15` → 对应 Tab 标题属性
-- `Modules/DashBoard/DashBoardNavigationItem.cs:15`、`DashBoardStatusBarItem.cs:15` → `Language.DashBoardNavigationTitle`
-- `Modules/DashBoard/DashBoardTasksPanelTab.cs:15` → `Language.DashBoardTasksTabTitle`
+- `Modules/DashBoard/DashBoardStatusBarItem.cs:15` → `Language.DashBoardNavigationTitle`
 - `Modules/DashBoard/ViewModels/Windows/DashBoardWindowViewModel.cs:24,43-45,56` → Splash 系列 5 个属性（启动画面阶段文案）
 
 Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
@@ -87,6 +85,8 @@ Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
 - `Modules/Workstation/Menus/ViewLayoutMenus.cs:10,13` → `MenuViewTitle` + `ResetLayoutTitle`
 - `Modules/Workstation/Menus/HelpMenus.cs:11,17` → `[MenuGroup("MenuHelpTitle", ...)]`、`[MenuItem("MenuAboutTitle", ...)]`
 - `Modules/DashBoard/DashBoardMenus.cs:11,17` → `[MenuGroup("MenuFileTitle", ...)]`、`[MenuItem("DashBoardOpenWindowMenuTitle", ...)]`
+- `Modules/Workstation/Views/{Properties,Outline,Output,Log}View.axaml.cs:10` → `[ToolView("shell.xxx", "PropertiesTabTitle"/"OutlineTabTitle"/"OutputTabTitle"/"LogTabTitle", ...)]`（ADR-0002 工具视图标题键）
+- `Modules/DashBoard/Views/DashBoardNavigationView.axaml.cs:14`、`DashBoardTasksView.axaml.cs:10` → `[ToolView("dashboard", "DashBoardNavigationTitle", ...)]`、`[ToolView("dashboard.tasks", "DashBoardTasksTabTitle", ...)]`
 
 `Language.Get(string)` 直接调用点（ADR-0001 菜单重构后首次有了真实消费方，不再只是给将来动态键场景留的后门）：
 

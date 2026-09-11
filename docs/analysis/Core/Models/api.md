@@ -9,9 +9,9 @@
 | `StartupProgressEvent` | Events/StartupProgressEvent.cs:7 | `StartupProgress` | `Core/Framework/FrameworkApplication.cs` 第 70 行 `eventAggregator.GetEvent<StartupProgressEvent>()`，第 75/86/105 行 `Publish` | `Modules/DashBoard/ViewModels/Windows/DashBoardWindowViewModel.cs` 第 19 行 `Subscribe(OnProgress, ThreadOption.UIThread, true)` |
 | `ModuleLoadFailedEvent` | Events/ModuleLoadFailedEvent.cs:7 | `ModuleLoadFailure` | FrameworkApplication.cs 第 94-95 行 | DashBoardWindowViewModel.cs 第 20 行 `Subscribe(OnModuleFailed, ThreadOption.UIThread, true)` |
 | `StartupFailureActionEvent` | Events/StartupFailureActionEvent.cs:7 | `StartupFailureAction` | DashBoardWindowViewModel.cs 第 72 行（`Continue`）与第 81 行（`Exit`） | FrameworkApplication.cs `WaitForFailureActionAsync` 第 120-122 行（一次性订阅，收到后 `Unsubscribe(token)`） |
-| `OpenMainViewEvent` | Events/OpenMainViewEvent.cs:7 | `string`（主视图 Id，即 `IMainViewContribution.Id`） | `Modules/DashBoard/Views/DashBoardNavigationView.axaml.cs` 第 30 行（`DashBoardOverviewMainView.ViewId`）、第 35 行（`DashBoardRecentMainView.ViewId`） | `Modules/Workstation/MainWindowViewModel.cs` 第 38 行 `Subscribe(OpenMainView)`（默认线程选项） |
-| `TogglePanelVisibilityEvent` | Events/TogglePanelVisibilityEvent.cs:7 | `TogglePanelTarget` | `Modules/Workstation/Menus/ViewPanelMenus.cs` 第 17/23/29 行（三个 `[MenuItem]` 方法体内分别 `Publish(SideBar/BottomPanel/AuxiliaryPanel)`） | MainWindowViewModel.cs 第 39 行 `Subscribe(TogglePanel)`（默认线程选项） |
-| `ResetLayoutEvent` | Events/ResetLayoutEvent.cs:7 | 无（非泛型 `PubSubEvent`，ADR-0002） | `Modules/Workstation/Menus/ViewLayoutMenus.cs` 第 16 行（`ResetLayout` 方法体内 `Publish()`） | MainWindowViewModel.cs 第 41 行 `Subscribe(ResetLayout)`（默认线程选项） |
+| `OpenMainViewEvent` | Events/OpenMainViewEvent.cs:7 | `string`（主视图 Id，即 `IMainViewContribution.Id`） | `Modules/DashBoard/Views/DashBoardNavigationView.axaml.cs` 第 35 行（`DashBoardOverviewMainView.ViewId`）、第 40 行（`DashBoardRecentMainView.ViewId`）；`Modules/Workstation/MainWindowViewModel.cs` `OpenSettings` 第 305 行（`WellKnownViews.Settings`，shell 左下角"设置"导航按钮，ADR-0006 决策 6） | `Modules/Workstation/MainWindowViewModel.cs` 第 48 行 `Subscribe(OpenMainView)`（默认线程选项） |
+| `TogglePanelVisibilityEvent` | Events/TogglePanelVisibilityEvent.cs:7 | `TogglePanelTarget` | `Modules/Workstation/Menus/ViewPanelMenus.cs` 第 17/23/29 行（三个 `[MenuItem]` 方法体内分别 `Publish(SideBar/BottomPanel/AuxiliaryPanel)`） | MainWindowViewModel.cs 第 49 行 `Subscribe(TogglePanel)`（默认线程选项） |
+| `ResetLayoutEvent` | Events/ResetLayoutEvent.cs:7 | 无（非泛型 `PubSubEvent`，ADR-0002） | `Modules/Workstation/Menus/ViewLayoutMenus.cs` 第 16 行（`ResetLayout` 方法体内 `Publish()`） | MainWindowViewModel.cs 第 51 行 `Subscribe(ResetLayout)`（默认线程选项） |
 
 事件类均无成员体（分号体声明），机制完全继承 Prism 基类：泛型 `Prism.Events.PubSubEvent<T>` 提供 `Publish(T payload)`、`Subscribe(Action<T> action, ThreadOption threadOption, bool keepSubscriberReferenceAlive)`、`Unsubscribe(...)`；无负载的 `ResetLayoutEvent` 继承非泛型 `PubSubEvent`，对应无参形态 `Publish()`/`Subscribe(Action)`。
 
@@ -79,7 +79,7 @@ progressEvent.Publish(new StartupProgress(StartupPhase.LoadingModules, module.Mo
 eventAggregator.GetEvent<StartupProgressEvent>().Subscribe(OnProgress, ThreadOption.UIThread, true);
 ```
 
-启动台订阅必须指定 `ThreadOption.UIThread`（UI 绑定更新），且传 `keepSubscriberReferenceAlive: true`；主窗口订阅（MainWindowViewModel 第 38-41 行）用默认线程选项，因为发布方当前都在 UI 线程上下文发布。
+启动台订阅必须指定 `ThreadOption.UIThread`（UI 绑定更新），且传 `keepSubscriberReferenceAlive: true`；主窗口订阅（MainWindowViewModel 第 48-51 行）用默认线程选项，因为发布方当前都在 UI 线程上下文发布。
 
 ### 一次性请求/响应（失败决策）
 

@@ -5,10 +5,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DigitalWorkstation.Core.Abstractions.Commands;
 using DigitalWorkstation.Core.Abstractions.Contributions;
+using DigitalWorkstation.Core.Abstractions.Regions;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.Layout;
 using DigitalWorkstation.Core.Framework.Menus;
 using DigitalWorkstation.Core.Models.Events;
+using DigitalWorkstation.Core.Resource;
 using DigitalWorkstation.Core.UIPackage;
 using DigitalWorkstation.Workstation.Views;
 
@@ -18,6 +20,7 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly ShellContributionCollector _collector;
     private readonly IContainerProvider _containerProvider;
+    private readonly IEventAggregator _eventAggregator;
     private readonly LayoutPersistence _persistence;
     private readonly Dictionary<string, NavigationItemViewModel> _itemsById = new();
     private readonly Dictionary<string, IMainViewContribution> _mainViewsById = new();
@@ -40,6 +43,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _collector = collector;
         _containerProvider = containerProvider;
+        _eventAggregator = eventAggregator;
         _persistence = persistence;
         eventAggregator.GetEvent<OpenMainViewEvent>().Subscribe(OpenMainView);
         eventAggregator.GetEvent<TogglePanelVisibilityEvent>().Subscribe(TogglePanel);
@@ -135,6 +139,16 @@ public partial class MainWindowViewModel : ObservableObject
     ///     AuxiliaryPanel 收起按钮的图标几何
     /// </summary>
     public Geometry CollapseAuxiliaryIcon { get; } = StreamGeometry.Parse(Icons.ChevronRight);
+
+    /// <summary>
+    ///     ActivityBar 底部"设置"入口按钮的图标几何（纯导航按钮，非工具视图，ADR-0006 决策 6）
+    /// </summary>
+    public Geometry SettingsIcon { get; } = StreamGeometry.Parse(Icons.Settings);
+
+    /// <summary>
+    ///     ActivityBar 底部"设置"入口按钮的标题（工具提示）
+    /// </summary>
+    public string SettingsTitle => Language.SettingsNavigationTitle;
 
     /// <summary>
     ///     SideBar 列宽：可见时为卡片宽度 + 4px 外边距间隙（布局模板的间隙约定），隐藏时归零，
@@ -279,6 +293,16 @@ public partial class MainWindowViewModel : ObservableObject
         State = State.SelectActivity(item.Id);
         SyncSideBarSelection();
         ScheduleSave();
+    }
+
+    /// <summary>
+    ///     ActivityBar 底部"设置"入口：纯导航（非工具视图，ADR-0006 决策 6），
+    ///     发布 OpenMainViewEvent 打开设置页主视图
+    /// </summary>
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        _eventAggregator.GetEvent<OpenMainViewEvent>().Publish(WellKnownViews.Settings);
     }
 
     /// <summary>

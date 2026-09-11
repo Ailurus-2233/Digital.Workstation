@@ -22,7 +22,8 @@
 
         <!--  共享部件模板：Content="{Binding}" 传入窗口 ViewModel 作为 DataContext  -->
 
-        <!--  ActivityBar：顶部为模块贡献的导航项，底部为设置类入口；与 SideBar 同色无缝衔接；右侧 Margin 2 与相邻卡片的 Margin 2 合成 4px 间隙  -->
+        <!--  ActivityBar：顶部为模块贡献的导航项，底部为钉住工具视图区（可为空）与内置"设置"导航按钮
+              （纯导航，发布 OpenMainViewEvent，ADR-0006 决策 6）；与 SideBar 同色无缝衔接；右侧 Margin 2 与相邻卡片的 Margin 2 合成 4px 间隙  -->
         <DataTemplate x:Key="ShellActivityBar">
             <Border
                 Background="{DynamicResource SemiColorNavBackground}"
@@ -37,10 +38,19 @@
                         MoveCommand="{Binding MoveTabCommand}"
                         Orientation="Vertical"
                         TargetBar="ActivityBar" />
-                    <ItemsControl
-                        Grid.Row="1"
-                        ItemTemplate="{StaticResource NavigationItemTemplate}"
-                        ItemsSource="{Binding BottomNavigationItems}" />
+                    <StackPanel Grid.Row="1">
+                        <ItemsControl
+                            ItemTemplate="{StaticResource NavigationItemTemplate}"
+                            ItemsSource="{Binding BottomNavigationItems}" />
+                        <!--  设置入口：shell 内置纯导航按钮，Command/图标/标题宽松绑定到窗口 ViewModel  -->
+                        <Button
+                            AutomationProperties.Name="{Binding SettingsTitle}"
+                            Classes="nav-item"
+                            Command="{Binding OpenSettingsCommand}"
+                            ToolTip.Tip="{Binding SettingsTitle}">
+                            <PathIcon Data="{Binding SettingsIcon}" />
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
         </DataTemplate>

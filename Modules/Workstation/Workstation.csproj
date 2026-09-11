@@ -11,6 +11,7 @@
         <ProjectReference Include="..\..\Core\Resource\Resource.csproj" />
         <ProjectReference Include="..\..\Core\UIPackage\UIPackage.csproj" />
         <ProjectReference Include="..\DashBoard\DashBoard.csproj" />
+        <ProjectReference Include="..\Settings\Settings.csproj" />
     </ItemGroup>
 
     <ItemGroup>
