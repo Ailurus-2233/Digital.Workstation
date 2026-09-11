@@ -1,8 +1,8 @@
 ﻿# Framework — 对外接口与调用方式
 
-命名空间七组：`DigitalWorkstation.Core.Framework`（根）、`.Framework.Layout`（布局状态机、面板分隔条与布局持久化）、`.Framework.Menus`（菜单建树/注册/呈现模型）、`.Framework.Commands`（命令注册，ADR-0005）、`.Framework.Contributions`（贡献收集器与工具视图注册）、`.Framework.Windows`（窗口基类、命令面板与主题）、`.Framework.WindowManager`。类型均 public，例外：`Menus/MenuRegistration.cs` 的 `ReflectedMenuItemContribution` 与 `Commands/CommandRegistration.cs` 的 `ReflectedCommandContribution` 两个 attribute 扫描生成的贡献实现为 internal（见第 12、14 节）。
+命名空间八组：`DigitalWorkstation.Core.Framework`（根）、`.Framework.Layout`（布局状态机、面板分隔条与布局持久化）、`.Framework.Menus`（菜单建树/注册/呈现模型）、`.Framework.Commands`（命令注册，ADR-0005）、`.Framework.Contributions`（贡献收集器与工具视图注册）、`.Framework.Settings`（设置注册与持久化，ADR-0006）、`.Framework.Windows`（窗口基类、命令面板与主题）、`.Framework.WindowManager`。类型均 public，例外：`Menus/MenuRegistration.cs` 的 `ReflectedMenuItemContribution` 与 `Commands/CommandRegistration.cs` 的 `ReflectedCommandContribution` 两个 attribute 扫描生成的贡献实现为 internal（见第 12、14 节）。
 
-## 1. `FrameworkApplication<TWindow>`（FrameworkApplication.cs:17）
+## 1. `FrameworkApplication<TWindow>`（FrameworkApplication.cs:20）
 
 ```csharp
 public abstract class FrameworkApplication<TWindow> : PrismApplication where TWindow : Window
@@ -14,24 +14,24 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
 
 | 成员 | 签名 | 说明 |
 |---|---|---|
-| `Initialize` | `public override void Initialize()` | 固定 `RequestedThemeVariant = ThemeVariant.Dark`（第 25 行），`Styles.AddRange(new WorkstationTheme())`（第 26 行），`VSCodePalette.ApplyTo(Resources)`（第 28 行），最后调 `base.Initialize()` |
-| `OnFrameworkInitializationCompleted` | `public override void OnFrameworkInitializationCompleted()` | 不调用 base；fire-and-forget 启动 `RunStartupSequenceAsync()`（第 38 行） |
-| `OnInitialized` | `protected override void OnInitialized()` | 空方法（第 45-47 行），故意阻止 base 提前显示 MainWindow |
-| `InitializeModules` | `protected override void InitializeModules()` | 空方法（第 52-54 行），抑制 Prism 同步一次性模块加载 |
+| `Initialize` | `public override void Initialize()` | 固定 `RequestedThemeVariant = ThemeVariant.Dark`（第 28 行），`Styles.AddRange(new WorkstationTheme())`（第 29 行），`VSCodePalette.ApplyTo(Resources)`（第 31 行），最后调 `base.Initialize()` |
+| `OnFrameworkInitializationCompleted` | `public override void OnFrameworkInitializationCompleted()` | 不调用 base；fire-and-forget 启动 `RunStartupSequenceAsync()`（第 41 行） |
+| `OnInitialized` | `protected override void OnInitialized()` | 空方法（第 48-50 行），故意阻止 base 提前显示 MainWindow |
+| `InitializeModules` | `protected override void InitializeModules()` | 空方法（第 55-57 行），抑制 Prism 同步一次性模块加载 |
 | `CreateSplashWindow` | `protected abstract Window CreateSplashWindow()` | 子类提供启动台窗口；模块加载进度与失败决策均经启动台呈现 |
-| `RegisterTypes` | `protected override void RegisterTypes(IContainerRegistry)` | **密封式编排**（注释明确"子类不需要重写"）：先 `RegisterFrameworkServices` 后 `RegisterCustomService`（第 175-179 行） |
-| `RegisterCustomService` | `protected virtual void RegisterCustomService(IContainerRegistry)` | 子类注册自定义服务的钩子，默认空实现（第 187 行） |
-| `CreateShell` | `protected override AvaloniaObject CreateShell()` | `Container.Resolve<TWindow>()`（第 198 行）——主窗口经容器解析，支持构造注入 |
-| `ConfigureViewModelLocator` | `protected override void ConfigureViewModelLocator()` | 约定式 ViewModel 定位（第 209-241 行），见下 |
+| `RegisterTypes` | `protected override void RegisterTypes(IContainerRegistry)` | **密封式编排**（注释明确"子类不需要重写"）：先 `RegisterFrameworkServices` 后 `RegisterCustomService`（第 189-193 行） |
+| `RegisterCustomService` | `protected virtual void RegisterCustomService(IContainerRegistry)` | 子类注册自定义服务的钩子，默认空实现（第 215 行） |
+| `CreateShell` | `protected override AvaloniaObject CreateShell()` | `Container.Resolve<TWindow>()`（第 224 行）——主窗口经容器解析，支持构造注入 |
+| `ConfigureViewModelLocator` | `protected override void ConfigureViewModelLocator()` | 约定式 ViewModel 定位（第 237-269 行），见下 |
 
 ### 私有启动序列成员（改行为时直接面对）
 
-- `RunStartupSequenceAsync()`（第 65 行）：三阶段启动，见 common.md 状态流转。阶段 2 取 `moduleCatalog.Modules.ToList()` 快照后以 `for (var i = 0; i < total; i++)` 按下标推进（`total = modules.Count`）：每模块先 `Publish(new StartupProgress(StartupPhase.LoadingModules, module.ModuleName, i + 1, total))`（序号从 1 起），再 `await Task.Run(() => moduleManager.LoadModule(module.ModuleName))`（第 89 行）。
-- `WaitForFailureActionAsync(IEventAggregator)`（第 118 行）：一次性订阅 `StartupFailureActionEvent`，返回 `true` = Continue。
-- `ShowMainWindow()`（第 128 行）：先做两个模式匹配守卫——`MainWindow is not Window window` 或 `ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime lifetime` 时**静默 return**（不抛异常、不动作）；通过后依次 `lifetime.MainWindow = window` → `_windowManager?.ShowMainWindow()` → `_windowManager?.CloseWindowsExceptMain()`。
-- `RegisterFrameworkServices`（第 143 行）/ `ResolveFrameworkServices`（第 161 行）：前者末尾调后者；后者用 `Container.Resolve<IEventAggregator>()` 与 `Container.Resolve<IMainWindowManager>()` 把两个服务存入 `_eventAggregator`/`_windowManager` 私有字段。RegisterTypes 阶段 `Container` 已可用（`RegisterFrameworkServices` 首行 `IoC.Initialize(containerRegistry, Container)` 即以它为参），且 `IMainWindowManager` 单例刚在本方法前段注册，故可立即解析。
+- `RunStartupSequenceAsync()`（第 68 行）：三阶段启动，见 common.md 状态流转。阶段 2 取 `moduleCatalog.Modules.ToList()` 快照后以 `for (var i = 0; i < total; i++)` 按下标推进（`total = modules.Count`）：每模块先 `Publish(new StartupProgress(StartupPhase.LoadingModules, module.ModuleName, i + 1, total))`（序号从 1 起），再 `await Task.Run(() => moduleManager.LoadModule(module.ModuleName))`（第 92 行）。
+- `WaitForFailureActionAsync(IEventAggregator)`（第 121 行）：一次性订阅 `StartupFailureActionEvent`，返回 `true` = Continue。
+- `ShowMainWindow()`（第 131 行）：先做两个模式匹配守卫——`MainWindow is not Window window` 或 `ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime lifetime` 时**静默 return**（不抛异常、不动作）；通过后依次 `lifetime.MainWindow = window` → `_windowManager?.ShowMainWindow()` → `_windowManager?.CloseWindowsExceptMain()`。
+- `RegisterFrameworkServices`（第 146 行）/ `ResolveFrameworkServices`（第 175 行）：前者依次注册窗口管理器双接口单例、`ShellContributionCollector` 单例、`LayoutPersistence` 单例，随后**显式构造 `SettingsService` 并立即 `Load()`**（第 163-165 行，仿 windowManager 工厂注册模式，时机明确）注册为 `ISettingsService` 单例、`RegisterSettings` 注册 Framework 自身「常规/语言」设置项（第 168 行）、`ApplyLanguageSetting` 按已存语言设置应用 UI 区域性（第 170 行，必须先于一切模块 `RegisterTypes`——标题注册期经 `Language.Get` 解析定死，见第 16 节），末尾调后者；后者用 `Container.Resolve<IEventAggregator>()` 与 `Container.Resolve<IMainWindowManager>()` 把两个服务存入 `_eventAggregator`/`_windowManager` 私有字段。RegisterTypes 阶段 `Container` 已可用（`RegisterFrameworkServices` 首行 `IoC.Initialize(containerRegistry, Container)` 即以它为参），且 `IMainWindowManager` 单例刚在本方法前段注册，故可立即解析。
 
-### ViewModel 定位约定（ConfigureViewModelLocator，第 209-241 行）
+### ViewModel 定位约定（ConfigureViewModelLocator，第 237-269 行）
 
 ```
 viewName.Replace("Views", "ViewModels")
@@ -39,7 +39,7 @@ viewName.Replace("Views", "ViewModels")
 后缀 View          → 追加 "Model"（即 *View → *ViewModel）
 ```
 
-即 `**/Views/*View.axaml → **/ViewModels/*ViewModel.cs`；`**/Views/Windows/*Window.axaml → **/ViewModels/Windows/*WindowViewModel.cs`；`**/Views/Pages/*Page.axaml → **/ViewModels/Pages/*PageViewModel.cs`。映射后的全名再拼上程序集全名组成程序集限定名 `$"{viewModelName}, {viewAssemblyName}"`（第 234 行），其中 `viewAssemblyName` 来自 `viewType.GetTypeInfo().Assembly.FullName`（第 216 行，即 **View 所在程序集**的全名——ViewModel 必须与 View 同程序集才能解析到）；最后调 `Type.GetType(fullViewModelName)`（第 236 行）解析出 ViewModel 的 `Type` 并返回。解析不到（`viewName`/`viewAssemblyName` 为空或类型不存在）时返回 null（不抛异常）。View 中需 `mvvm:ViewModelLocator.AutoWireViewModel="True"` 启用。
+即 `**/Views/*View.axaml → **/ViewModels/*ViewModel.cs`；`**/Views/Windows/*Window.axaml → **/ViewModels/Windows/*WindowViewModel.cs`；`**/Views/Pages/*Page.axaml → **/ViewModels/Pages/*PageViewModel.cs`。映射后的全名再拼上程序集全名组成程序集限定名 `$"{viewModelName}, {viewAssemblyName}"`（第 262 行），其中 `viewAssemblyName` 来自 `viewType.GetTypeInfo().Assembly.FullName`（第 244 行，即 **View 所在程序集**的全名——ViewModel 必须与 View 同程序集才能解析到）；最后调 `Type.GetType(fullViewModelName)`（第 264 行）解析出 ViewModel 的 `Type` 并返回。解析不到（`viewName`/`viewAssemblyName` 为空或类型不存在）时返回 null（不抛异常）。View 中需 `mvvm:ViewModelLocator.AutoWireViewModel="True"` 启用。
 
 ## 2. `FrameworkWindowManager`（WindowManager/FrameworkWindowManager.cs:12）
 
@@ -56,13 +56,13 @@ public class FrameworkWindowManager : IWindowManager, IMainWindowManager
 | `ShowWindow(Window)` / `ShowWindow(Window, object)` | 顺序：`InitializeWindow` 注册 →（dataContext 版）`window.DataContext = dataContext` 赋值 → 检查主窗口：已设且 `IsActive` 时 `window.Show(_mainWindow)`（以主窗口为 owner），否则 `window.Show()`；主窗口未设抛 `InvalidOperationException`（第 78-111 行）。注意抛异常时窗口已注册进 `_windowMap` 且 DataContext 已赋值，无回滚 |
 | `ShowDialog(...)` 四个重载 | 与 ShowWindow 类似，但**要求主窗口已设且 IsActive**，否则抛 `InvalidOperationException`（第 124-141 行） |
 | `CloseWindow(Type)` | `_windowMap` 命中则 `Close()`；未命中静默不操作（第 144-148 行） |
-| `HandleMainWindow()` | 从 `Application.Current as PrismApplication` 取 `MainWindow` 登记为 `_mainWindow` 并加入 `_windowMap`；取不到或已在映射中抛 `InvalidOperationException`（第 158-167 行）。**唯一调用点**：启动序列阶段 1（`FrameworkApplication.cs:73`），先于启动台显示 |
+| `HandleMainWindow()` | 从 `Application.Current as PrismApplication` 取 `MainWindow` 登记为 `_mainWindow` 并加入 `_windowMap`；取不到或已在映射中抛 `InvalidOperationException`（第 158-167 行）。**唯一调用点**：启动序列阶段 1（`FrameworkApplication.cs:76`），先于启动台显示 |
 | `HideMainWindow()` / `ShowMainWindow()` | `_mainWindow?.Hide()/Show()`，空调用安全（第 169-170 行） |
 | `CloseWindowsExceptMain()` | 先 `_windowMap.Values.Where(w => w != _mainWindow).ToList()` 物化快照（排除主窗口），再逐个 `Close()`（第 172-177 行）。必须 ToList：每个窗口 `Close()` 触发 `InitializeWindow` 挂的 `Closing` 处理器把类型从 `_windowMap` 移除，直接枚举 `Values` 会在迭代中修改集合 |
 
 内部状态：`private readonly Dictionary<Type, Window> _windowMap`（第 17 行）、`private Window? _mainWindow`（第 22 行）。`InitializeWindow`（第 45 行）注册时挂 `Closing` 事件把类型从映射移除——窗口关闭后同类型可再次 ShowWindow。
 
-**调用方式**：消费方构造注入 `IWindowManager` 或 `IMainWindowManager`（同一单例）。真实调用点：`Modules/DashBoard/DashBoardMenus.cs:20` `windowManager.ShowWindow<DashBoardWindow>`（经 Abstractions 的泛型扩展转发到 `ShowWindow(Type)`）、`Modules/Workstation/Menus/HelpMenus.cs:20` `windowManager.ShowDialog<AboutWindow>`；框架内部 `FrameworkApplication.cs:74` `Container.Resolve<IWindowManager>().ShowWindow(CreateSplashWindow())`。
+**调用方式**：消费方构造注入 `IWindowManager` 或 `IMainWindowManager`（同一单例）。真实调用点：`Modules/DashBoard/DashBoardMenus.cs:20` `windowManager.ShowWindow<DashBoardWindow>`（经 Abstractions 的泛型扩展转发到 `ShowWindow(Type)`）、`Modules/Workstation/Menus/HelpMenus.cs:20` `windowManager.ShowDialog<AboutWindow>`；框架内部 `FrameworkApplication.cs:77` `Container.Resolve<IWindowManager>().ShowWindow(CreateSplashWindow())`。
 
 ## 3. `ShellLayoutState` 及区域 record（Layout/）
 
@@ -205,7 +205,7 @@ public sealed class LayoutPersistence        // LayoutPersistence.cs:12
 
 落盘格式（`ShellLayoutDto` 族）独立于 `ShellLayoutState`——状态机只管流转语义，不管序列化兼容（文件注释自述）。`ShellLayoutDto` 成员：`Version`（:17，`Load` 对不识别版本整份丢弃）、`PanelAlignment`（:22，对齐档位由 `FrameworkWindow` 依赖属性持有、不在状态机内，一并持久化）、`Placements: Dictionary<string, ToolViewPlacementEntry>`（:29，可移动工具视图 Id → `{ Bar, Index }`，恢复时优先于 attribute 的 `Default`；**钉住项恒在 ActivityBar 底部段、不入此表**；无对应贡献的孤儿条目丢弃，无条目的新工具视图落回 `Default`）、三个可空子 DTO `SideBar`/`AuxiliaryPanel`/`BottomPanel`（:31-35，各记显隐/尺寸/选中项或活动 tab；为 null 表示该区域无持久化数据，恢复时保持默认）。序列化选项（`LayoutPersistence.cs:23-28`）：`WriteIndented` + camelCase 属性名 + `JsonStringEnumConverter`——枚举落成 `"Center"`/`"BottomPanel"` 形态字符串。
 
-`LayoutPersistence` 是 `%AppData%/Digital.Workstation/layout.json` 的读/写/删，注册为单例（`FrameworkApplication.cs:156`；注释自述"机制在 Framework、接线在 shell 模块"）：
+`LayoutPersistence` 是 `%AppData%/Digital.Workstation/layout.json` 的读/写/删，注册为单例（`FrameworkApplication.cs:159`；注释自述"机制在 Framework、接线在 shell 模块"）：
 
 | 成员 | 签名/位置 | 语义 |
 |---|---|---|
@@ -227,23 +227,25 @@ public sealed class LayoutPersistence        // LayoutPersistence.cs:12
 
 **典型消费**（真实代码）：`Modules/Workstation/MainWindowViewModel.cs:41-42` 构造注入；`EnsureContributionsLoaded` 里 `_toolViews = _collector.GetToolViews(); LoadToolViews(_persistence.Load());`（:178-179）——`LoadToolViews`（:200）按「钉住项恒落 ActivityBar 底部段、可移动项配置优先默认兜底」分派三处 Bar，layout 非 null 再调 `RestoreLayout`（:242）恢复显隐/尺寸（clamp 到各区域 record 常量）/选中项/对齐档位，layout 为 null 即全默认（重置布局复用此路径）；`ResetLayout`（:512，订阅 `ResetLayoutEvent`）先 `_persistence.Delete()` 再 `LoadToolViews(null)` 重建默认；`CaptureLayout`（:536）+ `ScheduleSave()`（:587）在 `SelectActivity`/`ActivateAuxTab`/`ActivateBottomTab`/`SetPanelAlignment`/`ResizePanel`/`TogglePanel`/`MoveTab`（拖拽落放，:449）末尾调度防抖保存。事件契约 `ResetLayoutEvent`（无负载）在 Core/Models/Events，由视图菜单「重置布局」项发布（`Modules/Workstation/Menus/ViewLayoutMenus.cs`）。
 
-## 8. `ShellContributionCollector`（Contributions/ShellContributionCollector.cs:9）
+## 8. `ShellContributionCollector`（Contributions/ShellContributionCollector.cs:12）
 
 ```csharp
 public class ShellContributionCollector(IContainerProvider containerProvider)
 ```
 
-主构造注入 Prism `IContainerProvider`。注册为单例（`FrameworkApplication.cs:153`）。五个收集方法；菜单方法自 ADR-0001 起不过滤不排序（建树器负责分组排序），工具视图自 ADR-0002 起不再按定位枚举过滤（三处 Bar 与钉住区的分派由消费方按 `Placement`/`AllowMove` 决定）：
+主构造注入 Prism `IContainerProvider`。注册为单例（`FrameworkApplication.cs:156`）。七个收集方法；菜单方法自 ADR-0001 起不过滤不排序（建树器负责分组排序），工具视图自 ADR-0002 起不再按定位枚举过滤（三处 Bar 与钉住区的分派由消费方按 `Placement`/`AllowMove` 决定）：
 
 | 方法 | 过滤 | 排序 |
 |---|---|---|
-| `GetToolViews()`（:15） | 无（三处 Bar 的分派由消费方决定，ADR-0002） | `Order` 升序 |
-| `GetMainViews()`（:24） | 无（全部） | 无（保持容器解析顺序） |
-| `GetMenuItems()`（:31，**无参数**） | 无（路径/分组模型下不再按定位枚举过滤） | 无（分组排序建树由 `MenuTreeBuilder` 负责，见第 11 节） |
-| `GetStatusBarItems()`（:38） | 无 | `Order` 升序 |
-| `GetCommands()`（:41，ADR-0005） | Id 冲突去重：保留先注册者，后者丢弃并记 `Logger.Warning` | `Order` 升序，同 Order 按解析后 `Title` 字典序（Ordinal） |
+| `GetToolViews()`（:18） | 无（三处 Bar 的分派由消费方决定，ADR-0002） | `Order` 升序 |
+| `GetMainViews()`（:27） | 无（全部） | 无（保持容器解析顺序） |
+| `GetMenuItems()`（:34，**无参数**） | 无（路径/分组模型下不再按定位枚举过滤） | 无（分组排序建树由 `MenuTreeBuilder` 负责，见第 11 节） |
+| `GetStatusBarItems()`（:63） | 无 | `Order` 升序 |
+| `GetCommands()`（:42，ADR-0005） | Id 冲突去重：保留先注册者，后者丢弃并记 `Logger.Warning` | `Order` 升序，同 Order 按解析后 `Title` 字典序（Ordinal） |
+| `GetSettingGroups()`（:74，ADR-0006） | 按名称全局合并：同名 `SettingGroupAttribute` 多处声明时位次取最小；仅被设置项引用而无声明的隐式分组补出、`Order` 视为 0 | `Order` 升序，同 Order 按名称键字典序（Ordinal） |
+| `GetSettingItems()`（:99，ADR-0006） | Id 冲突去重：保留先注册者，后者丢弃并记 `Logger.Warning`（同 `GetCommands`） | `Order` 升序，同 Order 按名称键字典序（Ordinal） |
 
-返回类型均为 `IReadOnlyList<T>`（快照数组）。贡献类型中 `ToolViewContribution`（sealed class，由 `RegisterToolViews` 扫描 `[ToolView]` 生成，见第 13 节）、`IMainViewContribution`、`IStatusBarItemContribution` 与枚举 `ToolViewPlacement` 在 Core/Abstractions 的 `Contributions/` 目录；`IMenuItemContribution` 在 `Menus/` 目录（形状已按 ADR-0001 改为路径/分组模型）；`ICommandContribution` 在 `Commands/` 目录（ADR-0005 扁平模型，见 Abstractions 文档）。
+返回类型均为 `IReadOnlyList<T>`（快照数组）。贡献类型中 `ToolViewContribution`（sealed class，由 `RegisterToolViews` 扫描 `[ToolView]` 生成，见第 13 节）、`IMainViewContribution`、`IStatusBarItemContribution` 与枚举 `ToolViewPlacement` 在 Core/Abstractions 的 `Contributions/` 目录；`IMenuItemContribution` 在 `Menus/` 目录（形状已按 ADR-0001 改为路径/分组模型）；`ICommandContribution` 在 `Commands/` 目录（ADR-0005 扁平模型）；`SettingGroupContribution`/`SettingItemContribution` 在 `Settings/` 目录（ADR-0006，见 Abstractions 文档）。
 
 **典型消费**：`Modules/Workstation/MainWindowViewModel.cs:41-42` 构造注入 `ShellContributionCollector`，`EnsureContributionsLoaded()`（:170）先调一次 `GetToolViews()`（:178）存 `_toolViews`，再 `LoadToolViews(_persistence.Load())`（:179）把分派与持久化恢复交给 `LoadToolViews`（:200-236：钉住项恒落 ActivityBar 底部段，可移动项持久化 placements 优先、attribute `Default` 兜底），并收集主视图与状态栏项；菜单走 `MenuTreeBuilder.Build(_collector.GetMenuItems())`（:184）建树后转为菜单 ViewModel。
 
@@ -363,9 +365,64 @@ public class CommandPalette : Border
 
 行为细节：过滤为子串、不区分大小写、匹配本地化后 `Title`（`RefreshItems`，:153）；MRU 内存列表 `_recentIds`（:29，新者在前，重启即清）执行后置顶、过滤后仍浮到最前；`OnKeyDown`（:105）处理 Esc/Enter/↑/↓（输入框单行，这些键不被吞，冒泡到控件）；单击条目即执行（`OnItemTapped`，:187，守卫点在条目容器内）；执行先 `Close()` 再 `Command.Execute(null)`（:204）。列表项模板为代码创建的 `FuncDataTemplate<ICommandContribution>`（:44，标题 + 右侧 gesture 文本，无图标）；空态「无匹配命令」与列表同格切换。样式在 `FrameworkWindowTheme.axaml:630-662`；`StyleKeyOverride` 未声明——类型选择器 `windows|CommandPalette` 按 StyleKey 匹配（同 `ToolViewBar` 的坑，见 pitfalls.md）。
 
+## 16. 设置管线（Settings/，ADR-0006）
+
+### `SettingRegistration.RegisterSettings`（Settings/SettingRegistration.cs:13）
+
+```csharp
+public static void RegisterSettings(this IContainerRegistry registry, Assembly assembly); // :19
+```
+
+attribute 设置注册扩展（ADR-0006 决策 1），与 `RegisterMenus`/`RegisterCommands` 同构。模块在自身 `RegisterTypes` 中调用并传入本模块程序集，**不做全局程序集扫描**；扫描只在注册时发生一次。规则（:21-66）：
+
+1. 遍历 `assembly.DefinedTypes`（:21），类上每条 `SettingGroupAttribute` 声明注册一个 `SettingGroupContribution` 单例（:23-27，attribute 允许 `AllowMultiple`；同名分组的合并与位次取最小发生在收集侧，见第 8 节 `GetSettingGroups`）。
+2. 取该类 `Public | Static | DeclaredOnly` 属性中标注 `SettingItemAttribute` 者（:29-36）；无 getter（:38-43）或 `DefaultValue` 非空且类型与属性类型不匹配（:45-51）记 `Logger.Warning` 跳过。属性只是声明锚点——扫描不读属性值，读写一律走 `ISettingsService`。
+3. 每个合法属性注册一个 `SettingItemContribution` 单例（:53-63）：`Id = attribute.Id ?? "声明类全名.属性名"`（:55，仿命令默认 Id 规则）、`ValueType` 取属性类型（:58）、`Group`/`Name`/`DefaultValue`/`Order`/`RequiresRestart` 透传。
+
+真实调用点：`FrameworkApplication.cs:168`（Framework 自身「常规/语言」设置项）。
+
+### `SettingsService`（Settings/SettingsService.cs:17）
+
+```csharp
+public sealed class SettingsService(IEventAggregator eventAggregator, IContainerProvider containerProvider)
+    : ISettingsService
+```
+
+`ISettingsService` 实现（ADR-0006 决策 3/4），`%AppData%/Digital.Workstation/settings.json` 的读/防抖写。注册方式特殊：**显式构造实例、立即 `Load()`、以工厂注册**（`FrameworkApplication.cs:163-165`，仿 windowManager 模式），使启动时一次性加载的时机明确。成员：
+
+| 成员 | 签名/位置 | 语义 |
+|---|---|---|
+| `FilePath` | `public static readonly string`（:23-25） | 设置配置文件路径：`%AppData%/Digital.Workstation/settings.json` |
+| `Load` | `public void Load()`（:53） | 启动时一次性加载入内存镜像 `_values`；文件缺失静默返回（:57-60，首次启动常态）；内容为空（:64-68）或一切异常 `catch (Exception)`（:78-82）记 Warning 按无修改处理——容错仿 `LayoutPersistence` |
+| `Get<T>` | `public T? Get<T>(string settingId)`（:85） | 纯内存读：`_values` 命中则按 `T` 反序列化返回，单项失败记 Warning 后**逐项**回退默认值（:91-100，与 layout.json 整份丢弃不同）；未修改时经 `FindContribution` 回退声明的 `DefaultValue`（:104-111）；未声明记 Warning 返回 `default` |
+| `Set<T>` | `public void Set<T>(string settingId, T value)`（:114） | 未声明记 Warning 但仍写入（:116-119）；锁内更新 `_values` 并把 500ms 防抖 Timer 重置到单次触发（:121-126），锁外广播 `SettingChangedEvent`（:128） |
+| `FindContribution` | `private SettingItemContribution?`（:135） | 声明默认值缓存：按 Id 缓存，未命中重新枚举容器中的全部声明刷新缓存——模块在启动序列阶段 2 才注册各自设置项，缓存必须允许后到的声明（:42-46 注释） |
+| `Flush` | `private void Flush(object?)`（:150） | Timer 回调：锁内快照 `_values` 后 `Directory.CreateDirectory` + 序列化写盘（:161-162）；`catch (Exception)` 就地吞掉记 Warning（:158-167，纪律同 `LayoutPersistence.Flush`） |
+
+序列化选项（:29-33）：`WriteIndented` + `JsonStringEnumConverter`——枚举落盘为 `JsonStringEnumMemberName` 指定的字符串（`UiLanguage` 为 `"zh-CN"`/`"en-US"`）。落盘文件只存**用户已修改的值**（`_values` 的镜像），默认值不进存储层。
+
+### `UiLanguage` 与 `UiLanguageExtensions`（Settings/UiLanguage.cs:12）
+
+```csharp
+public enum UiLanguage { [JsonStringEnumMemberName("zh-CN")] ZhCN, [JsonStringEnumMemberName("en-US")] EnUS } // :12-25
+public static CultureInfo ToCultureInfo(this UiLanguage language);                                            // :32
+```
+
+Framework 预置「常规/语言」设置项的值类型（ADR-0006 决策 9）。成员的 `JsonStringEnumMemberName` 值即对应 `CultureInfo` 名称——settings.json 落盘值与区域性名称同源；`ToCultureInfo`（:32-37）反射读该 attribute 值作为 `CultureInfo.GetCultureInfo` 的名称。
+
+### `GeneralSettings`（Settings/GeneralSettings.cs:10）
+
+```csharp
+[SettingGroup("SettingsGeneralGroupName", Order = 0)]
+public static class GeneralSettings
+```
+
+Framework 预置设置项的声明类（ADR-0006 决策 9）。成员：`public static readonly string LanguageSettingId`（:15，默认规则「声明类全名.属性名」，供启动序列等消费方读写）；`[SettingItem("SettingsGeneralGroupName", "SettingsLanguageName", DefaultValue = UiLanguage.ZhCN, RequiresRestart = true)] public static UiLanguage Language`（:20-22）——属性体只是声明锚点不会被读取，读写一律经 `ISettingsService`。
+
+
 ## 容器注册清单（对外可解析的服务）
 
-`RegisterFrameworkServices`（FrameworkApplication.cs:143-159）注册：
+`RegisterFrameworkServices`（FrameworkApplication.cs:146-173）注册：
 
 | 服务 | 注册方式 | 实现 |
 |---|---|---|
@@ -373,4 +430,5 @@ public class CommandPalette : Border
 | `IWindowManager` | Singleton | 同一 `FrameworkWindowManager` 实例 |
 | `ShellContributionCollector` | Singleton | 自身 |
 | `LayoutPersistence` | Singleton | 自身（ADR-0002；机制在 Framework、接线在 shell 模块） |
+| `ISettingsService` | Singleton（工厂） | 显式构造的 `SettingsService` 实例，注册前已 `Load()`（ADR-0006 决策 3/4） |
 | `IoC.Registry` / `IoC.Provider` | 静态初始化 | `IoC.Initialize(containerRegistry, Container)`（Common 模块） |

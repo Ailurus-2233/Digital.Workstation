@@ -14,7 +14,7 @@
 
 3. **键缺失返回键本身，不抛异常**。`Get(string key)`（`Language.cs:17-20`）的实现是 `Manager.GetString(key) ?? key`。`ResourceManager.GetString` 对缺失键返回 `null`，这里用 `?? key` 兜底——注释明确说明意图是"便于发现遗漏"：界面上直接显示出键名（如 `MenuExitTitle`），一眼能看出资源漏配，而不是空白或崩溃。
 
-4. **强类型门面：`nameof` 保证键与属性同名**。29 个静态属性（`Language.cs:25-162`）每个都是 `=> Get(nameof(XxxTitle))`。`nameof` 让键名与属性名永远一致：重命名属性时编译器会跟着改键名表达式，但 **`.resx` 里的 `data name` 必须手动同步改**（见 pitfalls.md）。
+4. **强类型门面：`nameof` 保证键与属性同名**。33 个静态属性（`Language.cs:25-182`）每个都是 `=> Get(nameof(XxxTitle))`。`nameof` 让键名与属性名永远一致：重命名属性时编译器会跟着改键名表达式，但 **`.resx` 里的 `data name` 必须手动同步改**（见 pitfalls.md）。
 
 5. **注释即真相**。每个 resx 条目的 `<comment>` 和 C# 属性的 XML doc 注释内容一致（如 `SettingsNavigationTitle` 的注释 "shell 预置\"设置\"导航项的标题"），说明该条文案用在哪个 UI 位置。这是本模块唯一的"用途文档"。
 
@@ -45,11 +45,12 @@
    - `Core/Resource/Language.en-US.resx`：加同名 `<data name="NewKey">` 英文条目；
    - `Core/Resource/Language.cs`：加 `public static string NewKey => Get(nameof(NewKey));` 属性并复制用途注释。
    漏加 en-US 条目不会报错，en-US 用户会静默看到中文（回退行为）。
+   设置相关键（`SettingsGeneralGroupName`/`SettingsLanguageName` 及枚举成员显示名键，ADR-0006）走同一流程；其中枚举成员键按「设置项名称键 + 成员名」约定生成（如 `SettingsLanguageNameZhCN`），见 [README 场景 8](../../README.md)。
 
 2. **改某条文案的措辞**：只改 `Language.resx` 的 `<value>`（中文）和 `Language.en-US.resx` 的 `<value>`（英文）。键名和 `Language.cs` 不动。例如把"启动台"改成"主页"：改 `DashBoardNavigationTitle` 的两个 `<value>`。
 
 3. **重命名一个键**：改 `Language.cs` 中属性名（`nameof` 自动跟随）+ 两个 resx 的 `data name`。注意消费方代码也要跟着改——强类型属性调用（如 `Modules/Workstation/MainWindowViewModel.cs:151` 的 `Language.SettingsNavigationTitle`）用 IDE 重命名重构可同时覆盖，但菜单 Attribute 里的字符串键（如 `Modules/Workstation/Menus/HelpMenus.cs:17` 的 `[MenuItem("MenuAboutTitle", ...)]`）IDE 重构不会跟随，和 resx 一样必须手动同步。
 
-4. **新增一种语言（如 ja-JP）**：新增 `Language.ja-JP.resx`，逐条翻译 29 个键；`Language.cs` 无需改动，`ResourceManager` 按 `CurrentUICulture` 自动选取。新语言的键可以只翻译一部分，缺失的键回退到中文。
+4. **新增一种语言（如 ja-JP）**：新增 `Language.ja-JP.resx`，逐条翻译 33 个键；`Language.cs` 无需改动，`ResourceManager` 按 `CurrentUICulture` 自动选取。新语言的键可以只翻译一部分，缺失的键回退到中文。
 
 5. **排查界面上出现了英文键名（如显示 "SplashPhaseReady"）**：说明该键在两个 resx 中都缺失，或 resx 里 `data name` 与 `nameof` 属性名不一致（拼写/大小写）。对照 `Language.cs` 属性名检查 `Language.resx` 的 `data name`。

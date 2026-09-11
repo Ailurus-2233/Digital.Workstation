@@ -6,15 +6,15 @@
 
 | 依赖 | 用到的能力 | 本模块使用点 |
 |---|---|---|
-| `Core/Abstractions` | 窗口管理契约 `IWindowManager`、`IMainWindowManager`（`Abstractions/WindowManager/`）；Shell 贡献契约 `ToolViewAttribute`/`ToolViewContribution`/`ToolViewPlacement`（工具视图，ADR-0002）、`IMainViewContribution`、`IStatusBarItemContribution`（`Abstractions/Contributions/`）；菜单贡献契约 `IMenuItemContribution` 与菜单 attribute `MenuGroupAttribute`/`MenuItemAttribute`（`Abstractions/Menus/`，ADR-0001） | `FrameworkWindowManager.cs:12` 实现两个窗口接口；`Contributions/ShellContributionCollector.cs` 四个 `Get*` 方法解析并排序贡献；`Contributions/ToolViewRegistration.cs:25` 读取 `ToolViewAttribute` 扫描注册工具视图；`Menus/MenuRegistration.cs:24、38` 读取两个 attribute 扫描注册菜单 |
-| `Core/Common` | `IoC`（一次性容器引用持有者）、`Logger`（Serilog 静态封装） | `FrameworkApplication.cs:145` `IoC.Initialize(...)`；`FrameworkWindowManager.cs:37` `IoC.Provider.Resolve(type)`；`FrameworkApplication.cs:93、110` `Logger.Error/Fatal`；`Layout/LayoutPersistence.cs` 全部失败路径 `Logger.Warning` |
-| `Core/Models` | 启动事件三件套：`StartupProgressEvent`/`StartupProgress`/`StartupPhase`、`ModuleLoadFailedEvent`/`ModuleLoadFailure`、`StartupFailureActionEvent`/`StartupFailureAction`（均位于 `Models/Events/`） | `FrameworkApplication.cs:70-105` 发布进度与失败事件；`:118-126` 订阅失败决策事件 |
-| `Core/UIPackage` | `WorkstationTheme`（Semi/Ursa 等四个主题包的 Styles 集合）、`VSCodePalette.ApplyTo`（VS Code Dark+ 色键写入） | `FrameworkApplication.cs:26、28`，全应用唯一主题装载点 |
+| `Core/Abstractions` | 窗口管理契约 `IWindowManager`、`IMainWindowManager`（`Abstractions/WindowManager/`）；Shell 贡献契约 `ToolViewAttribute`/`ToolViewContribution`/`ToolViewPlacement`（工具视图，ADR-0002）、`IMainViewContribution`、`IStatusBarItemContribution`（`Abstractions/Contributions/`）；菜单贡献契约 `IMenuItemContribution` 与菜单 attribute `MenuGroupAttribute`/`MenuItemAttribute`（`Abstractions/Menus/`，ADR-0001）；设置契约 `SettingGroupAttribute`/`SettingItemAttribute`/`SettingGroupContribution`/`SettingItemContribution`/`ISettingsService`（`Abstractions/Settings/`，ADR-0006） | `FrameworkWindowManager.cs:12` 实现两个窗口接口；`Contributions/ShellContributionCollector.cs` 七个 `Get*` 方法解析并排序贡献；`Contributions/ToolViewRegistration.cs:25` 读取 `ToolViewAttribute` 扫描注册工具视图；`Menus/MenuRegistration.cs:24、38` 读取两个 attribute 扫描注册菜单 |
+| `Core/Common` | `IoC`（一次性容器引用持有者）、`Logger`（Serilog 静态封装） | `FrameworkApplication.cs:148` `IoC.Initialize(...)`；`FrameworkWindowManager.cs:37` `IoC.Provider.Resolve(type)`；`FrameworkApplication.cs:96、113` `Logger.Error/Fatal`；`Layout/LayoutPersistence.cs` 全部失败路径 `Logger.Warning` |
+| `Core/Models` | 启动事件三件套：`StartupProgressEvent`/`StartupProgress`/`StartupPhase`、`ModuleLoadFailedEvent`/`ModuleLoadFailure`、`StartupFailureActionEvent`/`StartupFailureAction`（均位于 `Models/Events/`） | `FrameworkApplication.cs:73-108` 发布进度与失败事件；`:121-129` 订阅失败决策事件 |
+| `Core/UIPackage` | `WorkstationTheme`（Semi/Ursa 等四个主题包的 Styles 集合）、`VSCodePalette.ApplyTo`（VS Code Dark+ 色键写入） | `FrameworkApplication.cs:29、31`，全应用唯一主题装载点 |
 | `Core/Resource` | `Language.Get(string)`（按当前 UI 区域性解析资源键） | `Menus/MenuRegistration.cs:85` 解析菜单条目标题；`Menus/MenuTreeBuilder.cs:59、74、98` 解析路径段标题（ADR-0001）；`Contributions/ToolViewRegistration.cs:51` 解析工具视图标题（ADR-0002） |
 
 ### NuGet 包（Framework.csproj:18-23）
 
-`Avalonia.Desktop` 11.3.20、`Avalonia.Fonts.Inter` 11.3.20、`Avalonia.Themes.Fluent` 11.3.20、`AvaloniaUI.DiagnosticsSupport` 2.1.1、`CommunityToolkit.Mvvm` 8.4.0；另经 `Prism.DryIoc`（`using Prism.DryIoc;`，`FrameworkApplication.cs:13`）获得 `PrismApplication` 基类与 DryIoc 容器。目标框架 `net10.0`。
+`Avalonia.Desktop` 11.3.20、`Avalonia.Fonts.Inter` 11.3.20、`Avalonia.Themes.Fluent` 11.3.20、`AvaloniaUI.DiagnosticsSupport` 2.1.1、`CommunityToolkit.Mvvm` 8.4.0；另经 `Prism.DryIoc`（`using Prism.DryIoc;`，`FrameworkApplication.cs:16`）获得 `PrismApplication` 基类与 DryIoc 容器。目标框架 `net10.0`。
 
 ## 被依赖关系
 
@@ -62,7 +62,7 @@ ShellLayoutDto (Layout/ShellLayoutDto.cs:10)        const CurrentVersion=1（:15
 └── BottomPanel : BottomPanelLayoutDto? (:81)       Visible(true) / Height(160) / ActiveTab(string?)
 ```
 
-关系要点：与 `ShellLayoutState` 是**两套独立 record**——状态机管流转语义，DTO 管序列化兼容（`Version` 不识别即整份丢弃，刻意不做迁移）；两者由消费方 `MainWindowViewModel.CaptureLayout`/`RestoreLayout` 单向转换；读写经 `LayoutPersistence`（`Layout/LayoutPersistence.cs:12`，注册为单例于 `FrameworkApplication.cs:156`；序列化为 WriteIndented + camelCase + `JsonStringEnumConverter`，枚举落成 `"Center"` 形态字符串）。
+关系要点：与 `ShellLayoutState` 是**两套独立 record**——状态机管流转语义，DTO 管序列化兼容（`Version` 不识别即整份丢弃，刻意不做迁移）；两者由消费方 `MainWindowViewModel.CaptureLayout`/`RestoreLayout` 单向转换；读写经 `LayoutPersistence`（`Layout/LayoutPersistence.cs:12`，注册为单例于 `FrameworkApplication.cs:159`；序列化为 WriteIndented + camelCase + `JsonStringEnumConverter`，枚举落成 `"Center"` 形态字符串）。
 
 ### 窗口注册表（WindowManager/FrameworkWindowManager.cs）
 

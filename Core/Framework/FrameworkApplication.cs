@@ -1,12 +1,15 @@
-﻿using System.Reflection;
+﻿using System.Globalization;
+using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using DigitalWorkstation.Core.Abstractions.Settings;
 using Avalonia.Styling;
 using DigitalWorkstation.Core.Abstractions.WindowManager;
 using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.Layout;
+using DigitalWorkstation.Core.Framework.Settings;
 using DigitalWorkstation.Core.Framework.WindowManager;
 using DigitalWorkstation.Core.Models.Events;
 using DigitalWorkstation.Core.UIPackage;
@@ -155,6 +158,17 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
         // 注册布局持久化服务（ADR-0002）：layout.json 读/防抖写/删，机制在 Framework、接线在 shell 模块
         containerRegistry.RegisterSingleton<LayoutPersistence>();
 
+        // 注册设置服务（ADR-0006 决策 3/4）：与窗口管理器同型——显式构造实例并以工厂注册，
+        // 以便启动时一次性 Load 入内存的时机明确
+        var settingsService = new SettingsService(Container.Resolve<IEventAggregator>(), Container);
+        settingsService.Load();
+        containerRegistry.RegisterSingleton<ISettingsService>(() => settingsService);
+
+        // 注册 Framework 自身设置项（常规/语言，ADR-0006 决策 9），模块设置项由各自 RegisterTypes 注册
+        containerRegistry.RegisterSettings(typeof(SettingsService).Assembly);
+
+        ApplyLanguageSetting(settingsService);
+
         ResolveFrameworkServices();
     }
     
@@ -176,6 +190,20 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
     {
         RegisterFrameworkServices(containerRegistry);
         RegisterCustomService(containerRegistry);
+    }
+
+    /// <summary>
+    ///     按已存语言设置应用 UI 区域性（ADR-0006 决策 7：下次启动由消费方读取生效）。
+    ///     必须先于一切模块 RegisterTypes——菜单/工具视图标题在注册扫描时经 Language.Get 一次性解析；
+    ///     未存值时回退声明默认值（zh-CN），与操作系统区域性无关
+    /// </summary>
+    private static void ApplyLanguageSetting(ISettingsService settings)
+    {
+        var culture = settings.Get<UiLanguage>(GeneralSettings.LanguageSettingId).ToCultureInfo();
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.DefaultThreadCurrentUICulture = culture;
+        CultureInfo.CurrentCulture = culture;
+        CultureInfo.CurrentUICulture = culture;
     }
 
     /// <summary>

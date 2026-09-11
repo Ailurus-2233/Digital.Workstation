@@ -174,4 +174,20 @@
     <value>No matching commands</value>
     <comment>Empty-state text of the command palette when nothing matches (ADR-0005)</comment>
   </data>
+  <data name="SettingsGeneralGroupName" xml:space="preserve">
+    <value>General</value>
+    <comment>Display name of the "General" settings group (Framework built-in, ADR-0006)</comment>
+  </data>
+  <data name="SettingsLanguageName" xml:space="preserve">
+    <value>Language</value>
+    <comment>Display name of the "Language" setting item (Framework built-in, ADR-0006)</comment>
+  </data>
+  <data name="SettingsLanguageNameZhCN" xml:space="preserve">
+    <value>Chinese (Simplified)</value>
+    <comment>Display name of language setting member ZhCN (key convention: setting name key + member name, ADR-0006 decision 8)</comment>
+  </data>
+  <data name="SettingsLanguageNameEnUS" xml:space="preserve">
+    <value>English (US)</value>
+    <comment>Display name of language setting member EnUS (same convention)</comment>
+  </data>
 </root>

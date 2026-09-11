@@ -12,6 +12,11 @@
 5. **注册方式约定**：主视图/状态栏两接口注释一致——模块须「在 `Prism.Ioc.IContainerRegistry` 中以本接口注册实现」，以**接口**而非具体类型注册，shell 才能按接口收集。工具视图（ADR-0002）：不手写贡献类，View 类标 `ToolViewAttribute` 后在 `RegisterTypes` 调 `RegisterToolViews(Assembly)`，由 Framework 侧扫描生成 `ToolViewContribution` 元数据（单例注册）并注册 View 类型；非可实例化 `Control` 的标注类记 `Logger.Warning` 跳过。菜单例外（ADR-0001）：`IMenuItemContribution` 通常不手写实现，模块类标注 `MenuGroupAttribute`/`MenuItemAttribute` 后在 `RegisterTypes` 调 `RegisterMenus(Assembly)`，由 Framework 侧扫描生成实现并以接口注册。
 6. **面板收起行为**：「面板收起期间其 tab 的激活操作会被 ShellLayoutState 拒绝」（Contributions/ToolViewContribution.cs 注释）——激活操作不是异常而是被拒绝，调用方不要依赖激活必然生效。
 7. **菜单路径与分组语义**（ADR-0001）：路径段为 Language 资源键，各段 Trim 后按序精确匹配（Ordinal 大小写敏感）；含空段（`"A//B"`）的路径整体非法，扫描时记日志跳过；`MenuGroupAttribute` 的 `Group`/`GroupOrder`/`Order` 在单段路径与多段路径下语义不同（单段=方法项分组 + 顶层位次；多段=末端子菜单节点分组与位次，方法项进默认组）——深层子菜单内部分组必须拆类声明，一个 attribute 装不下两套分组参数。`MenuGroupAttribute.Order` 缺省 `int.MaxValue`（未声明 = 「无位次意见」，排最后且不参与取最小）——不要凭「数值缺省 0」的直觉推断位次，也别指望不写 `Order` 的类能抢前；`GroupOrder` 无此特例，缺省就是 0。
+8. **设置项契约不变量**（Settings/ 目录，ADR-0006）：
+   - `SettingItemContribution.Id` **全局唯一**（Settings/SettingItemContribution.cs 第 13 行）：默认「声明类全名.属性名」，是 settings.json 的 key 与 `ISettingsService` 读写的依据——撞 Id 时收集侧保留先注册者并记 `Logger.Warning`，后注册者被丢弃（同命令 Id 冲突规则）。
+   - `SettingItemAttribute` 只扫 `BindingFlags.Public | Static | DeclaredOnly` 属性：非公共/实例属性连候选都进不了，**静默忽略**（无日志，同菜单/命令扫描惯例）；无 getter 的属性扫描时记 `Logger.Warning` 跳过。
+   - `DefaultValue`（Settings/SettingItemAttribute.cs 第 33 行）必须是属性类型的**编译期常量**（attribute 实参限制，无法写 `new` 或方法调用）；类型与属性类型不匹配时扫描时记日志跳过——不是运行时校验。
+   - **声明属性体不会被执行**：扫描只读属性的类型与 attribute，不读属性值；读写一律走 `ISettingsService`（ADR-0006 决策 3）。在标注属性的 getter/setter 里写逻辑（如「读到 X 就迁移」）是无效代码，永远不运行。
 
 ## 易错改法
 

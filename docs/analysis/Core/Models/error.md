@@ -2,7 +2,7 @@
 
 ## 本模块自身抛出的异常
 
-**无。** 本模块 11 个文件全部是纯声明（空事件子类、位置 record、枚举），没有任何方法体、属性逻辑或构造验证，不可能主动抛出异常。record 的编译器合成成员（构造、`Equals`/`GetHashCode`/`ToString`、`Deconstruct`、with 表达式拷贝）不做参数校验，构造 `new StartupProgress(default, null!, -1, -1)` 也不会抛。
+**无。** 本模块 13 个文件全部是纯声明（空事件子类、位置 record、枚举），没有任何方法体、属性逻辑或构造验证，不可能主动抛出异常。record 的编译器合成成员（构造、`Equals`/`GetHashCode`/`ToString`、`Deconstruct`、with 表达式拷贝）不做参数校验，构造 `new StartupProgress(default, null!, -1, -1)` 也不会抛。
 
 ## 错误处理路径
 

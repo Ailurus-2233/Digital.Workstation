@@ -1,6 +1,6 @@
 # Abstractions — 对外接口与调用方式
 
-命名空间五组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Commands`（Commands/ 目录，命令契约 + 注册 attribute 两类型，ADR-0005）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，`ShellRegions` 与 `WellKnownViews` 两个常量类）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
+命名空间六组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Commands`（Commands/ 目录，命令契约 + 注册 attribute 两类型，ADR-0005）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，`ShellRegions` 与 `WellKnownViews` 两个常量类）、`DigitalWorkstation.Core.Abstractions.Settings`（Settings/ 目录，设置分组/设置项两 attribute + 两元数据类 + `ISettingsService`，ADR-0006）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
 
 ## Shell 贡献契约（Contributions/、Menus/ 与 Commands/，Region 与主视图 Id 常量在 Regions/）
 
@@ -148,6 +148,66 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 
 （此接口**没有**定位枚举和行为字段——状态栏只有一个区域，且条目是纯展示无点击行为。）
 
+## 设置契约（Settings/）
+
+设置项注册契约（ADR-0006 决策 1）：模块类标 `SettingGroupAttribute` 声明分组、公共静态可读属性标 `SettingItemAttribute` 声明设置项，经 Framework 侧 `SettingRegistration.RegisterSettings(Assembly)` 扫描生成 `SettingGroupContribution`/`SettingItemContribution` 元数据（单例注册）；设置值读写一律经 `ISettingsService`（ADR-0006 决策 3），声明属性体不被执行。
+
+### `SettingGroupAttribute`（Settings/SettingGroupAttribute.cs）
+
+`[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]`（第 9 行），声明一个设置分组，标注在任何类上。主构造参 `string name`（第 10 行）。
+
+| 成员 | 类型 | 语义 |
+|---|---|---|
+| `Name`（构造参，get-only，第 15 行） | `string` | 分组显示名的 Language 资源键，运行时解析，缺键回退键名本身；同名分组全局合并 |
+| `Order`（命名属性，第 20 行） | `int` | 分组在设置页分组树中的排序权重，小者靠前；同名多处声明冲突时取最小值（同 ADR-0001 决策 4）。缺省 `0` |
+
+仅被设置项引用而无本 attribute 声明的分组也可用——由设置项引用隐式产生，位次视为 0（收集侧补出）。
+
+### `SettingItemAttribute`（Settings/SettingItemAttribute.cs）
+
+`[AttributeUsage(AttributeTargets.Property)]`（第 9 行），声明一个设置项，标注在公共静态可读属性上。主构造参 `string group, string name`（第 10 行）。**属性只是声明锚点**：属性类型即设置值类型，扫描不读取属性值，读写一律经 `ISettingsService`；非公共/非静态/无 getter 的属性静默忽略（同菜单/命令扫描惯例）。
+
+| 成员 | 类型 | 语义 |
+|---|---|---|
+| `Group`（构造参，get-only，第 21 行） | `string` | 所属分组的名称键（`SettingGroupAttribute.Name`），按名称全局合并归组 |
+| `Name`（构造参，get-only，第 26 行） | `string` | 设置项显示名的 Language 资源键，运行时解析，缺键回退键名本身（ADR-0006 决策 2） |
+| `Id`（命名属性，第 16 行） | `string?` | 稳定标识；`null` = 默认「声明类全名.属性名」（仿命令 Id 规则，ADR-0005）；全局唯一，是 settings.json 的 key 与 `ISettingsService` 读写的依据 |
+| `DefaultValue`（命名属性，第 33 行） | `object?` | 默认值：用户从未修改时 `Get<T>` 的返回值（ADR-0006 决策 3）；必须是属性类型的编译期常量（attribute 实参限制），类型不匹配扫描时记日志跳过；枚举成员显示名走 Language 资源键，键按「设置项名称键 + 成员名」约定生成（决策 8）。缺省 `null` |
+| `Order`（命名属性，第 38 行） | `int` | 同分组内的排序权重，小者靠前；同 `Order` 按名称键字典序。缺省 `0` |
+| `RequiresRestart`（命名属性，第 43 行） | `bool` | 是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动由消费方读取生效（ADR-0006 决策 7）。缺省 `false` |
+
+### `SettingGroupContribution`（sealed class，Settings/SettingGroupContribution.cs）
+
+设置分组的贡献元数据：**不由模块手写**，由 Framework 侧 `RegisterSettings` 扫描 `SettingGroupAttribute` 生成并注册进容器；收集时按 `Name` 全局合并（多处声明取最小 `Order`），仅被设置项引用而无声明的分组由收集侧补出（`Order` 视为 0）。全部属性为 `required init`（第 13、18 行）。
+
+| 属性 | 类型 | 语义 |
+|---|---|---|
+| `Name` | `string` | 分组显示名的 Language 资源键（**非已解析文案**），运行时经 Language.Get 解析，缺键回退键名本身 |
+| `Order` | `int` | 分组在设置页分组树中的排序权重，小者靠前；同名多处声明取最小值 |
+
+### `SettingItemContribution`（sealed class，Settings/SettingItemContribution.cs）
+
+设置项的贡献元数据：**不由模块手写**，由 Framework 侧 `RegisterSettings` 扫描 `SettingItemAttribute` 生成并注册进容器；设置页据此渲染编辑器（控件由 `ValueType` 推断，ADR-0006 决策 8），`ISettingsService` 据此取 `DefaultValue` 作为未修改时的读值。全部属性为 `required init`（第 13-43 行）。
+
+| 属性 | 类型 | 语义 |
+|---|---|---|
+| `Id` | `string` | 稳定标识，全局唯一：默认「声明类全名.属性名」；settings.json 的 key 与 `ISettingsService` 读写的依据 |
+| `Group` | `string` | 所属分组的名称键（`SettingGroupAttribute.Name`），按名称全局合并归组 |
+| `Name` | `string` | 设置项显示名的 Language 资源键（**非已解析文案**），缺键回退键名本身 |
+| `ValueType` | `Type` | 设置值类型（声明属性的类型）：编辑器推断与 JSON 反序列化的依据 |
+| `DefaultValue` | `object?` | 默认值：用户从未修改时的取值，不是单独存储层（ADR-0006 决策 3） |
+| `Order` | `int` | 同分组内的排序权重，小者靠前；同 `Order` 按 `Name` 键字典序 |
+| `RequiresRestart` | `bool` | 是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动生效（ADR-0006 决策 7） |
+
+### `ISettingsService`（Settings/ISettingsService.cs）
+
+设置值读写服务（ADR-0006 决策 3）：Framework 实现，启动时一次性把 settings.json 加载入内存；读纯走内存——已修改取用户值，未修改取声明的默认值（默认值不是单独存储层）；写 = 更新内存 + 防抖落盘 + 广播 `SettingChangedEvent`（事件契约在 Core/Models）。
+
+| 成员 | 签名（行号） | 语义 |
+|---|---|---|
+| `Get` | `T? Get<T>(string settingId)`（第 14 行） | 读取设置值：已修改返回用户值，未修改返回声明的默认值，未声明（含持久化值反序列化失败回退后仍无声明）返回 `T` 的默认值并记日志 |
+| `Set` | `void Set<T>(string settingId, T value)`（第 20 行） | 写入设置值：立即更新内存、防抖落盘 settings.json、广播变更事件；对 `RequiresRestart` 的设置项，当前进程行为不变，下次启动生效 |
+
 ## 视图类型属性（ViewType）
 
 「激活时要显示哪个视图」这一能力由 `System.Type` 属性承载（注释均为「经容器解析以支持依赖注入」）。原 `ContentViewType`（已删的导航项/面板 tab 接口）已不复存在，命名统一为 `ViewType`：
@@ -196,6 +256,6 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 
 ## 调用方式与生命周期
 
-- **贡献契约**：无主动调用方 API。接口类贡献（`IMainViewContribution`/`IStatusBarItemContribution`）由模块实现接口并在 `Prism.Ioc.IContainerRegistry` 以接口注册（生命周期由模块注册方式决定），shell 收集消费；工具视图/菜单/命令例外——模块在 `RegisterTypes` 分别调 `RegisterToolViews(Assembly)`（View 类标 `ToolViewAttribute`）、`RegisterMenus(Assembly)`（菜单类标 `MenuGroupAttribute`/`MenuItemAttribute`）、`RegisterCommands(Assembly)`（方法标 `CommandAttribute`，免类级标记），由 Framework 侧扫描生成 `ToolViewContribution` 元数据/`IMenuItemContribution`/`ICommandContribution` 实现并注册。本模块内无调用点——本程序集是纯定义层，典型调用序列发生在 shell 与其他模块（不在本模块范围）。
+- **贡献契约**：无主动调用方 API。接口类贡献（`IMainViewContribution`/`IStatusBarItemContribution`）由模块实现接口并在 `Prism.Ioc.IContainerRegistry` 以接口注册（生命周期由模块注册方式决定），shell 收集消费；工具视图/菜单/命令/设置例外——模块在 `RegisterTypes` 分别调 `RegisterToolViews(Assembly)`（View 类标 `ToolViewAttribute`）、`RegisterMenus(Assembly)`（菜单类标 `MenuGroupAttribute`/`MenuItemAttribute`）、`RegisterCommands(Assembly)`（方法标 `CommandAttribute`，免类级标记）、`RegisterSettings(Assembly)`（类标 `SettingGroupAttribute`、公共静态可读属性标 `SettingItemAttribute`），由 Framework 侧扫描生成 `ToolViewContribution` 元数据/`IMenuItemContribution`/`ICommandContribution` 实现/`SettingGroupContribution`/`SettingItemContribution` 元数据并注册；设置值读写则由消费方注入 `ISettingsService` 调 `Get<T>`/`Set<T>`。本模块内无调用点——本程序集是纯定义层，典型调用序列发生在 shell/Framework 与其他模块（不在本模块范围）。
 - **窗口管理**：调用方注入 `IWindowManager`/`IMainWindowManager`，调 `ShowWindow<MyDialog>(vm)` 这类泛型扩展或直接 `ShowWindow(typeof(MyDialog), vm)`。窗口实例来源是 DI 容器（`GetWindow` 注释：「从容器中解析得到的窗口实例」）。
 - **数据结构**：本模块不定义任何 DTO/记录类；对外数据完全由上述接口属性承载，字段语义见上。

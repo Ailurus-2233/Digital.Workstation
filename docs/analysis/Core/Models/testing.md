@@ -4,7 +4,7 @@
 
 **本模块没有测试。** 仓库唯一的测试项目是 `UnitTest/Framework/Framework.csproj`，它既不引用 `Models.csproj`，也不涉及本模块任何类型（全仓 grep `Models|StartupProgress|TogglePanel` 于 UnitTest/ 目录零命中）。
 
-无测试的原因与模块形态相符：11 个文件全部是纯声明——6 个无成员体的事件子类（机制在 Prism 的 `PubSubEvent<T>`/`PubSubEvent` 里，不是本仓库代码）、2 个编译器合成全部成员的 record、3 个枚举。本模块内**没有任何本仓库编写的可执行逻辑**可供断言；唯一可测的行为是 record 的值相等/`Deconstruct`/with 拷贝，而那是编译器合成语义，测它没有防御价值。
+无测试的原因与模块形态相符：13 个文件全部是纯声明——7 个无成员体的事件子类（机制在 Prism 的 `PubSubEvent<T>`/`PubSubEvent` 里，不是本仓库代码）、3 个编译器合成全部成员的 record、3 个枚举。本模块内**没有任何本仓库编写的可执行逻辑**可供断言；唯一可测的行为是 record 的值相等/`Deconstruct`/with 拷贝，而那是编译器合成语义，测它没有防御价值。
 
 ## 怎么跑（如需）
 

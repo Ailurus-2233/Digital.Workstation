@@ -8,15 +8,15 @@
 | `InvalidOperationException($"Window of type {type} is already registered.")` | 同一运行时类型的窗口在已注册（尚未关闭）时再次 `ShowWindow`/`ShowDialog` | `FrameworkWindowManager.InitializeWindow`，`FrameworkWindowManager.cs:49` |
 | `InvalidOperationException("Main window is not set. Cannot show window.")`（常量 `NullMainWindowError`，第 27 行） | `_mainWindow` 为 null 时调用 `ShowWindow(Window)`/`ShowWindow(Window, object)`（第 89、110 行）；`_mainWindow` 为 null 或不活跃（`IsActive=false`）时调用 `ShowDialog` 实例版（第 130、140 行）；`HandleMainWindow()` 取不到主窗口**或主窗口已在 `_windowMap` 中**（第 166 行） | `FrameworkWindowManager` 各处 |
 | `KeyNotFoundException($"No window of type {type} is currently open.")` | 对未打开（或已关闭被移除映射）的窗口类型调 `HideWindow(Type)` | `FrameworkWindowManager.HideWindow`，`FrameworkWindowManager.cs:155` |
-| `InvalidOperationException("IoC is already initialized")` | 进程内第二次调用 `IoC.Initialize`（由 Common 模块抛出；正常路径下只有 `RegisterFrameworkServices` 调一次） | 经 `FrameworkApplication.cs:145` 触发，定义在 Core/Common/IoC.cs |
+| `InvalidOperationException("IoC is already initialized")` | 进程内第二次调用 `IoC.Initialize`（由 Common 模块抛出；正常路径下只有 `RegisterFrameworkServices` 调一次） | 经 `FrameworkApplication.cs:148` 触发，定义在 Core/Common/IoC.cs |
 | `NullReferenceException` | `IoC.Initialize` 之前任何代码访问 `IoC.Provider`/`IoC.Registry`（字段以 `null!` 抑制编译警告） | 经 `FrameworkWindowManager.GetWindow`（第 37 行）等，根源在 Core/Common |
-| 模块加载任意异常 | `moduleManager.LoadModule` 抛出的任何异常 | 不向上抛——`RunStartupSequenceAsync` 的 catch（`FrameworkApplication.cs:91`）捕获 |
+| 模块加载任意异常 | `moduleManager.LoadModule` 抛出的任何异常 | 不向上抛——`RunStartupSequenceAsync` 的 catch（`FrameworkApplication.cs:94`）捕获 |
 | `InvalidOperationException($"布局模板资源缺失：{key}")` | `FrameworkWindow` 构造或 `PanelAlignment` 切换时，对应档位的 `WindowLayout*` 布局模板经 `TryGetResource` 查不到（模板资源未编译进程序集，或键名与 axaml 漂移）——窗口构造期即失败 | `FrameworkWindow.UpdateLayoutTemplate`，`Windows/FrameworkWindow.cs:94` |
 | 无——**不抛异常** | layout.json 读/写/删的任何失败（JSON 损坏、枚举字符串非法、版本不识别、IO 失败） | `LayoutPersistence` 全路径 `catch (Exception)` + `Logger.Warning` 静默回落：`Load` 返回 null（`Layout/LayoutPersistence.cs:49、55、64`）、`Flush` 放弃本次写盘（:126）、`Delete` 放弃删除（:100） |
 
 ## 错误处理路径
 
-### 启动序列（FrameworkApplication.cs:65-113）
+### 启动序列（FrameworkApplication.cs:68-116）
 
 ```
 RunStartupSequenceAsync

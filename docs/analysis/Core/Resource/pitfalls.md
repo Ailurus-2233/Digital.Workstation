@@ -3,9 +3,9 @@
 ## 隐含不变量
 
 1. **键名 ≡ 属性名 ≡ resx `data name`，三者必须逐字一致（区分大小写）。**
-   `Language.cs:25-153` 的每个属性用 `Get(nameof(属性名))` 取键；`Language.resx` / `Language.en-US.resx` 的 `data name` 是字符串字面量。`nameof` 只保证 C# 侧一致，resx 侧没有任何编译期检查。`ResourceManager.GetString` 键查找大小写敏感——`SplashPhaseReady` 与 `SplashphaseReady` 是两个键。
+   `Language.cs:25-182` 的每个属性用 `Get(nameof(属性名))` 取键；`Language.resx` / `Language.en-US.resx` 的 `data name` 是字符串字面量。`nameof` 只保证 C# 侧一致，resx 侧没有任何编译期检查。`ResourceManager.GetString` 键查找大小写敏感——`SplashPhaseReady` 与 `SplashphaseReady` 是两个键。
 
-2. **两个 resx 的键集合必须一一对应。** 当前各 27 条。en-US 漏一条不会报错：en-US 用户静默看到中文回退值。这是最隐蔽的"漏翻译"来源。
+2. **两个 resx 的键集合必须一一对应。** 当前各 33 条。en-US 漏一条不会报错：en-US 用户静默看到中文回退值。这是最隐蔽的"漏翻译"来源。
 
 3. **`ResourceManager` 基名三要素绑定**：`Language.cs:12` 的字符串 `"DigitalWorkstation.Core.Resource.Language"` ≡ 项目根命名空间（`DigitalWorkstation.Core.Resource`，由项目路径/默认根命名空间推导）+ resx 文件名 `Language`（不含扩展名）+ resx 位于项目根目录。三者任一变化（重命名 resx、移动 resx 到子目录、改 csproj 根命名空间），基名就失配，首次访问抛 `MissingManifestResourceException`——且这个字符串字面量不会被重构工具更新。
 
@@ -21,7 +21,7 @@
 | 用 IDE 重命名重构属性名 | `nameof` 和 C# 调用点都跟着改，但 resx `data name` 不变 → 运行时该键缺失，界面显示键名（`?? key` 兜底） |
 | 把 `Language.resx` 重命名为 `Strings.resx` 并把基名同步改成 `...Strings` 但只改了一处 | 基名失配 → `MissingManifestResourceException`，启动即崩 |
 | 给 `Get` 加"键缺失就抛异常"的严格模式 | 违背 `Language.cs:15-16` 注释明示的设计意图（"键缺失时返回键本身，便于发现遗漏"），会把原本可视觉发现的漏配变成运行时崩溃 |
-| 在 resx `<value>` 里放 `{0}` 占位符后指望 `Get` 格式化 | `Get` 只做查表不做 `string.Format`；占位符会原样显示在界面上。当前 27 条文案均无占位符 |
+| 在 resx `<value>` 里放 `{0}` 占位符后指望 `Get` 格式化 | `Get` 只做查表不做 `string.Format`；占位符会原样显示在界面上。当前 33 条文案均无占位符 |
 | 把某属性的 XML doc 注释改了但不改 resx `<comment>`（或反之） | 两份"用途文档"漂移，后人不知哪个是真相；现状两者逐条一致 |
 
 ## 历史踩坑（从代码证据读出）

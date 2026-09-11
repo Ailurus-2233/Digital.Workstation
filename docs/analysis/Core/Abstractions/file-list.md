@@ -1,6 +1,6 @@
 # Abstractions — 文件结构与功能
 
-相对 `Core/Abstractions/` 的目录树（共 15 个文件，含 csproj；无子目录嵌套超过一层，无测试、无资源文件）：
+相对 `Core/Abstractions/` 的目录树（共 20 个文件，含 csproj；无子目录嵌套超过一层，无测试、无资源文件）：
 
 ```
 Abstractions.csproj
@@ -19,6 +19,12 @@ Menus/
 Regions/
 ├── ShellRegions.cs
 └── WellKnownViews.cs
+Settings/
+├── SettingGroupAttribute.cs
+├── SettingItemAttribute.cs
+├── SettingGroupContribution.cs
+├── SettingItemContribution.cs
+└── ISettingsService.cs
 WindowManager/
 ├── IWindowManager.cs
 ├── IMainWindowManager.cs
@@ -74,6 +80,26 @@ shell 与模块共知的主视图 Id 常量（ADR-0006 决策 5）。定义 `pub
 ### Menus/MenuItemAttribute.cs
 
 定义 `MenuItemAttribute`（`[AttributeUsage(AttributeTargets.Method)]`，构造参 `title` 为 Language 资源键，命名属性 `Order`/`Icon?`）——声明菜单项；方法签名仅支持无参 `void M()`/`Task M()`，非法签名扫描时记日志跳过。
+
+### Settings/SettingGroupAttribute.cs
+
+定义 `SettingGroupAttribute`（`[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]`，构造参 `name` 为 Language 资源键，命名属性 `Order` 缺省 `0`）——声明一个设置分组（ADR-0006 决策 1），经 Framework 侧 `RegisterSettings(Assembly)` 扫描注册；同名分组全局合并、多处声明位次取最小（同 ADR-0001 决策 4）。
+
+### Settings/SettingItemAttribute.cs
+
+定义 `SettingItemAttribute`（`[AttributeUsage(AttributeTargets.Property)]`，构造参 `group`/`name`，命名属性 `Id?`（缺省「声明类全名.属性名」，仿命令 Id 规则）/`DefaultValue?`（须为属性类型的编译期常量）/`Order`/`RequiresRestart`）——声明一个设置项（ADR-0006 决策 1），标注在公共静态可读属性上；属性只是声明锚点，扫描不读属性值，读写一律经 `ISettingsService`。
+
+### Settings/SettingGroupContribution.cs
+
+定义 `public sealed class SettingGroupContribution`（2 个 `required init` 属性：`Name`（Language 资源键，非已解析文案）/`Order`）——设置分组的贡献元数据，由 Framework 侧扫描 `SettingGroupAttribute` 生成并注册进容器，收集时按 `Name` 全局合并，模块不手写。
+
+### Settings/SettingItemContribution.cs
+
+定义 `public sealed class SettingItemContribution`（7 个 `required init` 属性：`Id`（全局唯一，settings.json 的 key）/`Group`/`Name`（Language 资源键，非已解析文案）/`ValueType`（编辑器推断与 JSON 反序列化依据）/`DefaultValue?`（未修改时的取值，不是单独存储层，ADR-0006 决策 3）/`Order`/`RequiresRestart`（ADR-0006 决策 7））——设置项的贡献元数据，由 Framework 侧扫描 `SettingItemAttribute` 生成并注册进容器，模块不手写。
+
+### Settings/ISettingsService.cs
+
+定义接口 `ISettingsService`（2 个方法：`T? Get<T>(string settingId)`、`void Set<T>(string settingId, T value)`）——设置值读写服务契约（ADR-0006 决策 3）：Framework 实现，启动一次加载入内存；读纯走内存（未修改取声明默认值），写 = 更新内存 + 防抖落盘 settings.json + 广播 `SettingChangedEvent`（事件契约在 Core/Models）。
 
 ### WindowManager/IWindowManager.cs
 

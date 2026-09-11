@@ -5,7 +5,7 @@
 ```
 Core/Framework/
 ├── Framework.csproj                       项目文件：net10.0；引用 Abstractions/Common/Models/UIPackage/Resource 五项目与 Avalonia/Prism/Ursa 相关包
-├── FrameworkApplication.cs                应用入口基类与启动序列
+├── FrameworkApplication.cs                应用入口基类与启动序列（含设置服务注册与启动时语言应用，ADR-0006）
 ├── Layout/                                  命名空间 DigitalWorkstation.Core.Framework.Layout
 │   ├── ShellLayoutState.cs                布局状态根 record + 全部转换方法
 │   ├── SideBarState.cs                    SideBar 区域状态 record
@@ -31,8 +31,13 @@ Core/Framework/
 ├── Commands/                                命名空间 DigitalWorkstation.Core.Framework.Commands（ADR-0005）
 │   └── CommandRegistration.cs             attribute 命令注册扩展（免类级 attribute）+ internal 反射贡献实现
 ├── Contributions/                           命名空间 DigitalWorkstation.Core.Framework.Contributions
-│   ├── ShellContributionCollector.cs      shell 贡献收集器
+│   ├── ShellContributionCollector.cs      shell 贡献收集器（含设置分组/设置项收集，ADR-0006）
 │   └── ToolViewRegistration.cs            attribute 工具视图注册扩展（ADR-0002）
+├── Settings/                                命名空间 DigitalWorkstation.Core.Framework.Settings（ADR-0006）
+│   ├── SettingRegistration.cs             attribute 设置注册扩展（与 RegisterMenus/RegisterCommands 同构）
+│   ├── SettingsService.cs                 ISettingsService 实现：settings.json 启动一次加载、内存读、防抖落盘、事件广播
+│   ├── UiLanguage.cs                      界面语言枚举（zh-CN/en-US）+ ToCultureInfo 扩展
+│   └── GeneralSettings.cs                 Framework 预置「常规/语言」设置项声明类
 ├── Windows/                                 命名空间 DigitalWorkstation.Core.Framework.Windows（窗口基类与主题）
 │   ├── FrameworkWindow.cs                 带基础布局的窗口基类（内置 VS Code 式五区 shell + 标题栏菜单栏 + 命令面板浮层与 Ctrl+P）
 │   ├── CommandPalette.cs                  命令面板控件（ADR-0005）：自包含检索浮层（过滤/键盘导航/MRU 内存置顶），ItemsSource 宽松绑定 Commands
@@ -48,13 +53,13 @@ Core/Framework/
 `net10.0`、`ImplicitUsings`+`Nullable` 开启。ProjectReference：`..\Abstractions`、`..\Common`、`..\Models`、`..\UIPackage`、`..\Resource`（第 10-14 行）。PackageReference：`Avalonia.Desktop`/`Avalonia.Fonts.Inter`/`Avalonia.Themes.Fluent` 11.3.20、`AvaloniaUI.DiagnosticsSupport` 2.1.1、`CommunityToolkit.Mvvm` 8.4.0、`Irihi.Ursa` 1.15.1（第 18-23 行，FrameworkWindow 直接继承 UrsaWindow）。
 
 ### `FrameworkApplication.cs`
-定义 `public abstract class FrameworkApplication<TWindow> : PrismApplication where TWindow : Window`（第 17 行，命名空间 `DigitalWorkstation.Core.Framework`）。关键入口：
-- `Initialize()`（第 22 行）：主题装载（Dark + `WorkstationTheme` + `VSCodePalette.ApplyTo`）。
-- `OnFrameworkInitializationCompleted()`（第 36 行）→ `RunStartupSequenceAsync()`（第 65 行）：三阶段启动序列（ADR-0004）。
-- `OnInitialized()`（第 45 行）、`InitializeModules()`（第 52 行）：两个故意的空覆盖。
-- `CreateSplashWindow()`（第 59 行，abstract）/`RegisterCustomService()`（第 187 行，virtual）：子类扩展点。
-- `RegisterTypes()`（第 175 行）→ `RegisterFrameworkServices`（第 143 行）：`IoC.Initialize`、窗口管理器双接口单例、`ShellContributionCollector` 单例、`LayoutPersistence` 单例（机制在 Framework、接线在 shell 模块，ADR-0002）。
-- `ConfigureViewModelLocator()`（第 209 行）：约定式 ViewModel 定位解析器。
+定义 `public abstract class FrameworkApplication<TWindow> : PrismApplication where TWindow : Window`（第 20 行，命名空间 `DigitalWorkstation.Core.Framework`）。关键入口：
+- `Initialize()`（第 25 行）：主题装载（Dark + `WorkstationTheme` + `VSCodePalette.ApplyTo`）。
+- `OnFrameworkInitializationCompleted()`（第 39 行）→ `RunStartupSequenceAsync()`（第 68 行）：三阶段启动序列（ADR-0004）。
+- `OnInitialized()`（第 48 行）、`InitializeModules()`（第 55 行）：两个故意的空覆盖。
+- `CreateSplashWindow()`（第 62 行，abstract）/`RegisterCustomService()`（第 215 行，virtual）：子类扩展点。
+- `RegisterTypes()`（第 189 行）→ `RegisterFrameworkServices`（第 146 行）：`IoC.Initialize`、窗口管理器双接口单例、`ShellContributionCollector` 单例、`LayoutPersistence` 单例（机制在 Framework、接线在 shell 模块，ADR-0002）；随后显式构造 `SettingsService` 并立即 `Load()`、注册 `ISettingsService` 单例（:163-165）、`RegisterSettings` 注册 Framework 自身「常规/语言」设置项（:168）、`ApplyLanguageSetting`（:200，私有静态）按已存语言设 `DefaultThreadCurrentCulture/UICulture` 与 `Current`——必须先于一切模块 `RegisterTypes`（ADR-0006 决策 7）。
+- `ConfigureViewModelLocator()`（第 237 行）：约定式 ViewModel 定位解析器。
 
 ### `Layout/ShellLayoutState.cs`
 `public sealed record ShellLayoutState`（第 9 行）：`SelectedActivity`（:14）与 `ActivityBarItems`（:20，ActivityBar 顶部段有序 Id 列表，钉住项不入列，ADR-0002）+ 五个区域状态属性 + `static Initial`（:30）。转换方法：`SelectActivity`（:36）、`ToggleSideBar`（:53）、`ToggleAuxiliaryPanel`（:61）、`ToggleBottomPanel`（:69）、`ActivateAuxTab`（:77）、`ActivateBottomTab`（:90）、`MoveTab`（:109，跨 Bar 迁移/同 Bar 重排）、`OpenMainView`（:236）、`Resize`（:244）、私有 `Clamp`（:275）。注释自述："原型验证过的 reducer 的正式实现"。
@@ -117,10 +122,22 @@ Core/Framework/
 `public class FrameworkWindowTheme : Styles`（第 12 行）：`StyleInclude`（BaseUri `avares://DigitalWorkstation.Core.Framework/Windows/`，:14；Source 相对 `FrameworkWindowTheme.axaml`，:20）加载主题，构造时 `_ = include.Loaded` 强制加载（:22）再 `Add(include)`（:23）。
 
 ### `Contributions/ShellContributionCollector.cs`
-`public class ShellContributionCollector(IContainerProvider containerProvider)`（第 9 行，主构造；命名空间 `DigitalWorkstation.Core.Framework.Contributions`）。五个收集方法：`GetToolViews()`（:15，`Order` 升序，不按定位枚举过滤——三处 Bar 的分派由消费方按 `Placement`/`AllowMove` 决定，ADR-0002）、`GetMainViews()`（:24）、`GetMenuItems()`（:31，无参数——不过滤不排序，建树由 `MenuTreeBuilder` 负责，ADR-0001）、`GetCommands()`（:41，`Order` 升序 + 同 Order 标题 Ordinal + Id 冲突去重保留先注册者，ADR-0005）、`GetStatusBarItems()`（:62）。统一模式：容器解析 `IEnumerable<T>` → （可选）过滤/排序 → `ToArray()`。
+`public class ShellContributionCollector(IContainerProvider containerProvider)`（第 12 行，主构造；命名空间 `DigitalWorkstation.Core.Framework.Contributions`）。七个收集方法：`GetToolViews()`（:18，`Order` 升序，不按定位枚举过滤——三处 Bar 的分派由消费方按 `Placement`/`AllowMove` 决定，ADR-0002）、`GetMainViews()`（:27）、`GetMenuItems()`（:34，无参数——不过滤不排序，建树由 `MenuTreeBuilder` 负责，ADR-0001）、`GetCommands()`（:42，`Order` 升序 + 同 Order 标题 Ordinal + Id 冲突去重保留先注册者，ADR-0005）、`GetStatusBarItems()`（:63）、`GetSettingGroups()`（:74，按名称全局合并——多处声明位次取最小、仅被设置项引用的隐式分组补出 `Order=0`，排序 `Order` 再名称 Ordinal，ADR-0006）、`GetSettingItems()`（:99，`Order` 升序 + 同 Order 名称 Ordinal + Id 冲突去重保留先注册者，ADR-0006）。统一模式：容器解析 `IEnumerable<T>` → （可选）过滤/排序 → `ToArray()`。
 
 ### `Contributions/ToolViewRegistration.cs`
 `public static class ToolViewRegistration`（第 14 行）：`RegisterToolViews(this IContainerRegistry, Assembly)` 扩展（:20，ADR-0002）——扫描传入程序集中标注 `ToolViewAttribute` 的类（不做全局扫描），非可实例化 `Control` 或程序集内 `Id` 重复记 `Logger.Warning` 跳过；合法者 `Register(viewType)` 注册 View 类型本身，并把 attribute 元数据（标题经 `Language.Get` 解析）落成 `ToolViewContribution` 注册 singleton。与 `Menus/MenuRegistration.cs` 同构。
+
+### `Settings/SettingRegistration.cs`
+`public static class SettingRegistration`（第 13 行）：`RegisterSettings(this IContainerRegistry, Assembly)` 扩展（:19，ADR-0006 决策 1）——扫描传入程序集（不做全局扫描）：类上每条 `SettingGroupAttribute` 声明注册一个 `SettingGroupContribution` 单例（:23-27，同名分组的合并与位次取最小发生在收集侧）；`Public | Static | DeclaredOnly` 属性中标注 `SettingItemAttribute` 者（:29-36），无 getter 或 `DefaultValue` 类型不匹配记 `Logger.Warning` 跳过（:38-51），合法者落成 `SettingItemContribution` 单例（:53-63，`Id` 默认「声明类全名.属性名」，`ValueType` 取属性类型）。与 `Menus/MenuRegistration.cs` 同构。
+
+### `Settings/SettingsService.cs`
+`public sealed class SettingsService(IEventAggregator, IContainerProvider) : ISettingsService`（第 17 行，ADR-0006 决策 3/4）：%AppData%/Digital.Workstation/settings.json 的读/防抖写，启动时经 `Load()`（:53）一次性加载入内存。成员：`public static readonly string FilePath`（:23-25）；`Load()`（文件缺失静默返回——首次启动常态；内容为空或一切异常记 `Logger.Warning` 按无修改处理，:64-82，容错仿 LayoutPersistence）；`Get<T>(string)`（:85，纯内存读——`_values` 命中反序列化返回、单项失败记 Warning 逐项回退默认值，未修改经 `FindContribution` 回退声明 `DefaultValue`，未声明记 Warning 返回 `default`）；`Set<T>(string, T)`（:114，锁内更新内存 + 500ms `Timer` 防抖，锁外广播 `SettingChangedEvent`）；私有 `FindContribution`（:135，声明缓存按 Id 惰性填充、未命中重新枚举容器以允许模块后到注册）；私有 `Flush`（:150，Timer 回调：快照 `_values` 后写盘，`catch (Exception)` 就地吞掉记 Warning——纪律同 `LayoutPersistence.Flush`）。序列化选项（:29-33）：`WriteIndented` + `JsonStringEnumConverter`（枚举落盘为 `JsonStringEnumMemberName` 字符串）。
+
+### `Settings/UiLanguage.cs`
+`public enum UiLanguage`（第 12 行）：`[JsonStringEnumMemberName("zh-CN")] ZhCN` / `[JsonStringEnumMemberName("en-US")] EnUS`——attribute 值即对应 `CultureInfo` 名称，落盘值与区域性名称同源。同文件 `public static class UiLanguageExtensions`（:30）：`ToCultureInfo(this UiLanguage)`（:32，反射读 `JsonStringEnumMemberName` 值作 `CultureInfo.GetCultureInfo` 名称）。
+
+### `Settings/GeneralSettings.cs`
+`[SettingGroup("SettingsGeneralGroupName", Order = 0)] public static class GeneralSettings`（第 10 行，ADR-0006 决策 9）：Framework 预置「常规/语言」设置项的声明类。`public static readonly string LanguageSettingId`（:15，默认规则「声明类全名.属性名」，供启动序列等消费方读写）；`[SettingItem("SettingsGeneralGroupName", "SettingsLanguageName", DefaultValue = UiLanguage.ZhCN, RequiresRestart = true)] public static UiLanguage Language`（:20-22）——属性体只是声明锚点不会被读取，读写一律经 `ISettingsService`。
 
 ### `Menus/MenuItemViewModel.cs`
 `public class MenuItemViewModel`（第 13 行），自 Modules/Workstation 迁入（命名空间 `DigitalWorkstation.Core.Framework.Menus`，API 不变）。菜单项呈现模型：`Title`（required init，:19）、`Icon: Geometry?`（:24，null 不渲染图标）、`Command: ICommand?`（:26）、`Children: ObservableCollection<object>`（:28，子项为 MenuItemViewModel 或 Avalonia `Separator`）；静态 `FromSubmenu(MenuTreeSubmenu)`（:33）把建树器产物递归转换（`IconPath` 经 `StreamGeometry.Parse` 转几何，:43；分隔线转 `Separator`，:47）。
