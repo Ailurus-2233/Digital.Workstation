@@ -8,10 +8,10 @@
 
 | 签名 | 说明 |
 |---|---|
-### 静态只读属性（33 个，全部以 `Get(nameof(属性名))` 实现，返回 `string`）
+### 静态只读属性（36 个，全部以 `Get(nameof(属性名))` 实现，返回 `string`）
 
 
-定义于 `Language.cs:25-182`。键名 = 属性名，中文值来自 `Language.resx`，英文值来自 `Language.en-US.resx`：
+定义于 `Language.cs:25-197`。键名 = 属性名，中文值来自 `Language.resx`，英文值来自 `Language.en-US.resx`：
 
 | 属性 | 中文值 | 英文值 | 用途（resx comment） |
 |---|---|---|---|
@@ -48,6 +48,9 @@
 | `SettingsLanguageName`（:172） | 语言 | Language | 设置项"语言"的显示名（Framework 预置，ADR-0006） |
 | `SettingsLanguageNameZhCN`（:177） | 中文（简体） | Chinese (Simplified) | 语言设置项成员 ZhCN 的显示名（键按「设置项名称键 + 成员名」约定生成，ADR-0006 决策 8） |
 | `SettingsLanguageNameEnUS`（:182） | English (US) | English (US) | 语言设置项成员 EnUS 的显示名（同上约定） |
+| `SettingsRestartPendingMark`（:187） | 重启后生效 | Restart to apply | 设置页需重启设置项被修改后的项级标记文本（ADR-0006 决策 7） |
+| `SettingsRestartBannerText`（:192） | 部分设置的更改将在重启后生效 | Some setting changes will take effect after restart | 设置页顶部「存在未生效的需重启修改」横幅文本（ADR-0006 决策 7） |
+| `SettingsRestartNowButtonTitle`（:197） | 立即重启 | Restart Now | 设置页重启横幅上「立即重启」按钮的标题（ADR-0006 决策 7） |
 
 
 > 注意：`StatusReadyTitle`（状态栏"就绪"，:123）与 `SplashPhaseReady`（启动画面"就绪"阶段名，:148）**中文值同为"就绪"，但用途不同，是两个独立的键**，不能合并。
@@ -80,6 +83,8 @@ public void Exit() { ... }
 - `Modules/Workstation/Contributions/ReadyStatusBarItem.cs:14` → `Language.StatusReadyTitle`
 - `Modules/DashBoard/DashBoardStatusBarItem.cs:15` → `Language.DashBoardNavigationTitle`
 - `Modules/DashBoard/ViewModels/Windows/DashBoardWindowViewModel.cs:24,43-45,56` → Splash 系列 5 个属性（启动画面阶段文案）
+- `Modules/Settings/ViewModels/SettingsPageViewModel.cs` → `Language.SettingsRestartBannerText`/`SettingsRestartNowButtonTitle`（重启横幅文本与按钮标题，ADR-0006 决策 7）
+- `Modules/Settings/ViewModels/SettingItemModel.cs` → `Language.SettingsRestartPendingMark`（「重启后生效」项级标记文本，决策 7）
 
 Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
 
@@ -99,4 +104,4 @@ Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
 
 ## 对外公开的数据结构
 
-无自定义数据结构。输入输出都是 `string`；语言资源键的"结构"即上表 33 个键，物理载体是两个 resx 文件中的 `<data name="键名"><value>文案</value><comment>用途</comment></data>` 条目（`Language.resx:61-192`、`Language.en-US.resx:61-192`）。
+无自定义数据结构。输入输出都是 `string`；语言资源键的"结构"即上表 36 个键，物理载体是两个 resx 文件中的 `<data name="键名"><value>文案</value><comment>用途</comment></data>` 条目（`Language.resx:61-204`、`Language.en-US.resx:61-204`）。

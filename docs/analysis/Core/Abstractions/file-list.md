@@ -99,7 +99,7 @@ shell 与模块共知的主视图 Id 常量（ADR-0006 决策 5）。定义 `pub
 
 ### Settings/ISettingsService.cs
 
-定义接口 `ISettingsService`（2 个方法：`T? Get<T>(string settingId)`、`void Set<T>(string settingId, T value)`）——设置值读写服务契约（ADR-0006 决策 3）：Framework 实现，启动一次加载入内存；读纯走内存（未修改取声明默认值），写 = 更新内存 + 防抖落盘 settings.json + 广播 `SettingChangedEvent`（事件契约在 Core/Models）。
+定义接口 `ISettingsService`（3 个方法：`T? Get<T>(string settingId)`、`void Set<T>(string settingId, T value)`、`bool IsPendingRestart(string settingId)`）——设置值读写服务契约（ADR-0006 决策 3）：Framework 实现，启动一次加载入内存；读纯走内存（未修改取声明默认值），写 = 更新内存 + 防抖落盘 settings.json + 广播 `SettingChangedEvent`（事件契约在 Core/Models）；`IsPendingRestart` 报告本次进程内值是否偏离启动时生效值（决策 7「重启后生效」判定依据）。
 
 ### WindowManager/IWindowManager.cs
 

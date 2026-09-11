@@ -190,4 +190,16 @@
     <value>English (US)</value>
     <comment>Display name of language setting member EnUS (same convention)</comment>
   </data>
+  <data name="SettingsRestartPendingMark" xml:space="preserve">
+    <value>Restart to apply</value>
+    <comment>Item-level marker text next to a modified restart-required setting on the settings page (ADR-0006 decision 7)</comment>
+  </data>
+  <data name="SettingsRestartBannerText" xml:space="preserve">
+    <value>Some setting changes will take effect after restart</value>
+    <comment>Settings page top banner text shown while restart-required changes are pending (ADR-0006 decision 7)</comment>
+  </data>
+  <data name="SettingsRestartNowButtonTitle" xml:space="preserve">
+    <value>Restart Now</value>
+    <comment>Title of the Restart Now button on the settings page restart banner (ADR-0006 decision 7)</comment>
+  </data>
 </root>

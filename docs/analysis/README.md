@@ -37,7 +37,7 @@
 | Core/UIPackage | [Core/UIPackage/](Core/UIPackage/common.md) | 共享 UI 资源包：`WorkstationTheme` 聚合 4 个第三方主题包、`VSCodePalette` 深色色键、`Icons` 15 个 StreamGeometry path 常量 | 无项目依赖（包：Avalonia/Semi.Avalonia/Ursa） |
 | Core/Framework | [Core/Framework/](Core/Framework/common.md) | 应用框架层：`FrameworkApplication<TWindow>` 引导与三阶段启动序列（ADR-0004）、`FrameworkWindow` 主题窗口基类（`Windows/`）、`CommandPalette` 命令面板控件（ADR-0005）、`FrameworkWindowManager`（`WindowManager/`）、`ShellLayoutState` 布局状态机与 `LayoutPersistence` 布局持久化（`Layout/`）、`ShellContributionCollector` 贡献收集（`Contributions/`）、`MenuTreeBuilder` 菜单建树与 `RegisterMenus`/`RegisterCommands` attribute 菜单/命令注册（`Menus/`、`Commands/`）、`RegisterSettings` attribute 设置注册与 `SettingsService` 设置持久化/语言应用（`Settings/`，ADR-0006） | Abstractions、Common、Models、UIPackage |
 | Modules/DashBoard | [Modules/DashBoard/](Modules/DashBoard/common.md) | 启动台模块：启动进度窗（进度/失败/继续退出决策）+ 向 shell 五个扩展点各贡献一条目的通路验证（tracer bullet） | Abstractions、Framework、Resource、UIPackage |
-| Modules/Settings | 尚无，待 deep-read 生成 | 设置页模块：向 MainContent 贡献设置页主视图占位骨架（`IMainViewContribution`，Id 取 `WellKnownViews.Settings`，ADR-0006） | Abstractions、Framework、Resource、UIPackage |
+| Modules/Settings | 尚无，待 deep-read 生成 | 设置页模块：向 MainContent 贡献设置页主视图（分组树 + 编辑器，含「重启后生效」标记与重启横幅 UX，ADR-0006 决策 5/7） | Abstractions、Framework、Resource、UIPackage |
 | Modules/Workstation | [Modules/Workstation/](Modules/Workstation/common.md) | 应用宿主与 shell：`MainWindow` VS Code 式五区布局、`MainWindowViewModel` 驱动布局状态（含命令收集与手势 KeyBinding 接线，ADR-0005；ActivityBar 左下角"设置"纯导航按钮，ADR-0006 决策 6）、`WorkstationApplication` 入口、shell 预置贡献 | Framework、Resource、UIPackage、DashBoard、Settings |
 | Launcher | [Launcher/](Launcher/common.md) | 程序入口与运行时引导器（WinExe）：Release 分类目录布局的程序集/native 库解析（`AssemblyLoader`）+ 启动 Avalonia/Prism 应用 | Workstation |
 
@@ -136,6 +136,6 @@ graph TD
 
 ### 8. 新增一个设置项（出现在设置页）
 
-1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：`SettingGroupAttribute`（类级、可多处声明同名分组取最小 `Order`）/`SettingItemAttribute`（标公共静态可读属性作声明锚点，`Id` 默认「声明类全名.属性名」、`DefaultValue`、`Order`、`RequiresRestart`）与 `ISettingsService`（`Get<T>`/`Set<T>`，ADR-0006）字段骨架；`Get` 对未修改值回退声明默认值，资源键缺失时界面显示键名本身（`Language.Get` 的 `?? key` 兜底）。
+1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：`SettingGroupAttribute`（类级、可多处声明同名分组取最小 `Order`）/`SettingItemAttribute`（标公共静态可读属性作声明锚点，`Id` 默认「声明类全名.属性名」、`DefaultValue`、`Order`、`RequiresRestart`）与 `ISettingsService`（`Get<T>`/`Set<T>`/`IsPendingRestart`，ADR-0006）字段骨架；`Get` 对未修改值回退声明默认值，资源键缺失时界面显示键名本身（`Language.Get` 的 `?? key` 兜底）。
 2. 模块侧：在静态类上标 `[SettingGroup("分组名键", Order=…)]`、在静态可读属性上标 `[SettingItem("分组名键", "设置项名键", DefaultValue=…)]`，模块 `RegisterTypes` 保证调了 `RegisterSettings(Assembly)`；分组名/设置项名/枚举成员显示名（「设置项名称键 + 成员名」约定）三类键同步在 Core/Resource 加（见场景 2）——现成样例为 Framework 预置的 `GeneralSettings`。
 3. [Core/Framework/common.md](Core/Framework/common.md)：收集侧零改动——`ShellContributionCollector.GetSettingGroups()`/`GetSettingItems()` 统一合并排序去重；代码读写设置经注入 `ISettingsService`（`Set` 自动防抖落盘并广播 `SettingChangedEvent`），不读 attribute 属性值。

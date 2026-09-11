@@ -190,4 +190,16 @@
     <value>English (US)</value>
     <comment>语言设置项成员 EnUS 的显示名（同上约定）</comment>
   </data>
+  <data name="SettingsRestartPendingMark" xml:space="preserve">
+    <value>重启后生效</value>
+    <comment>设置页需重启设置项被修改后的项级标记文本（ADR-0006 决策 7）</comment>
+  </data>
+  <data name="SettingsRestartBannerText" xml:space="preserve">
+    <value>部分设置的更改将在重启后生效</value>
+    <comment>设置页顶部「存在未生效的需重启修改」横幅文本（ADR-0006 决策 7）</comment>
+  </data>
+  <data name="SettingsRestartNowButtonTitle" xml:space="preserve">
+    <value>立即重启</value>
+    <comment>设置页重启横幅上「立即重启」按钮的标题（ADR-0006 决策 7）</comment>
+  </data>
 </root>

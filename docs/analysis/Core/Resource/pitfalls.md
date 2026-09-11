@@ -3,9 +3,9 @@
 ## 隐含不变量
 
 1. **键名 ≡ 属性名 ≡ resx `data name`，三者必须逐字一致（区分大小写）。**
-   `Language.cs:25-182` 的每个属性用 `Get(nameof(属性名))` 取键；`Language.resx` / `Language.en-US.resx` 的 `data name` 是字符串字面量。`nameof` 只保证 C# 侧一致，resx 侧没有任何编译期检查。`ResourceManager.GetString` 键查找大小写敏感——`SplashPhaseReady` 与 `SplashphaseReady` 是两个键。
+   `Language.cs:25-197` 的每个属性用 `Get(nameof(属性名))` 取键；`Language.resx` / `Language.en-US.resx` 的 `data name` 是字符串字面量。`nameof` 只保证 C# 侧一致，resx 侧没有任何编译期检查。`ResourceManager.GetString` 键查找大小写敏感——`SplashPhaseReady` 与 `SplashphaseReady` 是两个键。
 
-2. **两个 resx 的键集合必须一一对应。** 当前各 33 条。en-US 漏一条不会报错：en-US 用户静默看到中文回退值。这是最隐蔽的"漏翻译"来源。
+2. **两个 resx 的键集合必须一一对应。** 当前各 36 条。en-US 漏一条不会报错：en-US 用户静默看到中文回退值。这是最隐蔽的"漏翻译"来源。
 
 3. **`ResourceManager` 基名三要素绑定**：`Language.cs:12` 的字符串 `"DigitalWorkstation.Core.Resource.Language"` ≡ 项目根命名空间（`DigitalWorkstation.Core.Resource`，由项目路径/默认根命名空间推导）+ resx 文件名 `Language`（不含扩展名）+ resx 位于项目根目录。三者任一变化（重命名 resx、移动 resx 到子目录、改 csproj 根命名空间），基名就失配，首次访问抛 `MissingManifestResourceException`——且这个字符串字面量不会被重构工具更新。
 

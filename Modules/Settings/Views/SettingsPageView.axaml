@@ -12,12 +12,26 @@
     mc:Ignorable="d">
     <!--  设置页：左侧设置分组树、右侧选中分组的设置项编辑器（ADR-0006 决策 5/8）  -->
     <UserControl.DataTemplates>
-        <!--  枚举设置项：名称 + 下拉框（成员显示名已本地化）  -->
+        <!--  枚举设置项：名称 + 「重启后生效」项级标记 + 下拉框（成员显示名已本地化）  -->
         <DataTemplate DataType="viewmodels:EnumSettingItemModel">
-            <Grid Margin="0,6" ColumnDefinitions="*,Auto">
+            <Grid Margin="0,6" ColumnDefinitions="*,Auto,Auto">
                 <TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
-                <ComboBox
+                <Border
                     Grid.Column="1"
+                    Margin="8,0"
+                    Padding="6,1"
+                    VerticalAlignment="Center"
+                    BorderBrush="{DynamicResource SemiColorBorder}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    IsVisible="{Binding ShowRestartPending}">
+                    <TextBlock
+                        FontSize="12"
+                        Foreground="{DynamicResource SemiColorText2}"
+                        Text="{Binding RestartPendingMarkText}" />
+                </Border>
+                <ComboBox
+                    Grid.Column="2"
                     MinWidth="220"
                     ItemsSource="{Binding Options}"
                     SelectedItem="{Binding SelectedOption}">
@@ -31,26 +45,45 @@
         </DataTemplate>
     </UserControl.DataTemplates>
 
-    <Grid ColumnDefinitions="240,*" Margin="12">
+    <Grid RowDefinitions="Auto,*" Margin="12">
+        <!--  需重启修改横幅：存在未生效的需重启修改时显示，「立即重启」启动新进程并退出当前进程（ADR-0006 决策 7）  -->
         <Border
+            Margin="0,0,0,12"
+            Padding="12,8"
             Background="{DynamicResource SemiColorBackground1}"
             BorderBrush="{DynamicResource SemiColorBorder}"
             BorderThickness="1"
-            CornerRadius="8">
-            <ListBox
-                Background="Transparent"
-                BorderThickness="0"
-                ItemsSource="{Binding Groups}"
-                SelectedItem="{Binding SelectedGroup}">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Name}" />
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+            CornerRadius="8"
+            IsVisible="{Binding HasPendingRestartChanges}">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock VerticalAlignment="Center" Text="{Binding RestartBannerText}" />
+                <Button
+                    Grid.Column="1"
+                    Command="{Binding RestartNowCommand}"
+                    Content="{Binding RestartNowButtonTitle}" />
+            </Grid>
         </Border>
-        <ScrollViewer Grid.Column="1" Margin="12,0,0,0">
-            <ItemsControl ItemsSource="{Binding Items}" />
-        </ScrollViewer>
+        <Grid Grid.Row="1" ColumnDefinitions="240,*">
+            <Border
+                Background="{DynamicResource SemiColorBackground1}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <ListBox
+                    Background="Transparent"
+                    BorderThickness="0"
+                    ItemsSource="{Binding Groups}"
+                    SelectedItem="{Binding SelectedGroup}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+            <ScrollViewer Grid.Column="1" Margin="12,0,0,0">
+                <ItemsControl ItemsSource="{Binding Items}" />
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </UserControl>

@@ -393,11 +393,17 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
 | 成员 | 签名/位置 | 语义 |
 |---|---|---|
 | `FilePath` | `public static readonly string`（:23-25） | 设置配置文件路径：`%AppData%/Digital.Workstation/settings.json` |
-| `Load` | `public void Load()`（:53） | 启动时一次性加载入内存镜像 `_values`；文件缺失静默返回（:57-60，首次启动常态）；内容为空（:64-68）或一切异常 `catch (Exception)`（:78-82）记 Warning 按无修改处理——容错仿 `LayoutPersistence` |
-| `Get<T>` | `public T? Get<T>(string settingId)`（:85） | 纯内存读：`_values` 命中则按 `T` 反序列化返回，单项失败记 Warning 后**逐项**回退默认值（:91-100，与 layout.json 整份丢弃不同）；未修改时经 `FindContribution` 回退声明的 `DefaultValue`（:104-111）；未声明记 Warning 返回 `default` |
-| `Set<T>` | `public void Set<T>(string settingId, T value)`（:114） | 未声明记 Warning 但仍写入（:116-119）；锁内更新 `_values` 并把 500ms 防抖 Timer 重置到单次触发（:121-126），锁外广播 `SettingChangedEvent`（:128） |
-| `FindContribution` | `private SettingItemContribution?`（:135） | 声明默认值缓存：按 Id 缓存，未命中重新枚举容器中的全部声明刷新缓存——模块在启动序列阶段 2 才注册各自设置项，缓存必须允许后到的声明（:42-46 注释） |
-| `Flush` | `private void Flush(object?)`（:150） | Timer 回调：锁内快照 `_values` 后 `Directory.CreateDirectory` + 序列化写盘（:161-162）；`catch (Exception)` 就地吞掉记 Warning（:158-167，纪律同 `LayoutPersistence.Flush`） |
+| `Load` | `public void Load()`（:64） | 启动时一次性加载入内存镜像 `_values`，并把载入内容原样复制为 `_sessionStartValues`（:86，「重启后生效」判定的基准）；文件缺失静默返回（:68-71，首次启动常态）；内容为空（:75-79）或一切异常 `catch (Exception)`（:89-93）记 Warning 按无修改处理——容错仿 `LayoutPersistence` |
+| `Get<T>` | `public T? Get<T>(string settingId)`（:97） | 纯内存读：`_values` 命中则按 `T` 反序列化返回，单项失败记 Warning 后**逐项**回退默认值（:103-112，与 layout.json 整份丢弃不同）；未修改时经 `FindContribution` 回退声明的 `DefaultValue`（:116-123）；未声明记 Warning 返回 `default` |
+| `Set<T>` | `public void Set<T>(string settingId, T value)`（:126） | 未声明记 Warning 但仍写入（:129-132）；锁内更新 `_values`、把 500ms 防抖 Timer 重置到单次触发并 `TrackPendingRestart` 维护重启判定（:134-141），锁外广播 `SettingChangedEvent`（:143） |
+| `IsPendingRestart` | `public bool IsPendingRestart(string settingId)`（:146） | 锁内查 `_pendingRestartIds`（ADR-0006 决策 7「重启后生效」判定；服务不感知 RequiresRestart，过滤在调用方） |
+| `TrackPendingRestart` | `private void`（:158） | 重启判定维护（调用方须持 `_gate`）：当前值与启动时生效值经 `JsonElement.DeepEquals` 比较——快照命中取快照值，快照不含则以声明默认值序列化结果为基准（:160-163）；偏离记入 `_pendingRestartIds`、改回启动值即移出 |
+| `FindContribution` | `private SettingItemContribution?`（:179） | 声明默认值缓存：按 Id 缓存，未命中重新枚举容器中的全部声明刷新缓存——模块在启动序列阶段 2 才注册各自设置项，缓存必须允许后到的声明（:42-46 注释） |
+| `FlushPending` | `public void FlushPending()`（:198） | 立即落盘：锁内停掉在途防抖 Timer，锁外 `Save(TakeSnapshot())` 同步写盘。「立即重启」启动新进程前调用——防抖有 500ms 窗口，不强制落盘新进程可能读到旧配置 |
+| `Flush` | `private void Flush(object?)`（:208） | Timer 回调：`Save(TakeSnapshot())` |
+| `TakeSnapshot` / `Save` | `private`（:213 / :222） | 锁内快照 `_values` / `Directory.CreateDirectory` + 序列化写盘；`Save` 对一切异常 `catch (Exception)` 就地吞掉记 Warning（:221 注释，纪律同 `LayoutPersistence.Flush`） |
+
+内部状态：`_values`（:40，落盘内容内存镜像）、`_declared`（:46，声明惰性缓存）、`_sessionStartValues`（:52，进程启动时生效值快照）、`_pendingRestartIds`（:57，已偏离启动值的项）、`_timer`（:59，防抖）；全部经 `_gate`（:35）保护。
 
 序列化选项（:29-33）：`WriteIndented` + `JsonStringEnumConverter`——枚举落盘为 `JsonStringEnumMemberName` 指定的字符串（`UiLanguage` 为 `"zh-CN"`/`"en-US"`）。落盘文件只存**用户已修改的值**（`_values` 的镜像），默认值不进存储层。
 
@@ -418,6 +424,14 @@ public static class GeneralSettings
 ```
 
 Framework 预置设置项的声明类（ADR-0006 决策 9）。成员：`public static readonly string LanguageSettingId`（:15，默认规则「声明类全名.属性名」，供启动序列等消费方读写）；`[SettingItem("SettingsGeneralGroupName", "SettingsLanguageName", DefaultValue = UiLanguage.ZhCN, RequiresRestart = true)] public static UiLanguage Language`（:20-22）——属性体只是声明锚点不会被读取，读写一律经 `ISettingsService`。
+
+## 17. `ApplicationRestarter`（ApplicationRestarter.cs:14，ADR-0006 决策 7）
+
+```csharp
+public static class ApplicationRestarter { public static void Restart(); } // :19
+```
+
+「立即重启」：设置页重启横幅按钮的动作（真实调用点 `Modules/Settings/ViewModels/SettingsPageViewModel.cs` 的 `RestartNowCommand`）。顺序固定三步：① 经 `IoC.Provider` 解析 `ISettingsService`，是 `SettingsService` 则 `FlushPending()` 强制落盘（:21-25，防抖 500ms 窗口内重启会让新进程读到旧配置）；② `Environment.ProcessPath` 取当前可执行文件路径（为 null 记 `Logger.Error` 中止，:27-32），以原始命令行参数（`Environment.GetCommandLineArgs().Skip(1)`）`Process.Start` 启动新进程（:35）；③ `IClassicDesktopStyleApplicationLifetime.Shutdown()` 走正常桌面生命周期退出当前进程（:36，与启动失败退出同路径）。重启前记一行 `Logger.Information`（:34）。新进程会再次经过启动台，属预期行为。
 
 
 ## 容器注册清单（对外可解析的服务）

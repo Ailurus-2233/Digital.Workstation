@@ -180,4 +180,19 @@ public static class Language
     ///     语言设置项成员 EnUS 的显示名（同上约定）
     /// </summary>
     public static string SettingsLanguageNameEnUS => Get(nameof(SettingsLanguageNameEnUS));
+
+    /// <summary>
+    ///     设置页需重启设置项被修改后的项级标记文本（ADR-0006 决策 7）
+    /// </summary>
+    public static string SettingsRestartPendingMark => Get(nameof(SettingsRestartPendingMark));
+
+    /// <summary>
+    ///     设置页顶部「存在未生效的需重启修改」横幅文本（ADR-0006 决策 7）
+    /// </summary>
+    public static string SettingsRestartBannerText => Get(nameof(SettingsRestartBannerText));
+
+    /// <summary>
+    ///     设置页重启横幅上「立即重启」按钮的标题（ADR-0006 决策 7）
+    /// </summary>
+    public static string SettingsRestartNowButtonTitle => Get(nameof(SettingsRestartNowButtonTitle));
 }

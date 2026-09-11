@@ -45,6 +45,17 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
     /// </summary>
     private readonly Dictionary<string, SettingItemContribution> _declared = new(StringComparer.Ordinal);
 
+    /// <summary>
+    ///     进程启动时的生效值快照（Load 载入内容的副本）：「重启后生效」判定的基准，
+    ///     快照不含的项以声明默认值为基准（ADR-0006 决策 7）
+    /// </summary>
+    private readonly Dictionary<string, JsonElement> _sessionStartValues = new(StringComparer.Ordinal);
+
+    /// <summary>
+    ///     本次进程内值已偏离启动时生效值的设置项 Id（改回启动值即移除）
+    /// </summary>
+    private readonly HashSet<string> _pendingRestartIds = new(StringComparer.Ordinal);
+
     private System.Threading.Timer? _timer;
 
     /// <summary>
@@ -72,6 +83,7 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
                 foreach (var (key, value) in values)
                 {
                     _values[key] = value;
+                    _sessionStartValues[key] = value;
                 }
             }
         }
@@ -113,19 +125,51 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
 
     public void Set<T>(string settingId, T value)
     {
-        if (FindContribution(settingId) is null)
+        var contribution = FindContribution(settingId);
+        if (contribution is null)
         {
             Logger.Warning($"写入未声明的设置项 \"{settingId}\"", nameof(SettingsService));
         }
 
         lock (_gate)
         {
-            _values[settingId] = JsonSerializer.SerializeToElement(value, SerializerOptions);
+            var element = JsonSerializer.SerializeToElement(value, SerializerOptions);
+            _values[settingId] = element;
             _timer ??= new System.Threading.Timer(Flush, null, Timeout.Infinite, Timeout.Infinite);
             _timer.Change(DebounceMilliseconds, Timeout.Infinite);
+            TrackPendingRestart(settingId, element, contribution);
         }
 
         eventAggregator.GetEvent<SettingChangedEvent>().Publish(new SettingChanged(settingId, value));
+    }
+
+    public bool IsPendingRestart(string settingId)
+    {
+        lock (_gate)
+        {
+            return _pendingRestartIds.Contains(settingId);
+        }
+    }
+
+    /// <summary>
+    ///     维护「重启后生效」判定：当前值偏离启动时生效值（快照不含的项以声明默认值为基准）则记入，
+    ///     改回启动值则移出。调用方须持有 _gate
+    /// </summary>
+    private void TrackPendingRestart(string settingId, JsonElement current, SettingItemContribution? contribution)
+    {
+        if (!_sessionStartValues.TryGetValue(settingId, out var sessionStart) && contribution is not null)
+        {
+            sessionStart = JsonSerializer.SerializeToElement(contribution.DefaultValue, SerializerOptions);
+        }
+
+        if (JsonElement.DeepEquals(sessionStart, current))
+        {
+            _pendingRestartIds.Remove(settingId);
+        }
+        else
+        {
+            _pendingRestartIds.Add(settingId);
+        }
     }
 
     /// <summary>
@@ -147,15 +191,36 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
         return _declared.GetValueOrDefault(settingId);
     }
 
-    private void Flush(object? state)
+    /// <summary>
+    ///     立即落盘：作废在途的防抖保存并同步写入。
+    ///     「立即重启」启动新进程前调用——防抖有 500ms 窗口，不强制落盘新进程可能读到不含本次修改的旧配置
+    /// </summary>
+    public void FlushPending()
     {
-        Dictionary<string, JsonElement> snapshot;
         lock (_gate)
         {
-            snapshot = new Dictionary<string, JsonElement>(_values, StringComparer.Ordinal);
+            _timer?.Change(Timeout.Infinite, Timeout.Infinite);
         }
 
-        // Timer 回调里的异常无人处理会拖垮进程，写入失败必须就地吞掉记日志（同 LayoutPersistence.Flush）
+        Save(TakeSnapshot());
+    }
+
+    private void Flush(object? state)
+    {
+        Save(TakeSnapshot());
+    }
+
+    private Dictionary<string, JsonElement> TakeSnapshot()
+    {
+        lock (_gate)
+        {
+            return new Dictionary<string, JsonElement>(_values, StringComparer.Ordinal);
+        }
+    }
+
+    // Timer 回调（Flush）里的异常无人处理会拖垮进程，写入失败必须就地吞掉记日志（同 LayoutPersistence.Flush）
+    private static void Save(Dictionary<string, JsonElement> snapshot)
+    {
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
