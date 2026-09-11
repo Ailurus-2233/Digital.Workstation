@@ -17,7 +17,7 @@
 2. `ModuleText` 条件清空（第 48-50 行）：`LoadingModules` 阶段 `ModuleText == "name（i/N）"`（全角括号，见 `FormatModuleText` 第 61 行）；其余阶段为空字符串。
 3. 失败态转换（`OnModuleFailed` 第 53-59 行）：发布 `ModuleLoadFailure` 后 `IsFailed==true`、`PhaseText==Language.SplashPhaseFailed`、`ErrorMessage==failure.ErrorMessage`；随后再发 `StartupProgress` 断言 `IsFailed` 复位为 `false`（第 40 行）。
 4. 决策回传（`Continue`/`Exit` 第 70、79 行）：订阅 `StartupFailureActionEvent` 后执行 `ContinueCommand`/`ExitCommand`，断言收到对应 `StartupFailureAction`。
-5. 贡献声明的声明值：反射读 `DashBoardTasksView` 的 `[ToolView("dashboard.tasks", "DashBoardTasksTabTitle", Default = ToolViewPlacement.BottomPanel, Order = 15)]`（DashBoardTasksView.axaml.cs:10-11）、`DashBoardMenus` 的 `[MenuGroup("MenuFileTitle", Group="General", GroupOrder=100)]` 与 `OpenDashBoard` 的 `[MenuItem("DashBoardOpenWindowMenuTitle", Order=100, ...)]` 等纯声明断言（价值低，防误改排序约定时才有意义）。
+5. 贡献声明的声明值：反射读 `DashBoardTasksView` 的 `[ToolView("dashboard.tasks", "DashBoardTasksTabTitle", Default = ToolViewPlacement.BottomPanel, Order = 15)]`（DashBoardTasksView.axaml.cs:10-11）等纯声明断言（价值低，防误改排序约定时才有意义）。
 
 ## 当前的验证方式（手动冒烟）
 
@@ -25,4 +25,4 @@
 
 1. 启动应用（Workstation 宿主）：观察启动台（DashBoardWindow）依次显示"核心服务 → 正在加载模块 name（i/N）→ 就绪"，随后自动关闭并出现 MainWindow。
 2. 人为制造一个模块加载失败：确认启动台显示错误详情与"继续/退出"按钮；"继续"跳过失败模块进入工作区，"退出"终止应用。
-3. 工作区内：ActivityBar 出现"启动台"项；点开 SideBar 出现"概览/最近项目"两个条目，点击后 MainContent 整体切换；BottomPanel 出现"任务"tab 且排在"输出"与"日志"之间；文件菜单出现"打开启动台"（General 组，与"退出"的 Application 组之间有分隔线、位于其前），点击重新打开启动台窗口；状态栏出现启动台条目且位于"就绪"之后。
+3. 工作区内：ActivityBar 出现"启动台"项；点开 SideBar 出现"概览/最近项目"两个条目，点击后 MainContent 整体切换；BottomPanel 出现"任务"tab 且排在"输出"与"日志"之间；状态栏出现启动台条目且位于"就绪"之后。

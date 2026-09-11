@@ -393,16 +393,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    ///     Ctrl+B：独立翻转 SideBar 可见性，选中项与内容保留
-    /// </summary>
-    [RelayCommand]
-    private void ToggleSideBar()
-    {
-        TogglePanel(TogglePanelTarget.SideBar);
-    }
-
-    /// <summary>
-    ///     收起按钮或 Ctrl+Alt+B：独立翻转 AuxiliaryPanel 可见性，活动 tab 记录保留
+    ///     收起按钮：独立翻转 AuxiliaryPanel 可见性，活动 tab 记录保留（快捷键走 ViewCommands 的命令 Gesture）
     /// </summary>
     [RelayCommand]
     private void ToggleAuxiliaryPanel()
@@ -411,7 +402,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    ///     收起按钮或 Ctrl+J：独立翻转 BottomPanel 可见性，活动 tab 记录保留
+    ///     收起按钮：独立翻转 BottomPanel 可见性，活动 tab 记录保留（快捷键走 ViewCommands 的命令 Gesture）
     /// </summary>
     [RelayCommand]
     private void ToggleBottomPanel()

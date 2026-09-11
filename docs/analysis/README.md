@@ -86,7 +86,7 @@ graph TD
 
 1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：5 个 `I*Contribution` 接口的字段骨架（导航/主视图/面板/状态栏为 `Id`/`Title`/`IconPath`/`Order` + 定位枚举；`IMenuItemContribution` 为 ADR-0001 路径/分组模型，通常不经手写实现而由 `MenuGroupAttribute`/`MenuItemAttribute` + `RegisterMenus` 声明注册）。
 2. [Core/Abstractions/pitfalls.md](Core/Abstractions/pitfalls.md)：`Id` 唯一性分级（主视图 Id 跨模块全局唯一，建议模块名前缀）与 `Order`「小者靠前」的作用域。
-3. [Modules/DashBoard/common.md](Modules/DashBoard/common.md) + [reference.md](Modules/DashBoard/reference.md)：现成模板——DashBoard 是五个扩展点各贡献一条的 tracer bullet，`DashBoardModule.RegisterTypes` 是注册样板（菜单为一行 `RegisterMenus(typeof(...).Assembly)`，菜单条目是 `DashBoardMenus` 这类 attribute 菜单类），贡献类属性矩阵在 reference.md。
+3. [Modules/DashBoard/common.md](Modules/DashBoard/common.md) + [reference.md](Modules/DashBoard/reference.md)：现成模板——DashBoard 是工具视图/主视图/状态栏三类扩展点各贡献一条的 tracer bullet，`DashBoardModule.RegisterTypes` 是注册样板（工具视图一行 `RegisterToolViews(typeof(...).Assembly)`，接口贡献逐行 `RegisterSingleton`），贡献类属性矩阵在 reference.md。
 4. [Core/Resource/common.md](Core/Resource/common.md)：贡献项 `Title` 文案的来源（见场景 2）。
 5. [Core/UIPackage/common.md](Core/UIPackage/common.md)：贡献项 `IconPath` 的来源（`Icons.Xxx` 常量）。
 6. [Modules/Workstation/common.md](Modules/Workstation/common.md)：shell 侧如何收集（`EnsureContributionsLoaded` → `ShellContributionCollector`）并渲染；`WorkstationApplication.ConfigureModuleCatalog` 里 `AddModule<新模块>()`。
@@ -131,7 +131,7 @@ graph TD
 ### 7. 新增一个命令（出现在命令面板）
 
 1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：`ICommandContribution`/`CommandAttribute` 字段骨架（`Id` 默认「声明类全名.方法名」、`Title` 资源键、`Gesture`、`Order`；扁平模型，与菜单互不相干，ADR-0005）。
-2. 模块侧：在任何类的方法上标 `[Command("标题键", Order=…, Gesture=…)]`（免类级 attribute，仅支持无参 `void`/`Task`），模块 `RegisterTypes` 保证调了 `RegisterCommands(Assembly)`——现成样例 [Modules/DashBoard/](Modules/DashBoard/common.md) 的 `DashBoardCommands` 与 [Modules/Workstation/](Modules/Workstation/common.md) 的 `ViewCommands`；标题键同步在 Core/Resource 加（或复用既有键）。
+2. 模块侧：在任何类的方法上标 `[Command("标题键", Order=…, Gesture=…)]`（免类级 attribute，仅支持无参 `void`/`Task`），模块 `RegisterTypes` 保证调了 `RegisterCommands(Assembly)`——现成样例 [Modules/Workstation/](Modules/Workstation/common.md) 的 `ViewCommands`；标题键同步在 Core/Resource 加（或复用既有键）。
 3. [Core/Framework/common.md](Core/Framework/common.md)：收集侧零改动——`ShellContributionCollector.GetCommands()` 统一排序去重；`CommandPalette`（Ctrl+P）与 `RegisterCommandGestures` 接线已在 shell 就位。
 
 ### 8. 新增一个设置项（出现在设置页）

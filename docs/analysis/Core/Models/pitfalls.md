@@ -11,7 +11,7 @@
 
 ## 易错改法
 
-- **加枚举成员后编译全绿但行为错**：`MainWindowViewModel.TogglePanel`（第 497-506 行）与 `DashBoardWindowViewModel.OnProgress`（第 41-47 行）用 `_` 兜底分支。给 `TogglePanelTarget` 加新成员后，实际翻转的面板会静默落到兜底值（都翻转 BottomPanel）；同时别忘了在 `ViewPanelMenus`（`Modules/Workstation/Menus/ViewPanelMenus.cs`）补对应 `[MenuItem]` 方法——菜单项是逐方法声明的，不加编译也不报错。C# switch 表达式对枚举无穷尽性强制。
+- **加枚举成员后编译全绿但行为错**：`MainWindowViewModel.TogglePanel`（第 488-497 行）与 `DashBoardWindowViewModel.OnProgress`（第 41-47 行）用 `_` 兜底分支。给 `TogglePanelTarget` 加新成员后，实际翻转的面板会静默落到兜底值（都翻转 BottomPanel）；同时别忘了在 `ViewPanelMenus`（`Modules/Workstation/Menus/ViewPanelMenus.cs`）补对应 `[MenuItem]` 方法——菜单项是逐方法声明的，不加编译也不报错。C# switch 表达式对枚举无穷尽性强制。
 - **删掉 Models.csproj 里"看似无用"的 Common 引用**：本模块源码零引用 Common 类型（不用 Logger/IoC），引用看似可删；但 Prism 程序集与 `Prism.Events` global using（obj/Debug/Models.GlobalUsings.g.cs 第 6 行）全经此传递，删掉后 `PubSubEvent<T>` 立即无法解析。
 - **把 record 改成 class 或加可变属性**：`StartupProgress`/`ModuleLoadFailure` 的值相等与不可变性是"消息"语义的组成部分；改成可变 class 后，订阅方若在异步处理期间共享实例，发布方再改字段会造成跨订阅方串扰。
 - **在另一个程序集里"复制"同名事件类**：`EventAggregator.GetEvent<T>()` 按类型身份撮合，同名同结构的重复定义互不互通，发布与订阅各拿各的事件实例，症状是"订阅了但永远收不到"且无报错。

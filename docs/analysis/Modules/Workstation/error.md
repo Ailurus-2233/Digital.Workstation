@@ -13,10 +13,10 @@
 ## 静默路径（不抛异常但行为可能出乎意料）
 
 - **未知主视图 Id**：`OpenMainView(string viewId)`（MainWindowViewModel.cs:344-360）在 `_mainViewsById` 查不到时直接 `return`——`OpenMainViewEvent` 负载与 `IMainViewContribution.Id` 是字符串级契约，拼写不匹配表现为"点了没反应"，无任何日志。
-- **面板收起时点 tab**：`ActivateAuxTab`/`ActivateBottomTab`（:365-393）检测到 `ShellLayoutState` 拒绝（`ReferenceEquals(next, State)`）后直接返回，点击静默无效（正常时 tab 栏随面板一起不可见，只在绑定/状态异常时遇到）。**拖拽落放不受此限**：`MoveTab`（:449-492）对目标面板强制展开（语义在 `ShellLayoutState.MoveTab`）。
+- **面板收起时点 tab**：`ActivateAuxTab`/`ActivateBottomTab`（:365-393）检测到 `ShellLayoutState` 拒绝（`ReferenceEquals(next, State)`）后直接返回，点击静默无效（正常时 tab 栏随面板一起不可见，只在绑定/状态异常时遇到）。**拖拽落放不受此限**：`MoveTab`（:440-483）对目标面板强制展开（语义在 `ShellLayoutState.MoveTab`）。
 - **重复贡献 Id**：`_mainViewsById[id] = contribution`（:182）、`_itemsById[item.Id] = item`（:663）、`_tabsById[tab.Id] = tab`（:601）均为索引器赋值，重复 Id **静默覆盖**；但对应的 `ObservableCollection`（`TopNavigationItems` 等）两个条目都会加入——表现为列表里出现两个相同项、内容解析总是用后注册者。工具视图的注册侧守卫只管程序集内（`ToolViewRegistration` 对同程序集重复 Id 记 `Logger.Warning` 跳过，`ToolViewRegistration.cs:38-44`）；跨程序集 Id 冲突无守卫，靠 Id 带模块前缀的约定自律（ADR-0002）。
 - **退出命令空操作**：`FileMenus.Exit`（Menus/FileMenus.cs:21）用 `?.` 链，`ApplicationLifetime` 不是 `IClassicDesktopStyleApplicationLifetime` 时静默不退出。
-- **TogglePanel 默认分支**：`MainWindowViewModel.TogglePanel`（:497-506）的 `_` 默认分支调 `State.ToggleBottomPanel()`——传入任何未显式处理的 `TogglePanelTarget` 值都会切换 BottomPanel。
+- **TogglePanel 默认分支**：`MainWindowViewModel.TogglePanel`（:488-497）的 `_` 默认分支调 `State.ToggleBottomPanel()`——传入任何未显式处理的 `TogglePanelTarget` 值都会切换 BottomPanel。
 - **CloseWindow 式语义**：本模块不涉及；窗口管理静默路径见 Framework 文档。
 
 ## 错误处理路径
@@ -33,5 +33,5 @@
 | 拖拽分隔条面板不动/乱跳 | `PanelResizer.GetParentGrid`（`Core/Framework/Layout/PanelResizer.cs:46`）是否仍返回 null；方向换算取反（同文件 :54-63 的负号） | `GetParentGrid` 被"修复"成返回 base → GridSplitter 原生重排与 `ShellLayoutState` 打架；Auxiliary/Bottom 忘了取反导致方向反 |
 | 应用启动即崩溃 | `MainWindowViewModel` 构造函数 :41-55 解析 `EmptyStateView`；`WorkstationApplication.RegisterCustomService` 是否先执行（Framework `RegisterTypes` 保证先 `RegisterFrameworkServices` 后 `RegisterCustomService`） | 注册顺序/遗漏 |
 | 布局改动重启后丢了 | 该变更路径末尾是否调了 `ScheduleSave()`（七个现有变更点见 pitfalls.md）；落盘文件是 %AppData%/Digital.Workstation/layout.json（Framework `LayoutPersistence`，500ms 防抖） | 新增变更路径忘挂 `ScheduleSave`；或 500ms 防抖窗口内进程被杀 |
-| 工具视图拖不动/落放无反应 | 钉住项（`AllowMove=false`）本就不可拖（机制保留，当前无内置钉住项实例）；其余看：Framework `ToolViewButton.CanDrag` 绑定（主题模板里绑 `Contribution.AllowMove`）、`ToolViewBar` 的 ControlTheme 是否生效（`layout|ToolViewBar` 选择器匹配 StyleKey——控件若被加 `StyleKeyOverride` 会整体失效，见 Framework pitfalls）、`MoveTabCommand` 的拒绝分支（:451-454） | 钉住项不可拖是设计；底部钉住段（普通 ItemsControl）不接受拖放是设计；控件 StyleKeyOverride 破坏主题查找 |
+| 工具视图拖不动/落放无反应 | 钉住项（`AllowMove=false`）本就不可拖（机制保留，当前无内置钉住项实例）；其余看：Framework `ToolViewButton.CanDrag` 绑定（主题模板里绑 `Contribution.AllowMove`）、`ToolViewBar` 的 ControlTheme 是否生效（`layout|ToolViewBar` 选择器匹配 StyleKey——控件若被加 `StyleKeyOverride` 会整体失效，见 Framework pitfalls）、`MoveTabCommand` 的拒绝分支（:442-445） | 钉住项不可拖是设计；底部钉住段（普通 ItemsControl）不接受拖放是设计；控件 StyleKeyOverride 破坏主题查找 |
 | 日志位置 | 本模块不写日志；启动期错误看 Framework `Logger`（Serilog 静态封装）输出 | — |

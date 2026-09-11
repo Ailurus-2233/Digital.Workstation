@@ -93,7 +93,6 @@ Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
 - `Modules/Workstation/Menus/ViewAlignmentMenus.cs:12,15,21,27,33` → `MenuViewTitle` + PanelAlign 系列 4 键
 - `Modules/Workstation/Menus/ViewLayoutMenus.cs:10,13` → `MenuViewTitle` + `ResetLayoutTitle`
 - `Modules/Workstation/Menus/HelpMenus.cs:11,17` → `[MenuGroup("MenuHelpTitle", ...)]`、`[MenuItem("MenuAboutTitle", ...)]`
-- `Modules/DashBoard/DashBoardMenus.cs:11,17` → `[MenuGroup("MenuFileTitle", ...)]`、`[MenuItem("DashBoardOpenWindowMenuTitle", ...)]`
 - `Modules/Workstation/Views/{Properties,Outline,Output,Log}View.axaml.cs:10` → `[ToolView("shell.xxx", "PropertiesTabTitle"/"OutlineTabTitle"/"OutputTabTitle"/"LogTabTitle", ...)]`（ADR-0002 工具视图标题键）
 - `Modules/DashBoard/Views/DashBoardNavigationView.axaml.cs:14`、`DashBoardTasksView.axaml.cs:10` → `[ToolView("dashboard", "DashBoardNavigationTitle", ...)]`、`[ToolView("dashboard.tasks", "DashBoardTasksTabTitle", ...)]`
 

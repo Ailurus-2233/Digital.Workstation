@@ -62,7 +62,7 @@ public class FrameworkWindowManager : IWindowManager, IMainWindowManager
 
 内部状态：`private readonly Dictionary<Type, Window> _windowMap`（第 17 行）、`private Window? _mainWindow`（第 22 行）。`InitializeWindow`（第 45 行）注册时挂 `Closing` 事件把类型从映射移除——窗口关闭后同类型可再次 ShowWindow。
 
-**调用方式**：消费方构造注入 `IWindowManager` 或 `IMainWindowManager`（同一单例）。真实调用点：`Modules/DashBoard/DashBoardMenus.cs:20` `windowManager.ShowWindow<DashBoardWindow>`（经 Abstractions 的泛型扩展转发到 `ShowWindow(Type)`）、`Modules/Workstation/Menus/HelpMenus.cs:20` `windowManager.ShowDialog<AboutWindow>`；框架内部 `FrameworkApplication.cs:77` `Container.Resolve<IWindowManager>().ShowWindow(CreateSplashWindow())`。
+**调用方式**：消费方构造注入 `IWindowManager` 或 `IMainWindowManager`（同一单例）。真实调用点：`Modules/Workstation/Menus/HelpMenus.cs:20` `windowManager.ShowDialog<AboutWindow>`；框架内部 `FrameworkApplication.cs:77` `Container.Resolve<IWindowManager>().ShowWindow(CreateSplashWindow())`。
 
 ## 3. `ShellLayoutState` 及区域 record（Layout/）
 
@@ -189,7 +189,7 @@ public static class ToolViewDragSession                                 // ToolV
 - `ToolViewMove`：落点参数；`Index` 按目标 Bar 移除前的列表计，同 Bar 重排的修正在 `ShellLayoutState.MoveTab` 内部。
 - `ToolViewDragSession`：`IsActive` + `ActiveChanged` 静态信号；拖拽进行中 shell 临时显露隐藏面板作为投放区（「向隐藏面板拖入则自动显示」的先决条件）。
 
-**调用方式**：主题模板内声明式使用——导航项/tab 头用 `<layout:ToolViewButton DragTabId="{Binding Id}" CanDrag="{Binding Contribution.AllowMove}" .../>`，三处可投放 Bar 用 `<layout:ToolViewBar TargetBar="..." Orientation="..." MoveCommand="{Binding MoveTabCommand}">`（真实用例 `Windows/FrameworkWindowTheme.axaml:35-40、106-133、162-189`）。ViewModel 侧契约：提供接受 `ToolViewMove` 参数的 `MoveTabCommand`（真实实现 `Modules/Workstation/MainWindowViewModel.cs:449`）与 `AuxiliaryPanelRevealed`/`BottomPanelRevealed` 布尔属性。
+**调用方式**：主题模板内声明式使用——导航项/tab 头用 `<layout:ToolViewButton DragTabId="{Binding Id}" CanDrag="{Binding Contribution.AllowMove}" .../>`，三处可投放 Bar 用 `<layout:ToolViewBar TargetBar="..." Orientation="..." MoveCommand="{Binding MoveTabCommand}">`（真实用例 `Windows/FrameworkWindowTheme.axaml:35-40、106-133、162-189`）。ViewModel 侧契约：提供接受 `ToolViewMove` 参数的 `MoveTabCommand`（真实实现 `Modules/Workstation/MainWindowViewModel.cs:440`）与 `AuxiliaryPanelRevealed`/`BottomPanelRevealed` 布尔属性。
 
 
 ## 7. `ShellLayoutDto` 族与 `LayoutPersistence`（均位于 Layout/，ADR-0002）
@@ -225,7 +225,7 @@ public sealed class LayoutPersistence        // LayoutPersistence.cs:12
 | 写盘失败（`Flush`） | 记 Warning，静默放弃本次保存 |
 | 删文件失败（`Delete`） | 记 Warning；pending 保存已作废 |
 
-**典型消费**（真实代码）：`Modules/Workstation/MainWindowViewModel.cs:41-42` 构造注入；`EnsureContributionsLoaded` 里 `_toolViews = _collector.GetToolViews(); LoadToolViews(_persistence.Load());`（:178-179）——`LoadToolViews`（:200）按「钉住项恒落 ActivityBar 底部段、可移动项配置优先默认兜底」分派三处 Bar，layout 非 null 再调 `RestoreLayout`（:242）恢复显隐/尺寸（clamp 到各区域 record 常量）/选中项/对齐档位，layout 为 null 即全默认（重置布局复用此路径）；`ResetLayout`（:512，订阅 `ResetLayoutEvent`）先 `_persistence.Delete()` 再 `LoadToolViews(null)` 重建默认；`CaptureLayout`（:536）+ `ScheduleSave()`（:587）在 `SelectActivity`/`ActivateAuxTab`/`ActivateBottomTab`/`SetPanelAlignment`/`ResizePanel`/`TogglePanel`/`MoveTab`（拖拽落放，:449）末尾调度防抖保存。事件契约 `ResetLayoutEvent`（无负载）在 Core/Models/Events，由视图菜单「重置布局」项发布（`Modules/Workstation/Menus/ViewLayoutMenus.cs`）。
+**典型消费**（真实代码）：`Modules/Workstation/MainWindowViewModel.cs:41-42` 构造注入；`EnsureContributionsLoaded` 里 `_toolViews = _collector.GetToolViews(); LoadToolViews(_persistence.Load());`（:178-179）——`LoadToolViews`（:200）按「钉住项恒落 ActivityBar 底部段、可移动项配置优先默认兜底」分派三处 Bar，layout 非 null 再调 `RestoreLayout`（:242）恢复显隐/尺寸（clamp 到各区域 record 常量）/选中项/对齐档位，layout 为 null 即全默认（重置布局复用此路径）；`ResetLayout`（:503，订阅 `ResetLayoutEvent`）先 `_persistence.Delete()` 再 `LoadToolViews(null)` 重建默认；`CaptureLayout`（:527）+ `ScheduleSave()`（:578）在 `SelectActivity`/`ActivateAuxTab`/`ActivateBottomTab`/`SetPanelAlignment`/`ResizePanel`/`TogglePanel`/`MoveTab`（拖拽落放，:440）末尾调度防抖保存。事件契约 `ResetLayoutEvent`（无负载）在 Core/Models/Events，由视图菜单「重置布局」项发布（`Modules/Workstation/Menus/ViewLayoutMenus.cs`）。
 
 ## 8. `ShellContributionCollector`（Contributions/ShellContributionCollector.cs:12）
 
