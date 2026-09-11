@@ -22,10 +22,10 @@
 | 消费方 | 引用方式 | 消费内容 |
 |---|---|---|
 | `Core/Framework/Framework.csproj:13` | ProjectReference | `FrameworkApplication.cs:25` `Styles.AddRange(new WorkstationTheme())`；`FrameworkApplication.cs:27` `VSCodePalette.ApplyTo(Resources)`——主题与调色板的唯一装载点 |
-| `Modules/DashBoard/DashBoard.csproj:23` | ProjectReference | `Icons.DashBoard`（`Views/DashBoardNavigationView.axaml.cs:14` 的 `[ToolView]` `Icon`、`DashBoardStatusBarItem.cs:17`、`DashBoardMenus.cs:17` 的 `[MenuItem]` `Icon` 命名属性）、`Icons.Tasks`（`Views/DashBoardTasksView.axaml.cs:10`） |
-| `Modules/Workstation`（经 `Core/Framework` 传递 + using） | using `DigitalWorkstation.Core.UIPackage` | 几乎全部 shell 预置条目与 attribute 菜单类：`Icons.Settings`（`MainWindowViewModel.cs:146` `SettingsIcon`，ActivityBar 底部"设置"导航按钮，ADR-0006）、`Icons.Properties/Outline/Output/Log`（`Views/` 各 `[ToolView]` View.axaml.cs:10）、`Icons.Ready`（`Contributions/ReadyStatusBarItem.cs:16`）、`Icons.Exit`（`Menus/FileMenus.cs:18`）、`Icons.About`（`Menus/HelpMenus.cs:17`）、`Icons.PanelLeft/PanelBottom/PanelRight`（`Menus/ViewPanelMenus.cs:14、20、26`）、`Icons.AlignLeft/AlignRight/AlignCenter/AlignJustify`（`Menus/ViewAlignmentMenus.cs:15、21、27、33`，菜单类均为 `[MenuItem]` 的 `Icon` 命名属性）、`StreamGeometry.Parse(Icons.ChevronDown/ChevronRight/Settings)`（`MainWindowViewModel.cs:136、141、146`）；`MainWindowViewModel.cs:14` 直接 using 本命名空间 |
+| `Modules/DashBoard/DashBoard.csproj:23` | ProjectReference | `Icons.DashBoard`（`Views/DashBoardNavigationView.axaml.cs:14` 的 `[ToolView]` `Icon`、`DashBoardStatusBarItem.cs:17`、`DashBoardMenus.cs:17` 的 `[MenuItem]` `Icon` 命名属性、`DashBoardCommands.cs:16` 的 `[Command]` `Icon` 命名属性）、`Icons.Tasks`（`Views/DashBoardTasksView.axaml.cs:10`） |
+| `Modules/Workstation`（经 `Core/Framework` 传递 + using） | using `DigitalWorkstation.Core.UIPackage` | 几乎全部 shell 预置条目与 attribute 菜单类：`Icons.Settings`（`MainWindowViewModel.cs:146` `SettingsIcon`，ActivityBar 底部"设置"导航按钮，ADR-0006）、`Icons.Properties/Outline/Output/Log`（`Views/` 各 `[ToolView]` View.axaml.cs:10）、`Icons.Ready`（`Contributions/ReadyStatusBarItem.cs:16`）、`Icons.Exit`（`Menus/FileMenus.cs:18`）、`Icons.About`（`Menus/HelpMenus.cs:17`）、`Icons.PanelLeft/PanelBottom/PanelRight`（`Menus/ViewPanelMenus.cs:14、20、26` 与 `Commands/ViewCommands.cs:12、18、24` 的 `[Command]` `Icon`）、`Icons.AlignLeft/AlignRight/AlignCenter/AlignJustify`（`Menus/ViewAlignmentMenus.cs:15、21、27、33`，菜单类均为 `[MenuItem]` 的 `Icon` 命名属性）、`StreamGeometry.Parse(Icons.ChevronDown/ChevronRight/Settings)`（`MainWindowViewModel.cs:136、141、146`）；`MainWindowViewModel.cs:14` 直接 using 本命名空间 |
 
-场景归纳：`WorkstationTheme` 与 `VSCodePalette` 只被 Framework 的应用初始化使用一次；`Icons` 被所有模块的贡献类（导航项/面板 tab/状态栏项的 `IconPath` 属性、菜单项的 `[MenuItem]` `Icon` 命名属性）广泛引用。
+场景归纳：`WorkstationTheme` 与 `VSCodePalette` 只被 Framework 的应用初始化使用一次；`Icons` 被所有模块的贡献类（导航项/面板 tab/状态栏项的 `IconPath` 属性、菜单项的 `[MenuItem]` `Icon` 命名属性、命令的 `[Command]` `Icon` 命名属性）广泛引用。
 
 ## 核心内部数据结构
 
@@ -40,7 +40,7 @@ static VSCodePalette              (VSCodePalette.cs:11)
   └── Brush(string)               (VSCodePalette.cs:45)  SolidColorBrush(Color.Parse(color))
 
 static Icons                      (Icons.cs:7)
-  └── 15 × public const string    (Icons.cs:12-87)  StreamGeometry path 文本
+  └── 19 × public const string    (Icons.cs:12-107)  StreamGeometry path 文本
 ```
 
 - `WorkstationTheme` 内部持有的只是基类 `Styles` 的子样式列表，无自有字段。

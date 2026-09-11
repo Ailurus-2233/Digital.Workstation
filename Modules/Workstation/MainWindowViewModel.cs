@@ -183,7 +183,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
         foreach (var submenu in MenuTreeBuilder.Build(_collector.GetMenuItems()))
         {
-            MenuBarItems.Add(MenuItemViewModel.FromSubmenu(submenu));
+            MenuBarItems.Add(MenuItemViewModel.FromSubmenu(submenu, isTopLevel: true));
         }
         foreach (var item in _collector.GetStatusBarItems())
         {

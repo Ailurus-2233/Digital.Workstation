@@ -20,6 +20,11 @@ public sealed class CommandAttribute(string title) : Attribute
     public string? Id { get; set; }
 
     /// <summary>
+    ///     图标的 StreamGeometry path 字符串（取 Icons 常量）；null = 无图标
+    /// </summary>
+    public string? Icon { get; set; }
+
+    /// <summary>
     ///     快捷键文本（如 "Ctrl+Shift+P"），shell 收集后生成窗口级 KeyBinding；null = 无快捷键
     /// </summary>
     public string? Gesture { get; set; }

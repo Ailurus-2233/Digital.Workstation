@@ -47,7 +47,7 @@ attribute 菜单类（ADR-0001 路径/分组模型），**不实现 `IMenuItemCo
 
 ### DashBoardCommands.cs
 
-attribute 命令类（ADR-0005），**不实现 `ICommandContribution`**、免类级 attribute。主构造 `DashBoardCommands(IWindowManager windowManager)`（第 10 行）注入窗口管理器。唯一命令方法 `[Command("DashBoardOpenWindowMenuTitle", Order = 500)] public void OpenDashBoard()`（第 12-16 行）：标题为 Language 资源键（复用菜单键，收集时经 `Language.Get` 解析），无 Gesture；`Id` 默认「声明类全名.方法名」；方法体调 `windowManager.ShowWindow<DashBoardWindow>()`，与文件菜单"打开启动台"项是同一动作的两套独立声明。由 `DashBoardModule.RegisterTypes` 的 `RegisterCommands` 扫描注册——`DashBoardCommands` 本身注册为单例，方法被包装成一个 `ICommandContribution` 工厂。
+attribute 命令类（ADR-0005），**不实现 `ICommandContribution`**、免类级 attribute。主构造 `DashBoardCommands(IWindowManager windowManager)`（第 11 行）注入窗口管理器。唯一命令方法 `[Command("DashBoardOpenWindowMenuTitle", Order = 500, Icon = Icons.DashBoard)] public void OpenDashBoard()`（第 13-17 行）：标题为 Language 资源键（复用菜单键，收集时经 `Language.Get` 解析），图标与菜单项同为 `Icons.DashBoard`，无 Gesture；`Id` 默认「声明类全名.方法名」；方法体调 `windowManager.ShowWindow<DashBoardWindow>()` 重新显示启动台窗口（与菜单项同通路）。
 
 ### ViewModels/Windows/DashBoardWindowViewModel.cs
 

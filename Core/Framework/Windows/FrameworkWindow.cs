@@ -55,7 +55,9 @@ public abstract class FrameworkWindow : UrsaWindow
     }
 
     /// <summary>
-    ///     菜单项头部：图标（null 图标不渲染，不留占位间隙）+ 标题；图标前景色由 chrome-menu 样式接管
+    ///     菜单项头部：图标槽位 + 标题。弹出层内的项始终预留 14×14 槽位（null 图标渲染空 PathIcon，
+    ///     文本与有图标项对齐）；标题栏顶层菜单不预留（<see cref="MenuItemViewModel.IsTopLevel" />）。
+    ///     图标前景色由 chrome-menu 样式接管
     /// </summary>
     private static Control BuildMenuItemHeader(MenuItemViewModel item)
     {
@@ -63,6 +65,10 @@ public abstract class FrameworkWindow : UrsaWindow
         if (item.Icon is { } icon)
         {
             panel.Children.Add(new PathIcon { Data = icon, Width = 14, Height = 14 });
+        }
+        else if (!item.IsTopLevel)
+        {
+            panel.Children.Add(new PathIcon { Width = 14, Height = 14 });
         }
         panel.Children.Add(new TextBlock { Text = item.Title });
         return panel;

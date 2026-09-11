@@ -119,10 +119,11 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 | `Id` | `string` | 稳定标识：默认「声明类全名.方法名」，可经 attribute 覆盖；全局唯一，冲突时后注册者被丢弃并记日志。MRU 记忆与键绑定引用的依据 |
 | `Title` | `string` | 显示标题，**已按当前 UI 区域性解析**（非资源键） |
 | `Gesture` | `string?` | 快捷键文本（如 `"Ctrl+Shift+P"`）；`null` = 无快捷键。解析为窗口级 KeyBinding 由 Framework 侧 `FrameworkWindow.RegisterCommandGestures` 负责 |
+| `IconPath` | `string?` | 图标 StreamGeometry path 字符串，由 PathIcon 消费并随主题变色；`null` = 无图标（惯例同菜单，ADR-0001 决策 8） |
 | `Order` | `int` | 命令列表中的排序权重，小者靠前；同 `Order` 按解析后的 `Title` 字典序（Ordinal） |
 | `Command` | `ICommand` | 执行命令（`System.Windows.Input.ICommand`），命令面板选中或快捷键触发时调用 |
 
-与菜单契约的差异（ADR-0005 决策 1）：命令是扁平列表成员——有稳定 `Id`、无 `Path`/`Group` 定位、无图标；两套体系互不相干，菜单项不进命令面板。
+与菜单契约的差异（ADR-0005 决策 1）：命令是扁平列表成员——有稳定 `Id`、无 `Path`/`Group` 定位；两套体系互不相干，菜单项不进命令面板。图标惯例与菜单一致（`IconPath?`，`null` = 无图标）。
 
 ### `CommandAttribute`（Commands/CommandAttribute.cs）
 
@@ -132,6 +133,7 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 |---|---|---|
 | `Title`（构造参，get-only） | `string` | 显示标题的 Language 资源键，收集时解析，缺键回退键名本身 |
 | `Id`（命名属性） | `string?` | 稳定标识；`null` = 默认「声明类全名.方法名」 |
+| `Icon`（命名属性） | `string?` | 图标的 StreamGeometry path 字符串（取 `Icons` 常量）；`null` = 无图标 |
 | `Gesture`（命名属性） | `string?` | 快捷键文本（如 `"Ctrl+Shift+P"`）；`null` = 无快捷键 |
 | `Order`（命名属性） | `int` | 命令列表中的排序权重，小者靠前；同 `Order` 按解析后的标题字典序 |
 

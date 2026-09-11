@@ -25,14 +25,20 @@ public class MenuItemViewModel
 
     public ICommand? Command { get; init; }
 
+    /// <summary>
+    ///     是否标题栏顶层菜单项：顶层项不预留图标槽位（本无图标，避免标题文本缩进）；
+    ///     弹出层内的项即使无图标也预留槽位，让文本与有图标项对齐
+    /// </summary>
+    public bool IsTopLevel { get; init; }
+
     public ObservableCollection<object> Children { get; } = [];
 
     /// <summary>
     ///     把建树器产出的子菜单节点递归转换为呈现模型
     /// </summary>
-    public static MenuItemViewModel FromSubmenu(MenuTreeSubmenu submenu)
+    public static MenuItemViewModel FromSubmenu(MenuTreeSubmenu submenu, bool isTopLevel = false)
     {
-        var viewModel = new MenuItemViewModel { Title = submenu.Title };
+        var viewModel = new MenuItemViewModel { Title = submenu.Title, IsTopLevel = isTopLevel };
         foreach (var entry in submenu.Children)
         {
             viewModel.Children.Add(entry switch

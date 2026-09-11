@@ -1,5 +1,6 @@
 using DigitalWorkstation.Core.Abstractions.Commands;
 using DigitalWorkstation.Core.Abstractions.WindowManager;
+using DigitalWorkstation.Core.UIPackage;
 using DigitalWorkstation.DashBoard.Views.Windows;
 
 namespace DigitalWorkstation.DashBoard;
@@ -12,7 +13,7 @@ public class DashBoardCommands(IWindowManager windowManager)
     /// <summary>
     ///     重新显示启动台窗口
     /// </summary>
-    [Command("DashBoardOpenWindowMenuTitle", Order = 500)]
+    [Command("DashBoardOpenWindowMenuTitle", Order = 500, Icon = Icons.DashBoard)]
     public void OpenDashBoard()
     {
         windowManager.ShowWindow<DashBoardWindow>();

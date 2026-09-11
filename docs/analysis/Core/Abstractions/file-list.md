@@ -39,11 +39,11 @@ WindowManager/
 
 ### Commands/CommandAttribute.cs
 
-定义 `CommandAttribute`（`[AttributeUsage(AttributeTargets.Method)]`，构造参 `title` 为 Language 资源键，命名属性 `Id?`（缺省「声明类全名.方法名」）/`Gesture?`/`Order`）——声明一个命令（ADR-0005）：免类级 attribute，任何类的公共实例方法标注即被 Framework 侧 `RegisterCommands` 扫描注册；方法签名仅支持无参 `void M()`/`Task M()`，非法签名扫描时记日志跳过。
+定义 `CommandAttribute`（`[AttributeUsage(AttributeTargets.Method)]`，构造参 `title` 为 Language 资源键，命名属性 `Id?`（缺省「声明类全名.方法名」）/`Icon?`/`Gesture?`/`Order`）——声明一个命令（ADR-0005）：免类级 attribute，任何类的公共实例方法标注即被 Framework 侧 `RegisterCommands` 扫描注册；方法签名仅支持无参 `void M()`/`Task M()`，非法签名扫描时记日志跳过。
 
 ### Commands/ICommandContribution.cs
 
-`using System.Windows.Input;`。定义接口 `ICommandContribution`（`Id`/`Title`（已解析，非资源键）/`Gesture?`/`Order`/`Command`）——模块向全局命令列表贡献命令的契约（ADR-0005），扁平模型：有稳定 `Id`（MRU 记忆与键绑定引用的依据，全局唯一），无路径/分组/图标。命名空间 `DigitalWorkstation.Core.Abstractions.Commands`。
+`using System.Windows.Input;`。定义接口 `ICommandContribution`（`Id`/`Title`（已解析，非资源键）/`Gesture?`/`IconPath?`/`Order`/`Command`）——模块向全局命令列表贡献命令的契约（ADR-0005），扁平模型：有稳定 `Id`（MRU 记忆与键绑定引用的依据，全局唯一），无路径/分组；图标可选，惯例同菜单。命名空间 `DigitalWorkstation.Core.Abstractions.Commands`。
 
 ### Regions/ShellRegions.cs
 

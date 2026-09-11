@@ -57,7 +57,7 @@ DashBoardModule.RegisterTypes（DashBoardModule.cs:11-24）
 用户点击文件菜单"打开启动台" → `IMenuItemContribution.Command` 反射调用 `DashBoardMenus.OpenDashBoard()`（异常记日志不抛出）
   → IWindowManager.ShowWindow<DashBoardWindow>()（DashBoardMenus.cs:20）重新显示启动台窗口
 命令面板选中"打开启动台"（或其快捷键，若声明 Gesture） → `ICommandContribution.Command` 反射调用 `DashBoardCommands.OpenDashBoard()`（异常记日志不抛出）
-  → IWindowManager.ShowWindow<DashBoardWindow>()（DashBoardCommands.cs:15）重新显示启动台窗口
+  → IWindowManager.ShowWindow<DashBoardWindow>()（DashBoardCommands.cs:19）重新显示启动台窗口
 ```
 
 副作用与状态修改：ViewModel 只修改自身四个可观察属性；`OpenMainViewEvent`/`StartupFailureActionEvent` 的发布是仅有的对外副作用；模块不持有任何可变共享状态。
@@ -69,4 +69,4 @@ DashBoardModule.RegisterTypes（DashBoardModule.cs:11-24）
 3. **要改 SideBar 条目与主视图跳转**：按钮在 `Views/DashBoardNavigationView.axaml` 第 31-36 行（`Classes="sidebar-entry"` 样式定义在第 11-28 行）；点击处理 `OpenOverview`/`OpenRecent` 在 `DashBoardNavigationView.axaml.cs:33-41`，发布 `OpenMainViewEvent` 的负载必须是目标 `IMainViewContribution` 的 `ViewId` 常量（`DashBoardOverviewMainView.ViewId`/`DashBoardRecentMainView.ViewId`，DashBoardOverviewMainView.cs:11 / DashBoardRecentMainView.cs:11）。新增主视图：加 `IMainViewContribution` 实现 + 视图 + `RegisterTypes` 两行注册 + 一个按钮。
 4. **要让启动台窗口在启动后也能再次打开**：已经有——文件菜单"打开启动台"（`DashBoardMenus.OpenDashBoard`）。改菜单标题键/组内位次/图标改 `[MenuItem]` attribute 参数（DashBoardMenus.cs:17）；改所在顶层菜单/分组/组序改类级 `[MenuGroup]`（第 11 行）；改打开行为改 `OpenDashBoard` 方法体（第 18-21 行）。
 5. **要改模块注册的内容**：全部集中在 `DashBoardModule.RegisterTypes`（DashBoardModule.cs:11-24）。注意不要在 `OnInitialized` 里加开窗逻辑——启动台由启动序列负责（ADR-0004，见 pitfalls.md）。
-6. **要新增一个模块命令（出现在命令面板）**：不用走接口——在任何类的方法上标 `[Command("标题资源键", Order = n, Gesture = …)]`（Gesture 可空，仅支持无参 `void`/`Task`，参照 `DashBoardCommands.cs` 的 `OpenDashBoard`）；`RegisterCommands` 扫描自动覆盖，`RegisterTypes` 无需加行。命令与菜单是两套独立声明（ADR-0005），想让同一动作同时出现在菜单栏需另标 `[MenuItem]`。标题键在 Core/Resource 的 `Language` 中新增（或复用既有键）。
+6. **要新增一个模块命令（出现在命令面板）**：不用走接口——在任何类的方法上标 `[Command("标题资源键", Order = n, Icon = …, Gesture = …)]`（`Icon` 取 `Icons` 常量、`Gesture` 可空，仅支持无参 `void`/`Task`，参照 `DashBoardCommands.cs` 的 `OpenDashBoard`）；`RegisterCommands` 扫描自动覆盖，`RegisterTypes` 无需加行。命令与菜单是两套独立声明（ADR-0005），想让同一动作同时出现在菜单栏需另标 `[MenuItem]`。标题键在 Core/Resource 的 `Language` 加资源键同步本地化。

@@ -26,6 +26,11 @@ public interface ICommandContribution
     string? Gesture { get; }
 
     /// <summary>
+    ///     图标的 StreamGeometry path 字符串，由 PathIcon 消费并随主题变色；null = 无图标
+    /// </summary>
+    string? IconPath { get; }
+
+    /// <summary>
     ///     命令列表中的排序权重，小者靠前；同 Order 按解析后的 <see cref="Title" /> 字典序
     /// </summary>
     int Order { get; }

@@ -18,7 +18,7 @@
 5. Attribute 中的标题字符串是 `Language` 资源键，运行时解析，缺键回退键名本身（resx 既有行为）。
 6. 既有 7 个菜单贡献实现（含参数化的 `TogglePanelContribution`/`PanelAlignmentContribution` 工厂循环）全部迁移为 attribute 菜单类；视图菜单的 shell 分隔线特判随之删除，由分组自然表达。
 7. 方法签名仅支持 `void M()` 与 `Task M()`；非法签名扫描时记日志跳过。`Task` 执行异常记日志不抛出。本期不做 CanExecute/禁用态与快捷键。
-8. 菜单图标保留：`MenuItem` attribute 带可选 `Icon` 属性（`Icons.Xxx` 的 path 字符串），契约的 `IconPath` 改为可空，为空时模板不渲染图标。预置项迁移后图标原样保留，无 UI 回退。
+8. 菜单图标保留：`MenuItem` attribute 带可选 `Icon` 属性（`Icons.Xxx` 的 path 字符串），契约的 `IconPath` 改为可空。弹出层内的项即使无图标也预留与图标同宽的槽位（空 `PathIcon` 占位），让文本与有图标项对齐；标题栏顶层菜单不预留（`MenuItemViewModel.IsTopLevel`）。预置项迁移后图标原样保留，无 UI 回退。
 9. 菜单契约移除 `Id` 属性：菜单链路无任何消费方（导航项/面板 tab 的 Id 才参与行为），YAGNI。菜单项不再有稳定标识，定位完全由路径 + 分组 + 位次表达。
 10. 多段路径语义：`MenuGroup` 的 `Group`/`GroupOrder`/`Order` 描述该类在父菜单里**直接贡献的东西**——单段路径时是方法项的分组；多段路径时是末端子菜单节点在其父菜单内的分组与位次，此时方法项进入末端菜单的默认组。一个 attribute 只有一套分组参数；本期不支持在深层子菜单内部再分组（方法项一律进默认组）。
 11. 默认组：`Group` 未指定的条目归入无名默认组，`GroupOrder` 视为 `0` 排最前；`GroupOrder` 本身缺省值亦为 `0`。

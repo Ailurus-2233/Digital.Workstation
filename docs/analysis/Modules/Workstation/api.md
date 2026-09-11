@@ -112,7 +112,7 @@ public partial class MainWindowViewModel : ObservableObject
 | `ViewPanelMenus`（ViewPanelMenus.cs:12） | attribute 菜单类 | — | `[MenuGroup("MenuViewTitle", Group = "Panels", GroupOrder = 100, Order = 200)]`（:11） | — | 三项 Order 100/200/300 | 顶层"视图"菜单 Panels 组 | 构造注入 `IEventAggregator`；`ToggleSideBar`/`ToggleBottomPanel`/`ToggleAuxiliaryPanel`（:15/:21/:27）各发布 `TogglePanelVisibilityEvent` 对应 `TogglePanelTarget` |
 | `ViewAlignmentMenus`（ViewAlignmentMenus.cs:13） | attribute 菜单类 | — | `[MenuGroup("MenuViewTitle", Group = "Alignment", GroupOrder = 200)]`（:12） | — | 四项 Order 100/200/300/400 | 顶层"视图"菜单 Alignment 组（与 Panels 组之间由建树器插分隔线） | 构造注入 `IEventAggregator`；`AlignLeft`/`AlignRight`/`AlignCenter`/`AlignJustify`（:16/:22/:28/:34）各发布 `SetPanelAlignmentEvent` 对应 `PanelAlignment` |
 | `ViewLayoutMenus`（ViewLayoutMenus.cs:11） | attribute 菜单类 | — | `[MenuGroup("MenuViewTitle", Group = "Layout", GroupOrder = 300)]`（:10） | — | 单项 Order 100 | 顶层"视图"菜单 Layout 组（与 Alignment 组之间由建树器插分隔线） | 构造注入 `IEventAggregator`；`ResetLayout()`（:14-17，`[MenuItem("ResetLayoutTitle", Order = 100)]`，无图标，:13）：发布 `ResetLayoutEvent`（:16） |
-| `ViewCommands`（Commands/ViewCommands.cs:10） | attribute 命令类（ADR-0005） | —（Id 默认「声明类全名.方法名」） | 四个 `[Command]` 标题键（复用视图菜单键） | —（命令无图标） | 四项 Order 100/200/300/400 | 命令面板（扁平列表，无路径/分组） | 构造注入 `IEventAggregator`；`ToggleSideBar`/`ToggleBottomPanel`/`ToggleAuxiliaryPanel`/`ResetLayout`（:13/:19/:25/:31）各发布 `TogglePanelVisibilityEvent`/`ResetLayoutEvent`，与视图菜单同事件通路 |
+| `ViewCommands`（Commands/ViewCommands.cs:10） | attribute 命令类（ADR-0005） | —（Id 默认「声明类全名.方法名」） | 四个 `[Command]` 标题键（复用视图菜单键） | 三面板命令 `Icons.PanelLeft/PanelBottom/PanelRight`（与视图菜单项同图标），ResetLayout 无图标 | 四项 Order 100/200/300/400 | 命令面板（扁平列表，无路径/分组） | 构造注入 `IEventAggregator`；`ToggleSideBar`/`ToggleBottomPanel`/`ToggleAuxiliaryPanel`/`ResetLayout`（:13/:19/:25/:31）各发布 `TogglePanelVisibilityEvent`/`ResetLayoutEvent`，与视图菜单同事件通路 |
 
 ### 菜单类的 `[MenuItem]` 精确映射（消费方关键事实）
 
@@ -139,14 +139,14 @@ public partial class MainWindowViewModel : ObservableObject
 |---|---|---|---|---|
 | `ResetLayout`（:14-17） | `"ResetLayoutTitle"` | —（无图标） | **100** | `ResetLayoutEvent`（无负载，`MainWindowViewModel` 订阅后 `_persistence.Delete()` + 全默认重建） |
 
-`ViewCommands`（命令类本身单例注册，方法即命令；命令无图标，可带 `Gesture`——本类均未声明，面板显隐快捷键仍是 `MainWindow.axaml` 的硬编码 KeyBinding，迁移留待后续）：
+`ViewCommands`（命令类本身单例注册，方法即命令；三面板命令经 `Icon` 命名属性带 `Icons.PanelLeft/PanelBottom/PanelRight`（与对应视图菜单项同图标），ResetLayout 无图标；可带 `Gesture`——本类均未声明，面板显隐快捷键仍是 `MainWindow.axaml` 的硬编码 KeyBinding，迁移留待后续）：
 
-| 方法（位置） | `[Command]` 标题键 | Order | 发布 |
-|---|---|---|---|
-| `ToggleSideBar`（:12-16） | `"ToggleSideBarTitle"` | **100** | `TogglePanelTarget.SideBar` |
-| `ToggleBottomPanel`（:18-22） | `"ToggleBottomPanelTitle"` | **200** | `TogglePanelTarget.BottomPanel` |
-| `ToggleAuxiliaryPanel`（:24-28） | `"ToggleAuxiliaryPanelTitle"` | **300** | `TogglePanelTarget.AuxiliaryPanel` |
-| `ResetLayout`（:30-34） | `"ResetLayoutTitle"` | **400** | `ResetLayoutEvent`（无负载） |
+| 方法（位置） | `[Command]` 标题键 | Icon | Order | 发布 |
+|---|---|---|---|---|
+| `ToggleSideBar`（:12-16） | `"ToggleSideBarTitle"` | `Icons.PanelLeft` | **100** | `TogglePanelTarget.SideBar` |
+| `ToggleBottomPanel`（:18-22） | `"ToggleBottomPanelTitle"` | `Icons.PanelBottom` | **200** | `TogglePanelTarget.BottomPanel` |
+| `ToggleAuxiliaryPanel`（:24-28） | `"ToggleAuxiliaryPanelTitle"` | `Icons.PanelRight` | **300** | `TogglePanelTarget.AuxiliaryPanel` |
+| `ResetLayout`（:30-34） | `"ResetLayoutTitle"` | —（无图标） | **400** | `ResetLayoutEvent`（无负载） |
 
 注册方是 `WorkstationApplication.cs:27`、`:31` 与 `:33` 的三行 attribute 扫描——`RegisterToolViews`（ADR-0002）扫 `[ToolView]` View 类（非可实例化 `Control` 与程序集内重复 Id 记 `Logger.Warning` 跳过），`RegisterMenus`（ADR-0001）扫 `[MenuGroup]` 类（菜单类 RegisterSingleton、每个合法 `[MenuItem]` 方法注册一个 `IMenuItemContribution` 工厂），`RegisterCommands`（ADR-0005）扫 `[Command]` 方法（免类级 attribute；宿主类 RegisterSingleton、每个合法方法注册一个 `ICommandContribution` 工厂；非法签名记日志跳过，详见 Framework 文档）。`PanelAlignment`/`TogglePanelTarget` 新增枚举成员时需要在此手工加对应方法（不像旧工厂循环那样自动覆盖，见 pitfalls.md）。
 
@@ -158,4 +158,4 @@ public partial class MainWindowViewModel : ObservableObject
 
 模块向 shell 贡献东西**不需要引用本模块**：工具视图在模块自己的 View 类上标 `[ToolView(id, 标题键, …)]`，再在 `RegisterTypes` 里调 `containerRegistry.RegisterToolViews(模块程序集)`（ADR-0002，View 注册与元数据注册一行完成）；菜单则新建 `[MenuGroup]` 类 + `[MenuItem]` 方法后调 `containerRegistry.RegisterMenus(模块程序集)`（ADR-0001），本模块的 `EnsureContributionsLoaded` 收集并渲染。打开主视图：`IEventAggregator.GetEvent<OpenMainViewEvent>().Publish("my.view.id")`（真实调用点：DashBoard 模块 `DashBoardNavigationView.axaml.cs:35、40`；shell 侧 `MainWindowViewModel.OpenSettings`（:305）以 `WellKnownViews.Settings` 发布，ADR-0006 决策 6）。切换面板：`Publish(TogglePanelTarget.SideBar)` 到 `TogglePanelVisibilityEvent`（真实发布点：`Menus/ViewPanelMenus.cs:17`）。切换布局档位：`Publish(PanelAlignment.Justify)` 到 `SetPanelAlignmentEvent`（真实发布点：`Menus/ViewAlignmentMenus.cs:36`）。重置布局：`GetEvent<ResetLayoutEvent>().Publish()`（真实发布点：`Menus/ViewLayoutMenus.cs:16`）。弹窗：注入 `IWindowManager` 调 `ShowDialog<AboutWindow>()`（真实调用点：`Menus/HelpMenus.cs:20`）。
 
-命令：新建命令类（或在现有类上加方法）标 `[Command("标题键", Order=…, Gesture=…)]` 后调 `containerRegistry.RegisterCommands(模块程序集)`（ADR-0005），`EnsureContributionsLoaded` 经 `GetCommands()` 收集为 `Commands` 属性，Framework `CommandPalette`（Ctrl+P）呈现，`MainWindow.axaml.cs:22` 的 `RegisterCommandGestures` 接线把 `Gesture` 落成窗口级 KeyBinding（真实命令类：本模块 `Commands/ViewCommands.cs`、DashBoard 模块 `DashBoardCommands.cs`）。命令与菜单是两套独立声明，同一动作想同时出现在菜单栏需另标 `[MenuItem]`。
+命令：新建命令类（或在现有类上加方法）标 `[Command("标题键", Order=…, Icon=…, Gesture=…)]`（`Icon` 取 `Icons` 常量、可空）后调 `containerRegistry.RegisterCommands(模块程序集)`（ADR-0005），`EnsureContributionsLoaded` 经 `GetCommands()` 收集为 `Commands` 属性，Framework `CommandPalette`（Ctrl+P）呈现，`MainWindow.axaml.cs:22` 的 `RegisterCommandGestures` 接线把 `Gesture` 落成窗口级 KeyBinding（真实命令类：本模块 `Commands/ViewCommands.cs`、DashBoard 模块 `DashBoardCommands.cs`）。命令与菜单是两套独立声明，同一动作想同时出现在菜单栏需另标 `[MenuItem]`。

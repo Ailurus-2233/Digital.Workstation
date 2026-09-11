@@ -56,12 +56,12 @@ public void OpenDashBoard()                                          // 方法�
 
 （DashBoardMenus.cs:11-21）`MenuGroupAttribute`/`MenuItemAttribute` 定义在 Core/Abstractions/Menus/（ADR-0001）。注册时 `RegisterMenus` 把 `DashBoardMenus` 注册为单例、把 `OpenDashBoard` 包装成 `IMenuItemContribution` 工厂（internal `ReflectedMenuItemContribution`，标题经 `Language.Get` 解析）；点击菜单时其 `Command` 反射调用 `OpenDashBoard()` → `windowManager.ShowWindow<DashBoardWindow>()`（第 20 行），异常记日志不抛出。General 组（`GroupOrder=100`）排在 shell 预置"退出"所属 Application 组（1000）之前，组间由 `MenuTreeBuilder` 插分隔线。
 
-### 4. `DashBoardCommands`（attribute 命令类，DashBoardCommands.cs:10，ADR-0005）
+### 4. `DashBoardCommands`（attribute 命令类，DashBoardCommands.cs:11，ADR-0005）
 
 ```csharp
 public class DashBoardCommands(IWindowManager windowManager)        // 主构造注入
 
-[Command("DashBoardOpenWindowMenuTitle", Order = 500)]              // 方法级：标题 Language 键（复用菜单键）、列表位次；无 Gesture
+[Command("DashBoardOpenWindowMenuTitle", Order = 500, Icon = Icons.DashBoard)]  // 方法级：标题 Language 键（复用菜单键）、列表位次、图标（与菜单项同 Icons.DashBoard）；无 Gesture
 public void OpenDashBoard()                                          // 方法体即命令行为，与菜单项同通路
 ```
 

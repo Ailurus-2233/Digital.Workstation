@@ -70,6 +70,7 @@ internal sealed class ReflectedCommandContribution : ICommandContribution
         Title = Language.Get(attribute.Title);
         Gesture = attribute.Gesture;
         Order = attribute.Order;
+        IconPath = attribute.Icon;
         Command = new DelegateCommand(Execute);
     }
 
@@ -80,6 +81,8 @@ internal sealed class ReflectedCommandContribution : ICommandContribution
     public string? Gesture { get; }
 
     public int Order { get; }
+
+    public string? IconPath { get; }
 
     public System.Windows.Input.ICommand Command { get; }
 

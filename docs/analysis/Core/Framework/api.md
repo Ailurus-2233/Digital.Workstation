@@ -119,7 +119,7 @@ public abstract class FrameworkWindow : UrsaWindow
 | `PanelAlignment` | `public PanelAlignment PanelAlignment`（:79） | CLR 包装；写值触发 `OnPropertyChanged` → `UpdateLayoutTemplate`，**整体替换** `ContentTemplate`，不做动态调整 |
 | `StyleKeyOverride` | `protected override Type StyleKeyOverride => typeof(UrsaWindow)`（:74） | 继承 UrsaWindow 的窗口主题（标题栏 chrome、模板与焦点行为） |
 | 构造函数 | `protected FrameworkWindow()`（:31） | 依次：`Styles.Add(_theme)`（`_theme` 为 `FrameworkWindowTheme` 实例字段，:27）→ `_layoutHost`（ContentControl 布局宿主，:28）的 `Content` 经 `this[!DataContextProperty]` 绑定窗口 DataContext（:35，布局模板以 ViewModel 为绑定源，全部宽松绑定）→ **内置命令面板**（:36-44，ADR-0005）：`_palette[!ItemsSource]` 宽松绑定 `"Commands"`（:38），`Content = new Panel { _layoutHost, _palette }`（:39，面板叠在布局宿主之上，不动四份布局模板），注册 Ctrl+P KeyBinding（:40-44，`DelegateCommand(_palette.Open)` 直接开关）→ **内置菜单栏**：`LeftContent = new Menu { Classes = { "chrome-menu" }, VerticalAlignment.Center, ItemsSource 宽松绑定 "MenuBarItems" }`（:47-52）→ `DataTemplates.Add(new FuncDataTemplate<MenuItemViewModel>(...))`（:53，项模板入窗口 DataTemplates 而非主题资源，子菜单任意深度经模板查找递归复用）→ `UpdateLayoutTemplate()`（:54） |
-| `BuildMenuItemHeader` | `private static Control`（:60） | 菜单项头部：水平 StackPanel（Spacing=6）+ 图标（`Icon` 非 null 才创建 14×14 `PathIcon`，**不留占位间隙**）+ 标题 `TextBlock`；图标前景色由 chrome-menu 样式接管 |
+| `BuildMenuItemHeader` | `private static Control`（:62） | 菜单项头部：水平 StackPanel（Spacing=6）+ 图标槽位 + 标题 `TextBlock`；`Icon` 非 null 渲染 14×14 `PathIcon`，为 null 时弹出层内的项仍渲染同尺寸空 `PathIcon` 占位（文本与有图标项对齐），标题栏顶层菜单（`IsTopLevel`）不预留槽位；图标前景色由 chrome-menu 样式接管 |
 | `OnPropertyChanged` | `protected override void`（:85） | `e.Property == PanelAlignmentProperty` 时调 `UpdateLayoutTemplate()` |
 | `UpdateLayoutTemplate` | `private void`（:94） | 枚举→资源键映射后 `_theme.TryGetResource(key, null, out var template)` 查找并强转 `IDataTemplate` 赋给 `_layoutHost.ContentTemplate`；**缺失抛 `InvalidOperationException($"布局模板资源缺失：{key}")`**（:106），窗口构造期即失败 |
 | `RegisterCommandGestures` | `public void RegisterCommandGestures(IEnumerable<ICommandContribution>)`（:114，ADR-0005） | 为带 `Gesture` 的命令生成窗口级 KeyBinding：机制在 Framework、接线在 shell 模块（同 `LayoutPersistence` 惯例），shell 收集命令后调用一次；`KeyGesture.Parse` 抛 `FormatException` 的文本记 `Logger.Warning` 跳过 |
@@ -151,7 +151,7 @@ FrameworkWindow 的基础布局主题。加载机制：构造函数（:16-24）�
 
 样式（:513 起）：nav-item/panel-tab/GridSplitter/panel-collapse/region-title/placeholder/status-item 自 Modules/Workstation/MainWindow.axaml 迁入；`layout|ToolViewBar.drag-over`（:554，拖拽悬停整 Bar 高亮，ADR-0002）；4 个标题栏菜单样式（:611-628，ADR-0001 菜单栏内置配套）：`Menu.chrome-menu > MenuItem` 紧凑行高（MinHeight=30、Padding=10,0，:611-614）、`Popup#PART_Popup` VerticalOffset=-8 让弹出层贴合标题栏下缘（:616-619）、`Menu.chrome-menu MenuItem` 的 `ItemsSource={Binding Children}`/`Command={Binding Command}`/`AutomationProperties.Name={Binding Title}` 样式绑定（:621-624，叶子 Children 为空、节点 Command 为 null，均无副作用）、`PathIcon` 前景色 SemiColorText1（:626-628）。**菜单项的内容模板不在本主题内**——无 x:Key 的 DataTemplate 不能放 `Styles.Resources`（AVLN3000），故由 `FrameworkWindow` 构造时在窗口 `DataTemplates` 代码注册（见第 4 节）。分隔条改用 `layout:PanelResizer` 的 `Target`+`ResizeCommand` 声明式绑定（如 :240-252；axaml 以 `xmlns:layout="clr-namespace:DigitalWorkstation.Core.Framework.Layout"` 引入，:3）。**所有绑定为宽松反射绑定**——Framework 不引用具体 ViewModel 类型。面板对齐的切换入口不在本主题内（在视图菜单，见 Modules/Workstation 的 `Menus/ViewAlignmentMenus.cs`）。
 
-命令面板样式（:630-662，ADR-0005 配套）：`windows|CommandPalette` 浮层外观（SemiColorBackground1 底 + 边框 + 圆角 6 + 阴影，宽 600、顶部居中、上缘距 48）、`TextBox.command-input` 透明无边框、`ListBox.command-list` 透明底与条目圆角、`TextBlock.gesture` 右侧快捷键文本（SemiColorText2）。
+命令面板样式（:630-667，ADR-0005 配套）：`windows|CommandPalette` 浮层外观（SemiColorBackground1 底 + 边框 + 圆角 6 + 阴影，宽 600、顶部居中、上缘距 48）、`TextBox.command-input` 透明无边框、`ListBox.command-list` 透明底与条目圆角、`TextBlock.gesture` 右侧快捷键文本（SemiColorText2）、`PathIcon.command-icon` 条目左侧图标槽位（12×12、SemiColorText2、右间距 8、垂直居中；始终渲染，`IconPath` 为 null 时为空占位，文本对齐）。
 
 ## 6. `PanelAlignment` / `PanelResize` / `SetPanelAlignmentEvent` / `PanelResizer`（均位于 Layout/）
 
@@ -255,15 +255,16 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
 public class MenuItemViewModel
 ```
 
-菜单项的呈现模型（自 Modules/Workstation 迁入，命名空间 `DigitalWorkstation.Core.Framework.Menus`，API 不变）：叶子（`Command` 非空）或子菜单节点（`Children` 非空），由菜单树（`MenuTreeSubmenu`）递归转换而来；分隔线直接是 Avalonia `Separator` 控件。成员：
+菜单项的呈现模型（自 Modules/Workstation 迁入，命名空间 `DigitalWorkstation.Core.Framework.Menus`）：叶子（`Command` 非空）或子菜单节点（`Children` 非空），由菜单树（`MenuTreeSubmenu`）递归转换而来；分隔线直接是 Avalonia `Separator` 控件。成员：
 
 | 成员 | 签名 | 说明 |
 |---|---|---|
 | `Title` | `public required string Title { get; init; }`（:19） | 已解析的显示标题 |
-| `Icon` | `public Geometry? Icon { get; init; }`（:24） | 图标几何（随主题变色）；null = 无图标，模板不渲染 `PathIcon` |
+| `Icon` | `public Geometry? Icon { get; init; }`（:24） | 图标几何（随主题变色）；null = 无图标——弹出层内模板仍渲染空 `PathIcon` 占位对齐，顶层菜单不预留 |
 | `Command` | `public ICommand? Command { get; init; }`（:26） | 叶子命令；节点为 null |
-| `Children` | `public ObservableCollection<object> Children { get; }`（:28） | 子项（`MenuItemViewModel` 或 `Separator`） |
-| `FromSubmenu` | `public static MenuItemViewModel FromSubmenu(MenuTreeSubmenu)`（:33） | 递归转换：`MenuTreeItem` → 叶子（`IconPath` 经 `StreamGeometry.Parse` 转几何，:43）、`MenuTreeSubmenu` → 递归、分隔线 → `new Separator()`（:38-48） |
+| `IsTopLevel` | `public bool IsTopLevel { get; init; }`（:32） | 是否标题栏顶层菜单项：顶层项不预留图标槽位（避免标题文本缩进）；仅 `MainWindowViewModel` 建根项时经 `FromSubmenu(…, isTopLevel: true)` 置位，递归子项恒为 false |
+| `Children` | `public ObservableCollection<object> Children { get; }`（:34） | 子项（`MenuItemViewModel` 或 `Separator`） |
+| `FromSubmenu` | `public static MenuItemViewModel FromSubmenu(MenuTreeSubmenu, bool isTopLevel = false)`（:39） | 递归转换：`MenuTreeItem` → 叶子（`IconPath` 经 `StreamGeometry.Parse` 转几何，:49）、`MenuTreeSubmenu` → 递归（不带 isTopLevel，:52）、分隔线 → `new Separator()`（:44-54） |
 
 **消费约定**：shell 宿主窗口的 ViewModel 暴露 `MenuBarItems` 顶层集合（宽松绑定约定），`FrameworkWindow` 内置的 `Menu` 直接绑定它（见第 4 节）；真实实现 `Modules/Workstation/MainWindowViewModel.cs:108`。
 
@@ -347,7 +348,7 @@ attribute 命令注册扩展，与 `RegisterMenus` 同构但**免类级 attribut
 
 ### `ReflectedCommandContribution`（internal，:60）
 
-由 `RegisterCommands` 生成的 `ICommandContribution` 实现。构造期（:65-75）把 attribute 元数据落成契约属性：`Id = attribute.Id ?? $"{method.DeclaringType?.FullName}.{method.Name}"`（默认「声明类全名.方法名」）、`Title = Language.Get(attribute.Title)`（收集时按 UI 区域性解析）、`Gesture`/`Order` 透传、`Command = new DelegateCommand(Execute)`。执行路径与菜单完全同构：`Execute` fire-and-forget 调 `ExecuteAsync`（:86-89）：反射调用，返回 `Task` 则 `await`；异常解包 `TargetInvocationException` 后 `Logger.Error` 记录，**不抛出**（:91-104）。
+由 `RegisterCommands` 生成的 `ICommandContribution` 实现。构造期（:65-75）把 attribute 元数据落成契约属性：`Id = attribute.Id ?? $"{method.DeclaringType?.FullName}.{method.Name}"`（默认「声明类全名.方法名」）、`Title = Language.Get(attribute.Title)`（收集时按 UI 区域性解析）、`Gesture`/`IconPath`/`Order` 透传、`Command = new DelegateCommand(Execute)`。执行路径与菜单完全同构：`Execute` fire-and-forget 调 `ExecuteAsync`（:86-89）：反射调用，返回 `Task` 则 `await`；异常解包 `TargetInvocationException` 后 `Logger.Error` 记录，**不抛出**（:91-104）。
 
 ## 15. `CommandPalette`（Windows/CommandPalette.cs:18，ADR-0005）
 
@@ -362,8 +363,7 @@ public class CommandPalette : Border
 | `ItemsSourceProperty` / `ItemsSource` | `StyledProperty<IEnumerable<ICommandContribution>?>`（:20） | 命令数据源（`FrameworkWindow` 构造时宽松绑定 `"Commands"`）；变更且面板可见时重建列表 |
 | `Open` | `public void Open()`（:76） | 显示、清空输入、重建列表、聚焦输入框；并开始监听 TopLevel 的 PointerPressed（Tunnel）实现面板外点击关闭 |
 | `Close` | `public void Close()`（:89） | 隐藏并摘掉面板外点击监听；Esc、失焦、执行命令后均走此 |
-
-行为细节：过滤为子串、不区分大小写、匹配本地化后 `Title`（`RefreshItems`，:153）；MRU 内存列表 `_recentIds`（:29，新者在前，重启即清）执行后置顶、过滤后仍浮到最前；`OnKeyDown`（:105）处理 Esc/Enter/↑/↓（输入框单行，这些键不被吞，冒泡到控件）；单击条目即执行（`OnItemTapped`，:187，守卫点在条目容器内）；执行先 `Close()` 再 `Command.Execute(null)`（:204）。列表项模板为代码创建的 `FuncDataTemplate<ICommandContribution>`（:44，标题 + 右侧 gesture 文本，无图标）；空态「无匹配命令」与列表同格切换。样式在 `FrameworkWindowTheme.axaml:630-662`；`StyleKeyOverride` 未声明——类型选择器 `windows|CommandPalette` 按 StyleKey 匹配（同 `ToolViewBar` 的坑，见 pitfalls.md）。
+行为细节：过滤为子串、不区分大小写、匹配本地化后 `Title`（`RefreshItems`，:153）；MRU 内存列表 `_recentIds`（:29，新者在前，重启即清）执行后置顶、过滤后仍浮到最前；`OnKeyDown`（:105）处理 Esc/Enter/↑/↓（输入框单行，这些键不被吞，冒泡到控件）；单击条目即执行（`OnItemTapped`，:187，守卫点在条目容器内）；执行先 `Close()` 再 `Command.Execute(null)`（:204）。列表项模板为代码创建的 `FuncDataTemplate<ICommandContribution>`（:44，三列 Grid：左侧 `PathIcon.command-icon` 槽位始终渲染（`IconPath` 为 null 时为空占位，文本与有图标命令对齐——同菜单弹出层惯例）+ 标题 + 右侧 gesture 文本，`Gesture` 为 null 时隐藏）；空态「无匹配命令」与列表同格切换。样式在 `FrameworkWindowTheme.axaml:630-667`；`StyleKeyOverride` 未声明——类型选择器 `windows|CommandPalette` 按 StyleKey 匹配（同 `ToolViewBar` 的坑，见 pitfalls.md）。
 
 ## 16. 设置管线（Settings/，ADR-0006）
 

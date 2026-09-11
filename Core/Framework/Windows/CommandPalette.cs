@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using DigitalWorkstation.Core.Abstractions.Commands;
 using DigitalWorkstation.Core.Resource;
@@ -138,19 +139,25 @@ public class CommandPalette : Border
         {
             return new Grid();
         }
-
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
+        // 图标槽位始终预留（null 图标渲染空 PathIcon 占位），文本与有图标命令对齐——同菜单弹出层惯例
+        grid.Children.Add(new PathIcon
+        {
+            Classes = { "command-icon" },
+            Data = command.IconPath is null ? null : StreamGeometry.Parse(command.IconPath)
+        });
+        var title = new TextBlock { Text = command.Title };
+        Grid.SetColumn(title, 1);
+        grid.Children.Add(title);
         var gesture = new TextBlock
         {
             Classes = { "gesture" },
             Text = command.Gesture,
             IsVisible = command.Gesture is not null
         };
-        Grid.SetColumn(gesture, 1);
-        return new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
-            Children = { new TextBlock { Text = command.Title }, gesture }
-        };
+        Grid.SetColumn(gesture, 2);
+        grid.Children.Add(gesture);
+        return grid;
     }
 
     /// <summary>
