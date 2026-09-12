@@ -2,9 +2,18 @@
 
 ## 模块做什么
 
-`Modules/Workstation` 是 Digital.Workstation 的**应用宿主与 shell（工作台外壳）**：它提供主窗口 `MainWindow`（继承 Framework 的 `FrameworkWindow`，VS Code 式五区布局、标题栏菜单栏与命令面板由基类及 `FrameworkWindowTheme.axaml`/`FrameworkWindow.cs`/`CommandPalette.cs` 提供；本模块只加应用级 chrome：窗口标题、面板对齐档位）、主窗口 ViewModel `MainWindowViewModel`（驱动整个工作区布局状态，并把布局变更经 Framework 的 `LayoutPersistence` 防抖落盘）、应用入口 `WorkstationApplication`（继承 `FrameworkApplication<MainWindow>`），以及一组 shell 预置的界面贡献：**工具视图（Tool View，ADR-0002）**不再手写贡献类，机制是在 View 类上标 `[ToolView]` attribute、由 Framework `RegisterToolViews` 扫描注册——当前全应用无 `[ToolView]` 实例（本模块四个与 DashBoard 两个演示占位视图均已删除），三处 Bar 均为空；`Contributions/` 目录只剩就绪状态栏项 `ReadyStatusBarItem`；`Menus/` 目录：五个 attribute 菜单类——`FileMenus` 文件>退出、`ViewPanelMenus` 视图>三个面板显隐切换、`ViewAlignmentMenus` 视图>四档面板对齐、`ViewLayoutMenus` 视图>重置布局、`HelpMenus` 帮助>关于，经 `[MenuGroup]`/`[MenuItem]` 标注由 Framework 扫描注册，ADR-0001；`Commands/` 目录：shell 预置命令类 `ViewCommands`（三面板显隐切换 + 重置布局，与视图菜单同事件通路；三面板命令带 `Gesture`，快捷键由此声明），经 `[Command]` 标注由 Framework `RegisterCommands` 扫描注册，ADR-0005）和内置视图（`Views/`：空状态页、关于窗口）。ActivityBar 左下角的"设置"入口是 shell 内置**纯导航按钮**（非工具视图，ADR-0006 决策 6）：`OpenSettingsCommand` 发布 `OpenMainViewEvent(WellKnownViews.Settings)` 打开 Settings 模块贡献的设置页主视图。功能模块（如 DashBoard、Settings）不直接引用本模块的 UI，只按 Abstractions 的贡献契约注册（工具视图同样走 `[ToolView]` + `RegisterToolViews`，命令走 `[Command]` + `RegisterCommands`），由本模块收集并渲染。
+`Modules/Workstation` 是应用宿主与 shell：提供 `WorkstationApplication`、`MainWindow`、驱动布局与持久化接线的 `MainWindowViewModel`。五区布局、菜单栏与命令面板机制在 Framework，本模块负责应用级 chrome 与贡献收集。当前无工具视图实例；预置贡献为 `ReadyStatusBarItem`、六个菜单类（`FileMenus`、`FileNavigationMenus`、`ViewPanelMenus`、`ViewAlignmentMenus`、`ViewLayoutMenus`、`HelpMenus`）及两个命令宿主（`ViewCommands`、`FileNavigationMenus`），由 attribute 扫描注册。内置视图为启动主页 `EmptyStateView` 与关于窗口。设置页由 Settings 模块贡献，文件菜单“首选项”与左下角“设置”按钮均通过 `OpenMainViewEvent(WellKnownViews.Settings)` 打开；功能模块只依赖 Abstractions 契约，不引用本模块 UI。
 
 ## 核心设计逻辑
+
+### 主页与文件菜单导航
+
+- 主页是启动时的 `EmptyStateView`，不是 DashBoard 主视图贡献。VM 将启动时解析的实例保存在 `_homeContent`，回到主页不重新解析。
+- `Menus/FileNavigationMenus.cs` 声明文件菜单 Navigation 组（GroupOrder 100）：“回到主页”（Order 100）、“首选项”（Order 200）；原 `FileMenus` 的 Application 组（GroupOrder 1000）保持“退出”，组间自动插分隔线。
+- `FileNavigationMenus` 的两个导航方法均标注 `[MenuItem]` 与 `[Command]`，菜单与命令面板执行同一方法。`ReturnHome` 发布无负载 `ReturnHomeEvent`，不声明快捷键；`OpenPreferences` 发布 `OpenMainViewEvent(WellKnownViews.Settings)`，通过 `Gesture = "Ctrl+OemComma"` 注册 Ctrl+,。左下角设置入口保留。
+- `MainWindowViewModel.ReturnHome` 仅清除 `State.MainContent.ActiveView` 并恢复 `_homeContent`；面板布局、对齐、持久化文件及主视图缓存均不变。已在主页且活动主视图为空时直接返回。设置页再次打开复用原实例。
+
+### 布局与贡献机制
 
 - **单一不可变状态源**：整个工作区布局由 `MainWindowViewModel.State`（`ShellLayoutState`，Framework 的 `sealed record`，`MainWindowViewModel.cs:60`）驱动。所有显隐/选中/tab 激活/尺寸/拖拽迁移变更都是对该 record 的纯函数转换后整体替换（`State = State.SelectActivity(...)` 等），布局 XAML 全部绑定 `State.*` 或其派生属性（如 `IsVisible="{Binding State.SideBar.Visible}"`，Framework 的 `FrameworkWindowTheme.axaml:65`）。ViewModel 不直接存任何面板显隐标志。**面板对齐档位不在 `State` 里**（区别于显隐/尺寸/tab）：它是 `FrameworkWindow.PanelAlignment` 依赖属性，`MainWindowViewModel.PanelAlignment`（:85）只是与之双向绑定的镜像属性。
 - **基础布局在 Framework**：VS Code 式五区 shell + 状态栏 + 标题栏菜单栏由 Framework 的 `FrameworkWindow`（`Core/Framework/Windows/FrameworkWindow.cs:22`）提供——`PanelAlignment` 每个枚举值对应 `FrameworkWindowTheme.axaml` 里一份静态布局模板（`WindowLayoutLeft/Right/Center/Justify`），切换档位即整体替换模板，不做动态调整；菜单栏（`Menu` + 项模板 + `MenuBarItems` 宽松绑定）由 `FrameworkWindow` 构造函数在代码中内置创建（:47-52），样式在 `Core/Framework/Windows/FrameworkWindowTheme.axaml:611-628`；Framework 不引用具体 ViewModel 类型，布局模板里全部是宽松反射绑定。`MainWindow.axaml` 只剩应用级 chrome（窗口标题），列宽经 VM 的 `SideBarColumnWidth`/`AuxiliaryColumnWidth`（:157-164）暴露给模板，面板隐藏时归零、BottomPanel 跨度随之自然伸缩。

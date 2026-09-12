@@ -8,7 +8,7 @@
 
 | 签名 | 说明 |
 |---|---|
-### 静态只读属性（30 个，全部以 `Get(nameof(属性名))` 实现，返回 `string`）
+### 静态只读属性（全部以 `Get(nameof(属性名))` 实现，返回 `string`）
 
 
 定义于 `Language.cs:25-168`。键名 = 属性名，中文值来自 `Language.resx`，英文值来自 `Language.en-US.resx`：
@@ -21,6 +21,8 @@
 | `MenuViewTitle`（:39） | 视图 | View | 顶层"视图"菜单标题 |
 | `MenuHelpTitle`（:44） | 帮助 | Help | 顶层"帮助"菜单标题 |
 | `MenuExitTitle`（:49） | 退出 | Exit | 文件菜单"退出"项标题 |
+| `ReturnHomeTitle` | 回到主页 | Go Home | 回到主页命令与文件菜单项标题 |
+| `MenuPreferencesTitle` | 首选项 | Preferences | 文件菜单项标题，打开现有设置页 |
 | `MenuAboutTitle`（:54） | 关于 | About | 帮助菜单"关于"项标题 |
 | `ToggleSideBarTitle`（:59） | 切换 SideBar | Toggle Side Bar | SideBar 显隐切换项（视图菜单） |
 | `ToggleBottomPanelTitle`（:64） | 切换 BottomPanel | Toggle Bottom Panel | BottomPanel 显隐切换项（视图菜单） |

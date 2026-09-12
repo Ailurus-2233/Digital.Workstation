@@ -22,6 +22,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IContainerProvider _containerProvider;
     private readonly IEventAggregator _eventAggregator;
     private readonly LayoutPersistence _persistence;
+    private readonly EmptyStateView _homeContent;
     private readonly Dictionary<string, NavigationItemViewModel> _itemsById = new();
     private readonly Dictionary<string, IMainViewContribution> _mainViewsById = new();
     private readonly Dictionary<string, object> _mainViewContents = new();
@@ -46,12 +47,14 @@ public partial class MainWindowViewModel : ObservableObject
         _eventAggregator = eventAggregator;
         _persistence = persistence;
         eventAggregator.GetEvent<OpenMainViewEvent>().Subscribe(OpenMainView);
+        eventAggregator.GetEvent<ReturnHomeEvent>().Subscribe(ReturnHome);
         eventAggregator.GetEvent<TogglePanelVisibilityEvent>().Subscribe(TogglePanel);
         eventAggregator.GetEvent<SetPanelAlignmentEvent>().Subscribe(SetPanelAlignment);
         eventAggregator.GetEvent<ResetLayoutEvent>().Subscribe(ResetLayout);
         // 拖拽会话期间临时显露隐藏面板，作为「向隐藏面板拖入」的投放区
         ToolViewDragSession.ActiveChanged += active => IsToolViewDragActive = active;
-        _mainContent = containerProvider.Resolve<EmptyStateView>();
+        _homeContent = containerProvider.Resolve<EmptyStateView>();
+        _mainContent = _homeContent;
     }
 
     [ObservableProperty]
@@ -303,6 +306,17 @@ public partial class MainWindowViewModel : ObservableObject
     private void OpenSettings()
     {
         _eventAggregator.GetEvent<OpenMainViewEvent>().Publish(WellKnownViews.Settings);
+    }
+
+    private void ReturnHome()
+    {
+        if (ReferenceEquals(MainContent, _homeContent) && State.MainContent.ActiveView is null)
+        {
+            return;
+        }
+
+        State = State with { MainContent = State.MainContent with { ActiveView = null } };
+        MainContent = _homeContent;
     }
 
     /// <summary>

@@ -1,5 +1,15 @@
 ﻿# Framework — 验证方式
 
+## 命令面板快捷键标签手动回归
+
+按 `docs/agents/verification.md`，启动 `dotnet run --project Launcher/Launcher.csproj -c Debug`，不以自动化测试验收此 UI 改动：
+
+1. 按 Ctrl+P 打开命令面板，查看“首选项”，右侧应显示 `Ctrl+,`，不得显示 `Ctrl+OemComma`。
+2. 查看三个面板切换命令，标签仍为 `Ctrl+B`、`Ctrl+J`、`Ctrl+Alt+B`；“回到主页”无快捷键标签。
+3. 按 Esc 关闭命令面板，再按 Ctrl+,，应打开设置页。重新打开命令面板，标签仍应正确。
+
+原因：`Gesture` 是按键声明；`CommandPalette.FormatGesture` 必须使用 Avalonia 平台格式化生成显示文案，不直接输出声明字符串。最终验收由用户确认。
+
 ## 测试在哪、用什么框架
 
 测试项目：`UnitTest/Framework/Framework.csproj`（解决方案 `Digital.Workstation.slnx` 的 `/UnitTest/` 文件夹，第 15 行），是**全仓唯一的测试项目**。

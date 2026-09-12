@@ -16,6 +16,7 @@ Events/
   TogglePanelTarget.cs         目标面板枚举
   TogglePanelVisibilityEvent.cs 面板显隐请求事件
   ResetLayoutEvent.cs          重置布局请求事件（ADR-0002，无负载）
+  ReturnHomeEvent.cs           回到启动主页请求事件（无负载，保留布局与主视图缓存）
   SettingChanged.cs            设置项变更负载 record（ADR-0006 决策 3）
   SettingChangedEvent.cs       设置项变更事件（ADR-0006 决策 3）
 obj/、Output/                  构建产物（不入库语义；obj 下的 Models.GlobalUsings.g.cs 是 Prism global using 的证据）
@@ -71,7 +72,11 @@ obj/、Output/                  构建产物（不入库语义；obj 下的 Mode
 
 ### Events/ResetLayoutEvent.cs
 
-`public class ResetLayoutEvent : PubSubEvent;`（第 7 行）——请求重置布局（ADR-0002）：删除持久化布局配置并按 attribute 默认重建 shell 布局。无负载，是模块中唯一继承非泛型 `PubSubEvent` 的事件；由视图菜单的"重置布局"项（`Modules/Workstation/Menus/ViewLayoutMenus.cs` 第 16 行）发布，主窗口（`MainWindowViewModel` 构造函数第 51 行）订阅后重建 State。
+`public class ResetLayoutEvent : PubSubEvent;`——请求删除持久化布局配置并按 attribute 默认重建 shell 布局；由视图菜单“重置布局”发布，主窗口订阅。与 `ReturnHomeEvent` 不同，它会重置面板布局。
+
+### Events/ReturnHomeEvent.cs
+
+`public class ReturnHomeEvent : PubSubEvent;`——文件菜单与命令面板共用 `FileNavigationMenus.ReturnHome` 发布，主窗口订阅后清除活动主视图、恢复缓存的启动页。无负载，不重置布局、不清除主视图实例缓存。
 
 ### Events/SettingChanged.cs
 

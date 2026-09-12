@@ -152,12 +152,30 @@ public class CommandPalette : Border
         var gesture = new TextBlock
         {
             Classes = { "gesture" },
-            Text = command.Gesture,
+            Text = FormatGesture(command.Gesture),
             IsVisible = command.Gesture is not null
         };
         Grid.SetColumn(gesture, 2);
         grid.Children.Add(gesture);
         return grid;
+    }
+
+    private static string? FormatGesture(string? gesture)
+    {
+        if (string.IsNullOrEmpty(gesture))
+        {
+            return gesture;
+        }
+
+        try
+        {
+            return KeyGesture.Parse(gesture).ToString("p", null);
+        }
+        catch (FormatException)
+        {
+            // 快捷键注册处负责记录非法声明；显示原文，不让单条错误中断命令列表。
+            return gesture;
+        }
     }
 
     /// <summary>

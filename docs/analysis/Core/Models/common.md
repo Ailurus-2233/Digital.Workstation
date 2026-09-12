@@ -6,13 +6,14 @@
 
 - 启动序列三件套（ADR-0004）：`StartupProgressEvent`（启动进度）、`ModuleLoadFailedEvent`（模块加载失败）、`StartupFailureActionEvent`（用户对失败的"继续/退出"决策），配套负载 record `StartupProgress`/`ModuleLoadFailure` 与枚举 `StartupPhase`/`StartupFailureAction`；
 - 工作区交互四件套：`OpenMainViewEvent`（SideBar 内交互或 shell"设置"导航按钮请求 MainContent 打开指定主视图，负载为主视图 Id 字符串，ADR-0006 决策 6）、`TogglePanelVisibilityEvent`（翻转指定面板可见性，负载为 `TogglePanelTarget` 枚举）、`ResetLayoutEvent`（请求重置布局（ADR-0002），无负载；视图菜单"重置布局"项发布，主窗口订阅后删除持久化配置并重建 State）、`SettingChangedEvent`（设置项变更广播，负载为 `SettingChanged(SettingId, NewValue)`，`SettingsService.Set` 发布，ADR-0006 决策 3）。
+- 主页导航：`ReturnHomeEvent`（无负载），文件菜单与命令面板的“回到主页”发布，主窗口订阅后清除活动主视图并恢复缓存主页，保留布局与主视图缓存。文件菜单“首选项”复用 `OpenMainViewEvent(WellKnownViews.Settings)`。
 
-模块共 13 个源码文件：7 个空的事件子类（6 个 `PubSubEvent<T>` + 1 个无负载的非泛型 `PubSubEvent`）、3 个负载 record、3 个枚举，全部在 `Core/Models/Events/` 下。
+事件源码清单以 `file-list.md` 为准；无负载事件包括 `ResetLayoutEvent` 与 `ReturnHomeEvent`。
 
 ## 核心设计逻辑
 
 1. **契约独立成项目**：发布方（`Core/Framework` 的 `FrameworkApplication`）与订阅/发布方（`Modules/DashBoard`、`Modules/Workstation`）分属不同程序集。事件类型必须放在双方都引用的下游项目中，否则 shell 与模块无法在同一事件类型上对接。Prism 的 `EventAggregator.GetEvent<T>()` 按**类型身份**撮合发布/订阅，类型重复定义（哪怕同名同结构）不会互通，所以每个事件只能有唯一定义点——本模块就是这个定义点。
-2. **空子类承载语义**：7 个事件类都是无成员体的声明（如 `Events/StartupProgressEvent.cs` 第 7 行 `public class StartupProgressEvent : PubSubEvent<StartupProgress>;`；`Events/ResetLayoutEvent.cs` 第 7 行继承非泛型 `PubSubEvent`，连负载类型都没有）。这是 Prism 的惯例：`PubSubEvent<T>` 已提供全部机制（`Publish`/`Subscribe`/`Unsubscribe`、线程选项），子类只贡献**类型身份**，事件的业务语义完全写在 XML 注释里。这避免了任何重复机制代码。
+2. **空子类承载语义**：事件类均无成员体。有负载事件继承 `PubSubEvent<T>`，无负载的 `ResetLayoutEvent` 与 `ReturnHomeEvent` 继承 `PubSubEvent`。Prism 基类提供发布、订阅与线程选项；子类只贡献类型身份，XML 注释定义业务语义。
 3. **负载用 record 而非 class**：`StartupProgress`（Events/StartupProgress.cs 第 10 行）、`ModuleLoadFailure`（Events/ModuleLoadFailure.cs 第 10 行）与 `SettingChanged`（Events/SettingChanged.cs 第 9 行）是位置 record——不可变、值相等、构造即定型，适合"一次性消息"语义；可空标注（`string? ModuleName`、`object? NewValue`）表达"仅 LoadingModules 阶段携带模块名""新值类型由设置项声明的 ValueType 决定"的约定。
 4. **权衡——可空 + 约定而非类型区分阶段**：`StartupProgress` 用一个 record 通吃三个阶段，`ModuleName` 仅在 `StartupPhase.LoadingModules` 时非 null（注释明确约定，类型系统不强制）。代价是订阅方（如 `DashBoardWindowViewModel.OnProgress`）必须自己判阶段；收益是阶段切换不引入新类型，发布/订阅双方改动面最小。
 

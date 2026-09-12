@@ -363,6 +363,9 @@ public class CommandPalette : Border
 | `ItemsSourceProperty` / `ItemsSource` | `StyledProperty<IEnumerable<ICommandContribution>?>`（:20） | 命令数据源（`FrameworkWindow` 构造时宽松绑定 `"Commands"`）；变更且面板可见时重建列表 |
 | `Open` | `public void Open()`（:76） | 显示、清空输入、重建列表、聚焦输入框；并开始监听 TopLevel 的 PointerPressed（Tunnel）实现面板外点击关闭 |
 | `Close` | `public void Close()`（:89） | 隐藏并摘掉面板外点击监听；Esc、失焦、执行命令后均走此 |
+
+快捷键标签：`BuildItem` 经私有 `FormatGesture(string?)` 使用 `KeyGesture.Parse(...).ToString("p", null)` 生成平台可读文本；例如 Windows 上 `Ctrl+OemComma` 显示为 `Ctrl+,`。原始 `ICommandContribution.Gesture` 继续供窗口级 KeyBinding 解析。空值不格式化；`FormatException` 时保留原声明，命令列表仍可打开。
+
 行为细节：过滤为子串、不区分大小写、匹配本地化后 `Title`（`RefreshItems`，:153）；MRU 内存列表 `_recentIds`（:29，新者在前，重启即清）执行后置顶、过滤后仍浮到最前；`OnKeyDown`（:105）处理 Esc/Enter/↑/↓（输入框单行，这些键不被吞，冒泡到控件）；单击条目即执行（`OnItemTapped`，:187，守卫点在条目容器内）；执行先 `Close()` 再 `Command.Execute(null)`（:204）。列表项模板为代码创建的 `FuncDataTemplate<ICommandContribution>`（:44，三列 Grid：左侧 `PathIcon.command-icon` 槽位始终渲染（`IconPath` 为 null 时为空占位，文本与有图标命令对齐——同菜单弹出层惯例）+ 标题 + 右侧 gesture 文本，`Gesture` 为 null 时隐藏）；空态「无匹配命令」与列表同格切换。样式在 `FrameworkWindowTheme.axaml:630-667`；`StyleKeyOverride` 未声明——类型选择器 `windows|CommandPalette` 按 StyleKey 匹配（同 `ToolViewBar` 的坑，见 pitfalls.md）。
 
 ## 16. 设置管线（Settings/，ADR-0006）

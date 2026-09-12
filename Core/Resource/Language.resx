@@ -82,6 +82,14 @@
     <value>退出</value>
     <comment>文件菜单"退出"项的标题</comment>
   </data>
+  <data name="ReturnHomeTitle" xml:space="preserve">
+    <value>回到主页</value>
+    <comment>回到主页命令与文件菜单项的标题</comment>
+  </data>
+  <data name="MenuPreferencesTitle" xml:space="preserve">
+    <value>首选项</value>
+    <comment>文件菜单"首选项"项的标题</comment>
+  </data>
   <data name="MenuAboutTitle" xml:space="preserve">
     <value>关于</value>
     <comment>帮助菜单"关于"项的标题</comment>

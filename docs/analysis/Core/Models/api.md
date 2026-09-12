@@ -1,8 +1,8 @@
 # Models — 对外接口与调用方式
 
-本模块的"API 面"= 7 个事件类 + 3 个负载 record + 3 个枚举，全部 public，全部位于命名空间 `DigitalWorkstation.Core.Models.Events`。模块无方法、无服务、无生命周期管理，调用方式统一为 Prism `IEventAggregator.GetEvent<TEvent>()` 的发布/订阅。
+本模块公开事件类、负载 record 与枚举，全部位于命名空间 `DigitalWorkstation.Core.Models.Events`。调用方式统一为 Prism `IEventAggregator.GetEvent<TEvent>()` 的发布/订阅。
 
-## 事件类（7 个，均为空子类：6 个 `PubSubEvent<T>` + 1 个无负载的非泛型 `PubSubEvent`）
+## 事件类（空子类，有负载继承 `PubSubEvent<T>`，无负载继承 `PubSubEvent`）
 
 | 类型 | 定义 | 负载 | 发布方（真实调用点） | 订阅方（真实调用点） |
 |---|---|---|---|---|
@@ -12,9 +12,12 @@
 | `OpenMainViewEvent` | Events/OpenMainViewEvent.cs:7 | `string`（主视图 Id，即 `IMainViewContribution.Id`） | `Modules/Workstation/MainWindowViewModel.cs` `OpenSettings` 第 305 行（`WellKnownViews.Settings`，shell 左下角"设置"导航按钮，ADR-0006 决策 6）；原 DashBoard 导航视图的两个发布点已随演示视图删除 | `Modules/Workstation/MainWindowViewModel.cs` 第 48 行 `Subscribe(OpenMainView)`（默认线程选项） |
 | `TogglePanelVisibilityEvent` | Events/TogglePanelVisibilityEvent.cs:7 | `TogglePanelTarget` | `Modules/Workstation/Menus/ViewPanelMenus.cs` 第 17/23/29 行（三个 `[MenuItem]` 方法体内分别 `Publish(SideBar/BottomPanel/AuxiliaryPanel)`） | MainWindowViewModel.cs 第 49 行 `Subscribe(TogglePanel)`（默认线程选项） |
 | `ResetLayoutEvent` | Events/ResetLayoutEvent.cs:7 | 无（非泛型 `PubSubEvent`，ADR-0002） | `Modules/Workstation/Menus/ViewLayoutMenus.cs` 第 16 行（`ResetLayout` 方法体内 `Publish()`） | MainWindowViewModel.cs 第 51 行 `Subscribe(ResetLayout)`（默认线程选项） |
+| `ReturnHomeEvent` | Events/ReturnHomeEvent.cs | 无（非泛型 `PubSubEvent`） | `Modules/Workstation/Menus/FileNavigationMenus.ReturnHome`（文件菜单与命令面板共用方法） | `MainWindowViewModel.ReturnHome`；清除活动主视图并恢复启动页，不改变面板布局或主视图缓存 |
 | `SettingChangedEvent` | Events/SettingChangedEvent.cs:7 | `SettingChanged`（ADR-0006 决策 3） | `Core/Framework/Settings/SettingsService.cs` `Set` 第 128 行（更新内存 + 防抖落盘后广播） | 设置页与需重启 UX 等消费方（工单 03 就位；当前源码尚无订阅调用点） |
 
 事件类均无成员体（分号体声明），机制完全继承 Prism 基类：泛型 `Prism.Events.PubSubEvent<T>` 提供 `Publish(T payload)`、`Subscribe(Action<T> action, ThreadOption threadOption, bool keepSubscriberReferenceAlive)`、`Unsubscribe(...)`；无负载的 `ResetLayoutEvent` 继承非泛型 `PubSubEvent`，对应无参形态 `Publish()`/`Subscribe(Action)`。
+
+文件菜单 `FileNavigationMenus.OpenPreferences` 也是 `OpenMainViewEvent` 的发布方，负载为 `WellKnownViews.Settings`；与左下角设置入口共用主视图切换路径。
 
 ## 负载 record（3 个，位置 record，不可变、值相等）
 

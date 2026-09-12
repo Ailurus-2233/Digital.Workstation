@@ -49,6 +49,16 @@ public static class Language
     public static string MenuExitTitle => Get(nameof(MenuExitTitle));
 
     /// <summary>
+    ///     回到主页命令与文件菜单项的标题
+    /// </summary>
+    public static string ReturnHomeTitle => Get(nameof(ReturnHomeTitle));
+
+    /// <summary>
+    ///     文件菜单"首选项"项的标题
+    /// </summary>
+    public static string MenuPreferencesTitle => Get(nameof(MenuPreferencesTitle));
+
+    /// <summary>
     ///     帮助菜单"关于"项的标题
     /// </summary>
     public static string MenuAboutTitle => Get(nameof(MenuAboutTitle));

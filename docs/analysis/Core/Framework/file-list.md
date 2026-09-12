@@ -41,7 +41,7 @@ Core/Framework/
 │   └── GeneralSettings.cs                 Framework 预置「常规/语言」设置项声明类
 ├── Windows/                                 命名空间 DigitalWorkstation.Core.Framework.Windows（窗口基类与主题）
 │   ├── FrameworkWindow.cs                 带基础布局的窗口基类（内置 VS Code 式五区 shell + 标题栏菜单栏 + 命令面板浮层与 Ctrl+P）
-│   ├── CommandPalette.cs                  命令面板控件（ADR-0005）：自包含检索浮层（过滤/键盘导航/MRU 内存置顶），ItemsSource 宽松绑定 Commands
+│   ├── CommandPalette.cs                  命令面板控件（ADR-0005）：过滤/键盘导航/MRU 内存置顶、平台快捷键标签格式化，ItemsSource 宽松绑定 Commands
 │   ├── FrameworkWindowTheme.axaml         基础布局主题资源（四份布局模板 + 共享部件模板 + shell 样式 + 菜单样式 + 命令面板样式；ActivityBar 底部段 Grid(*,Auto) 分隔、StackPanel 承载钉住区 + 内置"设置"导航按钮；PanelResizer 经 xmlns:layout 引用）
 │   └── FrameworkWindowTheme.cs            主题加载器（StyleInclude 强制加载，BaseUri 指向 Windows/ 目录）
 └── WindowManager/

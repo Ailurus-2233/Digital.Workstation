@@ -27,6 +27,8 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
 | `RegisterSingleton<IStatusBarItemContribution, ReadyStatusBarItem>()`（:35） | 贡献 | 状态栏"就绪" |
 | `Register<AboutWindow>()`（:37） | 窗口（瞬态） | "关于"对话框，经 `IWindowManager` 按需解析 |
 
+补充注册：`Menus/FileNavigationMenus.cs` 由既有 `RegisterMenus` 与 `RegisterCommands` 扫描同时覆盖，无手动注册。文件菜单 Navigation 组在 Application 组之前；`ReturnHome()` 同时是菜单项与命令（`ReturnHomeTitle`，命令 Order 500，无 Gesture），发布 `ReturnHomeEvent`；`OpenPreferences()` 同时是菜单项与命令（`MenuPreferencesTitle`、`Icons.Settings`，命令 Order 600，Gesture 为 `"Ctrl+OemComma"`，即 Ctrl+,），发布 `OpenMainViewEvent(WellKnownViews.Settings)`。
+
 ## 2. `MainWindowViewModel`（MainWindowViewModel.cs:19）
 
 ```csharp
@@ -74,6 +76,8 @@ public partial class MainWindowViewModel : ObservableObject
 
 ### 私有方法（改行为时直接面对）
 
+`ReturnHome()`：构造函数订阅 `ReturnHomeEvent`；清除 `State.MainContent.ActiveView`，恢复启动时缓存的 `EmptyStateView`。不改变面板、不落盘、不清理主视图缓存；主页重复执行无变化。
+
 `TogglePanel(TogglePanelTarget)`（:488-497，switch：SideBar→`State.ToggleSideBar()`、AuxiliaryPanel→`State.ToggleAuxiliaryPanel()`、默认 `_`→`State.ToggleBottomPanel()`，末尾 `ScheduleSave()` :496——事件/快捷键/按钮各路线显隐切换统一在此落盘）、`SetPanelAlignment(PanelAlignment)`（:417-421，事件处理，`PanelAlignment = alignment` + `ScheduleSave()`）、`OpenMainView(string viewId)`（:344-360，未知 Id 静默返回）、**`LoadToolViews(ShellLayoutDto?)`**（:200-236：先把全部贡献登记进 `_contributionsById`（:204-207）；钉住项（`AllowMove=false`）恒落 ActivityBar 底部段（:225-226）；可移动项「配置优先、默认兜底」——局部函数 `MovableIn(bar)`（:209-219）先取持久化 `placements` 里归属该 bar 的（按 `Index` 排序），再把无配置条目且 attribute `Default == bar` 的按 `Order` 追加；孤儿条目随贡献迭代自然丢弃，无配置的新工具视图落到 Default Bar 末尾。ActivityBar 顶部段顺序写入 `State.ActivityBarItems`（:222-223）后 `LoadItems` 填两个导航集合、`LoadPanelTabs` 填两个面板（透传 `layout?.XxxPanel?.ActiveTab` 作 `preferredActiveTab`）；`layout` 非 null 再 `RestoreLayout`（:242）恢复显隐/尺寸（clamp）/选中项（必须是顶部段当前成员，否则按孤儿丢弃）/对齐档位）、**`ResetLayout()`**（:503-521，删持久化文件、清集合与索引、State/对齐回初值、`LoadToolViews(null)` 全默认重建；`_toolViewContents` 视图实例缓存保留）、**`CaptureLayout()`**（:527-573，快照当前布局为 DTO）、**`ScheduleSave()`**（:578-581，统一防抖落盘出口）、**`LoadPanelTabs`**（:586-618，建 tab 索引 `_tabsById`、定活动 tab、写 State.Tabs/ActiveTab、调 `SyncPanelTab`）、**`SyncPanelTab(ToolViewPlacement)`**（:624-646，按 State 同步 tab 高亮与内容区，无活动 tab 清空内容）、**`SyncSideBarSelection()`**（:311-326，按 State 同步导航项高亮与 SideBar 标题/内容）、**`ContentFor(string id)`**（:331-340，工具视图内容实例统一入口，`_toolViewContents` 按 Id 单实例缓存，未命中经 `_containerProvider.Resolve(ViewType)` 创建）、**`SyncBarCollection<TItem>`**（:663-702，static：把 Bar 呈现集合对齐到有序 Id 列表——移出删除、缺失经工厂创建并缓存复用、错位 `Move`）、`LoadItems`（:648-657，登记 `_itemsById` 并填导航集合）。
 
 ## 3. 呈现模型（包装贡献元数据，构造时解析图标几何）
@@ -90,7 +94,7 @@ public partial class MainWindowViewModel : ObservableObject
 
 本模块的 `PanelResizer.cs` 已删除；`PanelResizer` 现位于 `Core/Framework/Layout/PanelResizer.cs`，并改造为声明式调用：方向换算（SideBar 取 `+e.Vector.X`、AuxiliaryPanel 取 `-e.Vector.X`、BottomPanel 取 `-e.Vector.Y`）内聚进其 `OnDragDelta`，经 `Target`（`PanelResizeTarget`）与 `ResizeCommand`（`ICommand`）属性把增量包装为 `PanelResize` 发给 VM 的 `ResizePanelCommand`；`GetParentGrid() => null` 禁用原生重排的机制保持不变。XAML 用法迁至 `Core/Framework/Windows/FrameworkWindowTheme.axaml` 的各布局模板（声明 `Target`、`ResizeCommand="{Binding ResizePanelCommand}"`、`ResizeDirection`、8px 热区、`ZIndex="1"`）。细节见 `docs/analysis/Core/Framework/` 文档。
 
-## 5. Shell 预置贡献（`Contributions/` 一个 `IStatusBarItemContribution` 实现类 + `Menus/` 五个 attribute 菜单类 + `Commands/` 一个 attribute 命令类）
+## 5. Shell 预置贡献（一个状态栏贡献、六个菜单类；命令分布在 `ViewCommands` 与 `FileNavigationMenus`）
 
 工具视图（Tool View，ADR-0002）不再有贡献实现类：`[ToolView]` attribute 直接标在 View 类上，Framework `ToolViewRegistration.RegisterToolViews` 扫描时生成 `ToolViewContribution` 元数据（`Title` 经 `Language.Get(TitleKey)` 解析）。**当前全应用无 `[ToolView]` 实例**——本模块四个演示占位视图（`PropertiesView`/`OutlineView`/`OutputView`/`LogView`，Id `shell.properties`/`shell.outline`/`shell.output`/`shell.log`）与 DashBoard 的两个演示实例（`"dashboard"`/`"dashboard.tasks"`）均已删除，三处 Bar 均为空。菜单类的 Title 同样是 attribute 里的 Language 资源键字符串，运行时由 Framework 经 `Language.Get` 解析。
 贡献类与菜单类矩阵（Id/Title/IconPath/Order/定位/行为）：
@@ -99,6 +103,7 @@ public partial class MainWindowViewModel : ObservableObject
 |---|---|---|---|---|---|---|---|
 | `ReadyStatusBarItem`（ReadyStatusBarItem.cs:10） | `IStatusBarItemContribution` | `shell.status.ready` | `Language.StatusReadyTitle`（:14） | `Icons.Ready` | 10 | — | — |
 | `FileMenus`（FileMenus.cs:13） | attribute 菜单类（ADR-0001） | — | `[MenuGroup("MenuFileTitle", Group = "Application", GroupOrder = 1000, Order = 100)]`（:12） | — | `Exit` 项 Order 100 | 顶层"文件"菜单，Application 组（GroupOrder 1000 保持在末尾） | `Exit()`（:19-22，`[MenuItem("MenuExitTitle", Order = 100, Icon = Icons.Exit)]`，:18）：`(Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown()` |
+| `FileNavigationMenus`（Menus/FileNavigationMenus.cs） | attribute 菜单及命令类 | 命令 Id 默认「声明类全名.方法名」 | `ReturnHomeTitle` / `MenuPreferencesTitle` | 首选项为 `Icons.Settings` | 菜单 100/200；命令 500/600 | 文件菜单 Navigation 组（GroupOrder 100） | 两者均出现在命令面板；`ReturnHome()` 发布 `ReturnHomeEvent`；`OpenPreferences()` 发布 `OpenMainViewEvent(WellKnownViews.Settings)`，快捷键 Ctrl+, |
 | `HelpMenus`（HelpMenus.cs:12） | attribute 菜单类 | — | `[MenuGroup("MenuHelpTitle", Order = 300)]`（:11） | — | `About` 项 Order 100 | 顶层"帮助"菜单（单段路径，Order 300 是顶层位次；方法项进默认组） | 构造注入 `IWindowManager`；`About()`（:18-21，`[MenuItem("MenuAboutTitle", Order = 100, Icon = Icons.About)]`，:17）：`windowManager.ShowDialog<AboutWindow>()`（:20） |
 | `ViewPanelMenus`（ViewPanelMenus.cs:12） | attribute 菜单类 | — | `[MenuGroup("MenuViewTitle", Group = "Panels", GroupOrder = 100, Order = 200)]`（:11） | — | 三项 Order 100/200/300 | 顶层"视图"菜单 Panels 组 | 构造注入 `IEventAggregator`；`ToggleSideBar`/`ToggleBottomPanel`/`ToggleAuxiliaryPanel`（:15/:21/:27）各发布 `TogglePanelVisibilityEvent` 对应 `TogglePanelTarget` |
 | `ViewAlignmentMenus`（ViewAlignmentMenus.cs:13） | attribute 菜单类 | — | `[MenuGroup("MenuViewTitle", Group = "Alignment", GroupOrder = 200)]`（:12） | — | 四项 Order 100/200/300/400 | 顶层"视图"菜单 Alignment 组（与 Panels 组之间由建树器插分隔线） | 构造注入 `IEventAggregator`；`AlignLeft`/`AlignRight`/`AlignCenter`/`AlignJustify`（:16/:22/:28/:34）各发布 `SetPanelAlignmentEvent` 对应 `PanelAlignment` |

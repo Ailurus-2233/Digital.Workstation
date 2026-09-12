@@ -45,6 +45,10 @@ RunStartupSequenceAsync
 
 `LayoutPersistence`（`Layout/LayoutPersistence.cs`）不抛任何异常，语义是"静默回落到默认布局"：文件缺失时 `Load` 直接返回 null（**无日志**，首次启动常态，:41-44）；内容为空（:47-51）与版本不识别（:53-58）记 `Logger.Warning` 后返回 null；反序列化/IO 异常被 `catch (Exception)` 兜底（:62-67）。写路径 `Flush` 是 `System.Threading.Timer` 回调——注释自述"回调里的异常无人处理会拖垮进程"（:118），写盘失败就地吞掉记 Warning（:119-127）；`Delete` 先作废 pending 防抖保存再删文件，删除失败同样只记 Warning（:94-101）。用户可见的唯一后果是布局没恢复/没记住。
 
+### 命令面板快捷键标签
+
+`CommandPalette.FormatGesture` 使用 Avalonia 的平台格式化，不直接显示枚举键名。声明无法被 `KeyGesture.Parse` 解析时捕获 `FormatException` 并保留原文，避免新增的显示格式化中断整个命令列表；窗口快捷键注册路径继续负责记录警告及跳过无效绑定。
+
 ## 排查方式
 
 | 症状 | 看哪里 | 常见原因 |
