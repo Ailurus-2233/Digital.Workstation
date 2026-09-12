@@ -17,7 +17,10 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
     /// </summary>
     public IReadOnlyList<ToolViewContribution> GetToolViews()
     {
+        // DryIoc 对零注册的 IEnumerable<具体类> 会按具体类型兜底造一个默认构造的幽灵实例
+        // （required 仅编译期约束，Id 为 null）——零工具视图是合法状态，幽灵条目不是贡献，过滤
         return containerProvider.Resolve<IEnumerable<ToolViewContribution>>()
+            .Where(view => view.Id is not null)
             .OrderBy(view => view.Order)
             .ToArray();
     }

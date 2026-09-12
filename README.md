@@ -21,7 +21,7 @@
 	- UIPackage：UI 资源包（聚合 Semi、Ursa 等第三方主题为统一的应用主题 WorkstationTheme）
 - Modules/
 	- Workstation：主应用（Avalonia Application + MainWindow），负责注册/加载模块
-	- DashBoard：启动台（DashBoardWindow 进度窗）：显示核心服务初始化与逐模块加载进度（模块名 + i/N），模块失败时提供"继续（跳过）/退出"；同时向 shell 贡献导航项、面板 tab 等
+	- DashBoard：启动台（DashBoardWindow 进度窗）：显示核心服务初始化与逐模块加载进度（模块名 + i/N），模块失败时提供"继续（跳过）/退出"；另向状态栏贡献"启动台"条目
 
 ## 目录结构说明
 

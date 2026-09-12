@@ -54,29 +54,23 @@ public static class Icons
 {
     public const string Settings  = "M12 15.5A3.5 …";   // 设置齿轮（Icons.cs:12）
     public const string DashBoard = "M3 3h8v8H3V3…";    // 四宫格启动台（Icons.cs:18）
-    public const string Properties= "M3 17v2h6v-2…";    // 滑杆（Icons.cs:22）
-    public const string Outline   = "M5 9.5 7.5 14…";   // 层级列表（Icons.cs:28）
-    public const string Output    = "M20 19V7H4v12…";   // 终端（Icons.cs:34）
-    public const string Log       = "M6 2a2 2 0 0 0…";  // 文本文件（Icons.cs:40）
-    public const string Tasks     = "M19 3h-4.18…";     // 勾选清单（Icons.cs:46）
-    public const string ChevronDown  = "M7.41 8.58…";   // 向下箭头（Icons.cs:51）
-    public const string ChevronRight = "M8.59 16.58…";  // 向右箭头（Icons.cs:56）
-    public const string PanelLeft    = "M20 3H4a2 2…";  // 左侧面板（Icons.cs:60）
-    public const string PanelBottom  = "M4 3h16a2 2…";  // 底部面板（Icons.cs:64）
-    public const string PanelRight   = "M4 3h16a2 2…";  // 右侧面板（Icons.cs:70）
-    public const string Exit    = "M19 6.41 17.59…";    // 关闭叉号（Icons.cs:75）
-    public const string About   = "M11 9h2V7h-2…";      // 信息圆圈（Icons.cs:80）
-    public const string Ready   = "M12 2C6.5 2 2 6.5…"; // 勾选圆圈（Icons.cs:86）
-    public const string AlignLeft   = "M3 3h18v2H3V3…";   // 左对齐横线组（Icons.cs:92）
-    public const string AlignRight  = "M3 3h18v2H3V3…";   // 右对齐横线组（Icons.cs:97）
-    public const string AlignCenter = "M3 3h18v2H3V3…";   // 居中横线组（Icons.cs:102）
-    public const string AlignJustify= "M3 3h18v2H3V3…";   // 两端对齐横线组（Icons.cs:107）
-}
+    public const string ChevronDown  = "M7.41 8.58…";   // 向下箭头（Icons.cs:22）
+    public const string ChevronRight = "M8.59 16.58…";  // 向右箭头（Icons.cs:27）
+    public const string PanelLeft    = "M20 3H4a2 2…";  // 左侧面板（Icons.cs:31）
+    public const string PanelBottom  = "M4 3h16a2 2…";  // 底部面板（Icons.cs:36）
+    public const string PanelRight   = "M4 3h16a2 2…";  // 右侧面板（Icons.cs:41）
+    public const string Exit    = "M19 6.41 17.59…";    // 关闭叉号（Icons.cs:46）
+    public const string About   = "M11 9h2V7h-2…";      // 信息圆圈（Icons.cs:51）
+    public const string Ready   = "M12 2C6.5 2 2 6.5…"; // 勾选圆圈（Icons.cs:57）
+    public const string AlignLeft   = "M3 3h18v2H3V3…";   // 左对齐横线组（Icons.cs:63）
+    public const string AlignRight  = "M3 3h18v2H3V3…";   // 右对齐横线组（Icons.cs:68）
+    public const string AlignCenter = "M3 3h18v2H3V3…";   // 居中横线组（Icons.cs:73）
+    public const string AlignJustify= "M3 3h18v2H3V3…";   // 两端对齐横线组（Icons.cs:78）
 ```
 
 - **数据语义**：每个 const 是 SVG/StreamGeometry 兼容的 path 标记字符串（24×24 视窗的 Material Design 图标风格），类注释说明"由 PathIcon 消费并随主题变色"（`Icons.cs:4`）。
 - **两种真实消费方式**：
-  1. 贡献类暴露 path 字符串：`public string IconPath => Icons.DashBoard;`（`Modules/DashBoard/DashBoardStatusBarItem.cs:17`；同型还有 `Modules/Workstation/Contributions/ReadyStatusBarItem.cs:16`）；工具视图经 `[ToolView]` attribute 的 `Icon` 命名属性引用（`Modules/DashBoard/Views/DashBoardNavigationView.axaml.cs:14`、`Modules/Workstation/Views/OutputView.axaml.cs:10` 等，ADR-0002）；菜单项经 `[MenuItem]` attribute 的 `Icon` 命名属性引用（`Modules/Workstation/Menus/FileMenus.cs:18` 等）。
+  1. 贡献类暴露 path 字符串：`public string IconPath => Icons.DashBoard;`（`Modules/DashBoard/DashBoardStatusBarItem.cs:17`；同型还有 `Modules/Workstation/Contributions/ReadyStatusBarItem.cs:16`）；工具视图经 `[ToolView]` attribute 的 `Icon` 命名属性引用（ADR-0002，当前仓库无 `[ToolView]` 实例——Workstation 与 DashBoard 的演示视图均已删除）；菜单项经 `[MenuItem]` attribute 的 `Icon` 命名属性引用（`Modules/Workstation/Menus/FileMenus.cs:18` 等）。
   2. ViewModel 直接解析为几何：`StreamGeometry.Parse(Icons.ChevronDown)`（`Modules/Workstation/MainWindowViewModel.cs:136,141,146`——两个面板收起按钮与"设置"导航按钮 `SettingsIcon`，ADR-0006）。
 - **约定**：注释要求"贡献类经本类引用图标，不在各自类中硬编码 path"（`Icons.cs:5`）。`Icons.Xxx` 与本地化文案 `Language.XxxTitle`（Core/Resource 模块）在贡献类中成对出现。
 

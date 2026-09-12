@@ -29,30 +29,6 @@ public static class Language
     /// </summary>
     public static string DashBoardNavigationTitle => Get(nameof(DashBoardNavigationTitle));
     /// <summary>
-    ///     shell 预置 AuxiliaryPanel 演示 tab"属性"的标题
-    /// </summary>
-    public static string PropertiesTabTitle => Get(nameof(PropertiesTabTitle));
-
-    /// <summary>
-    ///     shell 预置 AuxiliaryPanel 演示 tab"大纲"的标题
-    /// </summary>
-    public static string OutlineTabTitle => Get(nameof(OutlineTabTitle));
-
-    /// <summary>
-    ///     shell 预置 BottomPanel 演示 tab"输出"的标题
-    /// </summary>
-    public static string OutputTabTitle => Get(nameof(OutputTabTitle));
-
-    /// <summary>
-    ///     shell 预置 BottomPanel 演示 tab"日志"的标题
-    /// </summary>
-    public static string LogTabTitle => Get(nameof(LogTabTitle));
-
-    /// <summary>
-    ///     DashBoard 贡献给 BottomPanel 的演示 tab"任务"的标题
-    /// </summary>
-    public static string DashBoardTasksTabTitle => Get(nameof(DashBoardTasksTabTitle));
-    /// <summary>
     ///     顶层"文件"菜单的标题
     /// </summary>
     public static string MenuFileTitle => Get(nameof(MenuFileTitle));
@@ -121,11 +97,6 @@ public static class Language
     ///     shell 预置状态栏"就绪"项的文本
     /// </summary>
     public static string StatusReadyTitle => Get(nameof(StatusReadyTitle));
-
-    /// <summary>
-    ///     DashBoard 贡献给文件菜单的"打开启动台"项的标题
-    /// </summary>
-    public static string DashBoardOpenWindowMenuTitle => Get(nameof(DashBoardOpenWindowMenuTitle));
 
     /// <summary>
     ///     启动台显示进度前的初始阶段文本

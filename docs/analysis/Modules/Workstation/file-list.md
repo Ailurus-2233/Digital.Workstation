@@ -3,7 +3,7 @@
 相对 `Modules/Workstation/` 的目录树（不含 `obj/`、`Output/` 构建产物）：
 
 ```
-Workstation.csproj                  项目文件：net10.0；引用 Framework/Resource/UIPackage/DashBoard/Settings；3 条 DependentUpon
+Workstation.csproj                  项目文件：net10.0；引用 Framework/Resource/UIPackage/DashBoard/Settings；2 条 DependentUpon
 WorkstationApplication.cs           应用入口：WorkstationApplication : FrameworkApplication<MainWindow>
 MainWindow.axaml                    主窗口 XAML（41 行）：FrameworkWindow，只留应用级 chrome（窗口标题；快捷键已迁移为命令 Gesture）
 MainWindow.axaml.cs                 主窗口 code-behind：构造函数接线 Opened → EnsureContributionsLoaded + RegisterCommandGestures（命令手势接线，ADR-0005）
@@ -23,10 +23,6 @@ Commands/
   ViewCommands.cs                   shell 预置命令类（ADR-0005）：四个 [Command] 方法（三面板显隐切换 + 重置布局，复用视图菜单标题键与事件通路；三面板命令带 Icons.PanelLeft/PanelBottom/PanelRight 图标（与对应菜单项一致）与 Gesture（Ctrl+B/Ctrl+J/Ctrl+Alt+B，即面板显隐快捷键））
 Views/
   EmptyStateView.axaml(.cs)         shell 内置空状态页：快捷键提示（Ctrl+B/J、Ctrl+Alt+B），不依赖任何模块
-  PropertiesView.axaml(.cs)         "属性"占位 UserControl + [ToolView("shell.properties", Order=10)]（AuxiliaryPanel 缺省，:10）
-  OutlineView.axaml(.cs)            "大纲"占位 UserControl + [ToolView("shell.outline", Order=20)]（AuxiliaryPanel 缺省，:10）
-  OutputView.axaml(.cs)             "输出"占位 UserControl + [ToolView("shell.output", BottomPanel, Order=10)]（:10-11）
-  LogView.axaml(.cs)                "日志"占位 UserControl + [ToolView("shell.log", BottomPanel, Order=20)]（:10-11）
   AboutWindow.axaml(.cs)            "关于"对话框：360×160 不可调大小、CenterOwner，硬编码中文文案
 ```
 
@@ -36,5 +32,5 @@ Views/
 - **MainWindow.axaml.cs**：`MainWindow : FrameworkWindow`（原 `UrsaWindow`）。构造函数（:7-11）在 `InitializeComponent()` 后接线 **`Opened += OnOpened`**——这是 `EnsureContributionsLoaded` 的触发链路起点。`OnOpened`（:13-23）先调 `EnsureContributionsLoaded()`（注释说明模块贡献在 Prism 模块初始化即晚于 shell 创建时才注册，首次显示时再收集），再调 `RegisterCommandGestures(viewModel.Commands)`（:22，ADR-0005——机制在 Framework、接线在本模块，为带 Gesture 的命令生成窗口级 KeyBinding）。原三个 `OnXxxResizerDragDelta` handler 已删除——方向换算内聚进 Framework 的 `PanelResizer`，code-behind 不再参与拖拽。
 - **MainWindowViewModel.cs**：构造（:41-55，四参注入含 `LayoutPersistence`，订阅 OpenMainView/TogglePanelVisibility/SetPanelAlignment/ResetLayout 四个事件 + Framework `ToolViewDragSession.ActiveChanged`）；`EnsureContributionsLoaded`（:170-193——`_toolViews = GetToolViews()` 一次缓存（:178），`LoadToolViews(_persistence.Load())`（:179）按持久化配置/默认兜底分派三处 Bar（钉住项恒落 ActivityBar 底部段，当前无内置钉住项实例），菜单为 `MenuTreeBuilder.Build(_collector.GetMenuItems())` 建树 + `MenuItemViewModel.FromSubmenu(submenu, isTopLevel: true)` → `MenuBarItems`（根项标记顶层，菜单模板据此不预留图标槽位），命令为 `Commands = _collector.GetCommands()`（:192，Order/标题排序 + Id 去重，命令面板数据源与手势 KeyBinding 来源，ADR-0005））；布局装载链 `LoadToolViews`（:200-236，ActivityBar 顶部段顺序写入 `State.ActivityBarItems`）/`RestoreLayout`（:242-286）；交互路径 `SelectActivity`（:291）/`OpenSettings`（:303-306，ActivityBar"设置"纯导航按钮：发布 `OpenMainViewEvent(WellKnownViews.Settings)`，配套属性 `SettingsIcon`（:146）/`SettingsTitle`（:151），ADR-0006 决策 6）/`ActivateAuxTab`/`ActivateBottomTab`（:365/:382）/`TogglePanel`（:488）/`ResizePanel`（:429）/`MoveTab`（:440，拖拽落放唯一路径：拒绝钉住项→State.MoveTab 转换→内容实例先脱离源视觉树→SyncBarCollection 对齐三个 Bar 集合→SyncSideBarSelection/SyncPanelTab 同步高亮与内容→ScheduleSave 落盘）；持久化 `CaptureLayout`（:527）/`ScheduleSave`（:578）/`ResetLayout`（:503）。
 - **三个呈现模型**（`NavigationItemViewModel`/`PanelTabViewModel`/`StatusBarItemViewModel`）：结构同构——构造接收贡献元数据、解析 `Icon` 几何、透传 `Id`/`Title`；前两者包装 `ToolViewContribution`（ADR-0002），`IconPath` 为 null 时 `Icon` 为 null（各 :15）；后者包装 `IStatusBarItemContribution`，`IconPath` 必填（:14）（见 api.md 第 3 节）。`MenuItemViewModel` 已迁入 Framework（`Core/Framework/Menus/MenuItemViewModel.cs`），本模块经 `using DigitalWorkstation.Core.Framework.Menus` 解析。
-- **Contributions/ + Menus/ + Commands/ 七个类**：一个 `IStatusBarItemContribution` 实现类（`Contributions/ReadyStatusBarItem.cs`，命名空间 `DigitalWorkstation.Workstation.Contributions`，纯属性实现）+ 五个 attribute 菜单类（`Menus/`，命名空间 `DigitalWorkstation.Workstation.Menus`，`[MenuGroup]` 类 + `[MenuItem]` 方法）+ 一个 attribute 命令类（`Commands/ViewCommands.cs`，命名空间 `DigitalWorkstation.Workstation.Commands`，免类级 attribute，`[Command]` 方法，ADR-0005），属性/attribute 矩阵见 api.md 第 5 节。工具视图不再是贡献类——声明在 `Views/` 四个 View 类的 `[ToolView]` attribute 上（ADR-0002）。
-- **Views/**：`EmptyStateView` 是唯一的静态内容页（键帽样式 `Border.key-chip`、说明样式 `TextBlock.shortcut-desc`，EmptyStateView.axaml:13-26）；其余四个 UserControl 的 axaml 各 14 行占位、code-behind 各带一个 `[ToolView]` attribute（矩阵见 api.md 第 5 节）；`AboutWindow` 16 行静态窗口。
+- **Contributions/ + Menus/ + Commands/ 七个类**：一个 `IStatusBarItemContribution` 实现类（`Contributions/ReadyStatusBarItem.cs`，命名空间 `DigitalWorkstation.Workstation.Contributions`，纯属性实现）+ 五个 attribute 菜单类（`Menus/`，命名空间 `DigitalWorkstation.Workstation.Menus`，`[MenuGroup]` 类 + `[MenuItem]` 方法）+ 一个 attribute 命令类（`Commands/ViewCommands.cs`，命名空间 `DigitalWorkstation.Workstation.Commands`，免类级 attribute，`[Command]` 方法，ADR-0005），属性/attribute 矩阵见 api.md 第 5 节。工具视图不再是贡献类——机制为 `[ToolView]` attribute 标在 View 类上（ADR-0002）；当前本模块无 `[ToolView]` 标注类（原四个演示占位视图已删除）。
+- **Views/**：`EmptyStateView` 是唯一的静态内容页（键帽样式 `Border.key-chip`、说明样式 `TextBlock.shortcut-desc`，EmptyStateView.axaml:13-26）；`AboutWindow` 16 行静态窗口。原四个 `[ToolView]` 演示占位 UserControl（Properties/Outline/Output/Log，axaml 各 14 行占位、code-behind 各带一个 `[ToolView]` attribute）已删除。

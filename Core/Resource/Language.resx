@@ -66,26 +66,6 @@
     <value>启动台</value>
     <comment>DashBoard 导航项的标题</comment>
   </data>
-  <data name="PropertiesTabTitle" xml:space="preserve">
-    <value>属性</value>
-    <comment>shell 预置 AuxiliaryPanel 演示 tab"属性"的标题</comment>
-  </data>
-  <data name="OutlineTabTitle" xml:space="preserve">
-    <value>大纲</value>
-    <comment>shell 预置 AuxiliaryPanel 演示 tab"大纲"的标题</comment>
-  </data>
-  <data name="OutputTabTitle" xml:space="preserve">
-    <value>输出</value>
-    <comment>shell 预置 BottomPanel 演示 tab"输出"的标题</comment>
-  </data>
-  <data name="LogTabTitle" xml:space="preserve">
-    <value>日志</value>
-    <comment>shell 预置 BottomPanel 演示 tab"日志"的标题</comment>
-  </data>
-  <data name="DashBoardTasksTabTitle" xml:space="preserve">
-    <value>任务</value>
-    <comment>DashBoard 贡献给 BottomPanel 的演示 tab"任务"的标题</comment>
-  </data>
   <data name="MenuFileTitle" xml:space="preserve">
     <value>文件</value>
     <comment>顶层"文件"菜单的标题</comment>
@@ -141,10 +121,6 @@
   <data name="StatusReadyTitle" xml:space="preserve">
     <value>就绪</value>
     <comment>shell 预置状态栏"就绪"项的文本</comment>
-  </data>
-  <data name="DashBoardOpenWindowMenuTitle" xml:space="preserve">
-    <value>打开启动台</value>
-    <comment>DashBoard 贡献给文件菜单的"打开启动台"项的标题</comment>
   </data>
   <data name="SplashStartingText" xml:space="preserve">
     <value>正在启动…</value>

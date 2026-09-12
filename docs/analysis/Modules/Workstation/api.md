@@ -20,7 +20,7 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
 
 | 注册 | 类型 | 说明 |
 |---|---|---|
-| `containerRegistry.RegisterToolViews(typeof(WorkstationApplication).Assembly)`（:27） | 工具视图（attribute 扫描，ADR-0002） | Framework `ToolViewRegistration.RegisterToolViews` 扩展扫描本程序集的 `[ToolView]` View 类：`PropertiesView`/`OutlineView`（AuxiliaryPanel）、`OutputView`/`LogView`（BottomPanel）——原 `SettingsView` ActivityBar 钉住项已删除，改为 shell 内置纯导航按钮（ADR-0006 决策 6）；每个合法类注册 View 类型本身 + 一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `Language.Get(TitleKey)` 解析）；非可实例化 `Control` 或程序集内 Id 重复记 `Logger.Warning` 跳过 |
+| `containerRegistry.RegisterToolViews(typeof(WorkstationApplication).Assembly)`（:27） | 工具视图（attribute 扫描，ADR-0002） | Framework `ToolViewRegistration.RegisterToolViews` 扩展扫描本程序集的 `[ToolView]` View 类——**当前本程序集无 `[ToolView]` 标注类**（原四个演示占位视图 `PropertiesView`/`OutlineView`/`OutputView`/`LogView` 已删除；更早的 `SettingsView` ActivityBar 钉住项已删除，改为 shell 内置纯导航按钮，ADR-0006 决策 6），注册行为空但保留该行以覆盖将来新增；每个合法类注册 View 类型本身 + 一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `Language.Get(TitleKey)` 解析）；非可实例化 `Control` 或程序集内 Id 重复记 `Logger.Warning` 跳过 |
 | `Register<EmptyStateView>()`（:29） | 视图（瞬态） | MainContent 空状态页，MainWindowViewModel 构造时解析 |
 | `containerRegistry.RegisterMenus(typeof(WorkstationApplication).Assembly)`（:31） | 菜单（attribute 扫描，ADR-0001） | Framework `MenuRegistration.RegisterMenus` 扩展扫描本程序集的 `[MenuGroup]` 类：`FileMenus`（文件>退出，Application 组 GroupOrder 1000）、`ViewPanelMenus`（视图>Panels 组三个显隐切换）、`ViewAlignmentMenus`（视图>Alignment 组四档对齐）、`ViewLayoutMenus`（视图>Layout 组重置布局）、`HelpMenus`（帮助>关于）；每个 `[MenuItem]` 方法注册一个 `IMenuItemContribution` 工厂，菜单类本身 RegisterSingleton |
 | `containerRegistry.RegisterCommands(typeof(WorkstationApplication).Assembly)`（:33） | 命令（attribute 扫描，ADR-0005） | Framework `CommandRegistration.RegisterCommands` 扩展扫描本程序集的 `[Command]` 方法（免类级 attribute）：`ViewCommands`（三面板显隐切换 + 重置布局，复用视图菜单的标题键与事件通路）；宿主类本身 RegisterSingleton，每个合法方法注册一个 `ICommandContribution` 工厂 |
@@ -90,17 +90,9 @@ public partial class MainWindowViewModel : ObservableObject
 
 本模块的 `PanelResizer.cs` 已删除；`PanelResizer` 现位于 `Core/Framework/Layout/PanelResizer.cs`，并改造为声明式调用：方向换算（SideBar 取 `+e.Vector.X`、AuxiliaryPanel 取 `-e.Vector.X`、BottomPanel 取 `-e.Vector.Y`）内聚进其 `OnDragDelta`，经 `Target`（`PanelResizeTarget`）与 `ResizeCommand`（`ICommand`）属性把增量包装为 `PanelResize` 发给 VM 的 `ResizePanelCommand`；`GetParentGrid() => null` 禁用原生重排的机制保持不变。XAML 用法迁至 `Core/Framework/Windows/FrameworkWindowTheme.axaml` 的各布局模板（声明 `Target`、`ResizeCommand="{Binding ResizePanelCommand}"`、`ResizeDirection`、8px 热区、`ZIndex="1"`）。细节见 `docs/analysis/Core/Framework/` 文档。
 
-## 5. Shell 预置贡献（`Views/` 四个 `[ToolView]` View 类 + `Contributions/` 一个 `IStatusBarItemContribution` 实现类 + `Menus/` 五个 attribute 菜单类 + `Commands/` 一个 attribute 命令类）
+## 5. Shell 预置贡献（`Contributions/` 一个 `IStatusBarItemContribution` 实现类 + `Menus/` 五个 attribute 菜单类 + `Commands/` 一个 attribute 命令类）
 
-工具视图（Tool View，ADR-0002）不再有贡献实现类：`[ToolView]` attribute 直接标在 View 类上，Framework `ToolViewRegistration.RegisterToolViews` 扫描时生成 `ToolViewContribution` 元数据（`Title` 经 `Language.Get(TitleKey)` 解析）；菜单类的 Title 同样是 attribute 里的 Language 资源键字符串，运行时由 Framework 经 `Language.Get` 解析。attribute 矩阵（Id/TitleKey/Icon 常量/Order/Default/AllowMove；`Default` 缺省 `AuxiliaryPanel`、`AllowMove` 缺省 `true`）：
-
-| View（文件，attribute 位置） | Id | TitleKey | Icon | Order | Default | AllowMove |
-|---|---|---|---|---|---|---|
-| `PropertiesView`（PropertiesView.axaml.cs:10） | `shell.properties` | `"PropertiesTabTitle"` | `Icons.Properties` | 10 | `AuxiliaryPanel`（缺省） | `true` |
-| `OutlineView`（OutlineView.axaml.cs:10） | `shell.outline` | `"OutlineTabTitle"` | `Icons.Outline` | 20 | `AuxiliaryPanel`（缺省） | `true` |
-| `OutputView`（OutputView.axaml.cs:10-11） | `shell.output` | `"OutputTabTitle"` | `Icons.Output` | 10 | `BottomPanel` | `true` |
-| `LogView`（LogView.axaml.cs:10-11） | `shell.log` | `"LogTabTitle"` | `Icons.Log` | 20 | `BottomPanel` | `true` |
-
+工具视图（Tool View，ADR-0002）不再有贡献实现类：`[ToolView]` attribute 直接标在 View 类上，Framework `ToolViewRegistration.RegisterToolViews` 扫描时生成 `ToolViewContribution` 元数据（`Title` 经 `Language.Get(TitleKey)` 解析）。**当前全应用无 `[ToolView]` 实例**——本模块四个演示占位视图（`PropertiesView`/`OutlineView`/`OutputView`/`LogView`，Id `shell.properties`/`shell.outline`/`shell.output`/`shell.log`）与 DashBoard 的两个演示实例（`"dashboard"`/`"dashboard.tasks"`）均已删除，三处 Bar 均为空。菜单类的 Title 同样是 attribute 里的 Language 资源键字符串，运行时由 Framework 经 `Language.Get` 解析。
 贡献类与菜单类矩阵（Id/Title/IconPath/Order/定位/行为）：
 
 | 类（文件） | 接口/类别 | Id | Title | IconPath | Order | 定位 | 行为字段 |
@@ -149,12 +141,12 @@ public partial class MainWindowViewModel : ObservableObject
 
 注册方是 `WorkstationApplication.cs:27`、`:31` 与 `:33` 的三行 attribute 扫描——`RegisterToolViews`（ADR-0002）扫 `[ToolView]` View 类（非可实例化 `Control` 与程序集内重复 Id 记 `Logger.Warning` 跳过），`RegisterMenus`（ADR-0001）扫 `[MenuGroup]` 类（菜单类 RegisterSingleton、每个合法 `[MenuItem]` 方法注册一个 `IMenuItemContribution` 工厂），`RegisterCommands`（ADR-0005）扫 `[Command]` 方法（免类级 attribute；宿主类 RegisterSingleton、每个合法方法注册一个 `ICommandContribution` 工厂；非法签名记日志跳过，详见 Framework 文档）。`PanelAlignment`/`TogglePanelTarget` 新增枚举成员时需要在此手工加对应方法（不像旧工厂循环那样自动覆盖，见 pitfalls.md）。
 
-## 6. 内置视图（Views/，均为无逻辑占位）
+## 6. 内置视图（Views/，均为无逻辑静态视图）
 
-`PropertiesView`/`OutlineView`/`OutputView`/`LogView` 均为 `UserControl`，axaml 里只有一行"XX（占位）" `TextBlock`；code-behind 除 `InitializeComponent()` 外各带一个 `[ToolView]` attribute（矩阵见第 5 节——它们同时是视图与工具视图声明，ADR-0002）。`EmptyStateView`（EmptyStateView.axaml）是静态快捷键提示页（Ctrl+B/Ctrl+J/Ctrl+Alt+B 三个键帽 + 引导文案）。`AboutWindow`（AboutWindow.axaml）：`Window`，360×160、`CanResize="False"`、`WindowStartupLocation="CenterOwner"`，标题与正文为**硬编码中文**（未走 `Language`，见 pitfalls.md）。
+`EmptyStateView`（EmptyStateView.axaml）是静态快捷键提示页（Ctrl+B/Ctrl+J/Ctrl+Alt+B 三个键帽 + 引导文案）。`AboutWindow`（AboutWindow.axaml）：`Window`，360×160、`CanResize="False"`、`WindowStartupLocation="CenterOwner"`，标题与正文为**硬编码中文**（未走 `Language`，见 pitfalls.md）。原四个 `[ToolView]` 演示占位 UserControl（axaml 各只有一行"XX（占位）" `TextBlock`）已删除，本模块 `Views/` 不再有工具视图声明。
 
 ## 典型调用序列
 
-模块向 shell 贡献东西**不需要引用本模块**：工具视图在模块自己的 View 类上标 `[ToolView(id, 标题键, …)]`，再在 `RegisterTypes` 里调 `containerRegistry.RegisterToolViews(模块程序集)`（ADR-0002，View 注册与元数据注册一行完成）；菜单则新建 `[MenuGroup]` 类 + `[MenuItem]` 方法后调 `containerRegistry.RegisterMenus(模块程序集)`（ADR-0001），本模块的 `EnsureContributionsLoaded` 收集并渲染。打开主视图：`IEventAggregator.GetEvent<OpenMainViewEvent>().Publish("my.view.id")`（真实调用点：DashBoard 模块 `DashBoardNavigationView.axaml.cs:35、40`；shell 侧 `MainWindowViewModel.OpenSettings`（:305）以 `WellKnownViews.Settings` 发布，ADR-0006 决策 6）。切换面板：`Publish(TogglePanelTarget.SideBar)` 到 `TogglePanelVisibilityEvent`（真实发布点：`Menus/ViewPanelMenus.cs:17`）。切换布局档位：`Publish(PanelAlignment.Justify)` 到 `SetPanelAlignmentEvent`（真实发布点：`Menus/ViewAlignmentMenus.cs:36`）。重置布局：`GetEvent<ResetLayoutEvent>().Publish()`（真实发布点：`Menus/ViewLayoutMenus.cs:16`）。弹窗：注入 `IWindowManager` 调 `ShowDialog<AboutWindow>()`（真实调用点：`Menus/HelpMenus.cs:20`）。
+模块向 shell 贡献东西**不需要引用本模块**：工具视图在模块自己的 View 类上标 `[ToolView(id, 标题键, …)]`，再在 `RegisterTypes` 里调 `containerRegistry.RegisterToolViews(模块程序集)`（ADR-0002，View 注册与元数据注册一行完成）；菜单则新建 `[MenuGroup]` 类 + `[MenuItem]` 方法后调 `containerRegistry.RegisterMenus(模块程序集)`（ADR-0001），本模块的 `EnsureContributionsLoaded` 收集并渲染。打开主视图：`IEventAggregator.GetEvent<OpenMainViewEvent>().Publish("my.view.id")`（真实发布点：shell 侧 `MainWindowViewModel.OpenSettings`（:305）以 `WellKnownViews.Settings` 发布，ADR-0006 决策 6）。切换面板：`Publish(TogglePanelTarget.SideBar)` 到 `TogglePanelVisibilityEvent`（真实发布点：`Menus/ViewPanelMenus.cs:17`）。切换布局档位：`Publish(PanelAlignment.Justify)` 到 `SetPanelAlignmentEvent`（真实发布点：`Menus/ViewAlignmentMenus.cs:36`）。重置布局：`GetEvent<ResetLayoutEvent>().Publish()`（真实发布点：`Menus/ViewLayoutMenus.cs:16`）。弹窗：注入 `IWindowManager` 调 `ShowDialog<AboutWindow>()`（真实调用点：`Menus/HelpMenus.cs:20`）。
 
 命令：新建命令类（或在现有类上加方法）标 `[Command("标题键", Order=…, Icon=…, Gesture=…)]`（`Icon` 取 `Icons` 常量、可空）后调 `containerRegistry.RegisterCommands(模块程序集)`（ADR-0005），`EnsureContributionsLoaded` 经 `GetCommands()` 收集为 `Commands` 属性，Framework `CommandPalette`（Ctrl+P）呈现，`MainWindow.axaml.cs:22` 的 `RegisterCommandGestures` 接线把 `Gesture` 落成窗口级 KeyBinding（真实命令类：本模块 `Commands/ViewCommands.cs`）。命令与菜单是两套独立声明，同一动作想同时出现在菜单栏需另标 `[MenuItem]`。

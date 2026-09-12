@@ -22,8 +22,8 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
     
     protected override void RegisterCustomService(IContainerRegistry containerRegistry)
     {
-        // shell 预置工具视图（ADR-0002，attribute 扫描）：AuxiliaryPanel"属性/大纲"、BottomPanel"输出/日志"；
-        // 标注 [ToolView] 的 View 同时注册进容器；原"设置"钉住项已删除，改为纯导航按钮（ADR-0006 决策 6）
+        // 工具视图（ADR-0002，attribute 扫描）：当前本程序集无 [ToolView] 标注类（原四个演示占位视图已删除），
+        // 扫描注册为空，保留该行以覆盖将来新增；标注 [ToolView] 的 View 会同时注册进容器
         containerRegistry.RegisterToolViews(typeof(WorkstationApplication).Assembly);
         // shell 内置空状态页：MainContent 尚无活动视图时显示，不依赖任何模块
         containerRegistry.Register<EmptyStateView>();

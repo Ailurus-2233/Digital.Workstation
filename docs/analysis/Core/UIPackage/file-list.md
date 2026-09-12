@@ -28,8 +28,8 @@ Core/UIPackage/
 - 关键入口：`ApplyTo(IResourceDictionary resources)`（行 16-43），写入约 20 个资源键；私有帮助函数 `Brush(string color)`（行 45-48）返回 `new SolidColorBrush(Color.Parse(color))`。
 - 文件无状态、无字段，纯启动期写入器。
 
-### `Icons.cs`（108 行）
+### `Icons.cs`（79 行）
 - 功能：集中存放共享图标的 StreamGeometry path 字符串，供各模块贡献类经 `IconPath => Icons.Xxx` 引用，禁止在各自类中硬编码 path（类注释，行 4-5）。
-- 关键类型：`public static class Icons`（行 7），含 19 个 `public const string`：
-  `Settings`(12)、`DashBoard`(18)、`Properties`(22)、`Outline`(28)、`Output`(34)、`Log`(40)、`Tasks`(46)、`ChevronDown`(51)、`ChevronRight`(56)、`PanelLeft`(60)、`PanelBottom`(64)、`PanelRight`(70)、`Exit`(75)、`About`(80)、`Ready`(86)、`AlignLeft`(92)、`AlignRight`(97)、`AlignCenter`(102)、`AlignJustify`(107)。
+- 关键类型：`public static class Icons`（行 7），含 14 个 `public const string`：
+  `Settings`(12)、`DashBoard`(18)、`ChevronDown`(22)、`ChevronRight`(27)、`PanelLeft`(31)、`PanelBottom`(36)、`PanelRight`(41)、`Exit`(46)、`About`(51)、`Ready`(57)、`AlignLeft`(63)、`AlignRight`(68)、`AlignCenter`(73)、`AlignJustify`(78)。
 - 每个常量带 XML 注释说明图形含义与预置用途（如 `ChevronDown` 注释为"向下箭头，BottomPanel 收起按钮"）。

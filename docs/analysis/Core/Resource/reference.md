@@ -33,7 +33,6 @@
 - `Modules/Workstation/Menus/ViewLayoutMenus.cs:10,13` — `MenuViewTitle` + 重置布局键（`ResetLayoutTitle`）
 - `Modules/Workstation/Commands/ViewCommands.cs:13,19,25,31` — 四个 `[Command]` 标题键（复用 `ToggleSideBarTitle`/`ToggleBottomPanelTitle`/`ToggleAuxiliaryPanelTitle`/`ResetLayoutTitle`，由 Framework 的 `CommandRegistration` 解析，ADR-0005）
 - `Modules/Workstation/Menus/HelpMenus.cs:11,17` — `[MenuGroup("MenuHelpTitle", ...)]`、`[MenuItem("MenuAboutTitle", ...)]`
-- `Modules/Workstation/Views/{Properties,Outline,Output,Log}View.axaml.cs:10` — `[ToolView("shell.xxx", "PropertiesTabTitle"/"OutlineTabTitle"/"OutputTabTitle"/"LogTabTitle", ...)]` 工具视图标题键（ADR-0002，由 Framework 的 `ToolViewRegistration` 解析）
 
 ### 3. `Modules/DashBoard/DashBoard.csproj`（:22）— 启动台模块
 
@@ -42,7 +41,6 @@
 - `Modules/DashBoard/DashBoardStatusBarItem.cs:15` — 状态栏项"启动台"
 - `Modules/DashBoard/ViewModels/Windows/DashBoardWindowViewModel.cs:24,43-45,56` — 启动画面：`SplashStartingText` 作 `_phaseText` 初值；按 `StartupPhase` 枚举在 `SplashPhaseCoreServices`/`SplashPhaseLoadingModules`/`SplashPhaseReady` 间切换；失败时置 `SplashPhaseFailed`
 
-菜单/工具视图键字符串：`Modules/DashBoard/Views/DashBoardNavigationView.axaml.cs:14`、`DashBoardTasksView.axaml.cs:10` — `[ToolView("dashboard", "DashBoardNavigationTitle", ...)]`、`[ToolView("dashboard.tasks", "DashBoardTasksTabTitle", ...)]`（ADR-0002；同 Workstation 场景二，由 Framework 解析）
 
 `Core/Models`、`Core/Abstractions`、`Core/UIPackage` 均**不**引用本模块。
 

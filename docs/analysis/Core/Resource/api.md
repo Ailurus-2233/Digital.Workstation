@@ -8,52 +8,46 @@
 
 | 签名 | 说明 |
 |---|---|
-### 静态只读属性（36 个，全部以 `Get(nameof(属性名))` 实现，返回 `string`）
+### 静态只读属性（30 个，全部以 `Get(nameof(属性名))` 实现，返回 `string`）
 
 
-定义于 `Language.cs:25-197`。键名 = 属性名，中文值来自 `Language.resx`，英文值来自 `Language.en-US.resx`：
+定义于 `Language.cs:25-168`。键名 = 属性名，中文值来自 `Language.resx`，英文值来自 `Language.en-US.resx`：
 
 | 属性 | 中文值 | 英文值 | 用途（resx comment） |
 |---|---|---|---|
 | `SettingsNavigationTitle`（:25） | 设置 | Settings | shell 预置"设置"导航项标题 |
 | `DashBoardNavigationTitle`（:30） | 启动台 | Launch Pad | DashBoard 导航项标题 |
-| `PropertiesTabTitle`（:34） | 属性 | Properties | shell 预置 AuxiliaryPanel 演示 tab"属性"标题 |
-| `OutlineTabTitle`（:39） | 大纲 | Outline | shell 预置 AuxiliaryPanel 演示 tab"大纲"标题 |
-| `OutputTabTitle`（:44） | 输出 | Output | shell 预置 BottomPanel 演示 tab"输出"标题 |
-| `LogTabTitle`（:49） | 日志 | Log | shell 预置 BottomPanel 演示 tab"日志"标题 |
-| `DashBoardTasksTabTitle`（:54） | 任务 | Tasks | DashBoard 贡献给 BottomPanel 的演示 tab"任务"标题 |
-| `MenuFileTitle`（:58） | 文件 | File | 顶层"文件"菜单标题 |
-| `MenuViewTitle`（:63） | 视图 | View | 顶层"视图"菜单标题 |
-| `MenuHelpTitle`（:68） | 帮助 | Help | 顶层"帮助"菜单标题 |
-| `MenuExitTitle`（:73） | 退出 | Exit | 文件菜单"退出"项标题 |
-| `MenuAboutTitle`（:78） | 关于 | About | 帮助菜单"关于"项标题 |
-| `ToggleSideBarTitle`（:83） | 切换 SideBar | Toggle Side Bar | SideBar 显隐切换项（视图菜单） |
-| `ToggleBottomPanelTitle`（:88） | 切换 BottomPanel | Toggle Bottom Panel | BottomPanel 显隐切换项（视图菜单） |
-| `ToggleAuxiliaryPanelTitle`（:93） | 切换 AuxiliaryPanel | Toggle Auxiliary Panel | AuxiliaryPanel 显隐切换项（视图菜单） |
-| `PanelAlignLeftTitle`（:98） | 左对齐 | Align Left | 面板对齐菜单"左对齐"项标题 |
-| `PanelAlignRightTitle`（:103） | 右对齐 | Align Right | 面板对齐菜单"右对齐"项标题 |
-| `PanelAlignCenterTitle`（:108） | 居中 | Align Center | 面板对齐菜单"居中"项标题 |
-| `PanelAlignJustifyTitle`（:113） | 两端对齐 | Justify | 面板对齐菜单"两端对齐"项标题 |
-| `ResetLayoutTitle`（:118） | 重置布局 | Reset Layout | 视图菜单"重置布局"项标题 |
-| `StatusReadyTitle`（:123） | 就绪 | Ready | shell 预置状态栏"就绪"项文本 |
-| `DashBoardOpenWindowMenuTitle`（:128） | 打开启动台 | Open Launch Pad | DashBoard 贡献给文件菜单的"打开启动台"项标题 |
-| `SplashStartingText`（:133） | 正在启动… | Starting… | 启动台显示进度前的初始阶段文本 |
-| `SplashPhaseCoreServices`（:138） | 初始化核心服务 | Initializing core services | 启动台阶段名 |
-| `SplashPhaseLoadingModules`（:143） | 加载模块 | Loading modules | 启动台阶段名 |
-| `SplashPhaseReady`（:148） | 就绪 | Ready | 启动台阶段名 |
-| `SplashPhaseFailed`（:152） | 模块加载失败 | Module failed to load | 启动台阶段名 |
-| `CommandPaletteWatermark`（:158） | 输入命令以执行 | Type a command to execute | 命令面板输入框水印（ADR-0005） |
-| `NoMatchingCommands`（:162） | 无匹配命令 | No matching commands | 命令面板空态文案（ADR-0005） |
-| `SettingsGeneralGroupName`（:167） | 常规 | General | 设置页"常规"分组的显示名（Framework 预置设置分组，ADR-0006） |
-| `SettingsLanguageName`（:172） | 语言 | Language | 设置项"语言"的显示名（Framework 预置，ADR-0006） |
-| `SettingsLanguageNameZhCN`（:177） | 中文（简体） | Chinese (Simplified) | 语言设置项成员 ZhCN 的显示名（键按「设置项名称键 + 成员名」约定生成，ADR-0006 决策 8） |
-| `SettingsLanguageNameEnUS`（:182） | English (US) | English (US) | 语言设置项成员 EnUS 的显示名（同上约定） |
-| `SettingsRestartPendingMark`（:187） | 重启后生效 | Restart to apply | 设置页需重启设置项被修改后的项级标记文本（ADR-0006 决策 7） |
-| `SettingsRestartBannerText`（:192） | 部分设置的更改将在重启后生效 | Some setting changes will take effect after restart | 设置页顶部「存在未生效的需重启修改」横幅文本（ADR-0006 决策 7） |
-| `SettingsRestartNowButtonTitle`（:197） | 立即重启 | Restart Now | 设置页重启横幅上「立即重启」按钮的标题（ADR-0006 决策 7） |
+| `MenuFileTitle`（:34） | 文件 | File | 顶层"文件"菜单标题 |
+| `MenuViewTitle`（:39） | 视图 | View | 顶层"视图"菜单标题 |
+| `MenuHelpTitle`（:44） | 帮助 | Help | 顶层"帮助"菜单标题 |
+| `MenuExitTitle`（:49） | 退出 | Exit | 文件菜单"退出"项标题 |
+| `MenuAboutTitle`（:54） | 关于 | About | 帮助菜单"关于"项标题 |
+| `ToggleSideBarTitle`（:59） | 切换 SideBar | Toggle Side Bar | SideBar 显隐切换项（视图菜单） |
+| `ToggleBottomPanelTitle`（:64） | 切换 BottomPanel | Toggle Bottom Panel | BottomPanel 显隐切换项（视图菜单） |
+| `ToggleAuxiliaryPanelTitle`（:69） | 切换 AuxiliaryPanel | Toggle Auxiliary Panel | AuxiliaryPanel 显隐切换项（视图菜单） |
+| `PanelAlignLeftTitle`（:74） | 左对齐 | Align Left | 面板对齐菜单"左对齐"项标题 |
+| `PanelAlignRightTitle`（:79） | 右对齐 | Align Right | 面板对齐菜单"右对齐"项标题 |
+| `PanelAlignCenterTitle`（:84） | 居中 | Align Center | 面板对齐菜单"居中"项标题 |
+| `PanelAlignJustifyTitle`（:89） | 两端对齐 | Justify | 面板对齐菜单"两端对齐"项标题 |
+| `ResetLayoutTitle`（:94） | 重置布局 | Reset Layout | 视图菜单"重置布局"项标题 |
+| `StatusReadyTitle`（:99） | 就绪 | Ready | shell 预置状态栏"就绪"项文本 |
+| `SplashStartingText`（:104） | 正在启动… | Starting… | 启动台显示进度前的初始阶段文本 |
+| `SplashPhaseCoreServices`（:109） | 初始化核心服务 | Initializing core services | 启动台阶段名 |
+| `SplashPhaseLoadingModules`（:114） | 加载模块 | Loading modules | 启动台阶段名 |
+| `SplashPhaseReady`（:119） | 就绪 | Ready | 启动台阶段名 |
+| `SplashPhaseFailed`（:123） | 模块加载失败 | Module failed to load | 启动台阶段名 |
+| `CommandPaletteWatermark`（:128） | 输入命令以执行 | Type a command to execute | 命令面板输入框水印（ADR-0005） |
+| `NoMatchingCommands`（:133） | 无匹配命令 | No matching commands | 命令面板空态文案（ADR-0005） |
+| `SettingsGeneralGroupName`（:138） | 常规 | General | 设置页"常规"分组的显示名（Framework 预置设置分组，ADR-0006） |
+| `SettingsLanguageName`（:143） | 语言 | Language | 设置项"语言"的显示名（Framework 预置，ADR-0006） |
+| `SettingsLanguageNameZhCN`（:148） | 中文（简体） | Chinese (Simplified) | 语言设置项成员 ZhCN 的显示名（键按「设置项名称键 + 成员名」约定生成，ADR-0006 决策 8） |
+| `SettingsLanguageNameEnUS`（:153） | English (US) | English (US) | 语言设置项成员 EnUS 的显示名（同上约定） |
+| `SettingsRestartPendingMark`（:158） | 重启后生效 | Restart to apply | 设置页需重启设置项被修改后的项级标记文本（ADR-0006 决策 7） |
+| `SettingsRestartBannerText`（:163） | 部分设置的更改将在重启后生效 | Some setting changes will take effect after restart | 设置页顶部「存在未生效的需重启修改」横幅文本（ADR-0006 决策 7） |
+| `SettingsRestartNowButtonTitle`（:168） | 立即重启 | Restart Now | 设置页重启横幅上「立即重启」按钮的标题（ADR-0006 决策 7） |
 
 
-> 注意：`StatusReadyTitle`（状态栏"就绪"，:123）与 `SplashPhaseReady`（启动画面"就绪"阶段名，:148）**中文值同为"就绪"，但用途不同，是两个独立的键**，不能合并。
+> 注意：`StatusReadyTitle`（状态栏"就绪"，:99）与 `SplashPhaseReady`（启动画面"就绪"阶段名，:119）**中文值同为"就绪"，但用途不同，是两个独立的键**，不能合并。
 ### 内部（非公开）成员
 - `private static readonly ResourceManager Manager`（`Language.cs:11-12`）：基名 `"DigitalWorkstation.Core.Resource.Language"`，绑定 `typeof(Language).Assembly`。
 - `Manager` 每次 `GetString` 都按调用线程的 `CultureInfo.CurrentUICulture` 解析：先找 en-US 卫星资源（`Language.en-US.resx` 编译产物），找不到/未命中则回退中性资源（`Language.resx` 中文）。本模块自身不提供切换语言的 API。
@@ -93,8 +87,6 @@ Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
 - `Modules/Workstation/Menus/ViewAlignmentMenus.cs:12,15,21,27,33` → `MenuViewTitle` + PanelAlign 系列 4 键
 - `Modules/Workstation/Menus/ViewLayoutMenus.cs:10,13` → `MenuViewTitle` + `ResetLayoutTitle`
 - `Modules/Workstation/Menus/HelpMenus.cs:11,17` → `[MenuGroup("MenuHelpTitle", ...)]`、`[MenuItem("MenuAboutTitle", ...)]`
-- `Modules/Workstation/Views/{Properties,Outline,Output,Log}View.axaml.cs:10` → `[ToolView("shell.xxx", "PropertiesTabTitle"/"OutlineTabTitle"/"OutputTabTitle"/"LogTabTitle", ...)]`（ADR-0002 工具视图标题键）
-- `Modules/DashBoard/Views/DashBoardNavigationView.axaml.cs:14`、`DashBoardTasksView.axaml.cs:10` → `[ToolView("dashboard", "DashBoardNavigationTitle", ...)]`、`[ToolView("dashboard.tasks", "DashBoardTasksTabTitle", ...)]`
 
 `Language.Get(string)` 直接调用点（ADR-0001 菜单重构后首次有了真实消费方，不再只是给将来动态键场景留的后门）：
 
@@ -103,4 +95,4 @@ Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
 
 ## 对外公开的数据结构
 
-无自定义数据结构。输入输出都是 `string`；语言资源键的"结构"即上表 36 个键，物理载体是两个 resx 文件中的 `<data name="键名"><value>文案</value><comment>用途</comment></data>` 条目（`Language.resx:61-204`、`Language.en-US.resx:61-204`）。
+无自定义数据结构。输入输出都是 `string`；语言资源键的"结构"即上表 30 个键，物理载体是两个 resx 文件中的 `<data name="键名"><value>文案</value><comment>用途</comment></data>` 条目（`Language.resx:61-180`、`Language.en-US.resx:61-180`）。

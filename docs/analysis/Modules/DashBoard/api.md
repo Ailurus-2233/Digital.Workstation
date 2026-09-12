@@ -1,6 +1,6 @@
 # DashBoard — 对外接口与调用方式
 
-模块命名空间：`DigitalWorkstation.DashBoard`（根）、`DigitalWorkstation.DashBoard.Views`、`DigitalWorkstation.DashBoard.Views.Windows`、`DigitalWorkstation.DashBoard.ViewModels.Windows`。
+模块命名空间：`DigitalWorkstation.DashBoard`（根）、`DigitalWorkstation.DashBoard.Views.Windows`、`DigitalWorkstation.DashBoard.ViewModels.Windows`（`Views/` 根不再持有视图类——四个占位视图已删除）。
 
 ## 公开 API 面
 
@@ -10,36 +10,24 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 
 | 成员 | 签名 | 说明 |
 |---|---|---|
-| `RegisterTypes` | `void RegisterTypes(IContainerRegistry containerRegistry)` | `RegisterToolViews` 扫描注册 2 个 `[ToolView]` 工具视图 + 3 个接口贡献单例 + 2 个主视图（见下"注册清单"） |
-| `OnInitialized` | `void OnInitialized(IContainerProvider containerProvider)` | **空实现**（DashBoardModule.cs:23 注释：启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004），模块自身不再开窗） |
+| `RegisterTypes` | `void RegisterTypes(IContainerRegistry containerRegistry)` | `RegisterToolViews` 扫描（当前程序集无 `[ToolView]` 标注类，注册为空）+ 1 个 `IStatusBarItemContribution` 单例（见下"注册清单"） |
+| `OnInitialized` | `void OnInitialized(IContainerProvider containerProvider)` | **空实现**（DashBoardModule.cs:18 注释：启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004），模块自身不再开窗） |
 
-注册清单（DashBoardModule.cs:13-18）：
-- `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 13 行，Core/Framework `DigitalWorkstation.Core.Framework.Contributions` 扩展，ADR-0002）——扫描程序集内 `[ToolView]` 类（`DashBoardNavigationView`/`DashBoardTasksView`）：对每个合法的（可实例化 `Control`、程序集内 Id 不重复）View 执行 `Register(viewType)` 并注册一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `Language.Get(TitleKey)` 解析）；非法者记 `Logger.Warning` 跳过
-- `RegisterSingleton<IMainViewContribution, DashBoardOverviewMainView>()` / `<IMainViewContribution, DashBoardRecentMainView>()`（第 14-15 行）
-- `RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>()`（第 16 行）
-- `Register<DashBoardOverviewView>()` / `<DashBoardRecentView>()`（第 17-18 行，瞬态；两个工具视图已由 `RegisterToolViews` 一并注册，不在此列）
+注册清单（DashBoardModule.cs:12-13）：
+- `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 12 行，Core/Framework `DigitalWorkstation.Core.Framework.Contributions` 扩展，ADR-0002）——扫描程序集内 `[ToolView]` 类：**当前程序集无标注类**（原 `DashBoardNavigationView`/`DashBoardTasksView` 已删除），扫描注册为空，保留该行以覆盖将来新增；机制为对每个合法的（可实例化 `Control`、程序集内 Id 不重复）View 执行 `Register(viewType)` 并注册一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `Language.Get(TitleKey)` 解析），非法者记 `Logger.Warning` 跳过
+- `RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>()`（第 13 行）
 
 注意：`DashBoardWindow` 与 `DashBoardWindowViewModel` **不在** `RegisterTypes` 中注册——`DashBoardWindow` 由启动序列在模块加载前经 `Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:43）解析，Prism 容器对未注册的具体类型仍可构造解析（DryIoc 默认行为），ViewModel 由 ViewModelLocator 约定装配。
 
 ### 2. 贡献声明（供 shell 收集消费）
 
-**工具视图（`[ToolView]` attribute，ADR-0002；无独立贡献类，元数据由 `RegisterToolViews` 扫描生成为 `ToolViewContribution`）：**
+**接口贡献类（仅一个，只有属性）：**
 
-| View 类 | `Id` | `TitleKey` | `Icon` | `Order` | `Default` | `AllowMove` |
-|---|---|---|---|---|---|---|
-| `DashBoardNavigationView`（Views/DashBoardNavigationView.axaml.cs:14-15） | `"dashboard"` | `"DashBoardNavigationTitle"`（扫描时 `Language.Get` 解析） | `Icons.DashBoard` | 0（缺省） | `ToolViewPlacement.ActivityBar` | true（缺省） |
-| `DashBoardTasksView`（Views/DashBoardTasksView.axaml.cs:10-11） | `"dashboard.tasks"` | `"DashBoardTasksTabTitle"` | `Icons.Tasks` | 15 | `ToolViewPlacement.BottomPanel` | true（缺省） |
+| 类 | 实现接口 | `Id` | `Title` | `IconPath` | `Order` |
+|---|---|---|---|---|---|
+| `DashBoardStatusBarItem`（DashBoardStatusBarItem.cs:11） | `IStatusBarItemContribution` | `"dashboard.status"` | `Language.DashBoardNavigationTitle`（启动台标题资源） | `Icons.DashBoard` | 20 |
 
-**接口贡献类（三个，均只有属性）：**
-
-| 类 | 实现接口 | `Id` | `Title` | `IconPath` | `Order` | 视图类型 |
-|---|---|---|---|---|---|---|
-| `DashBoardOverviewMainView`（DashBoardOverviewMainView.cs:9） | `IMainViewContribution` | `ViewId` 常量 `"dashboard.overview"` | —（接口无 Title） | — | — | `ViewType => typeof(DashBoardOverviewView)` |
-| `DashBoardRecentMainView`（DashBoardRecentMainView.cs:9） | `IMainViewContribution` | `ViewId` 常量 `"dashboard.recent"` | — | — | — | `ViewType => typeof(DashBoardRecentView)` |
-| `DashBoardStatusBarItem`（DashBoardStatusBarItem.cs:11） | `IStatusBarItemContribution` | `"dashboard.status"` | `Language.DashBoardNavigationTitle`（复用导航标题） | `Icons.DashBoard` | 20 | — |
-
-
-两个 `IMainViewContribution` 实现各暴露一个 `public const string ViewId`（DashBoardOverviewMainView.cs:11、DashBoardRecentMainView.cs:11），`Id => ViewId`；`ViewId` 常量是 `DashBoardNavigationView` 发布 `OpenMainViewEvent` 时的负载来源。
+原五个演示贡献已删除：两个 `[ToolView]` 工具视图（`DashBoardNavigationView` `"dashboard"` / `DashBoardTasksView` `"dashboard.tasks"`，ADR-0002）与两个 `IMainViewContribution` 主视图（`"dashboard.overview"` / `"dashboard.recent"`，各暴露 `public const string ViewId` 供 `OpenMainViewEvent` 负载）——工具视图 attribute 机制与 `ViewId` 常量负载模式当前无本模块实例。
 
 ### 3. `DashBoardWindowViewModel : ObservableObject`（ViewModels/Windows/DashBoardWindowViewModel.cs:12）
 
@@ -73,21 +61,13 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 
 > 上游调查备注：Core/Framework 深读验证期间曾以 `SetProgress` 指称本类的进度回调方法。在 main @ 04cfd02 及全部 git 历史中（`git log -S SetProgress` 无结果），该类**从未存在**名为 `SetProgress` 的成员；真实的进度回调方法名是 `OnProgress`，失败回调是 `OnModuleFailed`。
 
-### 4. 视图类型（五个公开类，均为 `partial`，无行为成员）
+### 4. 视图类型（一个公开类，`partial`，无行为成员）
 
 | 类 | 基类 | 文件 | 构造 |
 |---|---|---|---|
 | `DashBoardWindow` | `Avalonia.Controls.Window` | Views/Windows/DashBoardWindow.axaml(.cs) | 无参，`InitializeComponent()` |
-| `DashBoardNavigationView` | `UserControl` | Views/DashBoardNavigationView.axaml(.cs) | **双构造**：无参转发 `IoC.Provider.Resolve<IEventAggregator>()`（XAML loader 用）；`DashBoardNavigationView(IEventAggregator)`（容器用） |
-| `DashBoardOverviewView` | `UserControl` | Views/DashBoardOverviewView.axaml(.cs) | 无参 |
-| `DashBoardRecentView` | `UserControl` | Views/DashBoardRecentView.axaml(.cs) | 无参 |
-| `DashBoardTasksView` | `UserControl` | Views/DashBoardTasksView.axaml(.cs) | 无参 |
 
-`DashBoardNavigationView` 与 `DashBoardTasksView` 类上标有 `[ToolView]` attribute（声明值见第 2 节表，ADR-0002），由 `RegisterToolViews` 扫描注册进容器；其余三个视图不走工具视图通路。
-
-`DashBoardNavigationView` 的两个私有事件处理器（不是公开 API，但决定行为）：
-- `private void OpenOverview(object? sender, RoutedEventArgs e)`（.axaml.cs:33）→ `Publish OpenMainViewEvent(DashBoardOverviewMainView.ViewId)`
-- `private void OpenRecent(object? sender, RoutedEventArgs e)`（.axaml.cs:38）→ `Publish OpenMainViewEvent(DashBoardRecentMainView.ViewId)`
+原四个占位视图（`DashBoardNavigationView`/`DashBoardOverviewView`/`DashBoardRecentView`/`DashBoardTasksView`，均 `UserControl`）已删除。
 
 ## 调用方式与生命周期
 
@@ -97,7 +77,6 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 2. 启动序列在模块加载前显示启动台：`Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:40，`CreateSplashWindow` 重写）；ViewModel 由 `prism:ViewModelLocator.AutoWireViewModel="True"`（DashBoardWindow.axaml:3）按约定装配，构造时完成事件订阅。
 3. 启动序列逐模块发布 `StartupProgressEvent`/`ModuleLoadFailedEvent`，ViewModel 回调更新属性；用户点"继续/退出"时 ViewModel 发布 `StartupFailureActionEvent`。
 4. 模块加载时 Prism 调 `RegisterTypes` 注册贡献；shell 收集渲染。
-5. 工作区阶段的用户交互：SideBar 按钮发布 `OpenMainViewEvent`。
 
 **消费事件的发布方**（反向依赖）：`StartupProgressEvent`/`ModuleLoadFailedEvent` 由 Core/Framework 的 `FrameworkApplication.RunStartupSequenceAsync` 发布；`StartupFailureActionEvent` 由同一处订阅等待（`WaitForFailureActionAsync`）。`OpenMainViewEvent` 由 shell（MainWindowViewModel）订阅。详见 docs/analysis/Core/Framework/ 与 docs/analysis/Core/Models/ 文档。
 
@@ -105,5 +84,5 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 
 本模块**不定义**任何 DTO/record/枚举；对外数据完全由以下两类承载：
 
-- `[ToolView]` attribute 声明与接口贡献类的属性（上表），字符串 Id 与 `Type` 引用；
-- 事件负载（定义在 Core/Models/Events，本模块只消费）：`StartupProgress{Phase, ModuleName, ModuleIndex, ModuleCount}`、`ModuleLoadFailure{ModuleName, ModuleIndex, ModuleCount, ErrorMessage}`、`StartupFailureAction{Continue, Exit}`、`OpenMainViewEvent` 负载为主视图 `Id` 字符串（本模块发出的是 `"dashboard.overview"`/`"dashboard.recent"`）。
+- 接口贡献类的属性（上表），字符串 Id；
+- 事件负载（定义在 Core/Models/Events，本模块只消费/回传）：`StartupProgress{Phase, ModuleName, ModuleIndex, ModuleCount}`、`ModuleLoadFailure{ModuleName, ModuleIndex, ModuleCount, ErrorMessage}`、`StartupFailureAction{Continue, Exit}`。

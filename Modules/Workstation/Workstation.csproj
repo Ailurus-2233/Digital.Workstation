@@ -21,9 +21,6 @@
       <Compile Update="Views\AboutWindow.axaml.cs">
         <DependentUpon>AboutWindow.axaml</DependentUpon>
       </Compile>
-      <Compile Update="Views\LogView.axaml.cs">
-        <DependentUpon>LogView.axaml</DependentUpon>
-      </Compile>
     </ItemGroup>
 
 </Project>

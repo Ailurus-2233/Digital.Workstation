@@ -11,9 +11,6 @@
         <DependentUpon>DashBoardWindow.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Views\DashBoardTasksView.axaml.cs">
-        <DependentUpon>DashBoardTasksView.axaml</DependentUpon>
-      </Compile>
     </ItemGroup>
 
     <ItemGroup>

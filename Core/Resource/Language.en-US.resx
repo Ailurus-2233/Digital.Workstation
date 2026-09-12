@@ -66,26 +66,6 @@
     <value>Launch Pad</value>
     <comment>Title of the DashBoard navigation item</comment>
   </data>
-  <data name="PropertiesTabTitle" xml:space="preserve">
-    <value>Properties</value>
-    <comment>Title of the shell built-in AuxiliaryPanel demo tab "Properties"</comment>
-  </data>
-  <data name="OutlineTabTitle" xml:space="preserve">
-    <value>Outline</value>
-    <comment>Title of the shell built-in AuxiliaryPanel demo tab "Outline"</comment>
-  </data>
-  <data name="OutputTabTitle" xml:space="preserve">
-    <value>Output</value>
-    <comment>Title of the shell built-in BottomPanel demo tab "Output"</comment>
-  </data>
-  <data name="LogTabTitle" xml:space="preserve">
-    <value>Log</value>
-    <comment>Title of the shell built-in BottomPanel demo tab "Log"</comment>
-  </data>
-  <data name="DashBoardTasksTabTitle" xml:space="preserve">
-    <value>Tasks</value>
-    <comment>Title of the DashBoard-contributed BottomPanel demo tab "Tasks"</comment>
-  </data>
   <data name="MenuFileTitle" xml:space="preserve">
     <value>File</value>
     <comment>Title of the top-level "File" menu</comment>
@@ -141,10 +121,6 @@
   <data name="StatusReadyTitle" xml:space="preserve">
     <value>Ready</value>
     <comment>Text of the shell built-in status bar "Ready" item</comment>
-  </data>
-  <data name="DashBoardOpenWindowMenuTitle" xml:space="preserve">
-    <value>Open Launch Pad</value>
-    <comment>Title of the DashBoard-contributed File menu item that reopens the launch pad window</comment>
   </data>
   <data name="SplashStartingText" xml:space="preserve">
     <value>Starting…</value>

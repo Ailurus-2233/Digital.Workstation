@@ -7,8 +7,8 @@
 | 依赖 | 用到的能力 | 本模块使用点 |
 |---|---|---|
 | `Core/Framework` | `FrameworkApplication<TWindow>` 应用入口基类（Framework/FrameworkApplication.cs）；`FrameworkWindow` 与主题（Framework/Windows/）；`CommandPalette` 命令面板与 `CommandRegistration.RegisterCommands` 命令扫描注册（Framework/Windows/、Framework/Commands/，ADR-0005）；`PanelResizer`、`ShellLayoutState` 及区域 record、`PanelAlignment`/`PanelResize`/`PanelResizeTarget`、`SetPanelAlignmentEvent`、`LayoutPersistence` 布局落盘与 `ShellLayoutDto` 一族 DTO（Framework/Layout/）；`ShellContributionCollector` 贡献收集器与 `ToolViewRegistration.RegisterToolViews` 工具视图扫描注册（Framework/Contributions/，ADR-0002）；`MenuTreeBuilder`/`MenuRegistration`/`MenuItemViewModel` 菜单建树、扫描注册与呈现模型（Framework/Menus/，ADR-0001） | `WorkstationApplication.cs:15` 继承、`:27` `RegisterToolViews`、`:31` `RegisterMenus`、`:33` `RegisterCommands`；`MainWindowViewModel.cs:21` 注入 collector、`:24` 注入 `LayoutPersistence`、`:60` 持有 `ShellLayoutState _state`、`:184` `MenuTreeBuilder.Build`、`:438` `ResizePanel` 消费 `PanelResizeTarget`、`:536-590` `CaptureLayout`/`ScheduleSave` 产 `ShellLayoutDto`（using 见 `MainWindowViewModel.cs:6-12`：Abstractions.Commands/Abstractions.Contributions/Abstractions.Regions/Framework.Contributions/Layout/Menus/Models.Events）；`MainWindow.axaml.cs:1` `Framework.Windows`、`:22` `RegisterCommandGestures`（手势 KeyBinding 接线） |
-| `Core/Resource` | `Language` 本地化字符串（Resource/Language.cs） | `ReadyStatusBarItem.Title` 直接调 `Language.StatusReadyTitle`（`ReadyStatusBarItem.cs:14`）；`MainWindowViewModel.SettingsTitle` 直接调 `Language.SettingsNavigationTitle`（`MainWindowViewModel.cs:151`，ActivityBar"设置"导航按钮标题，ADR-0006 决策 6——不再是 `[ToolView]` 资源键）；四个 `[ToolView]` View 类与五个 attribute 菜单类不调用 `Language.*`，而是在 attribute 里写资源键字符串（`"PropertiesTabTitle"`/`"OutlineTabTitle"`/`"OutputTabTitle"`/`"LogTabTitle"` 工具视图标题键；`"MenuFileTitle"`/`"MenuViewTitle"`/`"MenuHelpTitle"`/`"MenuExitTitle"`/`"MenuAboutTitle"`/`"ToggleSideBarTitle"`/`"ResetLayoutTitle"` 等菜单键），运行时分别由 Framework 的 `ToolViewRegistration`（`ToolViewRegistration.cs:51`）与 `MenuRegistration`/`MenuTreeBuilder` 经 `Language.Get` 解析 |
-| `Core/UIPackage` | `Icons` 图标路径常量（UIPackage/Icons.cs）；Ursa/Semi 主题资源键（`SemiColor*`、`Chrome*`，运行期由 Framework 装载主题后可用） | 四个 View 类的 `[ToolView(Icon = …)]`、`ReadyStatusBarItem.IconPath` 与菜单类 `[MenuItem(Icon = …)]`；`MainWindowViewModel.cs:136、:141` 收起按钮图标、`:146` `SettingsIcon`（`Icons.Settings`，ActivityBar"设置"导航按钮图标，ADR-0006 决策 6）；`MainWindow.axaml` 全部 `{DynamicResource ...}` |
+| `Core/Resource` | `Language` 本地化字符串（Resource/Language.cs） | `ReadyStatusBarItem.Title` 直接调 `Language.StatusReadyTitle`（`ReadyStatusBarItem.cs:14`）；`MainWindowViewModel.SettingsTitle` 直接调 `Language.SettingsNavigationTitle`（`MainWindowViewModel.cs:151`，ActivityBar"设置"导航按钮标题，ADR-0006 决策 6——不再是 `[ToolView]` 资源键）；五个 attribute 菜单类不调用 `Language.*`，而是在 attribute 里写资源键字符串 |
+| `Core/UIPackage` | `Icons` 图标路径常量（UIPackage/Icons.cs）；Ursa/Semi 主题资源键（`SemiColor*`、`Chrome*`，运行期由 Framework 装载主题后可用） | `ReadyStatusBarItem.IconPath` 与菜单类 `[MenuItem(Icon = …)]`；`MainWindowViewModel.cs:136、:141` 收起按钮图标、`:146` `SettingsIcon`（`Icons.Settings`，ActivityBar"设置"导航按钮图标，ADR-0006 决策 6）；`MainWindow.axaml` 全部 `{DynamicResource ...}` |
 | `Modules/DashBoard` | `DashBoardModule`（Prism 模块）、`DashBoardWindow`（启动台窗口） | `WorkstationApplication.cs:19` `AddModule<DashBoardModule>()`、`:43-46` `CreateSplashWindow()` 返回 `Container.Resolve<DashBoardWindow>()` |
 | `Modules/Settings` | `SettingsModule`（Prism 模块，向 MainContent 贡献设置页主视图占位骨架，ADR-0006） | `WorkstationApplication.cs:20` `AddModule<SettingsModule>()`（using `DigitalWorkstation.Settings`，:9） |
 
@@ -24,7 +24,7 @@
 
 ### 编译设置
 
-`net10.0`、`ImplicitUsings`+`Nullable` enable（Workstation.csproj:4-6）。第 18-26 行三条 `Compile Update ... DependentUpon`（EmptyStateView/AboutWindow/LogView 的 code-behind 嵌套显示），仅 IDE 语义。程序集/根命名空间 `DigitalWorkstation.Workstation`（由 `Build/Base.props` 统一规则，源码命名空间与之一致）。
+`net10.0`、`ImplicitUsings`+`Nullable` enable（Workstation.csproj:4-6）。第 18-23 行两条 `Compile Update ... DependentUpon`（EmptyStateView/AboutWindow 的 code-behind 嵌套显示），仅 IDE 语义。程序集/根命名空间 `DigitalWorkstation.Workstation`（由 `Build/Base.props` 统一规则，源码命名空间与之一致）。
 
 ## 被依赖关系
 
@@ -56,15 +56,11 @@ private IReadOnlyList<ToolViewContribution> _toolViews;         // :39 工具视
 
 关系要点：`_toolViewContents` 与 `_mainViewContents` 两个缓存字典是视图实例的**唯一持有者**（除此之外只有 XAML `ContentControl` 的 Content 引用），缓存键 = 贡献的字符串 Id，与 `ShellLayoutState` 里的 `ContentFor`/`ActiveTab`/`ActiveView`/`ActivityBarItems` 对应。字典索引用赋值（`_mainViewsById[id] = contribution`），重复 Id **静默覆盖**（见 pitfalls.md）。`_toolViews` 只在 `EnsureContributionsLoaded` 赋值一次（:178），是 `LoadToolViews` 与 `ResetLayout` 重建的共同数据源。
 
-### 工具视图 attribute（Views/）、贡献类（Contributions/）与菜单类（Menus/）——无字段、无状态，全部数据即 attribute 值/属性值
+### 贡献类（Contributions/）与菜单类（Menus/）——无字段、无状态，全部数据即 attribute 值/属性值
 
-四个 `[ToolView]` View 的 attribute 矩阵与 `ReadyStatusBarItem` 的属性矩阵见 api.md 第 5 节（五个 attribute 菜单类不实现贡献接口、无 Id——`IMenuItemContribution` 的 Id 已随 ADR-0001 删除；工具视图 Id 即 `[ToolView]` 主构造参数，ADR-0002）。跨类关系由字符串 Id 建立：
+`ReadyStatusBarItem` 的属性矩阵见 api.md 第 5 节（五个 attribute 菜单类不实现贡献接口、无 Id——`IMenuItemContribution` 的 Id 已随 ADR-0001 删除）；当前本模块无 `[ToolView]` 标注类（原四个演示占位视图 `shell.properties`/`shell.outline`/`shell.output`/`shell.log` 已删除，机制见 ADR-0002——工具视图 Id 即 `[ToolView]` 主构造参数，默认归属仅决定首次/重置布局，实际归属是 `State.ActivityBarItems` / `AuxiliaryPanel.Tabs` / `BottomPanel.Tabs`）。跨类关系由字符串 Id 建立：
 
 ```
-PropertiesView [ToolView("shell.properties",…)]  ┐
-OutlineView    [ToolView("shell.outline",…)]     │  默认归属仅决定首次/重置布局；
-OutputView     [ToolView("shell.output",…)]      │  实际归属是 State.ActivityBarItems /
-LogView        [ToolView("shell.log",…)]         ┘  AuxiliaryPanel.Tabs / BottomPanel.Tabs（拖拽可迁，持久化优先）
 ReadyStatusBarItem.Id       "shell.status.ready"
 ```
 
@@ -73,9 +69,9 @@ ReadyStatusBarItem.Id       "shell.status.ready"
 | 本模块类型 | 实现/消费的抽象（定义处） |
 |---|---|
 | `WorkstationApplication` | `FrameworkApplication<TWindow>`（Core/Framework/FrameworkApplication.cs:16），最终基类 `Prism.DryIoc.PrismApplication` |
-| 四个 `[ToolView]` View 类（Views/）+ `ReadyStatusBarItem`（Contributions/）+ 五个 attribute 菜单类（Menus/） | `ToolViewAttribute`（Core/Abstractions/Contributions/ToolViewAttribute.cs，ADR-0002）、`IStatusBarItemContribution`（Core/Abstractions/Contributions/）与 `[MenuGroup]`/`[MenuItem]`（Core/Abstractions/Menus/），契约详见 docs/analysis/Core/Abstractions/api.md |
+| `ReadyStatusBarItem`（Contributions/）+ 五个 attribute 菜单类（Menus/） | `IStatusBarItemContribution`（Core/Abstractions/Contributions/）与 `[MenuGroup]`/`[MenuItem]`（Core/Abstractions/Menus/）；工具视图契约 `ToolViewAttribute`（ADR-0002）当前无本模块实现，详见 docs/analysis/Core/Abstractions/api.md |
 | `MainWindowViewModel.State` | `ShellLayoutState` 一族 record（Core/Framework/Layout/），转换语义详见 docs/analysis/Core/Framework/api.md 第 3 节 |
 | `MainWindowViewModel` 的事件订阅 | `OpenMainViewEvent`/`TogglePanelVisibilityEvent`/`ResetLayoutEvent`（Core/Models/Events/）与 `SetPanelAlignmentEvent`（Core/Framework/Layout/），负载分别为 `string`（= `IMainViewContribution.Id`）、`TogglePanelTarget`、无负载 与 `PanelAlignment`（Layout） |
 | `ViewCommands`（Commands/） | `CommandAttribute`（Core/Abstractions/Commands/CommandAttribute.cs，ADR-0005）：四个 `[Command]` 方法经 Framework `RegisterCommands` 扫描生成 `ICommandContribution` |
 | `HelpMenus.About` 的弹窗 | `IWindowManager`（Core/Abstractions/WindowManager/），实现为 Framework 的 `FrameworkWindowManager`（`ShowDialog` 要求主窗口已设且 IsActive） |
-| `[ToolView]` attribute 与 `ReadyStatusBarItem` 的 `Title`/`IconPath`、菜单类 attribute | `Language`（Core/Resource/Language.cs）/`Icons`（Core/UIPackage/Icons.cs）；attribute 里是资源键字符串，由 Framework 经 `Language.Get` 解析 |
+| `ReadyStatusBarItem` 的 `Title`/`IconPath`、菜单类 attribute | `Language`（Core/Resource/Language.cs）/`Icons`（Core/UIPackage/Icons.cs）；attribute 里是资源键字符串，由 Framework 经 `Language.Get` 解析 |

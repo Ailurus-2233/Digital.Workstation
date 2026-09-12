@@ -4,8 +4,7 @@
 
 **本模块源码中没有显式 `throw` 语句，也没有 try/catch。** 可能的运行期异常全部来自它调用的外部设施：
 
-1. **`IoC.Provider` 未初始化时构造 `DashBoardNavigationView` 失败** — 触发位置：无参构造 `DashBoardNavigationView()` → `IoC.Provider.Resolve<IEventAggregator>()`（Views/DashBoardNavigationView.axaml.cs:23）。触发条件：XAML runtime loader（设计器、预览器）在容器初始化前实例化视图。`IoC.Provider` 的未初始化行为定义在 Core/Common（见 docs/analysis/Core/Common/ 文档）。排查：确认该视图的实例化路径——shell 正常渲染走容器 `Resolve<DashBoardNavigationView>`（调用注入构造，不经无参构造）；只有 XAML loader 直建实例才走无参构造。
-2. **启动序列的模块加载异常不在此抛出**：本模块的 `RegisterTypes` 若抛异常（如容器注册冲突），由 Core/Framework 启动序列捕获并转为 `ModuleLoadFailedEvent` 发布——**本模块的 ViewModel 恰是该事件的订阅方**，因此 DashBoard 自身加载失败会显示在启动台上，用户可"继续（跳过）/退出"。
+1. **启动序列的模块加载异常不在此抛出**：本模块的 `RegisterTypes` 若抛异常（如容器注册冲突），由 Core/Framework 启动序列捕获并转为 `ModuleLoadFailedEvent` 发布——**本模块的 ViewModel 恰是该事件的订阅方**，因此 DashBoard 自身加载失败会显示在启动台上，用户可"继续（跳过）/退出"。
 
 ## 行为性故障（非异常）与排查
 
@@ -13,7 +12,6 @@
 |---|---|---|
 | 启动台窗口打开但无任何进度文字/ViewModel 不工作 | `prism:ViewModelLocator.AutoWireViewModel="True"`（DashBoardWindow.axaml:3）的约定装配失败——ViewModel 命名/目录不符合 `Views.Windows.*` ↔ `ViewModels.Windows.*` 约定，或 `DashBoardWindowViewModel` 改名 | 窗口 DataContext 是否为 `DashBoardWindowViewModel` 实例；README 第 46 行"按 Views ↔ ViewModels 的命名/目录约定自动绑定" |
 | 启动台进度不动、失败不显示 | 事件未到达：订阅在构造函数（DashBoardWindowViewModel.cs:19-20），若 ViewModel 未创建则无人订阅；或发布方（FrameworkApplication）未到对应阶段 | Serilog 控制台启动日志（docs/agents/verification.md 约定）；确认 `StartupProgressEvent` 发布 |
-| 点击"概览/最近项目"主视图不切换 | `OpenMainViewEvent` 负载 Id 与 `IMainViewContribution.Id` 不匹配——负载来自 `DashBoardOverviewMainView.ViewId`/`DashBoardRecentMainView.ViewId` 常量（DashBoardNavigationView.axaml.cs:35、40），改 Id 字符串必须同步改常量引用处 | 比对 `"dashboard.overview"`/`"dashboard.recent"` 在贡献类与订阅方（shell）两侧是否一致 |
 | 工具视图或接口贡献项不显示或顺序不对 | 工具视图不出现：`[ToolView]` 标注的类非可实例化 `Control`、或程序集内 Id 重复——`RegisterToolViews` 记 `Logger.Warning` 跳过（ADR-0002）；Id 跨模块冲突（唯一性约束，见 docs/analysis/Core/Abstractions/error.md）；`Order` 值与其他贡献相同导致相对顺序不稳 | Serilog 日志的 Warning；`ToolViewRegistration` 的跳过规则与 `ShellContributionCollector.GetToolViews()` 的排序（Core/Framework）；全仓搜索重复 Id 字符串 |
 | 按钮点击后绑定命令不执行 | XAML 绑定名 `ContinueCommand`/`ExitCommand` 与源生成命令名不匹配——命令名 = `[RelayCommand]` 方法名 + "Command"，改方法名后 XAML 运行期绑定静默失败 | DashBoardWindow.axaml:27-28 的 `Command="{Binding ...}"` 与 DashBoardWindowViewModel.cs:70、79 的方法名 |
 

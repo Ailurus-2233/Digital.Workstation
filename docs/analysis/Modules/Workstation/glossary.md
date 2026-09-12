@@ -2,7 +2,7 @@
 
 | 术语 | 定义 | 首次/主要代码位置 |
 |---|---|---|
-| **Shell（外壳）** | 本模块即应用 shell：主窗口 + 布局 + 预置贡献的合称；预置类分三处——`Views/` 四个 `[ToolView]` View（工具视图，Id 均以 `shell.` 前缀，ADR-0002）、`Contributions/`（只剩 `ReadyStatusBarItem`）与 `Menus/`（五个 attribute 菜单类，无 Id） | `Views/`、`Contributions/`、`Menus/` 目录；各 Id（如 `shell.properties`） |
+| **Shell（外壳）** | 本模块即应用 shell：主窗口 + 布局 + 预置贡献的合称；预置类分两处——`Contributions/`（只剩 `ReadyStatusBarItem`）与 `Menus/`（五个 attribute 菜单类，无 Id）；工具视图机制为 `[ToolView]` attribute（ADR-0002），当前本模块无标注类（原四个演示占位视图已删除） | `Contributions/`、`Menus/` 目录；`shell.status.ready` |
 | **ActivityBar** | 窗口最左 48px 竖条，放导航项按钮；顶部段为模块贡献项、底部段为钉住区（Pinned Item，机制保留、当前无内置实例）与 shell 内置"设置"导航按钮（`OpenSettingsCommand` → `OpenMainViewEvent` 纯导航，ADR-0006 决策 6）（VS Code 同源概念）。顶部段可拖放迁移/重排（`ToolViewBar`），底部段不接受拖放 | `Core/Framework/Windows/FrameworkWindowTheme.axaml:27`（ShellActivityBar 部件模板） |
 | **SideBar** | ActivityBar 右侧的侧边栏，显示选中导航项的内容视图；`State.SideBar`（`SideBarState`：Visible/Width/ContentFor，默认收起、宽 240、clamp 120-480） | `Core/Framework/Windows/FrameworkWindowTheme.axaml:59`（ShellSideBar）；`MainWindowViewModel.SelectActivity`（:291） |
 | **MainContent** | 中央主区，单视图切换；初始为 `EmptyStateView`，被 `OpenMainViewEvent` 整体替换 | `Core/Framework/Windows/FrameworkWindowTheme.axaml:75`（ShellMainContent）；`MainWindowViewModel._mainContent`（:54、:93） |

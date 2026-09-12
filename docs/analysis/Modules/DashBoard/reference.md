@@ -2,25 +2,24 @@
 
 ## 依赖关系
 
-### 项目引用（DashBoard.csproj:20-23）
+### 项目引用（DashBoard.csproj:17-20）
 
 | 依赖 | 用到的能力 | 本模块使用点 |
 |---|---|---|
-| `Core/Abstractions` | Shell 贡献契约：工具视图 attribute `ToolViewAttribute` 与放置枚举 `ToolViewPlacement { ActivityBar, AuxiliaryPanel, BottomPanel }`（ADR-0002，Abstractions/Contributions/ToolViewAttribute.cs）、`IMainViewContribution`、`IStatusBarItemContribution`（Abstractions/Contributions/） | 两个工具视图的 `[ToolView]` 标注（using `DigitalWorkstation.Core.Abstractions.Contributions`：DashBoardNavigationView.axaml.cs:3、14-15；DashBoardTasksView.axaml.cs:2、10-11）；`DashBoardOverviewMainView.cs:1、9`/`DashBoardRecentMainView.cs:1、9`/`DashBoardStatusBarItem.cs:1、11` 各实现一个接口 |
-| `Core/Framework` | 间接获得 Prism（`IModule`、`IContainerRegistry`、`IEventAggregator`、`PubSubEvent`、`ThreadOption`）与 CommunityToolkit.Mvvm（`ObservableObject`、`[ObservableProperty]`、`[RelayCommand]`）的传递引用；运行期由其提供 `IoC` 初始化与 `RegisterToolViews` 工具视图注册扩展（Framework/Contributions/ToolViewRegistration.cs，ADR-0002） | `DashBoardModule.cs:2、7、13` `IModule` 与 `RegisterToolViews`（using `DigitalWorkstation.Core.Framework.Contributions`，第 2 行）；`DashBoardWindowViewModel.cs:1-2、12、69、78` |
-| `Core/Resource` | `Language` 本地化字符串：`DashBoardNavigationTitle`、`DashBoardTasksTabTitle`、`SplashStartingText`、`SplashPhaseCoreServices`、`SplashPhaseLoadingModules`、`SplashPhaseReady`、`SplashPhaseFailed`（Resource/Language.cs；中英值在 Language.resx / Language.en-US.resx） | `DashBoardStatusBarItem.Title` 属性（DashBoardStatusBarItem.cs:15）；两个 `[ToolView]` 以字符串 TitleKey 引用（`"DashBoardNavigationTitle"`/`"DashBoardTasksTabTitle"`，扫描时经 `Language.Get` 解析）；`DashBoardWindowViewModel.cs:24、43-45、56` |
-| `Core/UIPackage` | `Icons` 图标路径常量：`Icons.DashBoard`（四宫格）、`Icons.Tasks`（勾选清单）（UIPackage/Icons.cs:18、46） | `DashBoardNavigationView.axaml.cs:14`（`[ToolView]` 的 `Icon`）、`DashBoardTasksView.axaml.cs:10`、`DashBoardStatusBarItem.cs:17` |
+| `Core/Abstractions` | Shell 贡献契约：`IStatusBarItemContribution`（Abstractions/Contributions/）；工具视图 attribute `ToolViewAttribute` 与放置枚举 `ToolViewPlacement`（ADR-0002）仅经 `RegisterToolViews` 扫描机制涉及，当前无标注类 | `DashBoardStatusBarItem.cs:1、11` 实现接口（using `DigitalWorkstation.Core.Abstractions.Contributions`，`DashBoardModule.cs:1`） |
+| `Core/Framework` | 间接获得 Prism（`IModule`、`IContainerRegistry`、`IEventAggregator`、`PubSubEvent`、`ThreadOption`）与 CommunityToolkit.Mvvm（`ObservableObject`、`[ObservableProperty]`、`[RelayCommand]`）的传递引用；运行期由其提供 `IoC` 初始化与 `RegisterToolViews` 工具视图注册扩展（Framework/Contributions/ToolViewRegistration.cs，ADR-0002） | `DashBoardModule.cs:2、6、12` `IModule` 与 `RegisterToolViews`（using `DigitalWorkstation.Core.Framework.Contributions`，第 2 行）；`DashBoardWindowViewModel.cs:1-2、12、69、78` |
+| `Core/Resource` | `Language` 本地化字符串：`DashBoardNavigationTitle`、`SplashStartingText`、`SplashPhaseCoreServices`、`SplashPhaseLoadingModules`、`SplashPhaseReady`、`SplashPhaseFailed`（Resource/Language.cs；中英值在 Language.resx / Language.en-US.resx） | `DashBoardStatusBarItem.Title` 属性（DashBoardStatusBarItem.cs:15）；`DashBoardWindowViewModel.cs:24、43-45、56` |
+| `Core/UIPackage` | `Icons` 图标路径常量：`Icons.DashBoard`（四宫格）（UIPackage/Icons.cs:18） | `DashBoardStatusBarItem.cs:17` |
 
 ### 传递依赖（未在 csproj 直接引用，但源码 using 其命名空间）
 
 | 传递来源 | 用到的能力 | 使用点 |
 |---|---|---|
-| `Core/Models`（经 Framework 传递） | 启动事件三件套：`StartupProgressEvent`/`StartupProgress`/`StartupPhase`、`ModuleLoadFailedEvent`/`ModuleLoadFailure`、`StartupFailureActionEvent`/`StartupFailureAction`；工作区事件 `OpenMainViewEvent`（均 Models/Events/） | `DashBoardWindowViewModel.cs:3、19-20、38、53、72、81`；`DashBoardNavigationView.axaml.cs:5、35、40` |
-| `Core/Common`（经 Framework 传递） | `IoC.Provider`（一次性容器引用持有者） | `DashBoardNavigationView.axaml.cs:4、23` 无参构造 `IoC.Provider.Resolve<IEventAggregator>()` |
+| `Core/Models`（经 Framework 传递） | 启动事件三件套：`StartupProgressEvent`/`StartupProgress`/`StartupPhase`、`ModuleLoadFailedEvent`/`ModuleLoadFailure`、`StartupFailureActionEvent`/`StartupFailureAction`（均 Models/Events/） | `DashBoardWindowViewModel.cs:3、19-20、38、53、72、81` |
 
 ### NuGet / 框架
 
-`net10.0`、`ImplicitUsings`+`Nullable` enable（DashBoard.csproj:4-7）。Avalonia（`Window`/`UserControl`/`RoutedEventArgs`）、Prism、CommunityToolkit.Mvvm 均经 Framework 传递。csproj 第 9-17 行另有两条 `Compile Update ... DependentUpon`（IDE 嵌套显示，对构建无语义影响）：`Views\Windows\DashBoardWindow.axaml.cs`（带 `SubType=Code`）与 `Views\DashBoardTasksView.axaml.cs`。
+`net10.0`、`ImplicitUsings`+`Nullable` enable（DashBoard.csproj:4-7）。Avalonia（`Window`/`UserControl`）、Prism、CommunityToolkit.Mvvm 均经 Framework 传递。csproj 第 9-13 行一条 `Compile Update ... DependentUpon`（IDE 嵌套显示，对构建无语义影响）：`Views\Windows\DashBoardWindow.axaml.cs`（带 `SubType=Code`）。
 
 ## 被依赖关系
 
@@ -35,13 +34,9 @@
 
 ### 贡献声明矩阵（声明值详表见 api.md）
 
-三个接口贡献类无字段、无状态，全部数据即属性值；两个工具视图只有 `[ToolView]` attribute 声明（元数据 `ToolViewContribution` 由 `RegisterToolViews` 扫描生成）。跨类关系由字符串 Id 建立：
+唯一的接口贡献类无字段、无状态，全部数据即属性值：
 
 ```
-[ToolView] DashBoardNavigationView  "dashboard"          ← shell SelectedActivity / SideBar 内容解析键（ToolViewContribution.Id）
-DashBoardOverviewMainView.ViewId  "dashboard.overview"  ┐
-DashBoardRecentMainView.ViewId    "dashboard.recent"    ├← OpenMainViewEvent 负载（DashBoardNavigationView 发布）
-[ToolView] DashBoardTasksView       "dashboard.tasks"    ← BottomPanel Tabs/ActiveTab 键
 DashBoardStatusBarItem.Id   "dashboard.status"
 ```
 
@@ -55,8 +50,6 @@ DashBoardStatusBarItem.Id   "dashboard.status"
 | 本模块类型 | 实现/消费的抽象（定义处） |
 |---|---|
 | `DashBoardModule` | `Prism.Modularity.IModule`（Prism.DryIoc 传递） |
-| 三个接口贡献类（`DashBoardOverviewMainView`/`DashBoardRecentMainView`/`DashBoardStatusBarItem`） | `Core/Abstractions/Contributions/` 下 `IMainViewContribution`/`IStatusBarItemContribution` 两个接口（详见 docs/analysis/Core/Abstractions/api.md） |
-| 两个 `[ToolView]` 视图（`DashBoardNavigationView`/`DashBoardTasksView`） | `ToolViewAttribute`/`ToolViewPlacement`（Core/Abstractions/Contributions/ToolViewAttribute.cs，ADR-0002）；经 Core/Framework `RegisterToolViews` 扩展（Framework/Contributions/ToolViewRegistration.cs）扫描生成 `ToolViewContribution` 元数据单例并把 View 注册进容器，由 `ShellContributionCollector.GetToolViews()` 收集（详见 docs/analysis/Core/Framework/api.md） |
-| `DashBoardWindowViewModel` 的事件订阅/发布 | `StartupProgressEvent`/`ModuleLoadFailedEvent`/`StartupFailureActionEvent`/`OpenMainViewEvent`（Core/Models/Events/，详见 docs/analysis/Core/Models/） |
+| 接口贡献类（`DashBoardStatusBarItem`） | `Core/Abstractions/Contributions/` 下 `IStatusBarItemContribution` 接口（详见 docs/analysis/Core/Abstractions/api.md） |
+| `DashBoardWindowViewModel` 的事件订阅/发布 | `StartupProgressEvent`/`ModuleLoadFailedEvent`/`StartupFailureActionEvent`（Core/Models/Events/，详见 docs/analysis/Core/Models/） |
 | `DashBoardWindow` 的显示方 | shell 启动序列直接 `Container.Resolve<DashBoardWindow>()` 显示（`WorkstationApplication.CreateSplashWindow`）；模块内不再有重开通路（原菜单/命令贡献已删除） |
-| `DashBoardNavigationView` 无参构造的解析源 | `IoC.Provider`（Core/Common），由 `FrameworkApplication.RegisterFrameworkServices` 初始化 |

@@ -31,9 +31,7 @@
 | `VSCodePalette.ApplyTo`（`VSCodePalette.cs:16`） | 产品品牌深色配色的一次性写入 |
 | `Icons.Settings`（`Icons.cs:12`） | shell 预置"设置"导航项的齿轮图标 |
 | `Icons.DashBoard`（`Icons.cs:18`） | DashBoard 启动台（四宫格） |
-| `Icons.Properties` / `Outline` / `Output` / `Log`（`Icons.cs:22-41`） | shell 预置四个面板 tab：属性 / 大纲 / 输出 / 日志 |
-| `Icons.Tasks`（`Icons.cs:46`） | DashBoard"任务"面板 tab |
-| `Icons.ChevronDown` / `ChevronRight`（`Icons.cs:51,56`） | BottomPanel / AuxiliaryPanel 的收起按钮箭头 |
-| `Icons.PanelLeft` / `PanelBottom` / `PanelRight`（`Icons.cs:60-70`） | 视图菜单中 SideBar / BottomPanel / AuxiliaryPanel 显隐切换项 |
-| `Icons.Exit` / `About`（`Icons.cs:75,80`） | 文件菜单"退出" / 帮助菜单"关于" |
-| `Icons.Ready`（`Icons.cs:86`） | shell 预置状态栏"就绪"项的勾选圆圈 |
+| `Icons.ChevronDown` / `ChevronRight`（`Icons.cs:22,27`） | BottomPanel / AuxiliaryPanel 的收起按钮箭头 |
+| `Icons.PanelLeft` / `PanelBottom` / `PanelRight`（`Icons.cs:31-41`） | 视图菜单中 SideBar / BottomPanel / AuxiliaryPanel 显隐切换项 |
+| `Icons.Exit` / `About`（`Icons.cs:46,51`） | 文件菜单"退出" / 帮助菜单"关于" |
+| `Icons.Ready`（`Icons.cs:57`） | shell 预置状态栏"就绪"项的勾选圆圈 |

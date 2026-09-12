@@ -29,7 +29,7 @@
 | 消费方 | 引用方式 | 消费点 |
 |---|---|---|
 | `Core/Framework`（Framework.csproj 第 12 行直接引用） | 直接 | `FrameworkApplication.cs`：发布 `StartupProgressEvent`（第 73/78/89/108 行）、发布 `ModuleLoadFailedEvent`（第 97-98 行）、在 `WaitForFailureActionAsync` 订阅 `StartupFailureActionEvent`（第 121-129 行）——本模块全部启动事件的唯一发布中枢；`Settings/SettingsService.cs`：`Set` 第 128 行发布 `SettingChangedEvent`（ADR-0006 决策 3） |
-| `Modules/DashBoard`（DashBoard.csproj 经 Framework 传递引用） | 传递 | `ViewModels/Windows/DashBoardWindowViewModel.cs`：订阅 `StartupProgressEvent`/`ModuleLoadFailedEvent`（第 19-20 行），发布 `StartupFailureActionEvent`（第 72/81 行）；`Views/DashBoardNavigationView.axaml.cs`：发布 `OpenMainViewEvent`（第 35/40 行） |
+| `Modules/DashBoard`（DashBoard.csproj 经 Framework 传递引用） | 传递 | `ViewModels/Windows/DashBoardWindowViewModel.cs`：订阅 `StartupProgressEvent`/`ModuleLoadFailedEvent`（第 19-20 行），发布 `StartupFailureActionEvent`（第 72/81 行） |
 | `Modules/Workstation`（Workstation.csproj 经 Framework 传递引用） | 传递 | `MainWindowViewModel.cs`：订阅 `OpenMainViewEvent`/`TogglePanelVisibilityEvent`（第 48-49 行）与 `ResetLayoutEvent`（第 51 行），`OpenSettings` 发布 `OpenMainViewEvent`（第 305 行，负载 `WellKnownViews.Settings`，ADR-0006 决策 6），`TogglePanel` 消费 `TogglePanelTarget`（第 488-497 行）；`Menus/ViewPanelMenus.cs` 发布 `TogglePanelVisibilityEvent`（第 17/23/29 行）；`Menus/ViewLayoutMenus.cs` 发布 `ResetLayoutEvent`（第 16 行） |
 | `Core/Abstractions` | **注释引用，无编译依赖** | `Contributions/IMainViewContribution.cs` 第 6 行注释提及 `OpenMainViewEvent` 负载为 `Id`；Abstractions 不引用 Models，`<see cref>` 无法解析——注释是写给实现侧的约定 |
 | `Launcher` | 传递（Launcher → Workstation → Framework → Models） | 不直接消费事件类型 |
@@ -68,4 +68,4 @@ Prism.Events.PubSubEvent<T>（Prism 包）
 | `SettingChangedEvent` | class : `PubSubEvent<SettingChanged>`（无成员体） | Events/SettingChangedEvent.cs | 设置项变更事件（ADR-0006 决策 3） |
 | `SettingChanged` | 位置 record（2 参数） | Events/SettingChanged.cs | 设置变更负载 |
 
-跨程序集耦合点：`OpenMainViewEvent` 的负载 string 与 `Core/Abstractions/Contributions/IMainViewContribution.Id` 构成**字符串级契约**——Id 值必须精确匹配（如 `DashBoardOverviewMainView.ViewId`），不匹配则 shell 找不到贡献，静默无反应。
+跨程序集耦合点：`OpenMainViewEvent` 的负载 string 与 `Core/Abstractions/Contributions/IMainViewContribution.Id` 构成**字符串级契约**——Id 值必须精确匹配（如 `WellKnownViews.Settings` = `"settings.main"`），不匹配则 shell 找不到贡献，静默无反应。

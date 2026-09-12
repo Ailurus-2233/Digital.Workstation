@@ -237,7 +237,7 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
 
 | 方法 | 过滤 | 排序 |
 |---|---|---|
-| `GetToolViews()`（:18） | 无（三处 Bar 的分派由消费方决定，ADR-0002） | `Order` 升序 |
+| `GetToolViews()`（:18） | 过滤 DryIoc 零注册幽灵实例（默认构造、`Id=null` 的条目，:23 的 `Where`；三处 Bar 的分派由消费方决定，ADR-0002） | `Order` 升序 |
 | `GetMainViews()`（:27） | 无（全部） | 无（保持容器解析顺序） |
 | `GetMenuItems()`（:34，**无参数**） | 无（路径/分组模型下不再按定位枚举过滤） | 无（分组排序建树由 `MenuTreeBuilder` 负责，见第 11 节） |
 | `GetStatusBarItems()`（:63） | 无 | `Order` 升序 |

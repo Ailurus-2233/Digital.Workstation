@@ -1,6 +1,5 @@
 ﻿using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Framework.Contributions;
-using DigitalWorkstation.DashBoard.Views;
 
 namespace DigitalWorkstation.DashBoard;
 
@@ -8,14 +7,10 @@ public class DashBoardModule : IModule
 {
     public void RegisterTypes(IContainerRegistry containerRegistry)
     {
-        // 工具视图（ADR-0002，attribute 扫描）：ActivityBar"启动台"、BottomPanel"任务"；
-        // 标注 [ToolView] 的 View 同时注册进容器
+        // 工具视图（ADR-0002，attribute 扫描）：当前程序集无 [ToolView] 标注类（原"启动台"导航视图与
+        // "任务"演示 tab 已删除），扫描注册为空；保留该行以覆盖将来新增
         containerRegistry.RegisterToolViews(typeof(DashBoardModule).Assembly);
-        containerRegistry.RegisterSingleton<IMainViewContribution, DashBoardOverviewMainView>();
-        containerRegistry.RegisterSingleton<IMainViewContribution, DashBoardRecentMainView>();
         containerRegistry.RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>();
-        containerRegistry.Register<DashBoardOverviewView>();
-        containerRegistry.Register<DashBoardRecentView>();
     }
 
     public void OnInitialized(IContainerProvider containerProvider)
