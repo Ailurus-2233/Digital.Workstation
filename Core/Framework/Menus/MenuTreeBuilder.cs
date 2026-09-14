@@ -23,7 +23,7 @@ public static class MenuTreeBuilder
             var segments = contribution.Path.Split('/', StringSplitOptions.TrimEntries);
             if (segments.Any(segment => segment.Length == 0))
             {
-                Logger.Warning($"菜单路径 \"{contribution.Path}\" 含空段，跳过条目 \"{contribution.Title}\"",
+                Logger.Warning($"Menu path \"{contribution.Path}\" has an empty segment; skipping item \"{contribution.Title}\"",
                     nameof(MenuTreeBuilder));
                 continue;
             }

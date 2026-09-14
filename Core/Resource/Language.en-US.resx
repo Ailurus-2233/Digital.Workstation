@@ -58,6 +58,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ProductName" xml:space="preserve">
+    <value>Digital Workstation</value>
+    <comment>Product display name</comment>
+  </data>
+  <data name="AboutWindowTitle" xml:space="preserve">
+    <value>About Digital Workstation</value>
+    <comment>About window title</comment>
+  </data>
   <data name="SettingsNavigationTitle" xml:space="preserve">
     <value>Settings</value>
     <comment>Title of the shell built-in Settings navigation item</comment>

@@ -15,7 +15,7 @@ namespace DigitalWorkstation.Core.Framework.Windows;
 /// <summary>
 ///     带基础布局的窗口基类：内置 VS Code 式五区 shell
 ///     （ActivityBar/SideBar/MainContent/AuxiliaryPanel/BottomPanel + 状态栏），
-///     以及标题栏左侧的菜单栏（全部菜单贡献建树生成，ADR-0001；宽松绑定 ViewModel 的 MenuBarItems）。
+///     菜单贡献在 macOS 映射到系统菜单栏，在其他平台渲染到标题栏左侧（宽松绑定 ViewModel 的 MenuBarItems）。
 ///     PanelAlignment 定义当前窗口的布局：每个枚举值对应一份静态布局模板（FrameworkWindowTheme 的 WindowLayout* 资源），
 ///     切换即整体替换模板，不做动态调整
 /// </summary>
@@ -42,14 +42,17 @@ public abstract class FrameworkWindow : UrsaWindow
             Gesture = new KeyGesture(Key.P, KeyModifiers.Control),
             Command = new DelegateCommand(_palette.Open)
         });
-        // 菜单栏内置于标题栏左侧：Menu 实例与项模板在代码中创建（项模板入窗口 DataTemplates，
-        // 子菜单任意深度经模板查找递归复用），chrome-menu 样式在 FrameworkWindowTheme.axaml
-        LeftContent = new Menu
+        // macOS 使用屏幕顶部的系统菜单栏，避免窗口内菜单与 traffic-light 按钮重叠；
+        // 其他平台保留标题栏内菜单，项模板入窗口 DataTemplates 供任意深度子菜单复用。
+        if (!OperatingSystem.IsMacOS())
         {
-            Classes = { "chrome-menu" },
-            VerticalAlignment = VerticalAlignment.Center,
-            [!ItemsControl.ItemsSourceProperty] = new Binding("MenuBarItems")
-        };
+            LeftContent = new Menu
+            {
+                Classes = { "chrome-menu" },
+                VerticalAlignment = VerticalAlignment.Center,
+                [!ItemsControl.ItemsSourceProperty] = new Binding("MenuBarItems")
+            };
+        }
         DataTemplates.Add(new FuncDataTemplate<MenuItemViewModel>((item, _) => BuildMenuItemHeader(item!)));
         UpdateLayoutTemplate();
     }
@@ -72,6 +75,44 @@ public abstract class FrameworkWindow : UrsaWindow
         }
         panel.Children.Add(new TextBlock { Text = item.Title });
         return panel;
+    }
+
+    /// <summary>
+    ///     在 macOS 上把菜单呈现模型映射到系统菜单栏；其他平台保持标题栏内菜单不变。
+    ///     调用方应在模块贡献收集完成后调用一次。
+    /// </summary>
+    protected void RegisterNativeMenu(IEnumerable<MenuItemViewModel> items)
+    {
+        if (!OperatingSystem.IsMacOS())
+        {
+            return;
+        }
+
+        var menu = new NativeMenu();
+        foreach (var item in items)
+        {
+            menu.Add(ToNativeMenuItem(item));
+        }
+        NativeMenu.SetMenu(this, menu);
+    }
+
+    private static NativeMenuItem ToNativeMenuItem(MenuItemViewModel item)
+    {
+        var nativeItem = new NativeMenuItem(item.Title) { Command = item.Command };
+        if (item.Children.Count == 0)
+        {
+            return nativeItem;
+        }
+
+        var submenu = new NativeMenu();
+        foreach (var child in item.Children)
+        {
+            submenu.Add(child is MenuItemViewModel childItem
+                ? ToNativeMenuItem(childItem)
+                : new NativeMenuItemSeparator());
+        }
+        nativeItem.Menu = submenu;
+        return nativeItem;
     }
 
     /// <summary>
@@ -133,7 +174,7 @@ public abstract class FrameworkWindow : UrsaWindow
             catch (FormatException exception)
             {
                 Logger.Warning(
-                    $"命令 \"{command.Title}\" 的快捷键 \"{gestureText}\" 无法解析（{exception.Message}），已跳过",
+                    $"Unable to parse gesture \"{gestureText}\" for command \"{command.Title}\" ({exception.Message}); skipping",
                     nameof(FrameworkWindow));
                 continue;
             }

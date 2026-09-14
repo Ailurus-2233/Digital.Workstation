@@ -25,11 +25,13 @@ public static class ApplicationRestarter
         var processPath = Environment.ProcessPath;
         if (processPath is null)
         {
-            Logger.Error("无法确定当前进程可执行文件路径，重启中止", nameof(ApplicationRestarter));
+            Logger.Error("Unable to determine the current process executable path; restart aborted",
+                nameof(ApplicationRestarter));
             return;
         }
 
-        Logger.Information("立即重启：启动新进程并退出当前进程", nameof(ApplicationRestarter));
+        Logger.Information("Restarting now: starting a new process and exiting the current process",
+            nameof(ApplicationRestarter));
         Process.Start(new ProcessStartInfo(processPath, Environment.GetCommandLineArgs().Skip(1)));
         (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
     }

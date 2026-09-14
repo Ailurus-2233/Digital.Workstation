@@ -30,7 +30,7 @@ public static class CommandRegistration
                     (method.ReturnType != typeof(void) && method.ReturnType != typeof(Task)))
                 {
                     Logger.Warning(
-                        $"命令方法 {type.FullName}.{method.Name} 签名非法（仅支持无参 void/Task），已跳过",
+                        $"Command method {type.FullName}.{method.Name} has an invalid signature; only parameterless void or Task methods are supported. Skipping",
                         nameof(CommandRegistration));
                     continue;
                 }
@@ -105,7 +105,7 @@ internal sealed class ReflectedCommandContribution : ICommandContribution
             var actual = exception is TargetInvocationException { InnerException: not null } invocation
                 ? invocation.InnerException
                 : exception;
-            Logger.Error(actual, $"命令 {_method.DeclaringType?.FullName}.{_method.Name} 执行失败",
+            Logger.Error(actual, $"Command {_method.DeclaringType?.FullName}.{_method.Name} failed",
                 nameof(ReflectedCommandContribution));
         }
     }

@@ -2,6 +2,7 @@
     d:DesignHeight="450"
     d:DesignWidth="600"
     mc:Ignorable="d"
+    xmlns:resource="clr-namespace:DigitalWorkstation.Core.Resource;assembly=DigitalWorkstation.Core.Resource"
     x:Class="DigitalWorkstation.Workstation.Views.EmptyStateView"
     xmlns="https://github.com/avaloniaui"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -35,7 +36,7 @@
                 FontSize="24"
                 FontWeight="SemiBold"
                 Foreground="{DynamicResource SemiColorText0}"
-                Text="Digital.Workstation" />
+                Text="{x:Static resource:Language.ProductName}" />
             <TextBlock Foreground="{DynamicResource SemiColorText2}" Text="从左侧 ActivityBar 选择功能域，点击 SideBar 中的条目打开视图" />
         </StackPanel>
 

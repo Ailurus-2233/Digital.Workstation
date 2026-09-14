@@ -46,13 +46,14 @@ public sealed class LayoutPersistence
             var layout = JsonSerializer.Deserialize<ShellLayoutDto>(File.ReadAllText(FilePath), SerializerOptions);
             if (layout is null)
             {
-                Logger.Warning($"布局配置为空，按默认布局启动：{FilePath}", nameof(LayoutPersistence));
+                Logger.Warning($"Layout configuration is empty; using the default layout: {FilePath}",
+                    nameof(LayoutPersistence));
                 return null;
             }
 
             if (layout.Version != ShellLayoutDto.CurrentVersion)
             {
-                Logger.Warning($"布局配置版本 {layout.Version} 不识别（当前 {ShellLayoutDto.CurrentVersion}），按默认布局启动：{FilePath}",
+                Logger.Warning($"Unrecognized layout configuration version {layout.Version} (current version: {ShellLayoutDto.CurrentVersion}); using the default layout: {FilePath}",
                     nameof(LayoutPersistence));
                 return null;
             }
@@ -61,7 +62,7 @@ public sealed class LayoutPersistence
         }
         catch (Exception exception)
         {
-            Logger.Warning($"布局配置读取失败（{exception.GetType().Name}），按默认布局启动：{FilePath}",
+            Logger.Warning($"Failed to read layout configuration ({exception.GetType().Name}); using the default layout: {FilePath}",
                 nameof(LayoutPersistence));
             return null;
         }
@@ -97,7 +98,8 @@ public sealed class LayoutPersistence
         }
         catch (Exception exception)
         {
-            Logger.Warning($"布局配置删除失败（{exception.GetType().Name}）：{FilePath}", nameof(LayoutPersistence));
+            Logger.Warning($"Failed to delete layout configuration ({exception.GetType().Name}): {FilePath}",
+                nameof(LayoutPersistence));
         }
     }
 
@@ -123,7 +125,8 @@ public sealed class LayoutPersistence
         }
         catch (Exception exception)
         {
-            Logger.Warning($"布局配置写入失败（{exception.GetType().Name}）：{FilePath}", nameof(LayoutPersistence));
+            Logger.Warning($"Failed to write layout configuration ({exception.GetType().Name}): {FilePath}",
+                nameof(LayoutPersistence));
         }
     }
 }

@@ -93,7 +93,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex, $"模块 {module.ModuleName} 加载失败");
+                    Logger.Error(ex, $"Failed to load module {module.ModuleName}");
                     eventAggregator.GetEvent<ModuleLoadFailedEvent>().Publish(
                         new ModuleLoadFailure(module.ModuleName, i + 1, total, ex.Message));
                     if (!await WaitForFailureActionAsync(eventAggregator))
@@ -110,7 +110,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
         }
         catch (Exception ex)
         {
-            Logger.Fatal(ex, "启动序列执行失败");
+            Logger.Fatal(ex, "Startup sequence failed");
             (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
         }
     }

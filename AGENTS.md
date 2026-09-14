@@ -2,6 +2,10 @@
 
 ## Agent skills
 
+### 日志语言
+
+代码中通过日志系统输出的消息内容必须使用英文，包括结构化日志的消息模板；不得使用中文或其他语言。
+
 ### 工单跟踪
 
 工单为本地 markdown 文件，存于 `.scratch/<feature>/issues/`（已被 .gitignore 排除，不进提交）。见 `docs/agents/issue-tracker.md`。

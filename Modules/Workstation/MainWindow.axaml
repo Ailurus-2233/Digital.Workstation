@@ -3,7 +3,7 @@
     MinHeight="600"
     MinWidth="960"
     Padding="0,32,0,0"
-    Title="Digital.Workstation"
+    Title="{x:Static resource:Language.ProductName}"
     Width="1280"
     d:DesignHeight="800"
     d:DesignWidth="1280"
@@ -15,6 +15,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:prism="http://prismlibrary.com/"
+    xmlns:resource="clr-namespace:DigitalWorkstation.Core.Resource;assembly=DigitalWorkstation.Core.Resource"
     xmlns:win="clr-namespace:DigitalWorkstation.Core.Framework.Windows;assembly=DigitalWorkstation.Core.Framework"
     xmlns:u="https://irihi.tech/ursa"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -26,16 +27,20 @@
         <!--  标题栏底色：与窗口背景（面板容器/ActivityBar）同色，视觉融为一体  -->
         <Style Selector="u|TitleBar">
             <Setter Property="Background" Value="{DynamicResource SemiColorNavBackground}" />
+            <Setter Property="Height" Value="32" />
         </Style>
     </win:FrameworkWindow.Styles>
 
     <win:FrameworkWindow.TitleBarContent>
-        <TextBlock
-            FontSize="12"
-            Foreground="{DynamicResource SemiColorText2}"
-            HorizontalAlignment="Center"
-            IsHitTestVisible="False"
-            Text="{Binding $parent[u:UrsaWindow].Title}"
-            VerticalAlignment="Center" />
+        <Grid Height="32">
+            <TextBlock
+                FontSize="12"
+                Foreground="{DynamicResource SemiColorText2}"
+                HorizontalAlignment="Center"
+                IsHitTestVisible="False"
+                Margin="0,2,0,0"
+                Text="{Binding $parent[u:UrsaWindow].Title}"
+                VerticalAlignment="Center" />
+        </Grid>
     </win:FrameworkWindow.TitleBarContent>
 </win:FrameworkWindow>

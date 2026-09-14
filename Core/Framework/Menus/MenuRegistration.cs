@@ -29,7 +29,7 @@ public static class MenuRegistration
 
             if (group.Path.Split('/', StringSplitOptions.TrimEntries).Any(segment => segment.Length == 0))
             {
-                Logger.Warning($"菜单类 {type.FullName} 的路径 \"{group.Path}\" 含空段，整类跳过",
+                Logger.Warning($"Menu class {type.FullName} has an empty segment in path \"{group.Path}\"; skipping the class",
                     nameof(MenuRegistration));
                 continue;
             }
@@ -45,7 +45,7 @@ public static class MenuRegistration
                     (method.ReturnType != typeof(void) && method.ReturnType != typeof(Task)))
                 {
                     Logger.Warning(
-                        $"菜单方法 {type.FullName}.{method.Name} 签名非法（仅支持无参 void/Task），已跳过",
+                        $"Menu method {type.FullName}.{method.Name} has an invalid signature; only parameterless void or Task methods are supported. Skipping",
                         nameof(MenuRegistration));
                     continue;
                 }
@@ -127,7 +127,7 @@ internal sealed class ReflectedMenuItemContribution : IMenuItemContribution
             var actual = exception is TargetInvocationException { InnerException: not null } invocation
                 ? invocation.InnerException
                 : exception;
-            Logger.Error(actual, $"菜单命令 {_method.DeclaringType?.FullName}.{_method.Name} 执行失败",
+            Logger.Error(actual, $"Menu command {_method.DeclaringType?.FullName}.{_method.Name} failed",
                 nameof(ReflectedMenuItemContribution));
         }
     }

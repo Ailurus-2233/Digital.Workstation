@@ -30,7 +30,7 @@ public static class ToolViewRegistration
 
             if (type.IsAbstract || !typeof(Control).IsAssignableFrom(type))
             {
-                Logger.Warning($"工具视图 {type.FullName} 必须是可实例化的 Control，已跳过",
+                Logger.Warning($"Tool view {type.FullName} must be a concrete Control; skipping",
                     nameof(ToolViewRegistration));
                 continue;
             }
@@ -38,7 +38,7 @@ public static class ToolViewRegistration
             if (!seenIds.Add(attribute.Id))
             {
                 Logger.Warning(
-                    $"工具视图 Id \"{attribute.Id}\" 在程序集 {assembly.GetName().Name} 中重复，{type.FullName} 已跳过",
+                    $"Duplicate tool view ID \"{attribute.Id}\" in assembly {assembly.GetName().Name}; skipping {type.FullName}",
                     nameof(ToolViewRegistration));
                 continue;
             }

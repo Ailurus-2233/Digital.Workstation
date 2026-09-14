@@ -37,7 +37,7 @@ public static class SettingRegistration
 
                 if (property.GetMethod is null)
                 {
-                    Logger.Warning($"设置项 {type.FullName}.{property.Name} 无 getter，已跳过",
+                    Logger.Warning($"Setting item {type.FullName}.{property.Name} has no getter; skipping",
                         nameof(SettingRegistration));
                     continue;
                 }
@@ -45,7 +45,7 @@ public static class SettingRegistration
                 if (item.DefaultValue is not null && !property.PropertyType.IsInstanceOfType(item.DefaultValue))
                 {
                     Logger.Warning(
-                        $"设置项 {type.FullName}.{property.Name} 的默认值类型与属性类型 {property.PropertyType.Name} 不匹配，已跳过",
+                        $"Default value type for setting item {type.FullName}.{property.Name} does not match property type {property.PropertyType.Name}; skipping",
                         nameof(SettingRegistration));
                     continue;
                 }

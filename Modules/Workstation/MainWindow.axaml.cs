@@ -18,6 +18,7 @@ public partial class MainWindow : FrameworkWindow
             return;
         }
         viewModel.EnsureContributionsLoaded();
+        RegisterNativeMenu(viewModel.MenuBarItems);
         // 命令手势 KeyBinding（ADR-0005）：机制在 Framework（RegisterCommandGestures），接线在本模块
         RegisterCommandGestures(viewModel.Commands);
     }

@@ -74,7 +74,8 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
                 File.ReadAllText(FilePath), SerializerOptions);
             if (values is null)
             {
-                Logger.Warning($"设置配置为空，全部按默认值处理：{FilePath}", nameof(SettingsService));
+                Logger.Warning($"Settings configuration is empty; using default values: {FilePath}",
+                    nameof(SettingsService));
                 return;
             }
 
@@ -89,7 +90,7 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
         }
         catch (Exception exception)
         {
-            Logger.Warning($"设置配置读取失败（{exception.GetType().Name}），全部按默认值处理：{FilePath}",
+            Logger.Warning($"Failed to read settings configuration ({exception.GetType().Name}); using default values: {FilePath}",
                 nameof(SettingsService));
         }
     }
@@ -107,7 +108,7 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
                 catch (Exception exception)
                 {
                     Logger.Warning(
-                        $"设置项 \"{settingId}\" 的持久化值反序列化失败（{exception.GetType().Name}），回退默认值",
+                        $"Failed to deserialize persisted value for setting item \"{settingId}\" ({exception.GetType().Name}); using the default value",
                         nameof(SettingsService));
                 }
             }
@@ -116,7 +117,8 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
         var contribution = FindContribution(settingId);
         if (contribution is null)
         {
-            Logger.Warning($"读取未声明的设置项 \"{settingId}\"，返回默认值", nameof(SettingsService));
+            Logger.Warning($"Reading undeclared setting item \"{settingId}\"; returning the default value",
+                nameof(SettingsService));
             return default;
         }
 
@@ -128,7 +130,7 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
         var contribution = FindContribution(settingId);
         if (contribution is null)
         {
-            Logger.Warning($"写入未声明的设置项 \"{settingId}\"", nameof(SettingsService));
+            Logger.Warning($"Writing undeclared setting item \"{settingId}\"", nameof(SettingsService));
         }
 
         lock (_gate)
@@ -228,7 +230,8 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
         }
         catch (Exception exception)
         {
-            Logger.Warning($"设置配置写入失败（{exception.GetType().Name}）：{FilePath}", nameof(SettingsService));
+            Logger.Warning($"Failed to write settings configuration ({exception.GetType().Name}): {FilePath}",
+                nameof(SettingsService));
         }
     }
 }

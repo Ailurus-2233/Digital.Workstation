@@ -142,7 +142,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
         }
 
         Logger.Warning(
-            $"设置项 \"{contribution.Id}\" 的类型 {contribution.ValueType.Name} 暂无编辑器，已跳过",
+            $"No editor is available for setting item \"{contribution.Id}\" of type {contribution.ValueType.Name}; skipping",
             nameof(SettingsPageViewModel));
         return null;
     }

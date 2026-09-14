@@ -15,6 +15,8 @@
 
 | 属性 | 中文值 | 英文值 | 用途（resx comment） |
 |---|---|---|---|
+| `ProductName` | 数字工作站 | Digital Workstation | 产品显示名称 |
+| `AboutWindowTitle` | 关于 数字工作站 | About Digital Workstation | 关于窗口标题 |
 | `SettingsNavigationTitle`（:25） | 设置 | Settings | shell 预置"设置"导航项标题 |
 | `DashBoardNavigationTitle`（:30） | 启动台 | Launch Pad | DashBoard 导航项标题 |
 | `MenuFileTitle`（:34） | 文件 | File | 顶层"文件"菜单标题 |
@@ -75,6 +77,9 @@ public void Exit() { ... }
 
 强类型属性：
 
+- `Modules/Workstation/WorkstationApplication.cs` → `Language.ProductName`（macOS 应用菜单名称）
+- `Modules/Workstation/MainWindow.axaml`、`Views/EmptyStateView.axaml`、`Views/AboutWindow.axaml` 与 `Modules/DashBoard/Views/Windows/DashBoardWindow.axaml` → `x:Static Language.ProductName`
+- `Modules/Workstation/Views/AboutWindow.axaml` → `x:Static Language.AboutWindowTitle`
 - `Modules/Workstation/MainWindowViewModel.cs:151` → `Language.SettingsNavigationTitle`（ActivityBar 底部"设置"导航按钮标题，ADR-0006）
 - `Modules/Workstation/Contributions/ReadyStatusBarItem.cs:14` → `Language.StatusReadyTitle`
 - `Modules/DashBoard/DashBoardStatusBarItem.cs:15` → `Language.DashBoardNavigationTitle`

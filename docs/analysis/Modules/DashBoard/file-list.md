@@ -52,7 +52,7 @@ Views/
 ### Views/Windows/DashBoardWindow.axaml(.cs)
 
 启动台窗口。axaml 第 1-13 行：`Window`，`CanResize="False"`、`SizeToContent="Height"`、`Width="440"`、`WindowStartupLocation="CenterScreen"`、`Title="启动台"`（硬编码中文，未走 Language）、`prism:ViewModelLocator.AutoWireViewModel="True"`。内容（第 14-32 行，`StackPanel Margin="24" Spacing="12"`）：
-- 标题 `TextBlock`"Digital.Workstation"（FontSize 18 SemiBold，硬编码）；
+- 标题 `TextBlock` 通过 `{x:Static resource:Language.ProductName}` 显示本地化产品名；
 - `TextBlock Text="{Binding PhaseText}"`（FontSize 14）；
 - `ProgressBar Height="4" IsIndeterminate="{Binding !IsFailed}"`（失败时停止滚动）；
 - `TextBlock Text="{Binding ModuleText}"`（`Foreground=SemiColorText2`）；

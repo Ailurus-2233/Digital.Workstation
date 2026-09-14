@@ -8,13 +8,14 @@
 public class WorkstationApplication : FrameworkApplication<MainWindow>
 ```
 
-应用入口类，由 Launcher 启动（`App` 入口实例化它，见 reference.md 被依赖关系）。三个重写成员：
+应用入口类由 Launcher 启动。构造函数把 `Application.Name` 设置为 `Language.ProductName`，使 macOS 系统菜单栏应用名称跟随当前 UI 语言；另有三个框架重写成员：
 
 | 成员 | 签名/位置 | 行为 |
 |---|---|---|
-| `ConfigureModuleCatalog` | `protected override void`（:17-21） | 两行 `AddModule`：`AddModule<DashBoardModule>()`（:19）+ `AddModule<SettingsModule>()`（:20）——把 DashBoard 与 Settings 模块纳入逐模块加载清单 |
-| `RegisterCustomService` | `protected override void RegisterCustomService(IContainerRegistry)`（:23-38） | 注册全部 shell 预置贡献与内置视图（清单见下） |
-| `CreateSplashWindow` | `protected override Window CreateSplashWindow()`（:43-46） | `Container.Resolve<DashBoardWindow>()`，启动台窗口（ADR-0004） |
+| 构造函数 | `public WorkstationApplication()` | 设置 `Application.Name = Language.ProductName` |
+| `ConfigureModuleCatalog` | `protected override void` | 把 DashBoard 与 Settings 模块加入逐模块加载清单 |
+| `RegisterCustomService` | `protected override void RegisterCustomService(IContainerRegistry)` | 注册 shell 预置贡献与内置视图 |
+| `CreateSplashWindow` | `protected override Window CreateSplashWindow()` | 从容器解析 DashBoard 启动台窗口 |
 
 ### RegisterCustomService 注册清单（:25-37，逐行）
 
@@ -50,7 +51,7 @@ public partial class MainWindowViewModel : ObservableObject
 | `AuxiliaryContent` / `BottomContent` | `object?`（:126、:132） | 两个面板当前活动 tab 的内容 |
 | `TopNavigationItems` / `BottomNavigationItems` | `ObservableCollection<NavigationItemViewModel>`（:98、:100） | ActivityBar 顶部/底部导航项（顶部段顺序与 `State.ActivityBarItems` 同步）；`BottomNavigationItems` 是钉住区集合——机制保留，当前无内置钉住项实例，默认为空 |
 | `AuxiliaryTabs` / `BottomTabs` | `ObservableCollection<PanelTabViewModel>`（:101、:103） | 两个面板的 tab 栏（顺序与 `State.X.Tabs` 同步） |
-| `MenuBarItems` | `ObservableCollection<MenuItemViewModel>`（:108；`MenuItemViewModel` 类型在 Framework：`Core/Framework/Menus/MenuItemViewModel.cs`，经 `using DigitalWorkstation.Core.Framework.Menus` 解析） | 菜单栏（ADR-0001）：全部菜单贡献经 `MenuTreeBuilder.Build` 建树生成，顶层菜单与子菜单节点同为 `MenuItemViewModel`，分隔线以 Avalonia `Separator` 控件形式存在于子级 `Children`；渲染侧是 `FrameworkWindow` 内置的标题栏菜单栏（`Core/Framework/Windows/FrameworkWindow.cs:47-52` 宽松绑定 `MenuBarItems`，chrome-menu 样式在 `Core/Framework/Windows/FrameworkWindowTheme.axaml:610-628`） |
+| `MenuBarItems` | `ObservableCollection<MenuItemViewModel>` | 全部菜单贡献经 `MenuTreeBuilder.Build` 建树生成；macOS 由 `MainWindow.OnOpened` 传给 `FrameworkWindow.RegisterNativeMenu` 后显示在系统菜单栏，其他平台由 `FrameworkWindow` 的标题栏 `Menu.chrome-menu` 绑定呈现 |
 | `StatusBarItems` | `ObservableCollection<StatusBarItemViewModel>`（:114） | 状态栏条目 |
 | `Commands` | `IReadOnlyList<ICommandContribution>`（[ObservableProperty]，:120；`ICommandContribution` 类型在 Abstractions：`Core/Abstractions/Commands/ICommandContribution.cs`，经 `using DigitalWorkstation.Core.Abstractions.Commands` 解析，ADR-0005） | 全部命令贡献：`GetCommands()` 一次收集（`Order`/标题排序、Id 冲突去重）；Framework `CommandPalette` 宽松绑定 `"Commands"` 作为命令面板数据源（Ctrl+P），`MainWindow.axaml.cs:22` 的 `RegisterCommandGestures` 接线把带 Gesture 的命令落成窗口级 KeyBinding |
 | `CollapseBottomIcon` / `CollapseAuxiliaryIcon` | `Geometry`（:136 `Icons.ChevronDown`、:141 `Icons.ChevronRight`） | 两个面板收起按钮图标 |
@@ -70,9 +71,7 @@ public partial class MainWindowViewModel : ObservableObject
 
 ### 公开方法
 
-| 方法 | 签名/位置 | 调用方 |
-|---|---|---|
-| `EnsureContributionsLoaded` | `public void`（:170-193） | 仅 `MainWindow.axaml.cs:13-23` 的 `OnOpened`；`_contributionsLoaded` 守卫保证只执行一次。方法体内先 **`GetToolViews()` 一次**拉出全部工具视图贡献存入 `_toolViews` 字段缓存（按 `Order` 升序，ADR-0002，:178），随后 **`LoadToolViews(_persistence.Load())`**（:179）——读持久化布局（缺失/损坏/版本不符返回 null）并按「配置优先、默认兜底」分派三处 Bar（详见私有方法 `LoadToolViews`）；**`GetMainViews()`** 把每个 `IMainViewContribution` 按 `Id` 存入 `_mainViewsById`（:180-183）；**`GetMenuItems()`**（无参，不过滤不排序，ADR-0001）经 Framework 的 `MenuTreeBuilder.Build` 建树（顶层排序不分组、子菜单分组排序且组间自动插分隔线），逐顶层节点 Framework 的 `MenuItemViewModel.FromSubmenu` 递归转换加入 `MenuBarItems`（:184-187）；**`GetStatusBarItems()`** 逐项包装为 `StatusBarItemViewModel` 加入 `StatusBarItems`（:188-191）；**`GetCommands()`**（`Order`/标题排序、Id 冲突去重，ADR-0005）赋给 `Commands` 属性（:192）——命令面板数据源与手势 KeyBinding 来源 |
+| `EnsureContributionsLoaded` | `public void` | 仅 `MainWindow.OnOpened` 调用；收集工具视图、主视图、菜单、状态栏和命令贡献。完成后 `OnOpened` 调 `RegisterNativeMenu(MenuBarItems)`（macOS 原生系统菜单，其他平台 no-op），再调 `RegisterCommandGestures(Commands)` |
 
 ### 私有方法（改行为时直接面对）
 

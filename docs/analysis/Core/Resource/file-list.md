@@ -29,19 +29,13 @@ Core/Resource/
   - `Get(string key)`（:17-20）：唯一取值入口，`GetString(key) ?? key`。
 - 类头注释（:5-8）是模块规约，完整两句：①"界面文案的统一入口：按当前 UI 区域性读取语言资源（**中性资源为中文，en-US 为英文卫星程序集**）"；②"C# 中的显示字符串一律经本类获取，不直接硬编码"。
 
-### `Language.resx`（181 行，30 个 `<data>`）
+### `Language.resx` / `Language.en-US.resx`
 
-- **中性（无区域性后缀）资源 = 中文**，是 `ResourceManager` 的最终回退。
-- 标准 resx 2.0 骨架：文件头四个 `resheader`（:49-60）——`resmimetype`（值 `text/microsoft-resx`）、`version`（值 `2.0`）、`reader`（完整值 `System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089`）、`writer`（完整值 `System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089`，即读写器类型都来自 System.Windows.Forms 程序集）；30 条条目（:61-180）。
-- 每条 `<data>` 的完整结构：`<data name="键名" xml:space="preserve">`，子元素顺序固定为 `<value>`（中文文案）在前、`<comment>`（用途说明，与 `Language.cs` 属性 XML doc 一致）在后。`xml:space="preserve"` **逐条出现在全部 30 个 data 元素上**，保证文案首尾空白不被裁剪；同时文件头部 `xsd:schema` 里也有 `<xsd:attribute ref="xml:space" />` 声明（:16、:34）——两个层级都有。
-- `xsd:schema` 骨架细节（:3-48）：先以 `<xsd:import namespace="http://www.w3.org/XML/1998/namespace" />` 导入 xml 命名空间；`data` 元素的 `name` 属性声明为 `use="required"`（必填），`type` 与 `mimetype` 为可选属性——全部 30 个 data 均未带 `type`/`mimetype`，即本模块资源全部是纯文本字符串，无二进制/文件引用资源；`value` 与 `comment` 子元素均声明 `minOccurs="0"`，即 value 可缺省/为空串（此时 `Get` 的 `?? key` 不触发，调用方拿到空字符串）。
-- 三文件键序一致：`Language.cs` 的 30 个属性声明顺序与两个 resx 的 data 出现顺序完全一一对应（首键均为 `SettingsNavigationTitle`，末键均为 `SettingsRestartNowButtonTitle`）——这是人工核对键集合的锚点；运行时 `ResourceManager` 按键名查找，与文件内顺序无关。
-- 键集合与 `Language.en-US.resx` 完全对齐。
-
-### `Language.en-US.resx`（181 行，30 个 `<data>`）
-
-- en-US 卫星资源，编译为 `en-US/Resource.resources.dll`。
-- 与中性 resx 同构、同键：**XML 声明、整段 `xsd:schema`、四条 `resheader`、30 个 `data name` 键名及 `xml:space="preserve"` 标注在两份文件中逐字相同、顺序一致；只翻译 `<value>` 与 `<comment>` 两个子元素**（运行时按键名查找，键名必须一致）；`<value>` 为英文翻译，`<comment>` 为英文注释。
+- 中性资源为中文，`Language.en-US.resx` 为英文卫星资源。
+- 两份文件键集合和顺序保持一致；每个条目均包含 `value` 与用途 `comment`。
+- `ProductName`：中文「数字工作站」，英文 `Digital Workstation`，供应用名称、主窗口、启动台、主页和关于页使用。
+- `AboutWindowTitle`：中文「关于 数字工作站」，英文 `About Digital Workstation`。
+- 其余菜单、命令、状态栏、启动进度和设置文案继续按同一资源机制解析。
 
 ### `obj/`
 

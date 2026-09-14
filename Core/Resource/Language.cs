@@ -20,6 +20,16 @@ public static class Language
     }
 
     /// <summary>
+    ///     产品显示名称
+    /// </summary>
+    public static string ProductName => Get(nameof(ProductName));
+
+    /// <summary>
+    ///     关于窗口标题
+    /// </summary>
+    public static string AboutWindowTitle => Get(nameof(AboutWindowTitle));
+
+    /// <summary>
     ///     shell 预置"设置"导航项的标题
     /// </summary>
     public static string SettingsNavigationTitle => Get(nameof(SettingsNavigationTitle));

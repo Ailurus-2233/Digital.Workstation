@@ -111,18 +111,18 @@ public sealed record ShellLayoutState
 public abstract class FrameworkWindow : UrsaWindow
 ```
 
-带基础布局的窗口基类：内置 VS Code 式五区 shell（ActivityBar/SideBar/MainContent/AuxiliaryPanel/BottomPanel + 状态栏），**标题栏左侧的菜单栏**（全部菜单贡献建树生成，ADR-0001；宽松绑定 ViewModel 的 `MenuBarItems`），**以及顶部居中的命令面板**（`CommandPalette`，ADR-0005；宽松绑定 ViewModel 的 `Commands`，Ctrl+P 开关）。真实子类：`Modules/Workstation/MainWindow`（`MainWindow.axaml.cs:5`，菜单栏与命令面板已由基类内置，axaml 侧只保留应用级 chrome——标题、快捷键）。成员：
+带基础布局的窗口基类：内置 VS Code 式五区 shell（ActivityBar/SideBar/MainContent/AuxiliaryPanel/BottomPanel + 状态栏）、**按平台呈现的菜单栏**（全部菜单贡献建树生成，ADR-0001；macOS 使用屏幕顶部的 `NativeMenu`，其他平台使用标题栏左侧的 Avalonia `Menu`），**以及顶部居中的命令面板**（`CommandPalette`，ADR-0005；宽松绑定 ViewModel 的 `Commands`，Ctrl+P 开关）。真实子类：`Modules/Workstation/MainWindow`。成员：
 
 | 成员 | 签名 | 说明 |
 |---|---|---|
-| `PanelAlignmentProperty` | `public static readonly StyledProperty<PanelAlignment>`（:24） | 布局档位的依赖属性，**默认 `PanelAlignment.Center`**（= 历史布局）；是布局定义的唯一入口，与 ViewModel 双向绑定 |
-| `PanelAlignment` | `public PanelAlignment PanelAlignment`（:79） | CLR 包装；写值触发 `OnPropertyChanged` → `UpdateLayoutTemplate`，**整体替换** `ContentTemplate`，不做动态调整 |
-| `StyleKeyOverride` | `protected override Type StyleKeyOverride => typeof(UrsaWindow)`（:74） | 继承 UrsaWindow 的窗口主题（标题栏 chrome、模板与焦点行为） |
-| 构造函数 | `protected FrameworkWindow()`（:31） | 依次：`Styles.Add(_theme)`（`_theme` 为 `FrameworkWindowTheme` 实例字段，:27）→ `_layoutHost`（ContentControl 布局宿主，:28）的 `Content` 经 `this[!DataContextProperty]` 绑定窗口 DataContext（:35，布局模板以 ViewModel 为绑定源，全部宽松绑定）→ **内置命令面板**（:36-44，ADR-0005）：`_palette[!ItemsSource]` 宽松绑定 `"Commands"`（:38），`Content = new Panel { _layoutHost, _palette }`（:39，面板叠在布局宿主之上，不动四份布局模板），注册 Ctrl+P KeyBinding（:40-44，`DelegateCommand(_palette.Open)` 直接开关）→ **内置菜单栏**：`LeftContent = new Menu { Classes = { "chrome-menu" }, VerticalAlignment.Center, ItemsSource 宽松绑定 "MenuBarItems" }`（:47-52）→ `DataTemplates.Add(new FuncDataTemplate<MenuItemViewModel>(...))`（:53，项模板入窗口 DataTemplates 而非主题资源，子菜单任意深度经模板查找递归复用）→ `UpdateLayoutTemplate()`（:54） |
-| `BuildMenuItemHeader` | `private static Control`（:62） | 菜单项头部：水平 StackPanel（Spacing=6）+ 图标槽位 + 标题 `TextBlock`；`Icon` 非 null 渲染 14×14 `PathIcon`，为 null 时弹出层内的项仍渲染同尺寸空 `PathIcon` 占位（文本与有图标项对齐），标题栏顶层菜单（`IsTopLevel`）不预留槽位；图标前景色由 chrome-menu 样式接管 |
-| `OnPropertyChanged` | `protected override void`（:85） | `e.Property == PanelAlignmentProperty` 时调 `UpdateLayoutTemplate()` |
-| `UpdateLayoutTemplate` | `private void`（:94） | 枚举→资源键映射后 `_theme.TryGetResource(key, null, out var template)` 查找并强转 `IDataTemplate` 赋给 `_layoutHost.ContentTemplate`；**缺失抛 `InvalidOperationException($"布局模板资源缺失：{key}")`**（:106），窗口构造期即失败 |
-| `RegisterCommandGestures` | `public void RegisterCommandGestures(IEnumerable<ICommandContribution>)`（:114，ADR-0005） | 为带 `Gesture` 的命令生成窗口级 KeyBinding：机制在 Framework、接线在 shell 模块（同 `LayoutPersistence` 惯例），shell 收集命令后调用一次；`KeyGesture.Parse` 抛 `FormatException` 的文本记 `Logger.Warning` 跳过 |
+| `PanelAlignmentProperty` | `public static readonly StyledProperty<PanelAlignment>` | 布局档位的依赖属性，默认 `PanelAlignment.Center`；与 ViewModel 双向绑定 |
+| `PanelAlignment` | `public PanelAlignment PanelAlignment` | CLR 包装；写值触发 `OnPropertyChanged` → `UpdateLayoutTemplate` |
+| `StyleKeyOverride` | `protected override Type StyleKeyOverride` | 返回 `typeof(UrsaWindow)`，继承 UrsaWindow 的窗口主题 |
+| 构造函数 | `protected FrameworkWindow()` | 创建布局宿主与命令面板；非 macOS 创建 `LeftContent` 标题栏菜单，macOS 留空以避开 traffic-light 按钮；注册菜单项 DataTemplate 后装载当前布局模板 |
+| `RegisterNativeMenu` | `protected void RegisterNativeMenu(IEnumerable<MenuItemViewModel>)` | 仅 macOS 生效；在贡献收集完成后把呈现树递归转换为原生菜单并通过 `NativeMenu.SetMenu(this, menu)` 附加到窗口；其他平台 no-op |
+| `RegisterCommandGestures` | `public void RegisterCommandGestures(IEnumerable<ICommandContribution>)` | 为带 Gesture 的命令生成窗口级 KeyBinding；解析失败记英文 Warning 并跳过 |
+
+`RegisterNativeMenu` 的转换保留标题和 `Command`，`MenuItemViewModel.Children` 中的子节点递归生成 `NativeMenuItem`，Avalonia `Separator` 映射为 `NativeMenuItemSeparator`。菜单模型仍只有一份，不维护第二套平台专用贡献。
 
 枚举→资源键映射（:96-102）：
 

@@ -17,7 +17,7 @@
 5. **给 `DashBoardStatusBarItem.Title` 换"更贴切"的资源键**：它刻意复用 `Language.DashBoardNavigationTitle`（DashBoardStatusBarItem.cs:15）；原引用该键的导航视图已删除，此键现仅服务状态栏一处——改键值即改状态栏显示。
 6. **调整 `Order` 值"取整"**：`DashBoardStatusBarItem.Order=20` 不是随意值，是排在 shell 预置"就绪"(10) 之后的排序验证点（类注释明示）；改成 0/1000 这类整齐数字会让排序验证失效甚至改变相对位置。
 7. **为工具视图手写贡献类或手写 `Register<View>()`**：`INavigationItemContribution`/`IPanelTabContribution` 已删除（ADR-0002），工具视图只需在 View 类上标 `[ToolView]`——`RegisterToolViews` 扫描时一并完成 `ToolViewContribution` 元数据生成与 View 容器注册；再在 `RegisterTypes` 手写注册属重复，违背单一渲染管道。
-8. **把 `DashBoardWindow.axaml` 的硬编码字符串搬进 Language**：`Title="启动台"`、"Digital.Workstation"、"继续/退出"按钮文本目前是硬编码中文，与 ViewModel 走 `Language` 的文案并存——这是现状不是规范；统一本地化是有意改动，需明确决策而非顺手。
+8. **把启动台全部硬编码字符串顺手搬进 Language**：产品名已使用 `Language.ProductName`，但 `Title="启动台"` 与「继续/退出」按钮仍是硬编码中文；统一剩余文案本地化是独立行为变更，不应混入无关修改。
 
 ## 历史踩坑线索
 - `DashBoardModule.cs:18` 注释「启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004），模块自身不再开窗」——"不再"二字暗示模块历史上（或 Prism 默认模式下）曾自己开窗，迁到启动序列后留下防线注释。ADR-0004 文档本体不在仓库中（悬空引用，见 docs/analysis/Core/Models/pitfalls.md），决策细节只能从注释还原。

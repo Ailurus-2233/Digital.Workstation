@@ -52,7 +52,7 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
                 {
                     return true;
                 }
-                Logger.Warning($"命令 Id \"{command.Id}\" 冲突，后注册的 \"{command.Title}\" 已丢弃",
+                Logger.Warning($"Duplicate command ID \"{command.Id}\"; discarding later registration \"{command.Title}\"",
                     nameof(ShellContributionCollector));
                 return false;
             })
@@ -109,7 +109,7 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
                 {
                     return true;
                 }
-                Logger.Warning($"设置项 Id \"{item.Id}\" 冲突，后注册的 \"{item.Name}\" 已丢弃",
+                Logger.Warning($"Duplicate setting item ID \"{item.Id}\"; discarding later registration \"{item.Name}\"",
                     nameof(ShellContributionCollector));
                 return false;
             })

@@ -4,6 +4,7 @@ using DigitalWorkstation.Core.Framework;
 using DigitalWorkstation.Core.Framework.Commands;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.Menus;
+using DigitalWorkstation.Core.Resource;
 using DigitalWorkstation.DashBoard;
 using DigitalWorkstation.DashBoard.Views.Windows;
 using DigitalWorkstation.Settings;
@@ -14,6 +15,11 @@ namespace DigitalWorkstation.Workstation;
 
 public class WorkstationApplication : FrameworkApplication<MainWindow>
 {
+    public WorkstationApplication()
+    {
+        Name = Language.ProductName;
+    }
+
     protected override void ConfigureModuleCatalog(IModuleCatalog moduleCatalog)
     {
         moduleCatalog.AddModule<DashBoardModule>();
