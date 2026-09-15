@@ -44,8 +44,8 @@
 	 - 初始化 IoC（DryIoc/Prism 容器桥接）
 	 - 注册 IWindowManager（FrameworkWindowManager）
 	 - 配置 ViewModelLocator：按 Views ↔ ViewModels 的命名/目录约定自动绑定
-	 - 抑制 Prism 同步 InitializeModules 一次性加载，模块改由启动序列逐模块异步加载（ADR-0004）
-5. 启动序列（OnFrameworkInitializationCompleted，ADR-0004）
+	 - 抑制 Prism 同步 InitializeModules 一次性加载，模块改由启动序列逐模块异步加载（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）
+5. 启动序列（OnFrameworkInitializationCompleted，[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）
 	 - 初始化核心服务：登记主窗口、显示启动台（DashBoardWindow）、校验模块目录
 	 - 逐模块异步加载：逐模块发布 StartupProgressEvent（阶段名 + 模块名 + i/N）；单模块失败时发布 ModuleLoadFailedEvent，启动台显示错误并经 StartupFailureActionEvent 回报"继续（跳过该模块）/退出"决策
 	 - 就绪：启动台自动关闭，MainWindow 设为桌面生命周期主窗口并显示，无需手动操作

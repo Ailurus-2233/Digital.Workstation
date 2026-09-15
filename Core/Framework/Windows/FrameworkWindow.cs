@@ -33,7 +33,7 @@ public abstract class FrameworkWindow : UrsaWindow
         Styles.Add(_theme);
         // 布局模板以窗口 DataContext（ViewModel）为绑定源；Framework 不引用具体 ViewModel 类型，全部宽松绑定
         _layoutHost[!ContentControl.ContentProperty] = this[!DataContextProperty];
-        // 命令面板（ADR-0005）：顶部浮层代码创建，叠在布局宿主之上（不动四份布局模板）；
+        // 命令面板（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：顶部浮层代码创建，叠在布局宿主之上（不动四份布局模板）；
         // ItemsSource 宽松绑定 ViewModel 的 Commands 集合，Ctrl+P 直接开关
         _palette[!CommandPalette.ItemsSourceProperty] = new Binding("Commands");
         Content = new Panel { Children = { _layoutHost, _palette } };
@@ -154,7 +154,7 @@ public abstract class FrameworkWindow : UrsaWindow
     }
 
     /// <summary>
-    ///     为带 <see cref="ICommandContribution.Gesture" /> 的命令生成窗口级 KeyBinding（ADR-0005）：
+    ///     为带 <see cref="ICommandContribution.Gesture" /> 的命令生成窗口级 KeyBinding（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：
     ///     机制在 Framework、接线在 shell 模块（同 LayoutPersistence 惯例），shell 收集命令后调用一次；
     ///     Gesture 文本无法解析时记日志跳过
     /// </summary>

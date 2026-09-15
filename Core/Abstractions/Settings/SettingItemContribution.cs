@@ -2,7 +2,7 @@ namespace DigitalWorkstation.Core.Abstractions.Settings;
 
 /// <summary>
 ///     设置项的贡献元数据：由 Framework 侧 RegisterSettings 扫描 <see cref="SettingItemAttribute" />
-///     生成并注册进容器。设置页据此渲染编辑器（控件由 <see cref="ValueType" /> 推断，ADR-0006 决策 8），
+///     生成并注册进容器。设置页据此渲染编辑器（控件由 <see cref="ValueType" /> 推断，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8），
 ///     ISettingsService 据此取 <see cref="DefaultValue" /> 作为未修改时的读值
 /// </summary>
 public sealed class SettingItemContribution
@@ -28,7 +28,7 @@ public sealed class SettingItemContribution
     public required Type ValueType { get; init; }
 
     /// <summary>
-    ///     默认值：用户从未修改时的取值，不是单独存储层（ADR-0006 决策 3）
+    ///     默认值：用户从未修改时的取值，不是单独存储层（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）
     /// </summary>
     public required object? DefaultValue { get; init; }
 
@@ -38,7 +38,7 @@ public sealed class SettingItemContribution
     public required int Order { get; init; }
 
     /// <summary>
-    ///     是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动生效（ADR-0006 决策 7）
+    ///     是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动生效（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
     /// </summary>
     public required bool RequiresRestart { get; init; }
 }

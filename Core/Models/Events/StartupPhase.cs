@@ -1,7 +1,7 @@
 ﻿namespace DigitalWorkstation.Core.Models.Events;
 
 /// <summary>
-///     启动阶段（ADR-0004）：Launcher 引导发生在 Avalonia 启动前，不在进度覆盖范围内
+///     启动阶段（ADR-0004 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）：Launcher 引导发生在 Avalonia 启动前，不在进度覆盖范围内
 /// </summary>
 public enum StartupPhase
 {

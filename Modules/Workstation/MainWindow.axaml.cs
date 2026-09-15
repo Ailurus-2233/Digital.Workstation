@@ -19,7 +19,7 @@ public partial class MainWindow : FrameworkWindow
         }
         viewModel.EnsureContributionsLoaded();
         RegisterNativeMenu(viewModel.MenuBarItems);
-        // 命令手势 KeyBinding（ADR-0005）：机制在 Framework（RegisterCommandGestures），接线在本模块
+        // 命令手势 KeyBinding（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：机制在 Framework（RegisterCommandGestures），接线在本模块
         RegisterCommandGestures(viewModel.Commands);
     }
 }

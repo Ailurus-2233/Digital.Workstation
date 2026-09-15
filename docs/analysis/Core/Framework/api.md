@@ -1,6 +1,6 @@
 ﻿# Framework — 对外接口与调用方式
 
-命名空间八组：`DigitalWorkstation.Core.Framework`（根）、`.Framework.Layout`（布局状态机、面板分隔条与布局持久化）、`.Framework.Menus`（菜单建树/注册/呈现模型）、`.Framework.Commands`（命令注册，ADR-0005）、`.Framework.Contributions`（贡献收集器与工具视图注册）、`.Framework.Settings`（设置注册与持久化，ADR-0006）、`.Framework.Windows`（窗口基类、命令面板与主题）、`.Framework.WindowManager`。类型均 public，例外：`Menus/MenuRegistration.cs` 的 `ReflectedMenuItemContribution` 与 `Commands/CommandRegistration.cs` 的 `ReflectedCommandContribution` 两个 attribute 扫描生成的贡献实现为 internal（见第 12、14 节）。
+命名空间八组：`DigitalWorkstation.Core.Framework`（根）、`.Framework.Layout`（布局状态机、面板分隔条与布局持久化）、`.Framework.Menus`（菜单建树/注册/呈现模型）、`.Framework.Commands`（命令注册，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）、`.Framework.Contributions`（贡献收集器与工具视图注册）、`.Framework.Settings`（设置注册与持久化，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）、`.Framework.Windows`（窗口基类、命令面板与主题）、`.Framework.WindowManager`。类型均 public，例外：`Menus/MenuRegistration.cs` 的 `ReflectedMenuItemContribution` 与 `Commands/CommandRegistration.cs` 的 `ReflectedCommandContribution` 两个 attribute 扫描生成的贡献实现为 internal（见第 12、14 节）。
 
 ## 1. `FrameworkApplication<TWindow>`（FrameworkApplication.cs:20）
 
@@ -70,7 +70,7 @@ public class FrameworkWindowManager : IWindowManager, IMainWindowManager
 public sealed record ShellLayoutState
 {
     public string? SelectedActivity { get; init; }
-    public IReadOnlyList<string> ActivityBarItems { get; init; } = [];  // 顶部段有序 Id（钉住项不入列，ADR-0002）
+    public IReadOnlyList<string> ActivityBarItems { get; init; } = [];  // 顶部段有序 Id（钉住项不入列，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）
     public SideBarState SideBar { get; init; } = new();
     public AuxiliaryPanelState AuxiliaryPanel { get; init; } = new();
     public BottomPanelState BottomPanel { get; init; } = new();
@@ -89,7 +89,7 @@ public sealed record ShellLayoutState
 | `ToggleBottomPanel()`（:69） | 独立翻转 `BottomPanel.Visible`，不影响活动 tab |
 | `ActivateAuxTab(string tab)`（:77） | AuxiliaryPanel 收起时**拒绝，返回 `this`**；面板可见时以 with 表达式更新 `AuxiliaryPanel.ActiveTab` 返回新实例 |
 | `ActivateBottomTab(string tab)`（:90） | BottomPanel 收起时拒绝返回 `this`；面板可见时以 with 表达式更新 `BottomPanel.ActiveTab` 返回新实例 |
-| `MoveTab(string tabId, ToolViewPlacement targetBar, int index)`（:109，ADR-0002） | 跨 Bar 迁移/同 Bar 重排：从源 Bar 移除、按 index 插入目标。跨 Bar：目标面板强制 `Visible=true` 且激活该 tab（目标 ActivityBar → 选中该导航项、展开 SideBar 并置 `ContentFor`）；源面板拖空 → `Visible=false`；源面板活动 tab 被拖走 → 回退到其**前一个** tab（原首位取移除后首个）；源为 ActivityBar 且被拖走的是选中项 → 顶部段仍有项则改选中其前一项、SideBar 保持展开，顶部段拖空才取消选中并收起。同 Bar 为纯重排（index 按移除前列表计，`sourceIndex < index` 时内部减一修正），不改激活状态。tabId 不属于任何 Bar（如钉住项）或原地落放 → 拒绝返回 `this` |
+| `MoveTab(string tabId, ToolViewPlacement targetBar, int index)`（:109，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)） | 跨 Bar 迁移/同 Bar 重排：从源 Bar 移除、按 index 插入目标。跨 Bar：目标面板强制 `Visible=true` 且激活该 tab（目标 ActivityBar → 选中该导航项、展开 SideBar 并置 `ContentFor`）；源面板拖空 → `Visible=false`；源面板活动 tab 被拖走 → 回退到其**前一个** tab（原首位取移除后首个）；源为 ActivityBar 且被拖走的是选中项 → 顶部段仍有项则改选中其前一项、SideBar 保持展开，顶部段拖空才取消选中并收起。同 Bar 为纯重排（index 按移除前列表计，`sourceIndex < index` 时内部减一修正），不改激活状态。tabId 不属于任何 Bar（如钉住项）或原地落放 → 拒绝返回 `this` |
 | `OpenMainView(string view)`（:236） | 仅改 `MainContent.ActiveView` |
 | `Resize(PanelResizeTarget target, double delta)`（:244） | SideBar/AuxiliaryPanel 调 `Width`、BottomPanel 调 `Height`，经私有静态 `Clamp(double value, double min, double max)`（:275，实现为 `Math.Max(min, Math.Min(max, value))`）钳到各 record 的 Min/Max 常量；switch 兜底分支 `_ => this`，未知 target 返回等值状态 |
 
@@ -111,7 +111,7 @@ public sealed record ShellLayoutState
 public abstract class FrameworkWindow : UrsaWindow
 ```
 
-带基础布局的窗口基类：内置 VS Code 式五区 shell（ActivityBar/SideBar/MainContent/AuxiliaryPanel/BottomPanel + 状态栏）、**按平台呈现的菜单栏**（全部菜单贡献建树生成，ADR-0001；macOS 使用屏幕顶部的 `NativeMenu`，其他平台使用标题栏左侧的 Avalonia `Menu`），**以及顶部居中的命令面板**（`CommandPalette`，ADR-0005；宽松绑定 ViewModel 的 `Commands`，Ctrl+P 开关）。真实子类：`Modules/Workstation/MainWindow`。成员：
+带基础布局的窗口基类：内置 VS Code 式五区 shell（ActivityBar/SideBar/MainContent/AuxiliaryPanel/BottomPanel + 状态栏）、**按平台呈现的菜单栏**（全部菜单贡献建树生成，[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)；macOS 使用屏幕顶部的 `NativeMenu`，其他平台使用标题栏左侧的 Avalonia `Menu`），**以及顶部居中的命令面板**（`CommandPalette`，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)；宽松绑定 ViewModel 的 `Commands`，Ctrl+P 开关）。真实子类：`Modules/Workstation/MainWindow`。成员：
 
 | 成员 | 签名 | 说明 |
 |---|---|---|
@@ -145,13 +145,13 @@ FrameworkWindow 的基础布局主题。加载机制：构造函数（:16-24）�
 
 | 资源键 | 位置 | 内容 |
 |---|---|---|
-| `ShellActivityBar` / `ShellSideBar` / `ShellMainContent` / `ShellAuxiliaryPanel` / `ShellBottomPanel` / `ShellStatusBar` | :27 / :59 / :75 / :87 / :142 / :198 | 六个共享部件 DataTemplate（三处可投放 Bar 用 ToolViewBar 承载；ActivityBar 底部段为 StackPanel（:41-53）＝钉住区 ItemsControl（`BottomNavigationItems`，当前无钉住项实例、可为空）+ shell 内置"设置"导航按钮（`Command={Binding OpenSettingsCommand}`，ADR-0006 决策 6），与顶部段以 `Grid RowDefinitions="*,Auto"` 分隔——不用 DockPanel bottom dock，见 pitfalls.md） |
+| `ShellActivityBar` / `ShellSideBar` / `ShellMainContent` / `ShellAuxiliaryPanel` / `ShellBottomPanel` / `ShellStatusBar` | :27 / :59 / :75 / :87 / :142 / :198 | 六个共享部件 DataTemplate（三处可投放 Bar 用 ToolViewBar 承载；ActivityBar 底部段为 StackPanel（:41-53）＝钉住区 ItemsControl（`BottomNavigationItems`，当前无钉住项实例、可为空）+ shell 内置"设置"导航按钮（`Command={Binding OpenSettingsCommand}`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6），与顶部段以 `Grid RowDefinitions="*,Auto"` 分隔——不用 DockPanel bottom dock，见 pitfalls.md） |
 | `WindowLayoutLeft` / `WindowLayoutRight` / `WindowLayoutCenter` / `WindowLayoutJustify` | :227 / :293 / :359 / :424 | 四份布局 DataTemplate：布局 Grid 列 `Auto,{Binding SideBarColumnWidth},*,{Binding AuxiliaryColumnWidth}`、行 `*,Auto`；差异为 BottomPanel 及分隔条的 `Grid.Column`/`ColumnSpan` 与侧栏的 `Grid.RowSpan`（见上表）；ActivityBar 恒 `RowSpan=2` 通高 |
-| `{x:Type layout:ToolViewBar}` | :492 | ToolViewBar 的 ControlTheme（ADR-0002）：Background=Transparent 使整条带参与命中测试；模板为 Border + Panel(ItemsPresenter + `PART_InsertionLine` 拖拽占位线） |
+| `{x:Type layout:ToolViewBar}` | :492 | ToolViewBar 的 ControlTheme（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：Background=Transparent 使整条带参与命中测试；模板为 Border + Panel(ItemsPresenter + `PART_InsertionLine` 拖拽占位线） |
 
-样式（:513 起）：nav-item/panel-tab/GridSplitter/panel-collapse/region-title/placeholder/status-item 自 Modules/Workstation/MainWindow.axaml 迁入；`layout|ToolViewBar.drag-over`（:554，拖拽悬停整 Bar 高亮，ADR-0002）；4 个标题栏菜单样式（:611-628，ADR-0001 菜单栏内置配套）：`Menu.chrome-menu > MenuItem` 紧凑行高（MinHeight=30、Padding=10,0，:611-614）、`Popup#PART_Popup` VerticalOffset=-8 让弹出层贴合标题栏下缘（:616-619）、`Menu.chrome-menu MenuItem` 的 `ItemsSource={Binding Children}`/`Command={Binding Command}`/`AutomationProperties.Name={Binding Title}` 样式绑定（:621-624，叶子 Children 为空、节点 Command 为 null，均无副作用）、`PathIcon` 前景色 SemiColorText1（:626-628）。**菜单项的内容模板不在本主题内**——无 x:Key 的 DataTemplate 不能放 `Styles.Resources`（AVLN3000），故由 `FrameworkWindow` 构造时在窗口 `DataTemplates` 代码注册（见第 4 节）。分隔条改用 `layout:PanelResizer` 的 `Target`+`ResizeCommand` 声明式绑定（如 :240-252；axaml 以 `xmlns:layout="clr-namespace:DigitalWorkstation.Core.Framework.Layout"` 引入，:3）。**所有绑定为宽松反射绑定**——Framework 不引用具体 ViewModel 类型。面板对齐的切换入口不在本主题内（在视图菜单，见 Modules/Workstation 的 `Menus/ViewAlignmentMenus.cs`）。
+样式（:513 起）：nav-item/panel-tab/GridSplitter/panel-collapse/region-title/placeholder/status-item 自 Modules/Workstation/MainWindow.axaml 迁入；`layout|ToolViewBar.drag-over`（:554，拖拽悬停整 Bar 高亮，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）；4 个标题栏菜单样式（:611-628，[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 菜单栏内置配套）：`Menu.chrome-menu > MenuItem` 紧凑行高（MinHeight=30、Padding=10,0，:611-614）、`Popup#PART_Popup` VerticalOffset=-8 让弹出层贴合标题栏下缘（:616-619）、`Menu.chrome-menu MenuItem` 的 `ItemsSource={Binding Children}`/`Command={Binding Command}`/`AutomationProperties.Name={Binding Title}` 样式绑定（:621-624，叶子 Children 为空、节点 Command 为 null，均无副作用）、`PathIcon` 前景色 SemiColorText1（:626-628）。**菜单项的内容模板不在本主题内**——无 x:Key 的 DataTemplate 不能放 `Styles.Resources`（AVLN3000），故由 `FrameworkWindow` 构造时在窗口 `DataTemplates` 代码注册（见第 4 节）。分隔条改用 `layout:PanelResizer` 的 `Target`+`ResizeCommand` 声明式绑定（如 :240-252；axaml 以 `xmlns:layout="clr-namespace:DigitalWorkstation.Core.Framework.Layout"` 引入，:3）。**所有绑定为宽松反射绑定**——Framework 不引用具体 ViewModel 类型。面板对齐的切换入口不在本主题内（在视图菜单，见 Modules/Workstation 的 `Menus/ViewAlignmentMenus.cs`）。
 
-命令面板样式（:630-667，ADR-0005 配套）：`windows|CommandPalette` 浮层外观（SemiColorBackground1 底 + 边框 + 圆角 6 + 阴影，宽 600、顶部居中、上缘距 48）、`TextBox.command-input` 透明无边框、`ListBox.command-list` 透明底与条目圆角、`TextBlock.gesture` 右侧快捷键文本（SemiColorText2）、`PathIcon.command-icon` 条目左侧图标槽位（12×12、SemiColorText2、右间距 8、垂直居中；始终渲染，`IconPath` 为 null 时为空占位，文本对齐）。
+命令面板样式（:630-667，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) 配套）：`windows|CommandPalette` 浮层外观（SemiColorBackground1 底 + 边框 + 圆角 6 + 阴影，宽 600、顶部居中、上缘距 48）、`TextBox.command-input` 透明无边框、`ListBox.command-list` 透明底与条目圆角、`TextBlock.gesture` 右侧快捷键文本（SemiColorText2）、`PathIcon.command-icon` 条目左侧图标槽位（12×12、SemiColorText2、右间距 8、垂直居中；始终渲染，`IconPath` 为 null 时为空占位，文本对齐）。
 
 ## 6. `PanelAlignment` / `PanelResize` / `SetPanelAlignmentEvent` / `PanelResizer`（均位于 Layout/）
 
@@ -175,7 +175,7 @@ public class SetPanelAlignmentEvent : PubSubEvent<PanelAlignment>               
 | `GetParentGrid() => null`（:46） | 使原生 resize 初始化短路：ResizeData 为空，GridSplitter 的所有原生重排路径自动跳过，只剩 Thumb 的 DragDelta 事件 |
 **调用方式**：布局模板内声明式使用——`<layout:PanelResizer Target="SideBar" ResizeCommand="{Binding ResizePanelCommand}" .../>`（真实用例 `Windows/FrameworkWindowTheme.axaml:240-252` 等，每份布局模板三枚：SideBar/AuxiliaryPanel/BottomPanel）。ViewModel 侧契约：提供接受 `PanelResize` 参数的 `ResizePanelCommand`（真实实现 `Modules/Workstation/MainWindowViewModel.cs` 转调 `ShellLayoutState.Resize`）。
 
-### 工具视图拖拽控件（ToolViewButton / ToolViewBar / ToolViewMove / ToolViewDragSession，均位于 Layout/，ADR-0002）
+### 工具视图拖拽控件（ToolViewButton / ToolViewBar / ToolViewMove / ToolViewDragSession，均位于 Layout/，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）
 
 ```csharp
 public class ToolViewButton : Button                                    // ToolViewButton.cs:14
@@ -192,7 +192,7 @@ public static class ToolViewDragSession                                 // ToolV
 **调用方式**：主题模板内声明式使用——导航项/tab 头用 `<layout:ToolViewButton DragTabId="{Binding Id}" CanDrag="{Binding Contribution.AllowMove}" .../>`，三处可投放 Bar 用 `<layout:ToolViewBar TargetBar="..." Orientation="..." MoveCommand="{Binding MoveTabCommand}">`（真实用例 `Windows/FrameworkWindowTheme.axaml:35-40、106-133、162-189`）。ViewModel 侧契约：提供接受 `ToolViewMove` 参数的 `MoveTabCommand`（真实实现 `Modules/Workstation/MainWindowViewModel.cs:440`）与 `AuxiliaryPanelRevealed`/`BottomPanelRevealed` 布尔属性。
 
 
-## 7. `ShellLayoutDto` 族与 `LayoutPersistence`（均位于 Layout/，ADR-0002）
+## 7. `ShellLayoutDto` 族与 `LayoutPersistence`（均位于 Layout/，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）
 
 ```csharp
 public sealed record ShellLayoutDto          // ShellLayoutDto.cs:10，const CurrentVersion = 1（:15）
@@ -233,19 +233,19 @@ public sealed class LayoutPersistence        // LayoutPersistence.cs:12
 public class ShellContributionCollector(IContainerProvider containerProvider)
 ```
 
-主构造注入 Prism `IContainerProvider`。注册为单例（`FrameworkApplication.cs:156`）。七个收集方法；菜单方法自 ADR-0001 起不过滤不排序（建树器负责分组排序），工具视图自 ADR-0002 起不再按定位枚举过滤（三处 Bar 与钉住区的分派由消费方按 `Placement`/`AllowMove` 决定）：
+主构造注入 Prism `IContainerProvider`。注册为单例（`FrameworkApplication.cs:156`）。七个收集方法；菜单方法自 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 起不过滤不排序（建树器负责分组排序），工具视图自 [ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md) 起不再按定位枚举过滤（三处 Bar 与钉住区的分派由消费方按 `Placement`/`AllowMove` 决定）：
 
 | 方法 | 过滤 | 排序 |
 |---|---|---|
-| `GetToolViews()`（:18） | 过滤 DryIoc 零注册幽灵实例（默认构造、`Id=null` 的条目，:23 的 `Where`；三处 Bar 的分派由消费方决定，ADR-0002） | `Order` 升序 |
+| `GetToolViews()`（:18） | 过滤 DryIoc 零注册幽灵实例（默认构造、`Id=null` 的条目，:23 的 `Where`；三处 Bar 的分派由消费方决定，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)） | `Order` 升序 |
 | `GetMainViews()`（:27） | 无（全部） | 无（保持容器解析顺序） |
 | `GetMenuItems()`（:34，**无参数**） | 无（路径/分组模型下不再按定位枚举过滤） | 无（分组排序建树由 `MenuTreeBuilder` 负责，见第 11 节） |
 | `GetStatusBarItems()`（:63） | 无 | `Order` 升序 |
-| `GetCommands()`（:42，ADR-0005） | Id 冲突去重：保留先注册者，后者丢弃并记 `Logger.Warning` | `Order` 升序，同 Order 按解析后 `Title` 字典序（Ordinal） |
-| `GetSettingGroups()`（:74，ADR-0006） | 按名称全局合并：同名 `SettingGroupAttribute` 多处声明时位次取最小；仅被设置项引用而无声明的隐式分组补出、`Order` 视为 0 | `Order` 升序，同 Order 按名称键字典序（Ordinal） |
-| `GetSettingItems()`（:99，ADR-0006） | Id 冲突去重：保留先注册者，后者丢弃并记 `Logger.Warning`（同 `GetCommands`） | `Order` 升序，同 Order 按名称键字典序（Ordinal） |
+| `GetCommands()`（:42，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)） | Id 冲突去重：保留先注册者，后者丢弃并记 `Logger.Warning` | `Order` 升序，同 Order 按解析后 `Title` 字典序（Ordinal） |
+| `GetSettingGroups()`（:74，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)） | 按名称全局合并：同名 `SettingGroupAttribute` 多处声明时位次取最小；仅被设置项引用而无声明的隐式分组补出、`Order` 视为 0 | `Order` 升序，同 Order 按名称键字典序（Ordinal） |
+| `GetSettingItems()`（:99，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)） | Id 冲突去重：保留先注册者，后者丢弃并记 `Logger.Warning`（同 `GetCommands`） | `Order` 升序，同 Order 按名称键字典序（Ordinal） |
 
-返回类型均为 `IReadOnlyList<T>`（快照数组）。贡献类型中 `ToolViewContribution`（sealed class，由 `RegisterToolViews` 扫描 `[ToolView]` 生成，见第 13 节）、`IMainViewContribution`、`IStatusBarItemContribution` 与枚举 `ToolViewPlacement` 在 Core/Abstractions 的 `Contributions/` 目录；`IMenuItemContribution` 在 `Menus/` 目录（形状已按 ADR-0001 改为路径/分组模型）；`ICommandContribution` 在 `Commands/` 目录（ADR-0005 扁平模型）；`SettingGroupContribution`/`SettingItemContribution` 在 `Settings/` 目录（ADR-0006，见 Abstractions 文档）。
+返回类型均为 `IReadOnlyList<T>`（快照数组）。贡献类型中 `ToolViewContribution`（sealed class，由 `RegisterToolViews` 扫描 `[ToolView]` 生成，见第 13 节）、`IMainViewContribution`、`IStatusBarItemContribution` 与枚举 `ToolViewPlacement` 在 Core/Abstractions 的 `Contributions/` 目录；`IMenuItemContribution` 在 `Menus/` 目录（形状已按 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 改为路径/分组模型）；`ICommandContribution` 在 `Commands/` 目录（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) 扁平模型）；`SettingGroupContribution`/`SettingItemContribution` 在 `Settings/` 目录（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)，见 Abstractions 文档）。
 
 **典型消费**：`Modules/Workstation/MainWindowViewModel.cs:41-42` 构造注入 `ShellContributionCollector`，`EnsureContributionsLoaded()`（:170）先调一次 `GetToolViews()`（:178）存 `_toolViews`，再 `LoadToolViews(_persistence.Load())`（:179）把分派与持久化恢复交给 `LoadToolViews`（:200-236：钉住项恒落 ActivityBar 底部段，可移动项持久化 placements 优先、attribute `Default` 兜底），并收集主视图与状态栏项；菜单走 `MenuTreeBuilder.Build(_collector.GetMenuItems())`（:184）建树后转为菜单 ViewModel。
 
@@ -293,7 +293,7 @@ public static class MenuTreeBuilder
 }
 ```
 
-纯函数、无状态建树器：把扁平贡献列表构建为分组排序好的顶层菜单列表，标题（路径段与条目）在建树时经 `Language.Get` 一次性解析（:59、:74、:98）。规则（ADR-0001）：
+纯函数、无状态建树器：把扁平贡献列表构建为分组排序好的顶层菜单列表，标题（路径段与条目）在建树时经 `Language.Get` 一次性解析（:59、:74、:98）。规则（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）：
 
 - **路径切分与跳过**：`Path.Split('/', TrimEntries)`（:23），含空段记 `Logger.Warning` 跳过该条目（:24-29）。
 - **单段路径**（顶层菜单直下条目）：`Order` 经 `NodeAccum.MergeNodeOrder` 声明顶层菜单位次（多处声明取最小，:126-135）；`Group`/`GroupOrder` 描述条目分组（:41-47）。
@@ -309,7 +309,7 @@ public static class MenuTreeBuilder
 public static void RegisterMenus(this IContainerRegistry registry, Assembly assembly); // :20
 ```
 
-attribute 菜单注册扩展（ADR-0001）。模块在自身 `RegisterTypes` 中调用并传入本模块程序集，**不做全局程序集扫描**；扫描只在注册时发生一次。规则（:21-68）：
+attribute 菜单注册扩展（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）。模块在自身 `RegisterTypes` 中调用并传入本模块程序集，**不做全局程序集扫描**；扫描只在注册时发生一次。规则（:21-68）：
 
 1. 遍历 `assembly.DefinedTypes`，取标注 `MenuGroupAttribute` 的类（:22-28）；类路径含空段记 `Logger.Warning` 整类跳过（:30-35）。
 2. 取该类 `Public | Instance | DeclaredOnly` 方法中标注 `MenuItemAttribute` 者（:37-40）；带参或返回值非 `void`/`Task` 的记 `Logger.Warning` 跳过（:44-51）——因此**静态方法与泛型方法**（非实例/含参）天然进不了候选或被签名校验挡下。
@@ -325,7 +325,7 @@ attribute 菜单注册扩展（ADR-0001）。模块在自身 `RegisterTypes` 中
 public static void RegisterToolViews(this IContainerRegistry registry, Assembly assembly); // :20
 ```
 
-attribute 工具视图注册扩展（ADR-0002），与 `RegisterMenus` 同构。模块在自身 `RegisterTypes` 中调用并传入本模块程序集，**不做全局程序集扫描**；扫描只在注册时发生一次。规则（:21-59）：
+attribute 工具视图注册扩展（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)），与 `RegisterMenus` 同构。模块在自身 `RegisterTypes` 中调用并传入本模块程序集，**不做全局程序集扫描**；扫描只在注册时发生一次。规则（:21-59）：
 
 1. 遍历 `assembly.DefinedTypes`，取标注 `ToolViewAttribute` 的类（:23-29）。
 2. 类非可实例化 `Control`（abstract 或非 `Control` 派生）记 `Logger.Warning` 跳过（:31-36）。
@@ -334,7 +334,7 @@ attribute 工具视图注册扩展（ADR-0002），与 `RegisterMenus` 同构。
 
 真实调用点：`Modules/Workstation/WorkstationApplication.cs:27`、`Modules/DashBoard/DashBoardModule.cs:14`。
 
-## 14. `CommandRegistration.RegisterCommands`（Commands/CommandRegistration.cs:13，ADR-0005）
+## 14. `CommandRegistration.RegisterCommands`（Commands/CommandRegistration.cs:13，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）
 
 ```csharp
 public static void RegisterCommands(this IContainerRegistry registry, Assembly assembly); // :19
@@ -350,7 +350,7 @@ attribute 命令注册扩展，与 `RegisterMenus` 同构但**免类级 attribut
 
 由 `RegisterCommands` 生成的 `ICommandContribution` 实现。构造期（:65-75）把 attribute 元数据落成契约属性：`Id = attribute.Id ?? $"{method.DeclaringType?.FullName}.{method.Name}"`（默认「声明类全名.方法名」）、`Title = Language.Get(attribute.Title)`（收集时按 UI 区域性解析）、`Gesture`/`IconPath`/`Order` 透传、`Command = new DelegateCommand(Execute)`。执行路径与菜单完全同构：`Execute` fire-and-forget 调 `ExecuteAsync`（:86-89）：反射调用，返回 `Task` 则 `await`；异常解包 `TargetInvocationException` 后 `Logger.Error` 记录，**不抛出**（:91-104）。
 
-## 15. `CommandPalette`（Windows/CommandPalette.cs:18，ADR-0005）
+## 15. `CommandPalette`（Windows/CommandPalette.cs:18，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）
 
 ```csharp
 public class CommandPalette : Border
@@ -368,7 +368,7 @@ public class CommandPalette : Border
 
 行为细节：过滤为子串、不区分大小写、匹配本地化后 `Title`（`RefreshItems`，:153）；MRU 内存列表 `_recentIds`（:29，新者在前，重启即清）执行后置顶、过滤后仍浮到最前；`OnKeyDown`（:105）处理 Esc/Enter/↑/↓（输入框单行，这些键不被吞，冒泡到控件）；单击条目即执行（`OnItemTapped`，:187，守卫点在条目容器内）；执行先 `Close()` 再 `Command.Execute(null)`（:204）。列表项模板为代码创建的 `FuncDataTemplate<ICommandContribution>`（:44，三列 Grid：左侧 `PathIcon.command-icon` 槽位始终渲染（`IconPath` 为 null 时为空占位，文本与有图标命令对齐——同菜单弹出层惯例）+ 标题 + 右侧 gesture 文本，`Gesture` 为 null 时隐藏）；空态「无匹配命令」与列表同格切换。样式在 `FrameworkWindowTheme.axaml:630-667`；`StyleKeyOverride` 未声明——类型选择器 `windows|CommandPalette` 按 StyleKey 匹配（同 `ToolViewBar` 的坑，见 pitfalls.md）。
 
-## 16. 设置管线（Settings/，ADR-0006）
+## 16. 设置管线（Settings/，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）
 
 ### `SettingRegistration.RegisterSettings`（Settings/SettingRegistration.cs:13）
 
@@ -376,7 +376,7 @@ public class CommandPalette : Border
 public static void RegisterSettings(this IContainerRegistry registry, Assembly assembly); // :19
 ```
 
-attribute 设置注册扩展（ADR-0006 决策 1），与 `RegisterMenus`/`RegisterCommands` 同构。模块在自身 `RegisterTypes` 中调用并传入本模块程序集，**不做全局程序集扫描**；扫描只在注册时发生一次。规则（:21-66）：
+attribute 设置注册扩展（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1），与 `RegisterMenus`/`RegisterCommands` 同构。模块在自身 `RegisterTypes` 中调用并传入本模块程序集，**不做全局程序集扫描**；扫描只在注册时发生一次。规则（:21-66）：
 
 1. 遍历 `assembly.DefinedTypes`（:21），类上每条 `SettingGroupAttribute` 声明注册一个 `SettingGroupContribution` 单例（:23-27，attribute 允许 `AllowMultiple`；同名分组的合并与位次取最小发生在收集侧，见第 8 节 `GetSettingGroups`）。
 2. 取该类 `Public | Static | DeclaredOnly` 属性中标注 `SettingItemAttribute` 者（:29-36）；无 getter（:38-43）或 `DefaultValue` 非空且类型与属性类型不匹配（:45-51）记 `Logger.Warning` 跳过。属性只是声明锚点——扫描不读属性值，读写一律走 `ISettingsService`。
@@ -391,7 +391,7 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
     : ISettingsService
 ```
 
-`ISettingsService` 实现（ADR-0006 决策 3/4），`%AppData%/Digital.Workstation/settings.json` 的读/防抖写。注册方式特殊：**显式构造实例、立即 `Load()`、以工厂注册**（`FrameworkApplication.cs:163-165`，仿 windowManager 模式），使启动时一次性加载的时机明确。成员：
+`ISettingsService` 实现（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4），`%AppData%/Digital.Workstation/settings.json` 的读/防抖写。注册方式特殊：**显式构造实例、立即 `Load()`、以工厂注册**（`FrameworkApplication.cs:163-165`，仿 windowManager 模式），使启动时一次性加载的时机明确。成员：
 
 | 成员 | 签名/位置 | 语义 |
 |---|---|---|
@@ -399,7 +399,7 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
 | `Load` | `public void Load()`（:64） | 启动时一次性加载入内存镜像 `_values`，并把载入内容原样复制为 `_sessionStartValues`（:86，「重启后生效」判定的基准）；文件缺失静默返回（:68-71，首次启动常态）；内容为空（:75-79）或一切异常 `catch (Exception)`（:89-93）记 Warning 按无修改处理——容错仿 `LayoutPersistence` |
 | `Get<T>` | `public T? Get<T>(string settingId)`（:97） | 纯内存读：`_values` 命中则按 `T` 反序列化返回，单项失败记 Warning 后**逐项**回退默认值（:103-112，与 layout.json 整份丢弃不同）；未修改时经 `FindContribution` 回退声明的 `DefaultValue`（:116-123）；未声明记 Warning 返回 `default` |
 | `Set<T>` | `public void Set<T>(string settingId, T value)`（:126） | 未声明记 Warning 但仍写入（:129-132）；锁内更新 `_values`、把 500ms 防抖 Timer 重置到单次触发并 `TrackPendingRestart` 维护重启判定（:134-141），锁外广播 `SettingChangedEvent`（:143） |
-| `IsPendingRestart` | `public bool IsPendingRestart(string settingId)`（:146） | 锁内查 `_pendingRestartIds`（ADR-0006 决策 7「重启后生效」判定；服务不感知 RequiresRestart，过滤在调用方） |
+| `IsPendingRestart` | `public bool IsPendingRestart(string settingId)`（:146） | 锁内查 `_pendingRestartIds`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7「重启后生效」判定；服务不感知 RequiresRestart，过滤在调用方） |
 | `TrackPendingRestart` | `private void`（:158） | 重启判定维护（调用方须持 `_gate`）：当前值与启动时生效值经 `JsonElement.DeepEquals` 比较——快照命中取快照值，快照不含则以声明默认值序列化结果为基准（:160-163）；偏离记入 `_pendingRestartIds`、改回启动值即移出 |
 | `FindContribution` | `private SettingItemContribution?`（:179） | 声明默认值缓存：按 Id 缓存，未命中重新枚举容器中的全部声明刷新缓存——模块在启动序列阶段 2 才注册各自设置项，缓存必须允许后到的声明（:42-46 注释） |
 | `FlushPending` | `public void FlushPending()`（:198） | 立即落盘：锁内停掉在途防抖 Timer，锁外 `Save(TakeSnapshot())` 同步写盘。「立即重启」启动新进程前调用——防抖有 500ms 窗口，不强制落盘新进程可能读到旧配置 |
@@ -417,7 +417,7 @@ public enum UiLanguage { [JsonStringEnumMemberName("zh-CN")] ZhCN, [JsonStringEn
 public static CultureInfo ToCultureInfo(this UiLanguage language);                                            // :32
 ```
 
-Framework 预置「常规/语言」设置项的值类型（ADR-0006 决策 9）。成员的 `JsonStringEnumMemberName` 值即对应 `CultureInfo` 名称——settings.json 落盘值与区域性名称同源；`ToCultureInfo`（:32-37）反射读该 attribute 值作为 `CultureInfo.GetCultureInfo` 的名称。
+Framework 预置「常规/语言」设置项的值类型（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 9）。成员的 `JsonStringEnumMemberName` 值即对应 `CultureInfo` 名称——settings.json 落盘值与区域性名称同源；`ToCultureInfo`（:32-37）反射读该 attribute 值作为 `CultureInfo.GetCultureInfo` 的名称。
 
 ### `GeneralSettings`（Settings/GeneralSettings.cs:10）
 
@@ -426,9 +426,9 @@ Framework 预置「常规/语言」设置项的值类型（ADR-0006 决策 9）�
 public static class GeneralSettings
 ```
 
-Framework 预置设置项的声明类（ADR-0006 决策 9）。成员：`public static readonly string LanguageSettingId`（:15，默认规则「声明类全名.属性名」，供启动序列等消费方读写）；`[SettingItem("SettingsGeneralGroupName", "SettingsLanguageName", DefaultValue = UiLanguage.ZhCN, RequiresRestart = true)] public static UiLanguage Language`（:20-22）——属性体只是声明锚点不会被读取，读写一律经 `ISettingsService`。
+Framework 预置设置项的声明类（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 9）。成员：`public static readonly string LanguageSettingId`（:15，默认规则「声明类全名.属性名」，供启动序列等消费方读写）；`[SettingItem("SettingsGeneralGroupName", "SettingsLanguageName", DefaultValue = UiLanguage.ZhCN, RequiresRestart = true)] public static UiLanguage Language`（:20-22）——属性体只是声明锚点不会被读取，读写一律经 `ISettingsService`。
 
-## 17. `ApplicationRestarter`（ApplicationRestarter.cs:14，ADR-0006 决策 7）
+## 17. `ApplicationRestarter`（ApplicationRestarter.cs:14，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
 
 ```csharp
 public static class ApplicationRestarter { public static void Restart(); } // :19
@@ -446,6 +446,6 @@ public static class ApplicationRestarter { public static void Restart(); } // :1
 | `IMainWindowManager` | Singleton | 同一 `FrameworkWindowManager` 实例 |
 | `IWindowManager` | Singleton | 同一 `FrameworkWindowManager` 实例 |
 | `ShellContributionCollector` | Singleton | 自身 |
-| `LayoutPersistence` | Singleton | 自身（ADR-0002；机制在 Framework、接线在 shell 模块） |
-| `ISettingsService` | Singleton（工厂） | 显式构造的 `SettingsService` 实例，注册前已 `Load()`（ADR-0006 决策 3/4） |
+| `LayoutPersistence` | Singleton | 自身（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)；机制在 Framework、接线在 shell 模块） |
+| `ISettingsService` | Singleton（工厂） | 显式构造的 `SettingsService` 实例，注册前已 `Load()`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4） |
 | `IoC.Registry` / `IoC.Provider` | 静态初始化 | `IoC.Initialize(containerRegistry, Container)`（Common 模块） |

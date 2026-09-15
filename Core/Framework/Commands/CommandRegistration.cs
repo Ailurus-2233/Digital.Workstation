@@ -6,7 +6,7 @@ using DigitalWorkstation.Core.Resource;
 namespace DigitalWorkstation.Core.Framework.Commands;
 
 /// <summary>
-///     attribute 命令注册（ADR-0005）：扫描程序集中标注 <see cref="CommandAttribute" /> 的方法，
+///     attribute 命令注册（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：扫描程序集中标注 <see cref="CommandAttribute" /> 的方法，
 ///     把宿主类注册为 singleton，并为每个合法方法生成一个 <see cref="ICommandContribution" />
 ///     实现注册进容器。扫描只在模块注册时发生一次；宿主类实例在 shell 收集时经容器解析一次，之后复用
 /// </summary>

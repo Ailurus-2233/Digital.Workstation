@@ -1,7 +1,7 @@
 namespace DigitalWorkstation.Core.Abstractions.Regions;
 
 /// <summary>
-///     shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：
+///     shell 与模块共同知晓的主视图 Id 常量（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 5）：
 ///     shell 侧导航按钮与贡献主视图的模块都引用本常量，从而互不依赖
 /// </summary>
 public static class WellKnownViews

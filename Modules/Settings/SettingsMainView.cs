@@ -6,7 +6,7 @@ namespace DigitalWorkstation.Settings;
 
 /// <summary>
 ///     设置页主视图贡献：Id 取自契约层 <see cref="WellKnownViews.Settings" />，
-///     shell 左下角按钮与本模块经该常量对接而互不依赖（ADR-0006 决策 5）
+///     shell 左下角按钮与本模块经该常量对接而互不依赖（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 5）
 /// </summary>
 public class SettingsMainView : IMainViewContribution
 {

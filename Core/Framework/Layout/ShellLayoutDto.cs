@@ -3,7 +3,7 @@ using DigitalWorkstation.Core.Abstractions.Contributions;
 namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
-///     布局持久化 DTO（ADR-0002）：layout.json 落盘的专用格式，独立于
+///     布局持久化 DTO（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：layout.json 落盘的专用格式，独立于
 ///     <see cref="ShellLayoutState" />（状态机只管流转语义，不管序列化兼容）。
 ///     <see cref="Version" /> 不识别的文件由 LayoutPersistence 整体丢弃，调用方静默默认布局
 /// </summary>

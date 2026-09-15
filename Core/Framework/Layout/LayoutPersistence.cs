@@ -5,7 +5,7 @@ using DigitalWorkstation.Core.Common;
 namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
-///     布局持久化服务（ADR-0002）：%AppData%/Digital.Workstation/layout.json 的读/写/删。
+///     布局持久化服务（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：%AppData%/Digital.Workstation/layout.json 的读/写/删。
 ///     读容错：文件缺失/损坏/版本不识别 → 返回 null，调用方静默按默认布局启动；
 ///     写防抖：500ms 内的连续布局变更合并为最后一次落盘。全部失败路径只记日志不打断应用
 /// </summary>

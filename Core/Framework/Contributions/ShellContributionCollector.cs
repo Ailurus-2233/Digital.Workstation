@@ -12,7 +12,7 @@ namespace DigitalWorkstation.Core.Framework.Contributions;
 public class ShellContributionCollector(IContainerProvider containerProvider)
 {
     /// <summary>
-    ///     收集全部工具视图贡献（ADR-0002），按 <see cref="ToolViewContribution.Order" /> 升序；
+    ///     收集全部工具视图贡献（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)），按 <see cref="ToolViewContribution.Order" /> 升序；
     ///     三处 Bar 与钉住区的分派由消费方按 Placement/AllowMove 决定
     /// </summary>
     public IReadOnlyList<ToolViewContribution> GetToolViews()
@@ -32,14 +32,14 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
         return containerProvider.Resolve<IEnumerable<IMainViewContribution>>().ToArray();
     }
     /// <summary>
-    ///     收集全部菜单贡献（不过滤不排序；分组排序与建树由 <see cref="Menus.MenuTreeBuilder" /> 负责，ADR-0001）
+    ///     收集全部菜单贡献（不过滤不排序；分组排序与建树由 <see cref="Menus.MenuTreeBuilder" /> 负责，ADR-0001 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）
     /// </summary>
     public IReadOnlyList<IMenuItemContribution> GetMenuItems()
     {
         return containerProvider.Resolve<IEnumerable<IMenuItemContribution>>().ToArray();
     }
     /// <summary>
-    ///     收集全部命令贡献（ADR-0005），按 Order 升序、同 Order 按解析后标题字典序（Ordinal）；
+    ///     收集全部命令贡献（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)），按 Order 升序、同 Order 按解析后标题字典序（Ordinal）；
     ///     Id 冲突时保留先注册者，后者丢弃并记日志
     /// </summary>
     public IReadOnlyList<ICommandContribution> GetCommands()
@@ -70,7 +70,7 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
             .ToArray();
     }
     /// <summary>
-    ///     收集全部设置分组（ADR-0006）：按名称全局合并——同名声明多处时位次取最小；
+    ///     收集全部设置分组（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）：按名称全局合并——同名声明多处时位次取最小；
     ///     仅被设置项引用而无 <see cref="SettingGroupAttribute" /> 声明的分组补出，位次视为 0。
     ///     按位次升序、同位次按名称键字典序（Ordinal）
     /// </summary>
@@ -96,7 +96,7 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
             .ToArray();
     }
     /// <summary>
-    ///     收集全部设置项（ADR-0006），按 Order 升序、同 Order 按名称键字典序（Ordinal）；
+    ///     收集全部设置项（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)），按 Order 升序、同 Order 按名称键字典序（Ordinal）；
     ///     Id 冲突时保留先注册者，后者丢弃并记日志（同 GetCommands）
     /// </summary>
     public IReadOnlyList<SettingItemContribution> GetSettingItems()

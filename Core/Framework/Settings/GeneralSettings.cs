@@ -3,7 +3,7 @@ using DigitalWorkstation.Core.Abstractions.Settings;
 namespace DigitalWorkstation.Core.Framework.Settings;
 
 /// <summary>
-///     Framework 预置设置项（ADR-0006 决策 9）：「常规 / 语言」（zh-CN / en-US，需重启）。
+///     Framework 预置设置项（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 9）：「常规 / 语言」（zh-CN / en-US，需重启）。
 ///     声明锚点属性体不会被读取——读写一律经 ISettingsService，扫描只读 attribute 与属性类型
 /// </summary>
 [SettingGroup("SettingsGeneralGroupName", Order = 0)]

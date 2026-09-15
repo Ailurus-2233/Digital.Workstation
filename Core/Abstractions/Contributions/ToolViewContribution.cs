@@ -1,7 +1,7 @@
 ﻿namespace DigitalWorkstation.Core.Abstractions.Contributions;
 
 /// <summary>
-///     工具视图（ToolView，ADR-0002）的贡献元数据：由 Framework 侧 RegisterToolViews
+///     工具视图（ToolView，ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）的贡献元数据：由 Framework 侧 RegisterToolViews
 ///     扫描 <see cref="ToolViewAttribute" /> 生成并注册进容器，shell 收集后渲染到
 ///     <see cref="Placement" /> 对应的 Bar；激活时经容器解析 <see cref="ViewType" /> 显示内容。
 ///     面板收起期间其 tab 的激活操作会被 ShellLayoutState 拒绝。

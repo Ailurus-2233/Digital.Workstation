@@ -5,7 +5,7 @@
 
 ## 上下文
 
-应用需要一个类似 VS Code Quick Open 的命令面板：主窗口按 Ctrl+P 在顶部弹出命令框，列出全部命令，支持检索与执行。命令的注册方式要求与菜单（ADR-0001）类似——attribute 标方法、模块加载时扫描、汇入全局命令列表。现有事实：菜单管线已成型（`MenuGroup`/`MenuItem` attribute + `RegisterMenus` 扫描 + 容器收集），但菜单契约刻意没有 Id（ADR-0001 决策 9）；全仓无全局快捷键框架，仅 `MainWindow.axaml` 三条硬编码 KeyBinding（Ctrl+B/Ctrl+J/Ctrl+Alt+B），与菜单 attribute 无关联。
+应用需要一个类似 VS Code Quick Open 的命令面板：主窗口按 Ctrl+P 在顶部弹出命令框，列出全部命令，支持检索与执行。命令的注册方式要求与菜单（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）类似——attribute 标方法、模块加载时扫描、汇入全局命令列表。现有事实：菜单管线已成型（`MenuGroup`/`MenuItem` attribute + `RegisterMenus` 扫描 + 容器收集），但菜单契约刻意没有 Id（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 决策 9）；全仓无全局快捷键框架，仅 `MainWindow.axaml` 三条硬编码 KeyBinding（Ctrl+B/Ctrl+J/Ctrl+Alt+B），与菜单 attribute 无关联。
 
 备选方案：(B) 命令复用菜单体系，菜单项自动全部进命令面板——菜单项无稳定 Id，无法支撑最近使用（MRU）与键绑定引用，且「哪些菜单项进面板」需要额外发明规则；(C) 面板交互状态（过滤文本、选中项、MRU）放进 shell ViewModel——`MainWindowViewModel` 已承载全部布局状态，面板状态是纯瞬时 UI 状态，放进去只会继续撑大它；(D) MRU 持久化到 %AppData%——引入文件格式与版本问题，收益不成比例，留作后续。
 
@@ -18,7 +18,7 @@
 5. `CommandAttribute` 带 `Gesture` 命名属性（如 `"Ctrl+Shift+P"`）：声明式快捷键。shell 收集命令后为带 Gesture 的命令生成窗口级 KeyBinding（机制在 Framework，接线在 shell 模块，同 `LayoutPersistence` 的分层惯例）。现有三条硬编码面板快捷键本期不迁移。
 6. 面板 UI 是 Framework 的自包含控件 `CommandPalette`：搜索框 + 列表 + 子串过滤（不区分大小写，匹配本地化后标题）+ ↑↓/Enter/Esc 键盘导航 + MRU 内存分组置顶，全部内聚在控件内；控件寿命 = 窗口寿命 = 应用寿命，内存 MRU 因此成立。`FrameworkWindow` 构造时代码创建面板并注册 Ctrl+P KeyBinding 直接开关，不动四份静态布局模板；ViewModel 契约只新增一个 `Commands` 集合（宽松绑定，同 `MenuBarItems` 惯例）。
 7. 标题在收集时经 `Language.Get` 一次解析（与菜单建树一致）；列表项显示可选图标（`CommandAttribute.Icon` → 契约 `IconPath`，惯例同菜单弹出层——为 null 渲染空 `PathIcon` 占位槽位，文本对齐）+ 标题 + 右侧快捷键文本；输入框无 `>`/`#` 前缀模式语法；无匹配时显示空态文案；Esc、失焦、执行命令后关闭面板。
-8. MRU 只在内存中，不持久化；持久化留作后续工单（可仿 `LayoutPersistence` 模式）。
+8. MRU 只在内存中，不持久化；持久化作为后续工作（可仿 `LayoutPersistence` 模式）。
 
 ## 后果
 

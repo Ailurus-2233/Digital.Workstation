@@ -5,7 +5,7 @@ using Avalonia.Input;
 namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
-///     可拖拽的工具视图按钮（面板 tab 头 / ActivityBar 导航项，ADR-0002）：左键按下并移动
+///     可拖拽的工具视图按钮（面板 tab 头 / ActivityBar 导航项，ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：左键按下并移动
 ///     超过阈值后以 DoDragDrop 发起拖拽，负载为 <see cref="DragTabId" />；<see cref="CanDrag" />
 ///     为 false（钉住项）时不发起拖拽，保持普通点击。控件不感知 ViewModel 类型，
 ///     DragTabId/CanDrag 在主题模板里宽松绑定

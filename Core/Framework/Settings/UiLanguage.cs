@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace DigitalWorkstation.Core.Framework.Settings;
 
 /// <summary>
-///     界面语言（Framework 预置「常规/语言」设置项的值类型，ADR-0006 决策 9）。
+///     界面语言（Framework 预置「常规/语言」设置项的值类型，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 9）。
 ///     成员的 <see cref="JsonStringEnumMemberNameAttribute" /> 值即对应 CultureInfo 名称——
 ///     settings.json 落盘值与区域性名称同源（经 JsonStringEnumConverter 序列化）
 /// </summary>

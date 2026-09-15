@@ -5,7 +5,7 @@
 ```
 Models.csproj                  项目文件：net10.0、ImplicitUsings/Nullable、仅引用 ..\Common\Common.csproj
 Events/
-  StartupPhase.cs              启动阶段枚举（ADR-0004）
+  StartupPhase.cs              启动阶段枚举（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）
   StartupProgress.cs           启动进度负载 record
   StartupProgressEvent.cs      启动进度事件
   ModuleLoadFailure.cs         模块加载失败负载 record
@@ -15,10 +15,10 @@ Events/
   OpenMainViewEvent.cs         打开主视图请求事件
   TogglePanelTarget.cs         目标面板枚举
   TogglePanelVisibilityEvent.cs 面板显隐请求事件
-  ResetLayoutEvent.cs          重置布局请求事件（ADR-0002，无负载）
+  ResetLayoutEvent.cs          重置布局请求事件（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)，无负载）
   ReturnHomeEvent.cs           回到启动主页请求事件（无负载，保留布局与主视图缓存）
-  SettingChanged.cs            设置项变更负载 record（ADR-0006 决策 3）
-  SettingChangedEvent.cs       设置项变更事件（ADR-0006 决策 3）
+  SettingChanged.cs            设置项变更负载 record（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）
+  SettingChangedEvent.cs       设置项变更事件（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）
 obj/、Output/                  构建产物（不入库语义；obj 下的 Models.GlobalUsings.g.cs 是 Prism global using 的证据）
 ```
 
@@ -48,7 +48,7 @@ obj/、Output/                  构建产物（不入库语义；obj 下的 Mode
 
 ### Events/ModuleLoadFailedEvent.cs
 
-`public class ModuleLoadFailedEvent : PubSubEvent<ModuleLoadFailure>;`（第 7 行）——模块加载失败事件（ADR-0004）；启动序列捕获异常后发布，启动台订阅显示错误并提供"继续/退出"。
+`public class ModuleLoadFailedEvent : PubSubEvent<ModuleLoadFailure>;`（第 7 行）——模块加载失败事件（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）；启动序列捕获异常后发布，启动台订阅显示错误并提供"继续/退出"。
 
 ### Events/StartupFailureAction.cs
 
@@ -60,7 +60,7 @@ obj/、Output/                  构建产物（不入库语义；obj 下的 Mode
 
 ### Events/OpenMainViewEvent.cs
 
-`public class OpenMainViewEvent : PubSubEvent<string>;`（第 7 行）——请求 MainContent 打开指定主视图，负载为主视图 Id（`IMainViewContribution.Id`）。注释明确边界：**由 SideBar 内交互与 shell 的"设置"导航按钮（ADR-0006 决策 6）发布；ActivityBar 导航切换不发布本事件，MainContent 保持不变**。
+`public class OpenMainViewEvent : PubSubEvent<string>;`（第 7 行）——请求 MainContent 打开指定主视图，负载为主视图 Id（`IMainViewContribution.Id`）。注释明确边界：**由 SideBar 内交互与 shell 的"设置"导航按钮（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6）发布；ActivityBar 导航切换不发布本事件，MainContent 保持不变**。
 
 ### Events/TogglePanelTarget.cs
 
@@ -80,8 +80,8 @@ obj/、Output/                  构建产物（不入库语义；obj 下的 Mode
 
 ### Events/SettingChanged.cs
 
-`public record SettingChanged(string SettingId, object? NewValue)`（第 9 行）——设置项变更负载（ADR-0006 决策 3）：`SettingId` 为设置项 Id（`SettingItemContribution.Id`），`NewValue` 为装箱后的新值（类型由设置项声明的 `ValueType` 决定）。
+`public record SettingChanged(string SettingId, object? NewValue)`（第 9 行）——设置项变更负载（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）：`SettingId` 为设置项 Id（`SettingItemContribution.Id`），`NewValue` 为装箱后的新值（类型由设置项声明的 `ValueType` 决定）。
 
 ### Events/SettingChangedEvent.cs
 
-`public class SettingChangedEvent : PubSubEvent<SettingChanged>;`（第 7 行）——设置项变更事件（ADR-0006 决策 3）；由 Framework 的 `SettingsService.Set`（`Core/Framework/Settings/SettingsService.cs` 第 128 行，更新内存 + 防抖落盘后）广播，订阅方为设置页与需重启 UX 等消费方（工单 03 就位，当前源码尚无订阅调用点）。
+`public class SettingChangedEvent : PubSubEvent<SettingChanged>;`（第 7 行）——设置项变更事件（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）；由 Framework 的 `SettingsService.Set`（`Core/Framework/Settings/SettingsService.cs` 第 128 行，更新内存 + 防抖落盘后）广播，订阅方为设置页与需重启 UX 等消费方，当前源码尚无订阅调用点。

@@ -143,27 +143,27 @@ public static class Language
     public static string SplashPhaseFailed => Get(nameof(SplashPhaseFailed));
 
     /// <summary>
-    ///     命令面板输入框的水印（ADR-0005）
+    ///     命令面板输入框的水印（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）
     /// </summary>
     public static string CommandPaletteWatermark => Get(nameof(CommandPaletteWatermark));
 
     /// <summary>
-    ///     命令面板无匹配结果时的空态文案（ADR-0005）
+    ///     命令面板无匹配结果时的空态文案（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）
     /// </summary>
     public static string NoMatchingCommands => Get(nameof(NoMatchingCommands));
 
     /// <summary>
-    ///     设置页"常规"分组的显示名（Framework 预置设置分组，ADR-0006）
+    ///     设置页"常规"分组的显示名（Framework 预置设置分组，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）
     /// </summary>
     public static string SettingsGeneralGroupName => Get(nameof(SettingsGeneralGroupName));
 
     /// <summary>
-    ///     设置项"语言"的显示名（Framework 预置，ADR-0006）
+    ///     设置项"语言"的显示名（Framework 预置，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）
     /// </summary>
     public static string SettingsLanguageName => Get(nameof(SettingsLanguageName));
 
     /// <summary>
-    ///     语言设置项成员 ZhCN 的显示名（键按「设置项名称键 + 成员名」约定生成，ADR-0006 决策 8）
+    ///     语言设置项成员 ZhCN 的显示名（键按「设置项名称键 + 成员名」约定生成，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8）
     /// </summary>
     public static string SettingsLanguageNameZhCN => Get(nameof(SettingsLanguageNameZhCN));
 
@@ -173,17 +173,17 @@ public static class Language
     public static string SettingsLanguageNameEnUS => Get(nameof(SettingsLanguageNameEnUS));
 
     /// <summary>
-    ///     设置页需重启设置项被修改后的项级标记文本（ADR-0006 决策 7）
+    ///     设置页需重启设置项被修改后的项级标记文本（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
     /// </summary>
     public static string SettingsRestartPendingMark => Get(nameof(SettingsRestartPendingMark));
 
     /// <summary>
-    ///     设置页顶部「存在未生效的需重启修改」横幅文本（ADR-0006 决策 7）
+    ///     设置页顶部「存在未生效的需重启修改」横幅文本（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
     /// </summary>
     public static string SettingsRestartBannerText => Get(nameof(SettingsRestartBannerText));
 
     /// <summary>
-    ///     设置页重启横幅上「立即重启」按钮的标题（ADR-0006 决策 7）
+    ///     设置页重启横幅上「立即重启」按钮的标题（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
     /// </summary>
     public static string SettingsRestartNowButtonTitle => Get(nameof(SettingsRestartNowButtonTitle));
 }

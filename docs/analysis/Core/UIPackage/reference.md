@@ -23,7 +23,7 @@
 |---|---|---|
 | `Core/Framework/Framework.csproj:13` | ProjectReference | `FrameworkApplication.cs:25` `Styles.AddRange(new WorkstationTheme())`；`FrameworkApplication.cs:27` `VSCodePalette.ApplyTo(Resources)`——主题与调色板的唯一装载点 |
 | `Modules/DashBoard/DashBoard.csproj:23` | ProjectReference | `Icons.DashBoard`（`DashBoardStatusBarItem.cs:17`） |
-| `Modules/Workstation`（经 `Core/Framework` 传递 + using） | using `DigitalWorkstation.Core.UIPackage` | 几乎全部 shell 预置条目与 attribute 菜单类：`Icons.Settings`（`MainWindowViewModel.cs:146` `SettingsIcon`，ActivityBar 底部"设置"导航按钮，ADR-0006）、`Icons.Ready`（`Contributions/ReadyStatusBarItem.cs:16`）、`Icons.Exit`（`Menus/FileMenus.cs:18`）、`Icons.About`（`Menus/HelpMenus.cs:17`）、`Icons.PanelLeft/PanelBottom/PanelRight`（`Menus/ViewPanelMenus.cs` 与 `Commands/ViewCommands.cs`）、`Icons.AlignLeft/AlignRight/AlignCenter/AlignJustify`（`Menus/ViewAlignmentMenus.cs`） |
+| `Modules/Workstation`（经 `Core/Framework` 传递 + using） | using `DigitalWorkstation.Core.UIPackage` | 几乎全部 shell 预置条目与 attribute 菜单类：`Icons.Settings`（`MainWindowViewModel.cs:146` `SettingsIcon`，ActivityBar 底部"设置"导航按钮，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）、`Icons.Ready`（`Contributions/ReadyStatusBarItem.cs:16`）、`Icons.Exit`（`Menus/FileMenus.cs:18`）、`Icons.About`（`Menus/HelpMenus.cs:17`）、`Icons.PanelLeft/PanelBottom/PanelRight`（`Menus/ViewPanelMenus.cs` 与 `Commands/ViewCommands.cs`）、`Icons.AlignLeft/AlignRight/AlignCenter/AlignJustify`（`Menus/ViewAlignmentMenus.cs`） |
 
 场景归纳：`WorkstationTheme` 与 `VSCodePalette` 只被 Framework 的应用初始化使用一次；`Icons` 被所有模块的贡献类（导航项/面板 tab/状态栏项的 `IconPath` 属性、菜单项的 `[MenuItem]` `Icon` 命名属性、命令的 `[Command]` `Icon` 命名属性）广泛引用。
 

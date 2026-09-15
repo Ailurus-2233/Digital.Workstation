@@ -23,7 +23,7 @@
         <!--  共享部件模板：Content="{Binding}" 传入窗口 ViewModel 作为 DataContext  -->
 
         <!--  ActivityBar：顶部为模块贡献的导航项，底部为钉住工具视图区（可为空）与内置"设置"导航按钮
-              （纯导航，发布 OpenMainViewEvent，ADR-0006 决策 6）；与 SideBar 同色无缝衔接；右侧 Margin 2 与相邻卡片的 Margin 2 合成 4px 间隙  -->
+              （纯导航，发布 OpenMainViewEvent，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6）；与 SideBar 同色无缝衔接；右侧 Margin 2 与相邻卡片的 Margin 2 合成 4px 间隙  -->
         <DataTemplate x:Key="ShellActivityBar">
             <Border
                 Background="{DynamicResource SemiColorNavBackground}"
@@ -607,7 +607,7 @@
         <Setter Property="Foreground" Value="{DynamicResource ChromeStatusBarForeground}" />
     </Style>
 
-    <!--  标题栏菜单栏（FrameworkWindow 内置，ADR-0001）：顶层 VS Code 式紧凑行高  -->
+    <!--  标题栏菜单栏（FrameworkWindow 内置，ADR-0001 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）：顶层 VS Code 式紧凑行高  -->
     <Style Selector="Menu.chrome-menu > MenuItem">
         <Setter Property="MinHeight" Value="30" />
         <Setter Property="Padding" Value="10,0" />
@@ -626,7 +626,7 @@
     <Style Selector="Menu.chrome-menu MenuItem PathIcon">
         <Setter Property="Foreground" Value="{DynamicResource SemiColorText1}" />
     </Style>
-    <!--  命令面板（FrameworkWindow 内置，ADR-0005）：顶部居中浮层，仿 VS Code Quick Open  -->
+    <!--  命令面板（FrameworkWindow 内置，ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：顶部居中浮层，仿 VS Code Quick Open  -->
     <Style Selector="windows|CommandPalette">
         <Setter Property="Background" Value="{DynamicResource SemiColorBackground1}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />

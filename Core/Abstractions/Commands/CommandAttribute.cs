@@ -1,7 +1,7 @@
 namespace DigitalWorkstation.Core.Abstractions.Commands;
 
 /// <summary>
-///     声明一个命令：标注在任何类的公共实例方法上（免类级 attribute，ADR-0005），
+///     声明一个命令：标注在任何类的公共实例方法上（免类级 attribute，ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)），
 ///     经 CommandRegistration.RegisterCommands 扫描后生成 <see cref="ICommandContribution" /> 注册进容器。
 ///     方法签名仅支持无参 <c>void M()</c> 与 <c>Task M()</c>，非法签名在扫描时记日志跳过
 /// </summary>

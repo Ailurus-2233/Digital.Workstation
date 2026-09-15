@@ -14,15 +14,15 @@
 
 三个项目通过 `<ProjectReference Include="..\..\Core\Resource\Resource.csproj" />`（Framework 为 `..\Resource\Resource.csproj`）引用本模块（解决方案 `Digital.Workstation.slnx:7` 把它列在 `/Core/` 文件夹下）：
 
-### 1. `Core/Framework/Framework.csproj`（:14）— 框架层（ADR-0001 新增）
+### 1. `Core/Framework/Framework.csproj`（:14）— 框架层（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 新增）
 
-场景：Attribute 菜单/命令注册把 Attribute 携带的资源键字符串解析为当前 UI 区域性下的显示文案——`Menus/MenuRegistration.cs:85` 用 `Language.Get(item.Title)` 解析 `MenuItemAttribute` 的 title 键；`Menus/MenuTreeBuilder.cs:59,74,98` 用 `Language.Get(node.Segment)` 解析菜单路径段键（兼作排序键）；`Commands/CommandRegistration.cs:70` 用 `Language.Get(attribute.Title)` 解析 `CommandAttribute` 的 title 键（ADR-0005）；`Windows/CommandPalette.cs` 直接读 `Language.CommandPaletteWatermark`（输入框水印）与 `Language.NoMatchingCommands`（空态文案）两个属性（ADR-0005）。**这是 `Language.Get(string)` 的首批真实消费方**，此前没有任何消费方直接调用 `Get`。
+场景：Attribute 菜单/命令注册把 Attribute 携带的资源键字符串解析为当前 UI 区域性下的显示文案——`Menus/MenuRegistration.cs:85` 用 `Language.Get(item.Title)` 解析 `MenuItemAttribute` 的 title 键；`Menus/MenuTreeBuilder.cs:59,74,98` 用 `Language.Get(node.Segment)` 解析菜单路径段键（兼作排序键）；`Commands/CommandRegistration.cs:70` 用 `Language.Get(attribute.Title)` 解析 `CommandAttribute` 的 title 键（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）；`Windows/CommandPalette.cs` 直接读 `Language.CommandPaletteWatermark`（输入框水印）与 `Language.NoMatchingCommands`（空态文案）两个属性（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）。**这是 `Language.Get(string)` 的首批真实消费方**，此前没有任何消费方直接调用 `Get`。
 
 ### 2. `Modules/Workstation/Workstation.csproj`（:11）— 宿主 shell
 
 场景一：shell 预置的界面贡献项取标题文案。`using DigitalWorkstation.Core.Resource;` 出现在：
 
-- `Modules/Workstation/MainWindowViewModel.cs:151` — ActivityBar 底部"设置"导航按钮标题（`SettingsTitle` 属性，ADR-0006）
+- `Modules/Workstation/MainWindowViewModel.cs:151` — ActivityBar 底部"设置"导航按钮标题（`SettingsTitle` 属性，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）
 - `Modules/Workstation/Contributions/ReadyStatusBarItem.cs:14` — 状态栏"就绪"
 
 场景二：菜单类在 Attribute 里携带 Language 资源键字符串（不 `using` 本模块、不直接访问 `Language` 属性，键由 Framework 的 `MenuRegistration`/`MenuTreeBuilder` 解析）：
@@ -31,7 +31,7 @@
 - `Modules/Workstation/Menus/ViewPanelMenus.cs:11,14,20,26` — `MenuViewTitle` + 三个面板显隐切换键
 - `Modules/Workstation/Menus/ViewAlignmentMenus.cs:12,15,21,27,33` — `MenuViewTitle` + 四档对齐键
 - `Modules/Workstation/Menus/ViewLayoutMenus.cs:10,13` — `MenuViewTitle` + 重置布局键（`ResetLayoutTitle`）
-- `Modules/Workstation/Commands/ViewCommands.cs:13,19,25,31` — 四个 `[Command]` 标题键（复用 `ToggleSideBarTitle`/`ToggleBottomPanelTitle`/`ToggleAuxiliaryPanelTitle`/`ResetLayoutTitle`，由 Framework 的 `CommandRegistration` 解析，ADR-0005）
+- `Modules/Workstation/Commands/ViewCommands.cs:13,19,25,31` — 四个 `[Command]` 标题键（复用 `ToggleSideBarTitle`/`ToggleBottomPanelTitle`/`ToggleAuxiliaryPanelTitle`/`ResetLayoutTitle`，由 Framework 的 `CommandRegistration` 解析，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）
 - `Modules/Workstation/Menus/HelpMenus.cs:11,17` — `[MenuGroup("MenuHelpTitle", ...)]`、`[MenuItem("MenuAboutTitle", ...)]`
 
 ### 3. `Modules/DashBoard/DashBoard.csproj`（:22）— 启动台模块

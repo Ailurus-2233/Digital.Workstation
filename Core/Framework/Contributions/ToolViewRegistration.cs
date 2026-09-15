@@ -7,7 +7,7 @@ using DigitalWorkstation.Core.Resource;
 namespace DigitalWorkstation.Core.Framework.Contributions;
 
 /// <summary>
-///     attribute 工具视图注册（ADR-0002）：扫描程序集中标注 <see cref="ToolViewAttribute" /> 的 View 类，
+///     attribute 工具视图注册（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：扫描程序集中标注 <see cref="ToolViewAttribute" /> 的 View 类，
 ///     为每个合法类生成一个 <see cref="ToolViewContribution" /> 元数据注册进容器，并注册 View 类型本身。
 ///     扫描只在模块注册时发生一次；不做全局程序集扫描
 /// </summary>

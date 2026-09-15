@@ -13,6 +13,7 @@ using DigitalWorkstation.Core.Framework.Settings;
 using DigitalWorkstation.Core.Framework.WindowManager;
 using DigitalWorkstation.Core.Models.Events;
 using DigitalWorkstation.Core.UIPackage;
+using DigitalWorkstation.Core.Resource;
 using Prism.DryIoc;
 
 namespace DigitalWorkstation.Core.Framework;
@@ -33,7 +34,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
     }
 
     /// <summary>
-    ///     框架初始化完成后执行启动序列：初始化核心服务 → 逐模块异步加载 → 就绪后显示主窗口（ADR-0004）。
+    ///     框架初始化完成后执行启动序列：初始化核心服务 → 逐模块异步加载 → 就绪后显示主窗口（ADR-0004 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）。
     ///     不调用 base：base 会把尚未完成模块加载的 MainWindow 直接设为桌面生命周期主窗口
     /// </summary>
     public override void OnFrameworkInitializationCompleted()
@@ -50,14 +51,14 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
     }
 
     /// <summary>
-    ///     抑制 Prism 同步 InitializeModules 一次性加载；模块改由启动序列逐模块异步加载（ADR-0004）
+    ///     抑制 Prism 同步 InitializeModules 一次性加载；模块改由启动序列逐模块异步加载（ADR-0004 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）
     /// </summary>
     protected override void InitializeModules()
     {
     }
 
     /// <summary>
-    ///     供子类提供启动台窗口；模块加载进度与失败决策均经启动台呈现（ADR-0004）
+    ///     供子类提供启动台窗口；模块加载进度与失败决策均经启动台呈现（ADR-0004 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）
     /// </summary>
     protected abstract Window CreateSplashWindow();
 
@@ -155,16 +156,16 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
         // 注册 shell 贡献收集器
         containerRegistry.RegisterSingleton<ShellContributionCollector>();
 
-        // 注册布局持久化服务（ADR-0002）：layout.json 读/防抖写/删，机制在 Framework、接线在 shell 模块
+        // 注册布局持久化服务（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：layout.json 读/防抖写/删，机制在 Framework、接线在 shell 模块
         containerRegistry.RegisterSingleton<LayoutPersistence>();
 
-        // 注册设置服务（ADR-0006 决策 3/4）：与窗口管理器同型——显式构造实例并以工厂注册，
+        // 注册设置服务（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4）：与窗口管理器同型——显式构造实例并以工厂注册，
         // 以便启动时一次性 Load 入内存的时机明确
         var settingsService = new SettingsService(Container.Resolve<IEventAggregator>(), Container);
         settingsService.Load();
         containerRegistry.RegisterSingleton<ISettingsService>(() => settingsService);
 
-        // 注册 Framework 自身设置项（常规/语言，ADR-0006 决策 9），模块设置项由各自 RegisterTypes 注册
+        // 注册 Framework 自身设置项（常规/语言，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 9），模块设置项由各自 RegisterTypes 注册
         containerRegistry.RegisterSettings(typeof(SettingsService).Assembly);
 
         ApplyLanguageSetting(settingsService);
@@ -193,17 +194,18 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
     }
 
     /// <summary>
-    ///     按已存语言设置应用 UI 区域性（ADR-0006 决策 7：下次启动由消费方读取生效）。
+    ///     按已存语言设置应用 UI 区域性（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7：下次启动由消费方读取生效）。
     ///     必须先于一切模块 RegisterTypes——菜单/工具视图标题在注册扫描时经 Language.Get 一次性解析；
     ///     未存值时回退声明默认值（zh-CN），与操作系统区域性无关
     /// </summary>
-    private static void ApplyLanguageSetting(ISettingsService settings)
+    private void ApplyLanguageSetting(ISettingsService settings)
     {
         var culture = settings.Get<UiLanguage>(GeneralSettings.LanguageSettingId).ToCultureInfo();
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
         CultureInfo.CurrentCulture = culture;
         CultureInfo.CurrentUICulture = culture;
+        Name = Language.ProductName;
     }
 
     /// <summary>

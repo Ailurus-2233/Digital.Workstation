@@ -6,7 +6,7 @@
 2. **`ModuleName` 可空性按阶段约定**：仅 `StartupPhase.LoadingModules` 阶段非 null（StartupProgress.cs 注释）。类型系统不强制——订阅方 `DashBoardWindowViewModel.OnProgress` 第 48 行用 `progress.Phase == StartupPhase.LoadingModules` 判断后才读 `ModuleName`。在非 LoadingModules 阶段传非 null 值不会报错，但违反契约；在 LoadingModules 阶段传 null 会让启动台模块名显示空白。
 3. **线程亲和性不对称**：启动台订阅显式用 `ThreadOption.UIThread`（DashBoardWindowViewModel.cs 第 19-20 行），主窗口订阅用默认选项（MainWindowViewModel.cs 第 48-51 行）——后者成立只是因为当前发布方都在 UI 线程上下文发布。若将来把 `OpenMainViewEvent`/`TogglePanelVisibilityEvent` 移到后台线程发布，主窗口侧会在非 UI 线程触碰 UI 绑定。
 4. **`StartupFailureActionEvent` 是一次性请求/响应，必须成对**：`WaitForFailureActionAsync`（FrameworkApplication.cs 第 118-126 行）订阅后 await，收到第一个决策即 `Unsubscribe(token)`。隐含约束：**每次失败必须恰好有一次决策发布**——无人发布则启动序列永久挂起（无超时无取消）；多订阅方同时发布也只有第一个生效。
-5. **`OpenMainViewEvent` 的发布方是封闭集合**：SideBar 内交互与 shell 的"设置"导航按钮（`MainWindowViewModel.OpenSettings`，ADR-0006 决策 6）。注释明确 **ActivityBar 导航切换**不发布本事件——注意设置按钮虽位于 ActivityBar 底部，但它是纯导航按钮而非导航切换，不在此限。绕过这两类语义在别处发布会打破"ActivityBar 切换不改 MainContent"的设计区分。
+5. **`OpenMainViewEvent` 的发布方是封闭集合**：SideBar 内交互与 shell 的"设置"导航按钮（`MainWindowViewModel.OpenSettings`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6）。注释明确 **ActivityBar 导航切换**不发布本事件——注意设置按钮虽位于 ActivityBar 底部，但它是纯导航按钮而非导航切换，不在此限。绕过这两类语义在别处发布会打破"ActivityBar 切换不改 MainContent"的设计区分。
 6. **弱引用订阅的生命周期假设**：MainWindowViewModel 用 `Subscribe(OpenMainView)` 默认参数（弱引用）；DashBoard 显式传 `keepSubscriberReferenceAlive: true`。订阅方对象若早于事件源被回收，弱引用订阅会**静默失效**——没有任何异常，事件照常发布但无人接收。
 
 ## 易错改法
@@ -20,7 +20,7 @@
 
 ## 历史踩坑线索
 
-- **ADR-0004 是"悬空引用"**：`StartupPhase.cs`/`StartupProgressEvent.cs`/`ModuleLoadFailedEvent.cs` 的注释与 README 第 47-51 行都引用 ADR-0004，但仓库中不存在该 ADR 文档（docs/ 下无 adr 目录）。决策细节只能从代码注释还原；改启动流程前无法回查原始决策，属已知风险。
+- **[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)**：`StartupPhase.cs`/`StartupProgressEvent.cs`/`ModuleLoadFailedEvent.cs` 的注释与 README 第 47-51 行均引用启动序列决策；该决策记录见 [`docs/adr/0004-startup-sequence.md`](../../adr/0004-startup-sequence.md)，改启动流程前先回查其阶段边界与失败决策语义。
 - **防御性注释即契约**：`StartupPhase` 注释特意声明"Launcher 引导发生在 Avalonia 启动前，不在进度覆盖范围内"——说明曾有人（或预期有人）疑惑启动台为何不覆盖最早阶段；该注释是防止错误扩展进度范围的防线。
-- **`OpenMainViewEvent` 注释的否定句式**：「ActivityBar 导航切换不发布本事件，MainContent 保持不变」——否定式契约通常对应一次实际踩坑或评审纠正，改导航行为时优先尊重它。ADR-0006 决策 6 后发布方扩为「SideBar 内交互 + shell"设置"导航按钮」两处，该否定句仍精确成立：它限定的是**导航切换**这一交互，而设置按钮是纯导航命令。
+- **`OpenMainViewEvent` 注释的否定句式**：「ActivityBar 导航切换不发布本事件，MainContent 保持不变」——否定式契约通常对应一次实际踩坑或评审纠正，改导航行为时优先尊重它。[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6 后发布方扩为「SideBar 内交互 + shell"设置"导航按钮」两处，该否定句仍精确成立：它限定的是**导航切换**这一交互，而设置按钮是纯导航命令。
 - **`TaskCreationOptions.RunContinuationsAsynchronously`**（FrameworkApplication.cs 第 121 行）：没有这个选项时 `TrySetResult` 会让 await 续体在发布者（按钮点击）线程内联执行，把启动序列的后续模块加载跑到 UI 事件回调里——该选项的存在暗示此坑被考虑过。

@@ -1,6 +1,6 @@
 # Abstractions — 对外接口与调用方式
 
-命名空间六组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Commands`（Commands/ 目录，命令契约 + 注册 attribute 两类型，ADR-0005）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，`ShellRegions` 与 `WellKnownViews` 两个常量类）、`DigitalWorkstation.Core.Abstractions.Settings`（Settings/ 目录，设置分组/设置项两 attribute + 两元数据类 + `ISettingsService`，ADR-0006）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
+命名空间六组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Commands`（Commands/ 目录，命令契约 + 注册 attribute 两类型，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，`ShellRegions` 与 `WellKnownViews` 两个常量类）、`DigitalWorkstation.Core.Abstractions.Settings`（Settings/ 目录，设置分组/设置项两 attribute + 两元数据类 + `ISettingsService`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
 
 ## Shell 贡献契约（Contributions/、Menus/ 与 Commands/，Region 与主视图 Id 常量在 Regions/）
 
@@ -20,7 +20,7 @@ Prism Region 名称常量，值均经 `nameof` 生成：
 
 ### `WellKnownViews`（static class，Regions/WellKnownViews.cs）
 
-shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell 侧导航按钮与贡献主视图的模块都引用本常量，从而互不依赖。与 `ShellRegions` 的 `nameof` 惯例不同，值为字面量字符串（主视图 Id 不是代码标识符）：
+shell 与模块共同知晓的主视图 Id 常量（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 5）：shell 侧导航按钮与贡献主视图的模块都引用本常量，从而互不依赖。与 `ShellRegions` 的 `nameof` 惯例不同，值为字面量字符串（主视图 Id 不是代码标识符）：
 
 | 常量 | 值 | 语义 |
 |---|---|---|
@@ -32,7 +32,7 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 
 ### `ToolViewAttribute`（Contributions/ToolViewAttribute.cs）
 
-`[AttributeUsage(AttributeTargets.Class)]`（第 29 行），声明一个 View 类是**工具视图（Tool View）**（ADR-0002 `docs/adr/0002-toolview-drag-persistence.md`）：带图标与标题的可停靠界面单元。模块在 `RegisterTypes` 调 `RegisterToolViews(Assembly)`（Framework 侧 `ToolViewRegistration`）扫描注册；`Default` 只是默认归属——用户拖拽后的实际归属以持久化布局为准。主构造参 `string id, string titleKey`（第 30 行）。
+`[AttributeUsage(AttributeTargets.Class)]`（第 29 行），声明一个 View 类是**工具视图（Tool View）**（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md) `docs/adr/0002-toolview-drag-persistence.md`）：带图标与标题的可停靠界面单元。模块在 `RegisterTypes` 调 `RegisterToolViews(Assembly)`（Framework 侧 `ToolViewRegistration`）扫描注册；`Default` 只是默认归属——用户拖拽后的实际归属以持久化布局为准。主构造参 `string id, string titleKey`（第 30 行）。
 
 | 成员 | 类型 | 语义 |
 |---|---|---|
@@ -50,11 +50,11 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 - `string Id { get; }` — 稳定标识，**跨模块全局唯一**；shell 按 Id 索引全部贡献；注释建议以模块名做前缀（如 `dashboard.overview`）
 - `Type ViewType { get; }` — 打开时 MainContent 显示的视图类型，经容器解析
 
-调用链：SideBar 内交互或 shell"设置"导航按钮发出 `OpenMainViewEvent`（负载为 `Id`，设置按钮用 `WellKnownViews.Settings`，ADR-0006 决策 6）→ shell 找到对应贡献 → 容器解析 `ViewType` → 替换 MainContent 当前视图。
+调用链：SideBar 内交互或 shell"设置"导航按钮发出 `OpenMainViewEvent`（负载为 `Id`，设置按钮用 `WellKnownViews.Settings`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6）→ shell 找到对应贡献 → 容器解析 `ViewType` → 替换 MainContent 当前视图。
 
 ### `ToolViewContribution`（sealed class，Contributions/ToolViewContribution.cs）
 
-工具视图的贡献元数据（ADR-0002）：**不由模块手写**，由 Framework 侧 `RegisterToolViews` 扫描 `ToolViewAttribute` 生成并以单例注册进容器；shell 收集后渲染到 `Placement` 对应的 Bar；激活时经容器解析 `ViewType` 显示内容。全部属性为 `required init`（第 14-44 行）。
+工具视图的贡献元数据（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：**不由模块手写**，由 Framework 侧 `RegisterToolViews` 扫描 `ToolViewAttribute` 生成并以单例注册进容器；shell 收集后渲染到 `Placement` 对应的 Bar；激活时经容器解析 `ViewType` 显示内容。全部属性为 `required init`（第 14-44 行）。
 
 | 属性 | 类型 | 语义 |
 |---|---|---|
@@ -70,7 +70,7 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 
 ### `IMenuItemContribution`（Menus/IMenuItemContribution.cs）
 
-模块向菜单栏贡献菜单项的契约（路径/分组模型，见 ADR-0001 `docs/adr/0001-attribute-menu-registration.md`）。文件 `using System.Windows.Input;`。**通常不直接实现本接口**：模块用 `MenuGroupAttribute`/`MenuItemAttribute` 标注普通类（见下两节），经 Framework 侧 `MenuRegistration.RegisterMenus` 扫描后生成本契约的实现注册进容器；shell 收集全部实现后由 `MenuTreeBuilder` 建树（分组排序、组间分隔线）并渲染。
+模块向菜单栏贡献菜单项的契约（路径/分组模型，见 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) `docs/adr/0001-attribute-menu-registration.md`）。文件 `using System.Windows.Input;`。**通常不直接实现本接口**：模块用 `MenuGroupAttribute`/`MenuItemAttribute` 标注普通类（见下两节），经 Framework 侧 `MenuRegistration.RegisterMenus` 扫描后生成本契约的实现注册进容器；shell 收集全部实现后由 `MenuTreeBuilder` 建树（分组排序、组间分隔线）并渲染。
 
 | 属性 | 类型 | 语义与排序规则 |
 |---|---|---|
@@ -83,7 +83,7 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 | `Order` | `int` | 条目在组内的排序权重，小者靠前；同 `Order` 按解析后的 `Title` 字典序（Ordinal） |
 | `Command` | `ICommand` | 点击菜单项执行的命令（`System.Windows.Input.ICommand`） |
 
-与旧模型的差异（ADR-0001）：删除 `Id`（菜单链路无任何消费方）与「追加到哪个顶层菜单」的封闭枚举定位；定位完全由 `Path` + `Group`/`GroupOrder` + `NodeOrder`/`Order` 表达，可表达多级子菜单、命名分组与组间自动分隔线。建树与排序语义（顶层不分组、子菜单组间插分隔线、位次冲突取最小）在 Framework 侧 `MenuTreeBuilder`，不在本程序集。
+与旧模型的差异（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）：删除 `Id`（菜单链路无任何消费方）与「追加到哪个顶层菜单」的封闭枚举定位；定位完全由 `Path` + `Group`/`GroupOrder` + `NodeOrder`/`Order` 表达，可表达多级子菜单、命名分组与组间自动分隔线。建树与排序语义（顶层不分组、子菜单组间插分隔线、位次冲突取最小）在 Framework 侧 `MenuTreeBuilder`，不在本程序集。
 
 ### `MenuGroupAttribute`（Menus/MenuGroupAttribute.cs）
 
@@ -96,7 +96,7 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 | `GroupOrder`（命名属性） | `int` | 组的排序权重，小者靠前；同名组多处声明冲突时取最小值 |
 | `Order`（命名属性） | `int` | 顶层菜单或末端子菜单节点在父级中的排序权重；多处声明取最小值。**缺省 `int.MaxValue`**（MenuGroupAttribute.cs 第 34 行）：未声明视为「无位次意见」，排最后，且不参与多处声明取最小——防止忘写 `Order` 的类以缺省 0 把所在菜单钉到最前 |
 
-路径段数决定三个命名属性的语义（ADR-0001 第 10 条）：**单段路径**（如 `"MenuFileTitle"`）时 `Group`/`GroupOrder` 描述方法项在该菜单内的分组，`Order` 描述顶层菜单在菜单栏的位次；**多段路径**（如 `"MenuFileTitle/Export"`）时三者描述末端子菜单节点在其父菜单内的分组与位次，方法项进入末端菜单的默认组。一个 attribute 只有一套分组参数，深层子菜单内部分组需拆类声明。含空段（`"A//B"`）的路径整体非法，扫描时记日志跳过。
+路径段数决定三个命名属性的语义（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 第 10 条）：**单段路径**（如 `"MenuFileTitle"`）时 `Group`/`GroupOrder` 描述方法项在该菜单内的分组，`Order` 描述顶层菜单在菜单栏的位次；**多段路径**（如 `"MenuFileTitle/Export"`）时三者描述末端子菜单节点在其父菜单内的分组与位次，方法项进入末端菜单的默认组。一个 attribute 只有一套分组参数，深层子菜单内部分组需拆类声明。含空段（`"A//B"`）的路径整体非法，扫描时记日志跳过。
 
 ### `MenuItemAttribute`（Menus/MenuItemAttribute.cs）
 
@@ -108,26 +108,26 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 | `Order`（命名属性） | `int` | 同组内的排序权重，小者靠前；同 `Order` 按解析后的标题字典序 |
 | `Icon`（命名属性） | `string?` | 图标的 StreamGeometry path 字符串（取 `Icons` 常量）；`null` = 无图标 |
 
-方法签名仅支持无参 `void M()` 与 `Task M()`；非法签名（带参、返回值非 `void`/`Task`）在扫描时记 `Logger.Warning` 跳过（ADR-0001 第 7 条）。
+方法签名仅支持无参 `void M()` 与 `Task M()`；非法签名（带参、返回值非 `void`/`Task`）在扫描时记 `Logger.Warning` 跳过（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 第 7 条）。
 
 ### `ICommandContribution`（Commands/ICommandContribution.cs）
 
-模块向全局命令列表贡献命令的契约（扁平模型，见 ADR-0005 `docs/adr/0005-command-registration-palette.md`）。文件 `using System.Windows.Input;`。**通常不直接实现本接口**：模块用 `CommandAttribute` 标注普通类的方法（见下节），经 Framework 侧 `CommandRegistration.RegisterCommands` 扫描后生成本契约的实现注册进容器；shell 收集全部实现后交给命令面板呈现，并为带 `Gesture` 的命令生成窗口级 KeyBinding。
+模块向全局命令列表贡献命令的契约（扁平模型，见 [ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) `docs/adr/0005-command-registration-palette.md`）。文件 `using System.Windows.Input;`。**通常不直接实现本接口**：模块用 `CommandAttribute` 标注普通类的方法（见下节），经 Framework 侧 `CommandRegistration.RegisterCommands` 扫描后生成本契约的实现注册进容器；shell 收集全部实现后交给命令面板呈现，并为带 `Gesture` 的命令生成窗口级 KeyBinding。
 
 | 属性 | 类型 | 语义与排序规则 |
 |---|---|---|
 | `Id` | `string` | 稳定标识：默认「声明类全名.方法名」，可经 attribute 覆盖；全局唯一，冲突时后注册者被丢弃并记日志。MRU 记忆与键绑定引用的依据 |
 | `Title` | `string` | 显示标题，**已按当前 UI 区域性解析**（非资源键） |
 | `Gesture` | `string?` | 快捷键文本（如 `"Ctrl+Shift+P"`）；`null` = 无快捷键。解析为窗口级 KeyBinding 由 Framework 侧 `FrameworkWindow.RegisterCommandGestures` 负责 |
-| `IconPath` | `string?` | 图标 StreamGeometry path 字符串，由 PathIcon 消费并随主题变色；`null` = 无图标（惯例同菜单，ADR-0001 决策 8） |
+| `IconPath` | `string?` | 图标 StreamGeometry path 字符串，由 PathIcon 消费并随主题变色；`null` = 无图标（惯例同菜单，[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 决策 8） |
 | `Order` | `int` | 命令列表中的排序权重，小者靠前；同 `Order` 按解析后的 `Title` 字典序（Ordinal） |
 | `Command` | `ICommand` | 执行命令（`System.Windows.Input.ICommand`），命令面板选中或快捷键触发时调用 |
 
-与菜单契约的差异（ADR-0005 决策 1）：命令是扁平列表成员——有稳定 `Id`、无 `Path`/`Group` 定位；两套体系互不相干，菜单项不进命令面板。图标惯例与菜单一致（`IconPath?`，`null` = 无图标）。
+与菜单契约的差异（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) 决策 1）：命令是扁平列表成员——有稳定 `Id`、无 `Path`/`Group` 定位；两套体系互不相干，菜单项不进命令面板。图标惯例与菜单一致（`IconPath?`，`null` = 无图标）。
 
 ### `CommandAttribute`（Commands/CommandAttribute.cs）
 
-`[AttributeUsage(AttributeTargets.Method)]`（第 8 行），声明一个命令，标注在**任何类**的公共实例方法上（免类级 attribute，ADR-0005 决策 2）。主构造参 `string title`（第 9 行）。
+`[AttributeUsage(AttributeTargets.Method)]`（第 8 行），声明一个命令，标注在**任何类**的公共实例方法上（免类级 attribute，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) 决策 2）。主构造参 `string title`（第 9 行）。
 
 | 成员 | 类型 | 语义 |
 |---|---|---|
@@ -152,7 +152,7 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 
 ## 设置契约（Settings/）
 
-设置项注册契约（ADR-0006 决策 1）：模块类标 `SettingGroupAttribute` 声明分组、公共静态可读属性标 `SettingItemAttribute` 声明设置项，经 Framework 侧 `SettingRegistration.RegisterSettings(Assembly)` 扫描生成 `SettingGroupContribution`/`SettingItemContribution` 元数据（单例注册）；设置值读写一律经 `ISettingsService`（ADR-0006 决策 3），声明属性体不被执行。
+设置项注册契约（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1）：模块类标 `SettingGroupAttribute` 声明分组、公共静态可读属性标 `SettingItemAttribute` 声明设置项，经 Framework 侧 `SettingRegistration.RegisterSettings(Assembly)` 扫描生成 `SettingGroupContribution`/`SettingItemContribution` 元数据（单例注册）；设置值读写一律经 `ISettingsService`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3），声明属性体不被执行。
 
 ### `SettingGroupAttribute`（Settings/SettingGroupAttribute.cs）
 
@@ -161,7 +161,7 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 | 成员 | 类型 | 语义 |
 |---|---|---|
 | `Name`（构造参，get-only，第 15 行） | `string` | 分组显示名的 Language 资源键，运行时解析，缺键回退键名本身；同名分组全局合并 |
-| `Order`（命名属性，第 20 行） | `int` | 分组在设置页分组树中的排序权重，小者靠前；同名多处声明冲突时取最小值（同 ADR-0001 决策 4）。缺省 `0` |
+| `Order`（命名属性，第 20 行） | `int` | 分组在设置页分组树中的排序权重，小者靠前；同名多处声明冲突时取最小值（同 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 决策 4）。缺省 `0` |
 
 仅被设置项引用而无本 attribute 声明的分组也可用——由设置项引用隐式产生，位次视为 0（收集侧补出）。
 
@@ -172,11 +172,11 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 | 成员 | 类型 | 语义 |
 |---|---|---|
 | `Group`（构造参，get-only，第 21 行） | `string` | 所属分组的名称键（`SettingGroupAttribute.Name`），按名称全局合并归组 |
-| `Name`（构造参，get-only，第 26 行） | `string` | 设置项显示名的 Language 资源键，运行时解析，缺键回退键名本身（ADR-0006 决策 2） |
-| `Id`（命名属性，第 16 行） | `string?` | 稳定标识；`null` = 默认「声明类全名.属性名」（仿命令 Id 规则，ADR-0005）；全局唯一，是 settings.json 的 key 与 `ISettingsService` 读写的依据 |
-| `DefaultValue`（命名属性，第 33 行） | `object?` | 默认值：用户从未修改时 `Get<T>` 的返回值（ADR-0006 决策 3）；必须是属性类型的编译期常量（attribute 实参限制），类型不匹配扫描时记日志跳过；枚举成员显示名走 Language 资源键，键按「设置项名称键 + 成员名」约定生成（决策 8）。缺省 `null` |
+| `Name`（构造参，get-only，第 26 行） | `string` | 设置项显示名的 Language 资源键，运行时解析，缺键回退键名本身（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 2） |
+| `Id`（命名属性，第 16 行） | `string?` | 稳定标识；`null` = 默认「声明类全名.属性名」（仿命令 Id 规则，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）；全局唯一，是 settings.json 的 key 与 `ISettingsService` 读写的依据 |
+| `DefaultValue`（命名属性，第 33 行） | `object?` | 默认值：用户从未修改时 `Get<T>` 的返回值（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）；必须是属性类型的编译期常量（attribute 实参限制），类型不匹配扫描时记日志跳过；枚举成员显示名走 Language 资源键，键按「设置项名称键 + 成员名」约定生成（决策 8）。缺省 `null` |
 | `Order`（命名属性，第 38 行） | `int` | 同分组内的排序权重，小者靠前；同 `Order` 按名称键字典序。缺省 `0` |
-| `RequiresRestart`（命名属性，第 43 行） | `bool` | 是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动由消费方读取生效（ADR-0006 决策 7）。缺省 `false` |
+| `RequiresRestart`（命名属性，第 43 行） | `bool` | 是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动由消费方读取生效（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）。缺省 `false` |
 
 ### `SettingGroupContribution`（sealed class，Settings/SettingGroupContribution.cs）
 
@@ -189,7 +189,7 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 
 ### `SettingItemContribution`（sealed class，Settings/SettingItemContribution.cs）
 
-设置项的贡献元数据：**不由模块手写**，由 Framework 侧 `RegisterSettings` 扫描 `SettingItemAttribute` 生成并注册进容器；设置页据此渲染编辑器（控件由 `ValueType` 推断，ADR-0006 决策 8），`ISettingsService` 据此取 `DefaultValue` 作为未修改时的读值。全部属性为 `required init`（第 13-43 行）。
+设置项的贡献元数据：**不由模块手写**，由 Framework 侧 `RegisterSettings` 扫描 `SettingItemAttribute` 生成并注册进容器；设置页据此渲染编辑器（控件由 `ValueType` 推断，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8），`ISettingsService` 据此取 `DefaultValue` 作为未修改时的读值。全部属性为 `required init`（第 13-43 行）。
 
 | 属性 | 类型 | 语义 |
 |---|---|---|
@@ -197,13 +197,13 @@ shell 与模块共同知晓的主视图 Id 常量（ADR-0006 决策 5）：shell
 | `Group` | `string` | 所属分组的名称键（`SettingGroupAttribute.Name`），按名称全局合并归组 |
 | `Name` | `string` | 设置项显示名的 Language 资源键（**非已解析文案**），缺键回退键名本身 |
 | `ValueType` | `Type` | 设置值类型（声明属性的类型）：编辑器推断与 JSON 反序列化的依据 |
-| `DefaultValue` | `object?` | 默认值：用户从未修改时的取值，不是单独存储层（ADR-0006 决策 3） |
+| `DefaultValue` | `object?` | 默认值：用户从未修改时的取值，不是单独存储层（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3） |
 | `Order` | `int` | 同分组内的排序权重，小者靠前；同 `Order` 按 `Name` 键字典序 |
-| `RequiresRestart` | `bool` | 是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动生效（ADR-0006 决策 7） |
+| `RequiresRestart` | `bool` | 是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动生效（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7） |
 
 ### `ISettingsService`（Settings/ISettingsService.cs）
 
-设置值读写服务（ADR-0006 决策 3）：Framework 实现，启动时一次性把 settings.json 加载入内存；读纯走内存——已修改取用户值，未修改取声明的默认值（默认值不是单独存储层）；写 = 更新内存 + 防抖落盘 + 广播 `SettingChangedEvent`（事件契约在 Core/Models）。另承载「重启后生效」判定（决策 7）。
+设置值读写服务（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）：Framework 实现，启动时一次性把 settings.json 加载入内存；读纯走内存——已修改取用户值，未修改取声明的默认值（默认值不是单独存储层）；写 = 更新内存 + 防抖落盘 + 广播 `SettingChangedEvent`（事件契约在 Core/Models）。另承载「重启后生效」判定（决策 7）。
 
 | 成员 | 签名（行号） | 语义 |
 |---|---|---|

@@ -14,7 +14,7 @@ public sealed record ShellLayoutState
     public string? SelectedActivity { get; init; }
 
     /// <summary>
-    ///     ActivityBar 顶部段导航项 Id 的有序列表（ADR-0002）；钉住项（AllowMove=false）在底部段，
+    ///     ActivityBar 顶部段导航项 Id 的有序列表（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）；钉住项（AllowMove=false）在底部段，
     ///     不参与拖拽，不入此列
     /// </summary>
     public IReadOnlyList<string> ActivityBarItems { get; init; } = [];
@@ -98,7 +98,7 @@ public sealed record ShellLayoutState
     }
 
     /// <summary>
-    ///     拖拽迁移/重排工具视图（ADR-0002）：从源 Bar 移除、按 index 插入目标 Bar。
+    ///     拖拽迁移/重排工具视图（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：从源 Bar 移除、按 index 插入目标 Bar。
     ///     跨 Bar 时目标 tab 激活（目标是面板 → 强制展开并激活；目标是 ActivityBar →
     ///     选中该导航项并展开 SideBar），源面板拖空则收起、活动 tab 被拖走则回退到其前一个 tab；
     ///     源为 ActivityBar 且被拖走的是选中项时，顶部段仍有项则改选中其前一项并保持 SideBar

@@ -19,15 +19,15 @@
 - `PathIcon`、`StreamGeometry`（Avalonia）— `IconPath` 的注释约定「由 PathIcon 消费并随主题变色」。
 - `ShellLayoutState`（shell 侧类型）— `ToolViewContribution` 注释提及「面板收起期间其 tab 的激活操作会被 ShellLayoutState 拒绝」。
 - `OpenMainViewEvent`（shell 侧事件）— `IMainViewContribution` 注释提及「SideBar 内交互请求打开主视图时（OpenMainViewEvent，负载为 Id）」。
-- `MenuRegistration.RegisterMenus`（Framework 侧）— `IMenuItemContribution`/`MenuGroupAttribute` 注释提及的菜单 attribute 扫描注册入口（ADR-0001）。
-- `ToolViewRegistration.RegisterToolViews`（Framework 侧）— `ToolViewAttribute`/`ToolViewContribution` 注释提及的工具视图 attribute 扫描注册入口（ADR-0002，`docs/adr/0002-toolview-drag-persistence.md`）。
+- `MenuRegistration.RegisterMenus`（Framework 侧）— `IMenuItemContribution`/`MenuGroupAttribute` 注释提及的菜单 attribute 扫描注册入口（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）。
+- `ToolViewRegistration.RegisterToolViews`（Framework 侧）— `ToolViewAttribute`/`ToolViewContribution` 注释提及的工具视图 attribute 扫描注册入口（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)，`docs/adr/0002-toolview-drag-persistence.md`）。
 
 ## 被依赖关系（外部 → 本模块）
 
 本模块为纯契约层，按设计意图被以下角色依赖（依据接口注释推断；具体实现项目不在本模块目录内，属其他模块文档范围）：
 
 - **Shell 宿主**：实现/消费全部贡献契约（收集 `ToolViewContribution` 元数据与接口实现并渲染到 `ShellRegions` 各 Region；菜单经 Framework 侧 `MenuTreeBuilder` 建树渲染），实现 `IWindowManager` 与 `IMainWindowManager`（窗口实例「从容器中解析」）。
-- **各功能模块**：实现 `I*Contribution` 接口向 shell 贡献主视图、状态栏项；View 类标 `ToolViewAttribute` 后经 `RegisterToolViews(Assembly)` 扫描贡献工具视图（导航项/面板 tab，ADR-0002）；菜单项例外——标注 `MenuGroupAttribute`/`MenuItemAttribute` 的菜单类经 `RegisterMenus(Assembly)` 扫描生成实现（ADR-0001）；注入 `IWindowManager`/`IMainWindowManager` 弹窗。
+- **各功能模块**：实现 `I*Contribution` 接口向 shell 贡献主视图、状态栏项；View 类标 `ToolViewAttribute` 后经 `RegisterToolViews(Assembly)` 扫描贡献工具视图（导航项/面板 tab，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）；菜单项例外——标注 `MenuGroupAttribute`/`MenuItemAttribute` 的菜单类经 `RegisterMenus(Assembly)` 扫描生成实现（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）；注入 `IWindowManager`/`IMainWindowManager` 弹窗。
 
 > 待进一步调查：解决方案中具体的 shell 项目与各模块项目名，需在对应模块的深读中确认。
 
@@ -38,10 +38,10 @@
 | 类型 | 种类 | 文件 |
 |---|---|---|
 | `ToolViewPlacement` | enum（`ActivityBar`/`AuxiliaryPanel`/`BottomPanel`） | Core/Abstractions/Contributions/ToolViewAttribute.cs |
-| `ToolViewAttribute` | sealed class（`AttributeTargets.Class`，工具视图声明，ADR-0002） | 同上 |
+| `ToolViewAttribute` | sealed class（`AttributeTargets.Class`，工具视图声明，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)） | 同上 |
 | `ToolViewContribution` | sealed class（7 个 `required init` 属性，工具视图元数据） | Core/Abstractions/Contributions/ToolViewContribution.cs |
 | `IMainViewContribution` | interface | Core/Abstractions/Contributions/IMainViewContribution.cs |
-| `IMenuItemContribution` | interface（路径/分组模型，无 `Id`/定位枚举，ADR-0001） | Core/Abstractions/Menus/IMenuItemContribution.cs |
+| `IMenuItemContribution` | interface（路径/分组模型，无 `Id`/定位枚举，[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)） | Core/Abstractions/Menus/IMenuItemContribution.cs |
 | `MenuGroupAttribute` | sealed class（`AttributeTargets.Class`，菜单类声明） | Core/Abstractions/Menus/MenuGroupAttribute.cs |
 | `MenuItemAttribute` | sealed class（`AttributeTargets.Method`，菜单项声明） | Core/Abstractions/Menus/MenuItemAttribute.cs |
 | `IStatusBarItemContribution` | interface | Core/Abstractions/Contributions/IStatusBarItemContribution.cs |
@@ -59,12 +59,12 @@ Id (string) + Title (string) + IconPath (string) + Order (int)
   + 行为字段: ViewType / Command（IStatusBarItemContribution 无）
 ```
 
-`ToolViewContribution` 不是接口而是 sealed 元数据类（required init 属性），由 Framework 侧 `RegisterToolViews` 扫描 `ToolViewAttribute` 生成，模块不手写实现（ADR-0002）。菜单契约 `IMenuItemContribution` 不适用此骨架（ADR-0001）：无 `Id`、无定位枚举，字段为 `Title`/`IconPath?`/`Path`/`Group?`/`GroupOrder`/`NodeOrder`/`Order`/`Command`，定位由路径/分组模型表达。
+`ToolViewContribution` 不是接口而是 sealed 元数据类（required init 属性），由 Framework 侧 `RegisterToolViews` 扫描 `ToolViewAttribute` 生成，模块不手写实现（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）。菜单契约 `IMenuItemContribution` 不适用此骨架（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）：无 `Id`、无定位枚举，字段为 `Title`/`IconPath?`/`Path`/`Group?`/`GroupOrder`/`NodeOrder`/`Order`/`Command`，定位由路径/分组模型表达。
 
 差异点（易混，见 glossary.md）：
 
 - `IMainViewContribution` 没有 `Title`/`IconPath`/`Order`，只有 `Id` + `ViewType`。
-- `Id` 唯一性约束一致为全局唯一、约定模块名前缀：`IMainViewContribution.Id` 注释建议模块名前缀；`ToolViewAttribute.Id` 约定模块名前缀且程序集内重复时扫描记 `Logger.Warning` 跳过；`IStatusBarItemContribution.Id` 全局唯一。`IMenuItemContribution` 无 `Id`（菜单链路无消费方，ADR-0001 第 9 条）。
+- `Id` 唯一性约束一致为全局唯一、约定模块名前缀：`IMainViewContribution.Id` 注释建议模块名前缀；`ToolViewAttribute.Id` 约定模块名前缀且程序集内重复时扫描记 `Logger.Warning` 跳过；`IStatusBarItemContribution.Id` 全局唯一。`IMenuItemContribution` 无 `Id`（菜单链路无消费方，[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 第 9 条）。
 
 ### 窗口管理类型的关系
 

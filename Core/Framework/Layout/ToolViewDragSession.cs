@@ -3,7 +3,7 @@ using Avalonia.Input;
 namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
-///     工具视图拖拽会话（ADR-0002）：<see cref="ToolViewButton" /> 在 DoDragDrop 期间把
+///     工具视图拖拽会话（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：<see cref="ToolViewButton" /> 在 DoDragDrop 期间把
 ///     <see cref="IsActive" /> 置为 true，shell 借此临时显露隐藏面板的投放区——
 ///     「向隐藏面板拖入则自动显示」的前提是拖拽进行中隐藏面板存在落点
 /// </summary>

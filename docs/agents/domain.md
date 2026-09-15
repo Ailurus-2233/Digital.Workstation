@@ -30,4 +30,4 @@ Single-context 布局（本仓库采用）：
 
 如果你的输出与现有 ADR 矛盾，明确指出，而不是静默覆盖：
 
-> _Contradicts ADR-0007 (…)——但值得重新讨论，因为…_
+> _Contradicts an existing ADR (…)——但值得重新讨论，因为…_

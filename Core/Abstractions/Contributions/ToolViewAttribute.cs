@@ -22,7 +22,7 @@ public enum ToolViewPlacement
 }
 
 /// <summary>
-///     声明一个 View 类是工具视图（ToolView，ADR-0002）：带图标与标题的可停靠界面单元。
+///     声明一个 View 类是工具视图（ToolView，ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：带图标与标题的可停靠界面单元。
 ///     由模块 RegisterTypes 中的 RegisterToolViews(Assembly) 扫描注册；
 ///     <see cref="Default" /> 只是默认归属——用户拖拽后的实际归属以持久化布局为准。
 /// </summary>

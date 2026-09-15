@@ -28,5 +28,110 @@
     <File Path="LICENSE" />
     <File Path="README.md" />
   </Folder>
+  <Folder Name="/_docs/analysis/">
+    <File Path="docs/analysis/README.md" />
+  </Folder>
+  <Folder Name="/_docs/analysis/Core/Abstractions/">
+    <File Path="docs/analysis/Core/Abstractions/api.md" />
+    <File Path="docs/analysis/Core/Abstractions/common.md" />
+    <File Path="docs/analysis/Core/Abstractions/error.md" />
+    <File Path="docs/analysis/Core/Abstractions/file-list.md" />
+    <File Path="docs/analysis/Core/Abstractions/glossary.md" />
+    <File Path="docs/analysis/Core/Abstractions/pitfalls.md" />
+    <File Path="docs/analysis/Core/Abstractions/reference.md" />
+    <File Path="docs/analysis/Core/Abstractions/testing.md" />
+  </Folder>
+  <Folder Name="/_docs/analysis/Core/Common/">
+    <File Path="docs/analysis/Core/Common/api.md" />
+    <File Path="docs/analysis/Core/Common/common.md" />
+    <File Path="docs/analysis/Core/Common/error.md" />
+    <File Path="docs/analysis/Core/Common/file-list.md" />
+    <File Path="docs/analysis/Core/Common/glossary.md" />
+    <File Path="docs/analysis/Core/Common/pitfalls.md" />
+    <File Path="docs/analysis/Core/Common/reference.md" />
+    <File Path="docs/analysis/Core/Common/testing.md" />
+  </Folder>
+  <Folder Name="/_docs/analysis/Core/Framework/">
+    <File Path="docs/analysis/Core/Framework/api.md" />
+    <File Path="docs/analysis/Core/Framework/common.md" />
+    <File Path="docs/analysis/Core/Framework/error.md" />
+    <File Path="docs/analysis/Core/Framework/file-list.md" />
+    <File Path="docs/analysis/Core/Framework/glossary.md" />
+    <File Path="docs/analysis/Core/Framework/pitfalls.md" />
+    <File Path="docs/analysis/Core/Framework/reference.md" />
+    <File Path="docs/analysis/Core/Framework/testing.md" />
+  </Folder>
+  <Folder Name="/_docs/analysis/Core/Models/">
+    <File Path="docs/analysis/Core/Models/api.md" />
+    <File Path="docs/analysis/Core/Models/common.md" />
+    <File Path="docs/analysis/Core/Models/error.md" />
+    <File Path="docs/analysis/Core/Models/file-list.md" />
+    <File Path="docs/analysis/Core/Models/glossary.md" />
+    <File Path="docs/analysis/Core/Models/pitfalls.md" />
+    <File Path="docs/analysis/Core/Models/reference.md" />
+    <File Path="docs/analysis/Core/Models/testing.md" />
+  </Folder>
+  <Folder Name="/_docs/analysis/Core/Resource/">
+    <File Path="docs/analysis/Core/Resource/api.md" />
+    <File Path="docs/analysis/Core/Resource/common.md" />
+    <File Path="docs/analysis/Core/Resource/error.md" />
+    <File Path="docs/analysis/Core/Resource/file-list.md" />
+    <File Path="docs/analysis/Core/Resource/glossary.md" />
+    <File Path="docs/analysis/Core/Resource/pitfalls.md" />
+    <File Path="docs/analysis/Core/Resource/reference.md" />
+    <File Path="docs/analysis/Core/Resource/testing.md" />
+  </Folder>
+  <Folder Name="/_docs/analysis/Core/UIPackage/">
+    <File Path="docs/analysis/Core/UIPackage/api.md" />
+    <File Path="docs/analysis/Core/UIPackage/common.md" />
+    <File Path="docs/analysis/Core/UIPackage/error.md" />
+    <File Path="docs/analysis/Core/UIPackage/file-list.md" />
+    <File Path="docs/analysis/Core/UIPackage/glossary.md" />
+    <File Path="docs/analysis/Core/UIPackage/pitfalls.md" />
+    <File Path="docs/analysis/Core/UIPackage/reference.md" />
+    <File Path="docs/analysis/Core/UIPackage/testing.md" />
+  </Folder>
+  <Folder Name="/_docs/analysis/Launcher/">
+    <File Path="docs/analysis/Launcher/api.md" />
+    <File Path="docs/analysis/Launcher/common.md" />
+    <File Path="docs/analysis/Launcher/error.md" />
+    <File Path="docs/analysis/Launcher/file-list.md" />
+    <File Path="docs/analysis/Launcher/glossary.md" />
+    <File Path="docs/analysis/Launcher/pitfalls.md" />
+    <File Path="docs/analysis/Launcher/reference.md" />
+    <File Path="docs/analysis/Launcher/testing.md" />
+  </Folder>
+  <Folder Name="/_docs/analysis/Modules/DashBoard/">
+    <File Path="docs/analysis/Modules/DashBoard/api.md" />
+    <File Path="docs/analysis/Modules/DashBoard/common.md" />
+    <File Path="docs/analysis/Modules/DashBoard/error.md" />
+    <File Path="docs/analysis/Modules/DashBoard/file-list.md" />
+    <File Path="docs/analysis/Modules/DashBoard/glossary.md" />
+    <File Path="docs/analysis/Modules/DashBoard/pitfalls.md" />
+    <File Path="docs/analysis/Modules/DashBoard/reference.md" />
+    <File Path="docs/analysis/Modules/DashBoard/testing.md" />
+  </Folder>
+  <Folder Name="/_docs/analysis/Modules/Workstation/">
+    <File Path="docs/analysis/Modules/Workstation/api.md" />
+    <File Path="docs/analysis/Modules/Workstation/common.md" />
+    <File Path="docs/analysis/Modules/Workstation/error.md" />
+    <File Path="docs/analysis/Modules/Workstation/file-list.md" />
+    <File Path="docs/analysis/Modules/Workstation/glossary.md" />
+    <File Path="docs/analysis/Modules/Workstation/pitfalls.md" />
+    <File Path="docs/analysis/Modules/Workstation/reference.md" />
+    <File Path="docs/analysis/Modules/Workstation/testing.md" />
+  </Folder>
+  <Folder Name="/_docs/adr/">
+    <File Path="docs/adr/0001-attribute-menu-registration.md" />
+    <File Path="docs/adr/0002-toolview-drag-persistence.md" />
+    <File Path="docs/adr/0004-startup-sequence.md" />
+    <File Path="docs/adr/0005-command-registration-palette.md" />
+    <File Path="docs/adr/0006-attribute-settings-registration.md" />
+  </Folder>
+  <Folder Name="/_docs/agents/">
+    <File Path="docs/agents/domain.md" />
+    <File Path="docs/agents/issue-tracker.md" />
+    <File Path="docs/agents/verification.md" />
+  </Folder>
   <Project Path="Launcher/Launcher.csproj" />
 </Solution>

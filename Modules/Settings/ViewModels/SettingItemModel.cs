@@ -30,17 +30,17 @@ public abstract partial class SettingItemModel(SettingItemContribution contribut
     public string Name { get; } = Language.Get(contribution.Name);
 
     /// <summary>
-    ///     名称资源键：枚举成员显示名按「本键 + 成员名」约定派生（ADR-0006 决策 8）
+    ///     名称资源键：枚举成员显示名按「本键 + 成员名」约定派生（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8）
     /// </summary>
     public string NameKey { get; } = contribution.Name;
 
     /// <summary>
-    ///     是否需重启生效（「重启后生效」标记由工单 03 消费）
+    ///     是否需重启生效（「重启后生效」标记由设置页消费）
     /// </summary>
     public bool RequiresRestart { get; } = contribution.RequiresRestart;
 
     /// <summary>
-    ///     「重启后生效」项级标记的显示文本（ADR-0006 决策 7）
+    ///     「重启后生效」项级标记的显示文本（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
     /// </summary>
     public string RestartPendingMarkText => Language.SettingsRestartPendingMark;
 

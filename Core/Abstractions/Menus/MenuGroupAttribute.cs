@@ -2,7 +2,7 @@ namespace DigitalWorkstation.Core.Abstractions.Menus;
 
 /// <summary>
 ///     声明一个菜单类：类中标注 <see cref="MenuItemAttribute" /> 的公共实例方法成为菜单项，
-///     经 MenuRegistration.RegisterMenus 扫描注册（见 ADR-0001）。
+///     经 MenuRegistration.RegisterMenus 扫描注册（见 ADR-0001 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）。
 ///     单段路径（如 "File"）时 <see cref="Group" />/<see cref="GroupOrder" /> 描述方法项在该菜单内的分组，
 ///     <see cref="Order" /> 描述顶层菜单在菜单栏的位次；
 ///     多段路径（如 "File/Export"）时三者描述末端子菜单节点在其父菜单内的分组与位次，

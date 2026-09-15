@@ -32,7 +32,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly Dictionary<string, ToolViewContribution> _contributionsById = new();
     private readonly Dictionary<string, PanelTabViewModel> _tabsById = new();
     /// <summary>
-    ///     工具视图内容实例按 Id 单一缓存（ADR-0002）：跨 Bar 迁移时实例随 tab 走，
+    ///     工具视图内容实例按 Id 单一缓存（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：跨 Bar 迁移时实例随 tab 走，
     ///     切换再切回不丢状态；缓存永不失效，寿命 = 应用寿命
     /// </summary>
     private readonly Dictionary<string, object> _toolViewContents = new();
@@ -105,7 +105,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<PanelTabViewModel> BottomTabs { get; } = [];
     /// <summary>
-    ///     菜单栏：全部菜单贡献经 MenuTreeBuilder 建树生成（ADR-0001）——顶层不分组不插分隔线，
+    ///     菜单栏：全部菜单贡献经 MenuTreeBuilder 建树生成（ADR-0001 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）——顶层不分组不插分隔线，
     ///     子菜单按 Group/Order 分组排序、组间插分隔线
     /// </summary>
     public ObservableCollection<MenuItemViewModel> MenuBarItems { get; } = [];
@@ -117,7 +117,7 @@ public partial class MainWindowViewModel : ObservableObject
     public ObservableCollection<StatusBarItemViewModel> StatusBarItems { get; } = [];
 
     /// <summary>
-    ///     全部命令贡献（ADR-0005）：命令面板数据源与手势 KeyBinding 来源，一次性收集
+    ///     全部命令贡献（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：命令面板数据源与手势 KeyBinding 来源，一次性收集
     /// </summary>
     [ObservableProperty]
     private IReadOnlyList<ICommandContribution> _commands = [];
@@ -144,7 +144,7 @@ public partial class MainWindowViewModel : ObservableObject
     public Geometry CollapseAuxiliaryIcon { get; } = StreamGeometry.Parse(Icons.ChevronRight);
 
     /// <summary>
-    ///     ActivityBar 底部"设置"入口按钮的图标几何（纯导航按钮，非工具视图，ADR-0006 决策 6）
+    ///     ActivityBar 底部"设置"入口按钮的图标几何（纯导航按钮，非工具视图，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6）
     /// </summary>
     public Geometry SettingsIcon { get; } = StreamGeometry.Parse(Icons.Settings);
 
@@ -299,7 +299,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    ///     ActivityBar 底部"设置"入口：纯导航（非工具视图，ADR-0006 决策 6），
+    ///     ActivityBar 底部"设置"入口：纯导航（非工具视图，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6），
     ///     发布 OpenMainViewEvent 打开设置页主视图
     /// </summary>
     [RelayCommand]

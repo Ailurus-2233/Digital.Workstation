@@ -5,7 +5,7 @@ using DigitalWorkstation.Core.Common;
 namespace DigitalWorkstation.Core.Framework.Settings;
 
 /// <summary>
-///     attribute 设置注册（ADR-0006 决策 1）：扫描程序集中标注 <see cref="SettingGroupAttribute" /> 的类
+///     attribute 设置注册（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1）：扫描程序集中标注 <see cref="SettingGroupAttribute" /> 的类
 ///     与标注 <see cref="SettingItemAttribute" /> 的公共静态属性，为每个合法声明生成
 ///     <see cref="SettingGroupContribution" />/<see cref="SettingItemContribution" /> 元数据注册进容器。
 ///     扫描只在模块注册时发生一次；不做全局程序集扫描

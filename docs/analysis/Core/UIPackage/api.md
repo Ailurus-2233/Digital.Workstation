@@ -70,8 +70,8 @@ public static class Icons
 
 - **数据语义**：每个 const 是 SVG/StreamGeometry 兼容的 path 标记字符串（24×24 视窗的 Material Design 图标风格），类注释说明"由 PathIcon 消费并随主题变色"（`Icons.cs:4`）。
 - **两种真实消费方式**：
-  1. 贡献类暴露 path 字符串：`public string IconPath => Icons.DashBoard;`（`Modules/DashBoard/DashBoardStatusBarItem.cs:17`；同型还有 `Modules/Workstation/Contributions/ReadyStatusBarItem.cs:16`）；工具视图经 `[ToolView]` attribute 的 `Icon` 命名属性引用（ADR-0002，当前仓库无 `[ToolView]` 实例——Workstation 与 DashBoard 的演示视图均已删除）；菜单项经 `[MenuItem]` attribute 的 `Icon` 命名属性引用（`Modules/Workstation/Menus/FileMenus.cs:18` 等）。
-  2. ViewModel 直接解析为几何：`StreamGeometry.Parse(Icons.ChevronDown)`（`Modules/Workstation/MainWindowViewModel.cs:136,141,146`——两个面板收起按钮与"设置"导航按钮 `SettingsIcon`，ADR-0006）。
+  1. 贡献类暴露 path 字符串：`public string IconPath => Icons.DashBoard;`（`Modules/DashBoard/DashBoardStatusBarItem.cs:17`；同型还有 `Modules/Workstation/Contributions/ReadyStatusBarItem.cs:16`）；工具视图经 `[ToolView]` attribute 的 `Icon` 命名属性引用（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)，当前仓库无 `[ToolView]` 实例——Workstation 与 DashBoard 的演示视图均已删除）；菜单项经 `[MenuItem]` attribute 的 `Icon` 命名属性引用（`Modules/Workstation/Menus/FileMenus.cs:18` 等）。
+  2. ViewModel 直接解析为几何：`StreamGeometry.Parse(Icons.ChevronDown)`（`Modules/Workstation/MainWindowViewModel.cs:136,141,146`——两个面板收起按钮与"设置"导航按钮 `SettingsIcon`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）。
 - **约定**：注释要求"贡献类经本类引用图标，不在各自类中硬编码 path"（`Icons.cs:5`）。`Icons.Xxx` 与本地化文案 `Language.XxxTitle`（Core/Resource 模块）在贡献类中成对出现。
 
 ## 对外公开的数据结构

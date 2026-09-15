@@ -61,7 +61,7 @@ RunStartupSequenceAsync
 | 面板 tab 点了没反应 | `ShellLayoutState.ActivateAuxTab/ActivateBottomTab` 的 `Visible` 检查（第 71、84 行） | 面板处于收起状态，激活被拒绝是设计行为，先展开面板 |
 | 拖分隔条尺寸不动/跳变 | `Resize` 的 Clamp（第 103-132 行）与各 record 的 Min/Max 常量 | delta 累计后被钳在边界；或消费方未用返回的新实例替换旧状态 |
 | 窗口构造即抛"布局模板资源缺失：{key}" | `FrameworkWindow.UpdateLayoutTemplate`（`Windows/FrameworkWindow.cs:82-95`）的键映射 vs `Windows/FrameworkWindowTheme.axaml` 的 `WindowLayout*` 资源键 | 键名漂移（改了一侧没改另一侧），或 axaml 未作为编译资源进程序集（`FrameworkWindowTheme.cs` 经 `StyleInclude` 从 `avares://` 加载，构造时已强制 `Loaded`） |
-| 工具视图没出现在任何 Bar | 日志找 `Logger.Warning` 的 `工具视图 ... 已跳过`（`Contributions/ToolViewRegistration.cs:33、40`） | 类非可实例化 `Control` 或 `Id` 在程序集内重复被跳过；或模块 `RegisterTypes` 未调 `RegisterToolViews`（扫描不做全局发现，ADR-0002） |
+| 工具视图没出现在任何 Bar | 日志找 `Logger.Warning` 的 `工具视图 ... 已跳过`（`Contributions/ToolViewRegistration.cs:33、40`） | 类非可实例化 `Control` 或 `Id` 在程序集内重复被跳过；或模块 `RegisterTypes` 未调 `RegisterToolViews`（扫描不做全局发现，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)） |
 | 重启后布局回默认/布局改动没记住 | Console 日志找 `[WRN]` 且来源 `LayoutPersistence`（`Layout/LayoutPersistence.cs:49、55、64、126`） | layout.json 损坏/版本不识别/反序列化失败 → `Load` 返回 null 静默回默认（设计行为）；或 `Flush` 写盘失败（权限/磁盘） |
 | 手工编辑 layout.json 后布局全丢 | 同上，`Load` 的 Warning（:64，异常类型名会打在日志里） | 枚举值必须是 `"Center"`/`"BottomPanel"` 形态字符串（`JsonStringEnumConverter`，:27）；非法枚举字符串让 System.Text.Json 抛 `JsonException`，整份文件被丢弃回默认——容错设计不是 bug |
 | 「重置布局」后旧布局又复活 | `LayoutPersistence.Delete`（:86-102）的 pending 作废气锁（:88-92） | 若有代码绕过 `Delete` 直接删文件，在途的防抖回调会把 layout.json 重建——必须走 `Delete` |

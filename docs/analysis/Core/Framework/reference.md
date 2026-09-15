@@ -6,11 +6,11 @@
 
 | 依赖 | 用到的能力 | 本模块使用点 |
 |---|---|---|
-| `Core/Abstractions` | 窗口管理契约 `IWindowManager`、`IMainWindowManager`（`Abstractions/WindowManager/`）；Shell 贡献契约 `ToolViewAttribute`/`ToolViewContribution`/`ToolViewPlacement`（工具视图，ADR-0002）、`IMainViewContribution`、`IStatusBarItemContribution`（`Abstractions/Contributions/`）；菜单贡献契约 `IMenuItemContribution` 与菜单 attribute `MenuGroupAttribute`/`MenuItemAttribute`（`Abstractions/Menus/`，ADR-0001）；设置契约 `SettingGroupAttribute`/`SettingItemAttribute`/`SettingGroupContribution`/`SettingItemContribution`/`ISettingsService`（`Abstractions/Settings/`，ADR-0006） | `FrameworkWindowManager.cs:12` 实现两个窗口接口；`Contributions/ShellContributionCollector.cs` 七个 `Get*` 方法解析并排序贡献；`Contributions/ToolViewRegistration.cs:25` 读取 `ToolViewAttribute` 扫描注册工具视图；`Menus/MenuRegistration.cs:24、38` 读取两个 attribute 扫描注册菜单 |
+| `Core/Abstractions` | 窗口管理契约 `IWindowManager`、`IMainWindowManager`（`Abstractions/WindowManager/`）；Shell 贡献契约 `ToolViewAttribute`/`ToolViewContribution`/`ToolViewPlacement`（工具视图，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）、`IMainViewContribution`、`IStatusBarItemContribution`（`Abstractions/Contributions/`）；菜单贡献契约 `IMenuItemContribution` 与菜单 attribute `MenuGroupAttribute`/`MenuItemAttribute`（`Abstractions/Menus/`，[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）；设置契约 `SettingGroupAttribute`/`SettingItemAttribute`/`SettingGroupContribution`/`SettingItemContribution`/`ISettingsService`（`Abstractions/Settings/`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)） | `FrameworkWindowManager.cs:12` 实现两个窗口接口；`Contributions/ShellContributionCollector.cs` 七个 `Get*` 方法解析并排序贡献；`Contributions/ToolViewRegistration.cs:25` 读取 `ToolViewAttribute` 扫描注册工具视图；`Menus/MenuRegistration.cs:24、38` 读取两个 attribute 扫描注册菜单 |
 | `Core/Common` | `IoC`（一次性容器引用持有者）、`Logger`（Serilog 静态封装） | `FrameworkApplication.cs:148` `IoC.Initialize(...)`；`FrameworkWindowManager.cs:37` `IoC.Provider.Resolve(type)`；`FrameworkApplication.cs:96、113` `Logger.Error/Fatal`；`Layout/LayoutPersistence.cs` 全部失败路径 `Logger.Warning` |
 | `Core/Models` | 启动事件三件套：`StartupProgressEvent`/`StartupProgress`/`StartupPhase`、`ModuleLoadFailedEvent`/`ModuleLoadFailure`、`StartupFailureActionEvent`/`StartupFailureAction`（均位于 `Models/Events/`） | `FrameworkApplication.cs:73-108` 发布进度与失败事件；`:121-129` 订阅失败决策事件 |
 | `Core/UIPackage` | `WorkstationTheme`（Semi/Ursa 等四个主题包的 Styles 集合）、`VSCodePalette.ApplyTo`（VS Code Dark+ 色键写入） | `FrameworkApplication.cs:29、31`，全应用唯一主题装载点 |
-| `Core/Resource` | `Language.Get(string)`（按当前 UI 区域性解析资源键） | `Menus/MenuRegistration.cs:85` 解析菜单条目标题；`Menus/MenuTreeBuilder.cs:59、74、98` 解析路径段标题（ADR-0001）；`Contributions/ToolViewRegistration.cs:51` 解析工具视图标题（ADR-0002） |
+| `Core/Resource` | `Language.Get(string)`（按当前 UI 区域性解析资源键） | `Menus/MenuRegistration.cs:85` 解析菜单条目标题；`Menus/MenuTreeBuilder.cs:59、74、98` 解析路径段标题（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）；`Contributions/ToolViewRegistration.cs:51` 解析工具视图标题（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)） |
 
 ### NuGet 包（Framework.csproj:18-23）
 
@@ -20,7 +20,7 @@
 
 | 依赖方 | 引用方式 | 用在什么场景 |
 |---|---|---|
-| `Modules/Workstation`（Workstation.csproj:10） | ProjectReference | 应用宿主：`WorkstationApplication.cs:15` `WorkstationApplication : FrameworkApplication<MainWindow>`（实现 `CreateSplashWindow`、配置模块目录——`:19-20` 两行 `AddModule`（DashBoard + Settings，ADR-0006）；`:27` 调 `RegisterToolViews` 扫描注册 shell 预置工具视图，`:31` 调 `RegisterMenus` 扫描注册 shell 预置菜单）；`MainWindowViewModel.cs:41-42,60` 注入 `ShellContributionCollector`/`LayoutPersistence` 并持有 `ShellLayoutState _state` 驱动整个工作区布局（`GetToolViews()` 一次后交 `LoadToolViews(_persistence.Load())` 分派并恢复持久化布局，`:178-179`；菜单经 `MenuTreeBuilder.Build` 建树，`:184`）；`PanelResizer.cs` 把拖拽增量交给 `ShellLayoutState.Resize`；`Menus/HelpMenus.cs:20` 用 `IWindowManager.ShowDialog<AboutWindow>` |
+| `Modules/Workstation`（Workstation.csproj:10） | ProjectReference | 应用宿主：`WorkstationApplication.cs:15` `WorkstationApplication : FrameworkApplication<MainWindow>`（实现 `CreateSplashWindow`、配置模块目录——`:19-20` 两行 `AddModule`（DashBoard + Settings，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）；`:27` 调 `RegisterToolViews` 扫描注册 shell 预置工具视图，`:31` 调 `RegisterMenus` 扫描注册 shell 预置菜单）；`MainWindowViewModel.cs:41-42,60` 注入 `ShellContributionCollector`/`LayoutPersistence` 并持有 `ShellLayoutState _state` 驱动整个工作区布局（`GetToolViews()` 一次后交 `LoadToolViews(_persistence.Load())` 分派并恢复持久化布局，`:178-179`；菜单经 `MenuTreeBuilder.Build` 建树，`:184`）；`PanelResizer.cs` 把拖拽增量交给 `ShellLayoutState.Resize`；`Menus/HelpMenus.cs:20` 用 `IWindowManager.ShowDialog<AboutWindow>` |
 | `Modules/DashBoard`（DashBoard.csproj:21） | ProjectReference | 启动台模块：`DashBoardWindowViewModel` 订阅 `StartupProgressEvent`/`ModuleLoadFailedEvent` 并发布 `StartupFailureActionEvent`（即启动台 UI 方，事件负载见 Models 文档）；`DashBoardModule.cs:12` 调 `RegisterToolViews`（当前程序集无 `[ToolView]` 类，扫描为空） |
 | `UnitTest/Framework`（UnitTest/Framework/Framework.csproj:17） | ProjectReference | 唯一的测试项目，仅测 `ShellLayoutState`（见 testing.md） |
 
@@ -50,7 +50,7 @@ ShellLayoutState (Layout/ShellLayoutState.cs:7)
 
 关系要点：`ShellLayoutState` 只持有数据与转换方法，不感知贡献收集与视图解析；`Tabs` 列表由消费方（MainWindowViewModel）从 `ShellContributionCollector.GetToolViews` 的结果按 `Placement` 分派填入；`ContentFor`/`ActiveTab`/`ActiveView` 的字符串 Id 与 Abstractions 贡献类型的 `Id` 对应（`SelectedActivity` ↔ ActivityBar 工具视图的 `ToolViewContribution.Id`，`ActiveView` ↔ `IMainViewContribution.Id`，`ActiveTab` ↔ 面板工具视图的 `ToolViewContribution.Id`）。
 
-### 布局持久化 DTO 族（Layout/ShellLayoutDto.cs，均为 `sealed record`，ADR-0002）
+### 布局持久化 DTO 族（Layout/ShellLayoutDto.cs，均为 `sealed record`，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）
 
 ```
 ShellLayoutDto (Layout/ShellLayoutDto.cs:10)        const CurrentVersion=1（:15）

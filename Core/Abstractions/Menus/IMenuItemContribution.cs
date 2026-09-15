@@ -3,7 +3,7 @@
 namespace DigitalWorkstation.Core.Abstractions.Menus;
 
 /// <summary>
-///     模块向菜单栏贡献菜单项的契约（路径/分组模型，见 ADR-0001）。
+///     模块向菜单栏贡献菜单项的契约（路径/分组模型，见 ADR-0001 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）。
 ///     通常不直接实现本接口：模块用 <see cref="MenuGroupAttribute" />/<see cref="MenuItemAttribute" />
 ///     标注普通类，经 MenuRegistration.RegisterMenus 扫描后生成本契约的实现注册进容器；
 ///     shell 收集全部实现后建树（分组排序、组间分隔线）并渲染。

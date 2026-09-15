@@ -6,7 +6,7 @@ namespace DigitalWorkstation.Core.Framework.Menus;
 
 /// <summary>
 ///     菜单建树器：把扁平的菜单贡献列表构建为分组排序好的菜单树（纯函数，无状态）。
-///     排序与分隔线规则见 ADR-0001：顶层只按 NodeOrder 排序、不分组不插分隔线；
+///     排序与分隔线规则见 ADR-0001 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)：顶层只按 NodeOrder 排序、不分组不插分隔线；
 ///     子菜单按 (GroupOrder, Group) 分组、组内按 Order 排序、组间插分隔线；
 ///     同组同 Order 按解析后的标题字典序（Ordinal）定平局
 /// </summary>

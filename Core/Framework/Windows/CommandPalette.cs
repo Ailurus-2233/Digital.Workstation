@@ -11,7 +11,7 @@ using DigitalWorkstation.Core.Resource;
 namespace DigitalWorkstation.Core.Framework.Windows;
 
 /// <summary>
-///     命令面板（ADR-0005）：窗口顶部居中的命令检索浮层。搜索框 + 列表 + 子串过滤（不区分大小写，
+///     命令面板（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：窗口顶部居中的命令检索浮层。搜索框 + 列表 + 子串过滤（不区分大小写，
 ///     匹配本地化后标题）+ ↑↓/Enter/Esc 键盘导航 + MRU 内存置顶全部内聚在控件内（控件模式同
 ///     PanelResizer/ToolViewBar）；控件寿命 = 窗口寿命 = 应用寿命，内存 MRU 因此成立。
 ///     数据源经 ItemsSource 宽松绑定 ViewModel 的 Commands 集合（同 MenuBarItems 惯例），VM 零交互逻辑
@@ -25,7 +25,7 @@ public class CommandPalette : Border
     private readonly ListBox _list;
     private readonly TextBlock _emptyState;
     /// <summary>
-    ///     最近执行的命令 Id，新者在前；只在内存中，重启即清（ADR-0005 决策 8）
+    ///     最近执行的命令 Id，新者在前；只在内存中，重启即清（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) 决策 8）
     /// </summary>
     private readonly List<string> _recentIds = [];
     private TopLevel? _topLevel;

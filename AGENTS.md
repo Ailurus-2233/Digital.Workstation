@@ -26,6 +26,8 @@ deep-read 产出（经 ABC 闭卷验证，main @ 04cfd02）；总索引与跨模
 
 **同步规则**：开发新功能或修复 bug 时，提交前必须同步更新受影响模块的 `docs/analysis/` 文档：接口变了改 `api.md`，行为/流转变了改 `common.md`，异常变了改 `error.md`，文件增删改 `file-list.md`，测试变了改 `testing.md`，发现新坑补 `pitfalls.md`，引入新术语补 `glossary.md`。文档与代码不一致视为任务未完成。
 
+**解决方案索引同步规则**：`Digital.Workstation.slnx` 的 `/_docs/` 是 `docs/` 的解决方案视图索引。新增或删除 `docs/` 下的任意文件时，必须同步在 `.slnx` 中新增或删除对应的 `<File Path="docs/..." />` 项，并保持其归属的 `/_docs/analysis/`、`/_docs/adr/` 或 `/_docs/agents/` 虚拟文件夹正确。完成标准：`docs/` 下每个实际文件都能在 `.slnx` 找到且每个索引路径都指向现有文件。
+
 - 改贡献契约/窗口管理接口（`Core/Abstractions`）时读 `docs/analysis/Core/Abstractions/`
 - 改日志/全局容器门面（`Logger`/`IoC`）时读 `docs/analysis/Core/Common/`
 - 增改事件契约（`Core/Models/Events`）时读 `docs/analysis/Core/Models/`

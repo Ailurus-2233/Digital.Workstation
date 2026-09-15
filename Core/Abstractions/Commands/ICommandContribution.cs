@@ -3,7 +3,7 @@ using System.Windows.Input;
 namespace DigitalWorkstation.Core.Abstractions.Commands;
 
 /// <summary>
-///     模块向全局命令列表贡献命令的契约（ADR-0005）。
+///     模块向全局命令列表贡献命令的契约（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）。
 ///     通常不直接实现本接口：模块用 <see cref="CommandAttribute" /> 标注普通类的方法，
 ///     经 CommandRegistration.RegisterCommands 扫描后生成本契约的实现注册进容器；
 ///     shell 收集全部实现后交给命令面板呈现，并为带 <see cref="Gesture" /> 的命令生成窗口级 KeyBinding

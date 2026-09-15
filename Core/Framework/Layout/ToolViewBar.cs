@@ -10,7 +10,7 @@ using DigitalWorkstation.Core.Abstractions.Contributions;
 namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
-///     工具视图 Bar 的投放目标（ADR-0002）：接受 <see cref="ToolViewButton" /> 发起的拖拽。
+///     工具视图 Bar 的投放目标（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：接受 <see cref="ToolViewButton" /> 发起的拖拽。
 ///     DragOver 按指针位置计算插入序号，并把模板中的 PART_InsertionLine 占位线移动到落点缝隙；
 ///     Drop 把落点包装为 <see cref="ToolViewMove" /> 执行 MoveCommand。控件模式仿
 ///     <see cref="PanelResizer" />：控件只做手势与视觉，状态转换在 ViewModel；

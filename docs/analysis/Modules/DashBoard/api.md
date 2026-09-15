@@ -11,10 +11,10 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 | 成员 | 签名 | 说明 |
 |---|---|---|
 | `RegisterTypes` | `void RegisterTypes(IContainerRegistry containerRegistry)` | `RegisterToolViews` 扫描（当前程序集无 `[ToolView]` 标注类，注册为空）+ 1 个 `IStatusBarItemContribution` 单例（见下"注册清单"） |
-| `OnInitialized` | `void OnInitialized(IContainerProvider containerProvider)` | **空实现**（DashBoardModule.cs:18 注释：启动台窗口由 shell 启动序列在模块加载前显示（ADR-0004），模块自身不再开窗） |
+| `OnInitialized` | `void OnInitialized(IContainerProvider containerProvider)` | **空实现**（DashBoardModule.cs:18 注释：启动台窗口由 shell 启动序列在模块加载前显示（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)），模块自身不再开窗） |
 
 注册清单（DashBoardModule.cs:12-13）：
-- `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 12 行，Core/Framework `DigitalWorkstation.Core.Framework.Contributions` 扩展，ADR-0002）——扫描程序集内 `[ToolView]` 类：**当前程序集无标注类**（原 `DashBoardNavigationView`/`DashBoardTasksView` 已删除），扫描注册为空，保留该行以覆盖将来新增；机制为对每个合法的（可实例化 `Control`、程序集内 Id 不重复）View 执行 `Register(viewType)` 并注册一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `Language.Get(TitleKey)` 解析），非法者记 `Logger.Warning` 跳过
+- `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 12 行，Core/Framework `DigitalWorkstation.Core.Framework.Contributions` 扩展，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）——扫描程序集内 `[ToolView]` 类：**当前程序集无标注类**（原 `DashBoardNavigationView`/`DashBoardTasksView` 已删除），扫描注册为空，保留该行以覆盖将来新增；机制为对每个合法的（可实例化 `Control`、程序集内 Id 不重复）View 执行 `Register(viewType)` 并注册一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `Language.Get(TitleKey)` 解析），非法者记 `Logger.Warning` 跳过
 - `RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>()`（第 13 行）
 
 注意：`DashBoardWindow` 与 `DashBoardWindowViewModel` **不在** `RegisterTypes` 中注册——`DashBoardWindow` 由启动序列在模块加载前经 `Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:43）解析，Prism 容器对未注册的具体类型仍可构造解析（DryIoc 默认行为），ViewModel 由 ViewModelLocator 约定装配。
@@ -27,7 +27,7 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 |---|---|---|---|---|---|
 | `DashBoardStatusBarItem`（DashBoardStatusBarItem.cs:11） | `IStatusBarItemContribution` | `"dashboard.status"` | `Language.DashBoardNavigationTitle`（启动台标题资源） | `Icons.DashBoard` | 20 |
 
-原五个演示贡献已删除：两个 `[ToolView]` 工具视图（`DashBoardNavigationView` `"dashboard"` / `DashBoardTasksView` `"dashboard.tasks"`，ADR-0002）与两个 `IMainViewContribution` 主视图（`"dashboard.overview"` / `"dashboard.recent"`，各暴露 `public const string ViewId` 供 `OpenMainViewEvent` 负载）——工具视图 attribute 机制与 `ViewId` 常量负载模式当前无本模块实例。
+原五个演示贡献已删除：两个 `[ToolView]` 工具视图（`DashBoardNavigationView` `"dashboard"` / `DashBoardTasksView` `"dashboard.tasks"`，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）与两个 `IMainViewContribution` 主视图（`"dashboard.overview"` / `"dashboard.recent"`，各暴露 `public const string ViewId` 供 `OpenMainViewEvent` 负载）——工具视图 attribute 机制与 `ViewId` 常量负载模式当前无本模块实例。
 
 ### 3. `DashBoardWindowViewModel : ObservableObject`（ViewModels/Windows/DashBoardWindowViewModel.cs:12）
 

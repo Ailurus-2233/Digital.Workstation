@@ -3,7 +3,7 @@ using DigitalWorkstation.Core.Abstractions.Contributions;
 namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
-///     一次工具视图拖拽落放（ADR-0002）：<see cref="ToolViewBar" /> 在 Drop 时把落点信息包装为本记录，
+///     一次工具视图拖拽落放（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：<see cref="ToolViewBar" /> 在 Drop 时把落点信息包装为本记录，
 ///     经 MoveCommand 发给 ViewModel，由 <see cref="ShellLayoutState.MoveTab" /> 做状态转换
 /// </summary>
 /// <param name="TabId">被拖拽的工具视图 Id</param>

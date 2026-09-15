@@ -7,7 +7,7 @@ using DigitalWorkstation.Core.Models.Events;
 namespace DigitalWorkstation.Core.Framework.Settings;
 
 /// <summary>
-///     设置服务（ADR-0006 决策 3/4）：%AppData%/Digital.Workstation/settings.json 的读/防抖写。
+///     设置服务（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4）：%AppData%/Digital.Workstation/settings.json 的读/防抖写。
 ///     启动时经 <see cref="Load" /> 一次性加载入内存；<see cref="Get{T}" /> 纯内存读
 ///     （未修改时回退声明的默认值，默认值经容器中的 SettingItemContribution 惰性按 Id 缓存）；
 ///     <see cref="Set{T}" /> 更新内存 + 防抖落盘 + 广播 SettingChangedEvent。
@@ -47,7 +47,7 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
 
     /// <summary>
     ///     进程启动时的生效值快照（Load 载入内容的副本）：「重启后生效」判定的基准，
-    ///     快照不含的项以声明默认值为基准（ADR-0006 决策 7）
+    ///     快照不含的项以声明默认值为基准（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
     /// </summary>
     private readonly Dictionary<string, JsonElement> _sessionStartValues = new(StringComparer.Ordinal);
 

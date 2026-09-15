@@ -12,9 +12,9 @@ shell 的可停靠内容有两个几乎同构的贡献契约：`IPanelTabContrib
 - 布局不可拖拽时，归属由贡献的静态 `Panel`/`Placement` 属性决定；可拖拽后归属是用户数据，必须持久化且优先于声明默认值。
 - `ShellLayoutState` 是纯 record（string/bool/double/字符串列表），天然可序列化；但仓库此前**零持久化基础设施**（连日志都不落盘），位置/格式/时机无现存约定。
 - Avalonia 的 attached property 写在 View 的 XAML 上，只有实例化后才读得到——违背「`ContentViewType` 只给类型、延迟解析」的设计；attribute 标在类上可反射读元数据，零实例化。`Icons.*` 是 `const string` 可直接作 attribute 参数；`Language.*` 是运行时属性，标题只能传资源键。
-- 仓库已有 attribute 扫描先例：菜单契约（ADR-0001）由各模块 `RegisterMenus(自己的Assembly)` 按程序集扫描，标题传 `Language` 资源键运行时解析。
+- 仓库已有 attribute 扫描先例：菜单契约（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）由各模块 `RegisterMenus(自己的Assembly)` 按程序集扫描，标题传 `Language` 资源键运行时解析。
 
-备选方案：(B) 拖拽只允许 AuxiliaryPanel ↔ BottomPanel，不动 ActivityBar——不满足「任何 Bar」的诉求，且留着两个同构契约；(C) 保留旧接口、attribute 生成适配器——双机制并存是永久理解负担，违背单一渲染管道原则（同 ADR-0001 否掉 B 的理由）；(D) attached property + 实例化探测——启动时 new 出所有视图，慢且有副作用风险；(E) 不持久化，重启回默认——拖拽功能的价值随之坍塌。
+备选方案：(B) 拖拽只允许 AuxiliaryPanel ↔ BottomPanel，不动 ActivityBar——不满足「任何 Bar」的诉求，且留着两个同构契约；(C) 保留旧接口、attribute 生成适配器——双机制并存是永久理解负担，违背单一渲染管道原则（同 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 否掉 B 的理由）；(D) attached property + 实例化探测——启动时 new 出所有视图，慢且有副作用风险；(E) 不持久化，重启回默认——拖拽功能的价值随之坍塌。
 
 ## 决策
 
@@ -28,7 +28,7 @@ shell 的可停靠内容有两个几乎同构的贡献契约：`IPanelTabContrib
 
 ## 后果
 
-- 得：三处 Bar 的条目完全可互换，布局即用户数据；模块侧注册简化为「View 类上加 attribute + 一行 `RegisterToolViews`」；延续 ADR-0001 的 attribute 扫描单一管道，无第二套贡献机制。
+- 得：三处 Bar 的条目完全可互换，布局即用户数据；模块侧注册简化为「View 类上加 attribute + 一行 `RegisterToolViews`」；延续 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 的 attribute 扫描单一管道，无第二套贡献机制。
 - 得：持久化基础设施（DTO + 防抖写盘 + 容错回落）从零建立后，未来其他状态（窗口位置等）可复用同一落盘通道。
 - 失：两个贡献接口删除级联全部实现方（shell 5 个 + DashBoard 2 个）与收集器；`ShellLayoutState` 的 `Tabs` 初始化语义从「贡献静态分桶」变为「配置优先、默认兜底」，装载逻辑变复杂。
 - 失：Id 冲突、配置与代码漂移等场景走静默规则（丢弃/回落），不报错；只能靠 `Id` 带模块前缀的约定自律。

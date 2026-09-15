@@ -1,7 +1,7 @@
 namespace DigitalWorkstation.Core.Abstractions.Settings;
 
 /// <summary>
-///     设置值读写服务（ADR-0006 决策 3）：Framework 实现，启动时一次性把 settings.json 加载入内存。
+///     设置值读写服务（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）：Framework 实现，启动时一次性把 settings.json 加载入内存。
 ///     读纯走内存——已修改取用户值，未修改取声明的默认值（默认值不是单独存储层）；
 ///     写 = 更新内存 + 防抖落盘 + 广播 SettingChangedEvent（事件契约在 Core/Models）。
 ///     另承载「重启后生效」判定（决策 7）：跟踪本次进程内的值是否偏离启动时的生效值
@@ -21,7 +21,7 @@ public interface ISettingsService
     void Set<T>(string settingId, T value);
 
     /// <summary>
-    ///     本次进程内该设置项的值是否已偏离进程启动时的生效值（ADR-0006 决策 7）：
+    ///     本次进程内该设置项的值是否已偏离进程启动时的生效值（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）：
     ///     「重启后生效」项级标记与重启横幅的判定依据；改回启动值即恢复为 false。
     ///     调用方自行结合 SettingItemContribution.RequiresRestart 过滤——本服务不感知该元数据
     /// </summary>

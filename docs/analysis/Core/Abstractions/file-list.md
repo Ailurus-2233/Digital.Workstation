@@ -39,11 +39,11 @@ WindowManager/
 
 ### Commands/CommandAttribute.cs
 
-定义 `CommandAttribute`（`[AttributeUsage(AttributeTargets.Method)]`，构造参 `title` 为 Language 资源键，命名属性 `Id?`（缺省「声明类全名.方法名」）/`Icon?`/`Gesture?`/`Order`）——声明一个命令（ADR-0005）：免类级 attribute，任何类的公共实例方法标注即被 Framework 侧 `RegisterCommands` 扫描注册；方法签名仅支持无参 `void M()`/`Task M()`，非法签名扫描时记日志跳过。
+定义 `CommandAttribute`（`[AttributeUsage(AttributeTargets.Method)]`，构造参 `title` 为 Language 资源键，命名属性 `Id?`（缺省「声明类全名.方法名」）/`Icon?`/`Gesture?`/`Order`）——声明一个命令（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：免类级 attribute，任何类的公共实例方法标注即被 Framework 侧 `RegisterCommands` 扫描注册；方法签名仅支持无参 `void M()`/`Task M()`，非法签名扫描时记日志跳过。
 
 ### Commands/ICommandContribution.cs
 
-`using System.Windows.Input;`。定义接口 `ICommandContribution`（`Id`/`Title`（已解析，非资源键）/`Gesture?`/`IconPath?`/`Order`/`Command`）——模块向全局命令列表贡献命令的契约（ADR-0005），扁平模型：有稳定 `Id`（MRU 记忆与键绑定引用的依据，全局唯一），无路径/分组；图标可选，惯例同菜单。命名空间 `DigitalWorkstation.Core.Abstractions.Commands`。
+`using System.Windows.Input;`。定义接口 `ICommandContribution`（`Id`/`Title`（已解析，非资源键）/`Gesture?`/`IconPath?`/`Order`/`Command`）——模块向全局命令列表贡献命令的契约（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)），扁平模型：有稳定 `Id`（MRU 记忆与键绑定引用的依据，全局唯一），无路径/分组；图标可选，惯例同菜单。命名空间 `DigitalWorkstation.Core.Abstractions.Commands`。
 
 ### Regions/ShellRegions.cs
 
@@ -51,11 +51,11 @@ Prism Region 名称常量。定义 `public static class ShellRegions`，含 5 �
 
 ### Regions/WellKnownViews.cs
 
-shell 与模块共知的主视图 Id 常量（ADR-0006 决策 5）。定义 `public static class WellKnownViews`（第 7 行），目前含 1 个 `public const string`：`Settings = "settings.main"`（第 13 行）——设置页主视图 Id，由 Settings 模块以 `IMainViewContribution` 贡献、shell 左下角"设置"导航按钮经 `OpenMainViewEvent` 引用，双方借本常量互不依赖。命名空间 `DigitalWorkstation.Core.Abstractions.Regions`。与 `ShellRegions` 的 `nameof` 惯例不同，值为字面量字符串。
+shell 与模块共知的主视图 Id 常量（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 5）。定义 `public static class WellKnownViews`（第 7 行），目前含 1 个 `public const string`：`Settings = "settings.main"`（第 13 行）——设置页主视图 Id，由 Settings 模块以 `IMainViewContribution` 贡献、shell 左下角"设置"导航按钮经 `OpenMainViewEvent` 引用，双方借本常量互不依赖。命名空间 `DigitalWorkstation.Core.Abstractions.Regions`。与 `ShellRegions` 的 `nameof` 惯例不同，值为字面量字符串。
 
 ### Contributions/ToolViewAttribute.cs
 
-定义枚举 `ToolViewPlacement`（`ActivityBar`/`AuxiliaryPanel`/`BottomPanel`）与 `ToolViewAttribute`（`[AttributeUsage(AttributeTargets.Class)]`，主构造参 `id`/`titleKey`，命名属性 `Icon?`/`Default`（缺省 `AuxiliaryPanel`）/`Order`/`AllowMove`（缺省 `true`））——声明一个 View 类是工具视图（Tool View，ADR-0002），经 Framework 侧 `RegisterToolViews(Assembly)` 扫描注册。
+定义枚举 `ToolViewPlacement`（`ActivityBar`/`AuxiliaryPanel`/`BottomPanel`）与 `ToolViewAttribute`（`[AttributeUsage(AttributeTargets.Class)]`，主构造参 `id`/`titleKey`，命名属性 `Icon?`/`Default`（缺省 `AuxiliaryPanel`）/`Order`/`AllowMove`（缺省 `true`））——声明一个 View 类是工具视图（Tool View，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)），经 Framework 侧 `RegisterToolViews(Assembly)` 扫描注册。
 
 ### Contributions/ToolViewContribution.cs
 
@@ -71,7 +71,7 @@ shell 与模块共知的主视图 Id 常量（ADR-0006 决策 5）。定义 `pub
 
 ### Menus/IMenuItemContribution.cs
 
-`using System.Windows.Input;`。定义接口 `IMenuItemContribution`（`Title`/`IconPath?`/`Path`/`Group?`/`GroupOrder`/`NodeOrder`/`Order`/`Command`）——模块向菜单栏贡献菜单项的契约，路径/分组模型（ADR-0001），无 `Id`、无定位枚举。命名空间 `DigitalWorkstation.Core.Abstractions.Menus`。
+`using System.Windows.Input;`。定义接口 `IMenuItemContribution`（`Title`/`IconPath?`/`Path`/`Group?`/`GroupOrder`/`NodeOrder`/`Order`/`Command`）——模块向菜单栏贡献菜单项的契约，路径/分组模型（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)），无 `Id`、无定位枚举。命名空间 `DigitalWorkstation.Core.Abstractions.Menus`。
 
 ### Menus/MenuGroupAttribute.cs
 
@@ -83,11 +83,11 @@ shell 与模块共知的主视图 Id 常量（ADR-0006 决策 5）。定义 `pub
 
 ### Settings/SettingGroupAttribute.cs
 
-定义 `SettingGroupAttribute`（`[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]`，构造参 `name` 为 Language 资源键，命名属性 `Order` 缺省 `0`）——声明一个设置分组（ADR-0006 决策 1），经 Framework 侧 `RegisterSettings(Assembly)` 扫描注册；同名分组全局合并、多处声明位次取最小（同 ADR-0001 决策 4）。
+定义 `SettingGroupAttribute`（`[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]`，构造参 `name` 为 Language 资源键，命名属性 `Order` 缺省 `0`）——声明一个设置分组（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1），经 Framework 侧 `RegisterSettings(Assembly)` 扫描注册；同名分组全局合并、多处声明位次取最小（同 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 决策 4）。
 
 ### Settings/SettingItemAttribute.cs
 
-定义 `SettingItemAttribute`（`[AttributeUsage(AttributeTargets.Property)]`，构造参 `group`/`name`，命名属性 `Id?`（缺省「声明类全名.属性名」，仿命令 Id 规则）/`DefaultValue?`（须为属性类型的编译期常量）/`Order`/`RequiresRestart`）——声明一个设置项（ADR-0006 决策 1），标注在公共静态可读属性上；属性只是声明锚点，扫描不读属性值，读写一律经 `ISettingsService`。
+定义 `SettingItemAttribute`（`[AttributeUsage(AttributeTargets.Property)]`，构造参 `group`/`name`，命名属性 `Id?`（缺省「声明类全名.属性名」，仿命令 Id 规则）/`DefaultValue?`（须为属性类型的编译期常量）/`Order`/`RequiresRestart`）——声明一个设置项（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1），标注在公共静态可读属性上；属性只是声明锚点，扫描不读属性值，读写一律经 `ISettingsService`。
 
 ### Settings/SettingGroupContribution.cs
 
@@ -95,11 +95,11 @@ shell 与模块共知的主视图 Id 常量（ADR-0006 决策 5）。定义 `pub
 
 ### Settings/SettingItemContribution.cs
 
-定义 `public sealed class SettingItemContribution`（7 个 `required init` 属性：`Id`（全局唯一，settings.json 的 key）/`Group`/`Name`（Language 资源键，非已解析文案）/`ValueType`（编辑器推断与 JSON 反序列化依据）/`DefaultValue?`（未修改时的取值，不是单独存储层，ADR-0006 决策 3）/`Order`/`RequiresRestart`（ADR-0006 决策 7））——设置项的贡献元数据，由 Framework 侧扫描 `SettingItemAttribute` 生成并注册进容器，模块不手写。
+定义 `public sealed class SettingItemContribution`（7 个 `required init` 属性：`Id`（全局唯一，settings.json 的 key）/`Group`/`Name`（Language 资源键，非已解析文案）/`ValueType`（编辑器推断与 JSON 反序列化依据）/`DefaultValue?`（未修改时的取值，不是单独存储层，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）/`Order`/`RequiresRestart`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7））——设置项的贡献元数据，由 Framework 侧扫描 `SettingItemAttribute` 生成并注册进容器，模块不手写。
 
 ### Settings/ISettingsService.cs
 
-定义接口 `ISettingsService`（3 个方法：`T? Get<T>(string settingId)`、`void Set<T>(string settingId, T value)`、`bool IsPendingRestart(string settingId)`）——设置值读写服务契约（ADR-0006 决策 3）：Framework 实现，启动一次加载入内存；读纯走内存（未修改取声明默认值），写 = 更新内存 + 防抖落盘 settings.json + 广播 `SettingChangedEvent`（事件契约在 Core/Models）；`IsPendingRestart` 报告本次进程内值是否偏离启动时生效值（决策 7「重启后生效」判定依据）。
+定义接口 `ISettingsService`（3 个方法：`T? Get<T>(string settingId)`、`void Set<T>(string settingId, T value)`、`bool IsPendingRestart(string settingId)`）——设置值读写服务契约（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）：Framework 实现，启动一次加载入内存；读纯走内存（未修改取声明默认值），写 = 更新内存 + 防抖落盘 settings.json + 广播 `SettingChangedEvent`（事件契约在 Core/Models）；`IsPendingRestart` 报告本次进程内值是否偏离启动时生效值（决策 7「重启后生效」判定依据）。
 
 ### WindowManager/IWindowManager.cs
 

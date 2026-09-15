@@ -40,15 +40,15 @@
 | `SplashPhaseLoadingModules`（:114） | 加载模块 | Loading modules | 启动台阶段名 |
 | `SplashPhaseReady`（:119） | 就绪 | Ready | 启动台阶段名 |
 | `SplashPhaseFailed`（:123） | 模块加载失败 | Module failed to load | 启动台阶段名 |
-| `CommandPaletteWatermark`（:128） | 输入命令以执行 | Type a command to execute | 命令面板输入框水印（ADR-0005） |
-| `NoMatchingCommands`（:133） | 无匹配命令 | No matching commands | 命令面板空态文案（ADR-0005） |
-| `SettingsGeneralGroupName`（:138） | 常规 | General | 设置页"常规"分组的显示名（Framework 预置设置分组，ADR-0006） |
-| `SettingsLanguageName`（:143） | 语言 | Language | 设置项"语言"的显示名（Framework 预置，ADR-0006） |
-| `SettingsLanguageNameZhCN`（:148） | 中文（简体） | Chinese (Simplified) | 语言设置项成员 ZhCN 的显示名（键按「设置项名称键 + 成员名」约定生成，ADR-0006 决策 8） |
+| `CommandPaletteWatermark`（:128） | 输入命令以执行 | Type a command to execute | 命令面板输入框水印（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)） |
+| `NoMatchingCommands`（:133） | 无匹配命令 | No matching commands | 命令面板空态文案（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)） |
+| `SettingsGeneralGroupName`（:138） | 常规 | General | 设置页"常规"分组的显示名（Framework 预置设置分组，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)） |
+| `SettingsLanguageName`（:143） | 语言 | Language | 设置项"语言"的显示名（Framework 预置，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)） |
+| `SettingsLanguageNameZhCN`（:148） | 中文（简体） | Chinese (Simplified) | 语言设置项成员 ZhCN 的显示名（键按「设置项名称键 + 成员名」约定生成，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8） |
 | `SettingsLanguageNameEnUS`（:153） | English (US) | English (US) | 语言设置项成员 EnUS 的显示名（同上约定） |
-| `SettingsRestartPendingMark`（:158） | 重启后生效 | Restart to apply | 设置页需重启设置项被修改后的项级标记文本（ADR-0006 决策 7） |
-| `SettingsRestartBannerText`（:163） | 部分设置的更改将在重启后生效 | Some setting changes will take effect after restart | 设置页顶部「存在未生效的需重启修改」横幅文本（ADR-0006 决策 7） |
-| `SettingsRestartNowButtonTitle`（:168） | 立即重启 | Restart Now | 设置页重启横幅上「立即重启」按钮的标题（ADR-0006 决策 7） |
+| `SettingsRestartPendingMark`（:158） | 重启后生效 | Restart to apply | 设置页需重启设置项被修改后的项级标记文本（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7） |
+| `SettingsRestartBannerText`（:163） | 部分设置的更改将在重启后生效 | Some setting changes will take effect after restart | 设置页顶部「存在未生效的需重启修改」横幅文本（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7） |
+| `SettingsRestartNowButtonTitle`（:168） | 立即重启 | Restart Now | 设置页重启横幅上「立即重启」按钮的标题（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7） |
 
 
 > 注意：`StatusReadyTitle`（状态栏"就绪"，:99）与 `SplashPhaseReady`（启动画面"就绪"阶段名，:119）**中文值同为"就绪"，但用途不同，是两个独立的键**，不能合并。
@@ -80,11 +80,11 @@ public void Exit() { ... }
 - `Modules/Workstation/WorkstationApplication.cs` → `Language.ProductName`（macOS 应用菜单名称）
 - `Modules/Workstation/MainWindow.axaml`、`Views/EmptyStateView.axaml`、`Views/AboutWindow.axaml` 与 `Modules/DashBoard/Views/Windows/DashBoardWindow.axaml` → `x:Static Language.ProductName`
 - `Modules/Workstation/Views/AboutWindow.axaml` → `x:Static Language.AboutWindowTitle`
-- `Modules/Workstation/MainWindowViewModel.cs:151` → `Language.SettingsNavigationTitle`（ActivityBar 底部"设置"导航按钮标题，ADR-0006）
+- `Modules/Workstation/MainWindowViewModel.cs:151` → `Language.SettingsNavigationTitle`（ActivityBar 底部"设置"导航按钮标题，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）
 - `Modules/Workstation/Contributions/ReadyStatusBarItem.cs:14` → `Language.StatusReadyTitle`
 - `Modules/DashBoard/DashBoardStatusBarItem.cs:15` → `Language.DashBoardNavigationTitle`
 - `Modules/DashBoard/ViewModels/Windows/DashBoardWindowViewModel.cs:24,43-45,56` → Splash 系列 5 个属性（启动画面阶段文案）
-- `Modules/Settings/ViewModels/SettingsPageViewModel.cs` → `Language.SettingsRestartBannerText`/`SettingsRestartNowButtonTitle`（重启横幅文本与按钮标题，ADR-0006 决策 7）
+- `Modules/Settings/ViewModels/SettingsPageViewModel.cs` → `Language.SettingsRestartBannerText`/`SettingsRestartNowButtonTitle`（重启横幅文本与按钮标题，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
 - `Modules/Settings/ViewModels/SettingItemModel.cs` → `Language.SettingsRestartPendingMark`（「重启后生效」项级标记文本，决策 7）
 
 Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
@@ -95,7 +95,7 @@ Attribute 字符串键（经 Framework 的 `Language.Get` 间接解析）：
 - `Modules/Workstation/Menus/ViewLayoutMenus.cs:10,13` → `MenuViewTitle` + `ResetLayoutTitle`
 - `Modules/Workstation/Menus/HelpMenus.cs:11,17` → `[MenuGroup("MenuHelpTitle", ...)]`、`[MenuItem("MenuAboutTitle", ...)]`
 
-`Language.Get(string)` 直接调用点（ADR-0001 菜单重构后首次有了真实消费方，不再只是给将来动态键场景留的后门）：
+`Language.Get(string)` 直接调用点（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 菜单重构后首次有了真实消费方，不再只是给将来动态键场景留的后门）：
 
 - `Core/Framework/Menus/MenuRegistration.cs:85` → `Language.Get(item.Title)`：把 `MenuItemAttribute` 携带的 title 键解析为当前 UI 区域性下的显示标题
 - `Core/Framework/Menus/MenuTreeBuilder.cs:59,74,98` → `Language.Get(node.Segment)`：把菜单路径各段键解析为顶层/子菜单标题，并作为顶层与子菜单分组的排序键
