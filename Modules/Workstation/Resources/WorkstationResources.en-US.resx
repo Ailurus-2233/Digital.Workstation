@@ -4,13 +4,21 @@
     <value>A modular workspace that brings your everyday tools together in one desktop application.</value>
     <comment>主页产品说明</comment>
   </data>
+  <data name="HomeLoadedModulesTitle" xml:space="preserve">
+    <value>Loaded modules</value>
+    <comment>主页已加载模块区域标题</comment>
+  </data>
+  <data name="HomeModuleDescriptionTitle" xml:space="preserve">
+    <value>Module description</value>
+    <comment>主页模块说明区域标题</comment>
+  </data>
   <data name="HomeCoreTitle" xml:space="preserve">
-    <value>Core components</value>
-    <comment>主页核心组件列表标题</comment>
+    <value>System core</value>
+    <comment>主页系统核心分组标题</comment>
   </data>
   <data name="HomeCustomTitle" xml:space="preserve">
     <value>Custom modules</value>
-    <comment>主页自定义模块列表标题</comment>
+    <comment>主页自定义模块分组标题</comment>
   </data>
   <data name="HomeNoModules" xml:space="preserve">
     <value>No modules loaded</value>
@@ -74,10 +82,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ProductName" xml:space="preserve">
-    <value>Digital Workstation</value>
-    <comment>Product display name</comment>
-  </data>
   <data name="AboutWindowTitle" xml:space="preserve">
     <value>About Digital Workstation</value>
     <comment>About window title</comment>
@@ -85,10 +89,6 @@
   <data name="SettingsNavigationTitle" xml:space="preserve">
     <value>Settings</value>
     <comment>Title of the shell built-in Settings navigation item</comment>
-  </data>
-  <data name="DashBoardNavigationTitle" xml:space="preserve">
-    <value>Launch Pad</value>
-    <comment>Title of the DashBoard navigation item</comment>
   </data>
   <data name="MenuFileTitle" xml:space="preserve">
     <value>File</value>
@@ -153,61 +153,5 @@
   <data name="StatusReadyTitle" xml:space="preserve">
     <value>Ready</value>
     <comment>Text of the shell built-in status bar "Ready" item</comment>
-  </data>
-  <data name="SplashStartingText" xml:space="preserve">
-    <value>Starting…</value>
-    <comment>Initial phase text before the splash shows progress</comment>
-  </data>
-  <data name="SplashPhaseCoreServices" xml:space="preserve">
-    <value>Initializing core services</value>
-    <comment>Splash phase name: initializing core services</comment>
-  </data>
-  <data name="SplashPhaseLoadingModules" xml:space="preserve">
-    <value>Loading modules</value>
-    <comment>Splash phase name: loading modules</comment>
-  </data>
-  <data name="SplashPhaseReady" xml:space="preserve">
-    <value>Ready</value>
-    <comment>Splash phase name: ready</comment>
-  </data>
-  <data name="SplashPhaseFailed" xml:space="preserve">
-    <value>Module failed to load</value>
-    <comment>Splash phase name: module failed to load</comment>
-  </data>
-  <data name="CommandPaletteWatermark" xml:space="preserve">
-    <value>Type a command to execute</value>
-    <comment>Watermark of the command palette input box (ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md))</comment>
-  </data>
-  <data name="NoMatchingCommands" xml:space="preserve">
-    <value>No matching commands</value>
-    <comment>Empty-state text of the command palette when nothing matches (ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md))</comment>
-  </data>
-  <data name="SettingsGeneralGroupName" xml:space="preserve">
-    <value>General</value>
-    <comment>Display name of the "General" settings group (Framework built-in, ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md))</comment>
-  </data>
-  <data name="SettingsLanguageName" xml:space="preserve">
-    <value>Language</value>
-    <comment>Display name of the "Language" setting item (Framework built-in, ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md))</comment>
-  </data>
-  <data name="SettingsLanguageNameZhCN" xml:space="preserve">
-    <value>Chinese (Simplified)</value>
-    <comment>Display name of language setting member ZhCN (key convention: setting name key + member name, ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) decision 8)</comment>
-  </data>
-  <data name="SettingsLanguageNameEnUS" xml:space="preserve">
-    <value>English (US)</value>
-    <comment>Display name of language setting member EnUS (same convention)</comment>
-  </data>
-  <data name="SettingsRestartPendingMark" xml:space="preserve">
-    <value>Restart to apply</value>
-    <comment>Item-level marker text next to a modified restart-required setting on the settings page (ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) decision 7)</comment>
-  </data>
-  <data name="SettingsRestartBannerText" xml:space="preserve">
-    <value>Some setting changes will take effect after restart</value>
-    <comment>Settings page top banner text shown while restart-required changes are pending (ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) decision 7)</comment>
-  </data>
-  <data name="SettingsRestartNowButtonTitle" xml:space="preserve">
-    <value>Restart Now</value>
-    <comment>Title of the Restart Now button on the settings page restart banner (ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) decision 7)</comment>
   </data>
 </root>

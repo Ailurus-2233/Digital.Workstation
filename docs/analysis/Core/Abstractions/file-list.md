@@ -39,7 +39,7 @@ WindowManager/
 
 ### Commands/CommandAttribute.cs
 
-定义 `CommandAttribute`（`[AttributeUsage(AttributeTargets.Method)]`，构造参 `title` 为 Language 资源键，命名属性 `Id?`（缺省「声明类全名.方法名」）/`Icon?`/`Gesture?`/`Order`）——声明一个命令（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：免类级 attribute，任何类的公共实例方法标注即被 Framework 侧 `RegisterCommands` 扫描注册；方法签名仅支持无参 `void M()`/`Task M()`，非法签名扫描时记日志跳过。
+定义 `CommandAttribute(Type resourceType, string title)`，`AttributeTargets.Method`；`ResourceType` 标明标题来源，`Title` 为键。命名属性 `Id?`/`Icon?`/`Gesture?`/`Order` 不变。无需类级 attribute，公共实例无参 `void`/`Task` 方法经 Framework 的 `RegisterCommands` 扫描注册；默认 Id 为「声明类全名.方法名」。
 
 ### Commands/ICommandContribution.cs
 
@@ -55,7 +55,7 @@ shell 与模块共知的主视图 Id 常量（[ADR-0006](https://github.com/Ailu
 
 ### Contributions/ToolViewAttribute.cs
 
-定义枚举 `ToolViewPlacement`（`ActivityBar`/`AuxiliaryPanel`/`BottomPanel`）与 `ToolViewAttribute`（`[AttributeUsage(AttributeTargets.Class)]`，主构造参 `id`/`titleKey`，命名属性 `Icon?`/`Default`（缺省 `AuxiliaryPanel`）/`Order`/`AllowMove`（缺省 `true`））——声明一个 View 类是工具视图（Tool View，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)），经 Framework 侧 `RegisterToolViews(Assembly)` 扫描注册。
+定义 `ToolViewPlacement`（`ActivityBar`/`AuxiliaryPanel`/`BottomPanel`）与 `ToolViewAttribute(string id, Type resourceType, string titleKey)`。资源来源显式传入；命名属性 `Icon?`/`Default`（缺省 `AuxiliaryPanel`）/`Order`/`AllowMove`（缺省 `true`）保留。标注 View 类，经 `RegisterToolViews(Assembly)` 扫描注册。
 
 ### Contributions/ToolViewContribution.cs
 
@@ -71,31 +71,31 @@ shell 与模块共知的主视图 Id 常量（[ADR-0006](https://github.com/Ailu
 
 ### Menus/IMenuItemContribution.cs
 
-`using System.Windows.Input;`。定义接口 `IMenuItemContribution`（`Title`/`IconPath?`/`Path`/`Group?`/`GroupOrder`/`NodeOrder`/`Order`/`Command`）——模块向菜单栏贡献菜单项的契约，路径/分组模型（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)），无 `Id`、无定位枚举。命名空间 `DigitalWorkstation.Core.Abstractions.Menus`。
+定义接口 `IMenuItemContribution`：`Title`/`IconPath?`/`Path`/`PathTitle?`/`Group?`/`GroupOrder`/`NodeOrder`/`Order`/`Command`。稳定 `Path` 定位，`PathTitle` 提供已解析末端标题，null 表示无标题意见；菜单项本身无 Id、无定位枚举。
 
 ### Menus/MenuGroupAttribute.cs
 
-定义 `MenuGroupAttribute`（`[AttributeUsage(AttributeTargets.Class)]`，构造参 `path`，命名属性 `Group?`/`GroupOrder`/`Order`）——声明菜单类：类中标注 `MenuItemAttribute` 的公共实例方法成为菜单项，经 Framework 侧 `RegisterMenus` 扫描注册。单段/多段路径语义见 api.md。
+定义 `MenuGroupAttribute(string path)`（仅引用路径）和 `MenuGroupAttribute(string path, Type resourceType, string titleKey)`（声明末端标题），`AttributeTargets.Class`。引用形式的 `ResourceType`/`TitleKey` 都为 null；声明形式成对传入。命名属性 `Group?`/`GroupOrder`/`Order` 保留。模块可引用稳定路径而不引用所有者资源，详见 api.md。
 
 ### Menus/MenuItemAttribute.cs
 
-定义 `MenuItemAttribute`（`[AttributeUsage(AttributeTargets.Method)]`，构造参 `title` 为 Language 资源键，命名属性 `Order`/`Icon?`）——声明菜单项；方法签名仅支持无参 `void M()`/`Task M()`，非法签名扫描时记日志跳过。
+定义 `MenuItemAttribute(Type resourceType, string title)`，`AttributeTargets.Method`，命名属性 `Order`/`Icon?`。标题来源独立于类级 `MenuGroupAttribute`；仅支持公共实例无参 `void`/`Task` 方法，非法签名扫描时记日志跳过。
 
 ### Settings/SettingGroupAttribute.cs
 
-定义 `SettingGroupAttribute`（`[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]`，构造参 `name` 为 Language 资源键，命名属性 `Order` 缺省 `0`）——声明一个设置分组（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1），经 Framework 侧 `RegisterSettings(Assembly)` 扫描注册；同名分组全局合并、多处声明位次取最小（同 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 决策 4）。
+定义 `SettingGroupAttribute(string id, Type resourceType, string name)`，`AttributeTargets.Class`、`AllowMultiple=true`。稳定 `Id` 为跨模块归并依据，`Name` 是所属资源的键；`Order` 缺省 0。同 Id 保留首个声明的来源与名称、位次取最小。
 
 ### Settings/SettingItemAttribute.cs
 
-定义 `SettingItemAttribute`（`[AttributeUsage(AttributeTargets.Property)]`，构造参 `group`/`name`，命名属性 `Id?`（缺省「声明类全名.属性名」，仿命令 Id 规则）/`DefaultValue?`（须为属性类型的编译期常量）/`Order`/`RequiresRestart`）——声明一个设置项（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1），标注在公共静态可读属性上；属性只是声明锚点，扫描不读属性值，读写一律经 `ISettingsService`。
+定义 `SettingItemAttribute(string group, Type resourceType, string name)`，标注公共静态可读属性。`Group` 是稳定分组 Id，`ResourceType` 提供设置项/枚举名称来源；命名属性 `Id?`/`DefaultValue?`/`Order`/`RequiresRestart` 保留。扫描不执行属性体，值读写经 `ISettingsService`。
 
 ### Settings/SettingGroupContribution.cs
 
-定义 `public sealed class SettingGroupContribution`（2 个 `required init` 属性：`Name`（Language 资源键，非已解析文案）/`Order`）——设置分组的贡献元数据，由 Framework 侧扫描 `SettingGroupAttribute` 生成并注册进容器，收集时按 `Name` 全局合并，模块不手写。
+定义 `SettingGroupContribution`，4 个 `required init` 属性：`Id`/`ResourceType: Type?`/`Name`/`Order`。扫描生成，收集时按 Id 合并；仅无声明的隐式分组使用 `ResourceType=null`、`Name=Id`、`Order=0`。
 
 ### Settings/SettingItemContribution.cs
 
-定义 `public sealed class SettingItemContribution`（7 个 `required init` 属性：`Id`（全局唯一，settings.json 的 key）/`Group`/`Name`（Language 资源键，非已解析文案）/`ValueType`（编辑器推断与 JSON 反序列化依据）/`DefaultValue?`（未修改时的取值，不是单独存储层，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）/`Order`/`RequiresRestart`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7））——设置项的贡献元数据，由 Framework 侧扫描 `SettingItemAttribute` 生成并注册进容器，模块不手写。
+定义 `SettingItemContribution`，8 个 `required init` 属性：`Id`/`Group`/`ResourceType: Type`/`Name`/`ValueType`/`DefaultValue?`/`Order`/`RequiresRestart`。`Group` 是稳定分组 Id，`Name` 保留资源键；设置页使用同一来源解析名称与枚举选项，`ValueType` 决定编辑器与反序列化类型。
 
 ### Settings/ISettingsService.cs
 

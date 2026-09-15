@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DigitalWorkstation.Core.Models.Events;
-using DigitalWorkstation.Core.Resource;
+using DigitalWorkstation.DashBoard.Resources;
 
 namespace DigitalWorkstation.DashBoard.ViewModels.Windows;
 
@@ -21,7 +21,7 @@ public partial class DashBoardWindowViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private string _phaseText = Language.SplashStartingText;
+    private string _phaseText = DashBoardResources.SplashStartingText;
 
     /// <summary>
     ///     当前加载模块名与 i/N 进度；非加载模块阶段为空
@@ -40,9 +40,9 @@ public partial class DashBoardWindowViewModel : ObservableObject
         IsFailed = false;
         PhaseText = progress.Phase switch
         {
-            StartupPhase.CoreServices => Language.SplashPhaseCoreServices,
-            StartupPhase.LoadingModules => Language.SplashPhaseLoadingModules,
-            StartupPhase.Ready => Language.SplashPhaseReady,
+            StartupPhase.CoreServices => DashBoardResources.SplashPhaseCoreServices,
+            StartupPhase.LoadingModules => DashBoardResources.SplashPhaseLoadingModules,
+            StartupPhase.Ready => DashBoardResources.SplashPhaseReady,
             _ => PhaseText
         };
         ModuleText = progress.Phase == StartupPhase.LoadingModules
@@ -53,7 +53,7 @@ public partial class DashBoardWindowViewModel : ObservableObject
     private void OnModuleFailed(ModuleLoadFailure failure)
     {
         IsFailed = true;
-        PhaseText = Language.SplashPhaseFailed;
+        PhaseText = DashBoardResources.SplashPhaseFailed;
         ModuleText = FormatModuleText(failure.ModuleName, failure.ModuleIndex, failure.ModuleCount);
         ErrorMessage = failure.ErrorMessage;
     }

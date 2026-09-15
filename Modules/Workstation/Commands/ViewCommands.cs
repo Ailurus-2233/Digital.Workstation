@@ -1,6 +1,7 @@
 using DigitalWorkstation.Core.Abstractions.Commands;
 using DigitalWorkstation.Core.Models.Events;
 using DigitalWorkstation.Core.UIPackage;
+using DigitalWorkstation.Workstation.Resources;
 
 namespace DigitalWorkstation.Workstation.Commands;
 
@@ -10,25 +11,25 @@ namespace DigitalWorkstation.Workstation.Commands;
 /// </summary>
 public class ViewCommands(IEventAggregator eventAggregator)
 {
-    [Command("ToggleSideBarTitle", Order = 100, Icon = Icons.PanelLeft, Gesture = "Ctrl+B")]
+    [Command(typeof(WorkstationResources), nameof(WorkstationResources.ToggleSideBarTitle), Order = 100, Icon = Icons.PanelLeft, Gesture = "Ctrl+B")]
     public void ToggleSideBar()
     {
         eventAggregator.GetEvent<TogglePanelVisibilityEvent>().Publish(TogglePanelTarget.SideBar);
     }
 
-    [Command("ToggleBottomPanelTitle", Order = 200, Icon = Icons.PanelBottom, Gesture = "Ctrl+J")]
+    [Command(typeof(WorkstationResources), nameof(WorkstationResources.ToggleBottomPanelTitle), Order = 200, Icon = Icons.PanelBottom, Gesture = "Ctrl+J")]
     public void ToggleBottomPanel()
     {
         eventAggregator.GetEvent<TogglePanelVisibilityEvent>().Publish(TogglePanelTarget.BottomPanel);
     }
 
-    [Command("ToggleAuxiliaryPanelTitle", Order = 300, Icon = Icons.PanelRight, Gesture = "Ctrl+Alt+B")]
+    [Command(typeof(WorkstationResources), nameof(WorkstationResources.ToggleAuxiliaryPanelTitle), Order = 300, Icon = Icons.PanelRight, Gesture = "Ctrl+Alt+B")]
     public void ToggleAuxiliaryPanel()
     {
         eventAggregator.GetEvent<TogglePanelVisibilityEvent>().Publish(TogglePanelTarget.AuxiliaryPanel);
     }
 
-    [Command("ResetLayoutTitle", Order = 400)]
+    [Command(typeof(WorkstationResources), nameof(WorkstationResources.ResetLayoutTitle), Order = 400)]
     public void ResetLayout()
     {
         eventAggregator.GetEvent<ResetLayoutEvent>().Publish();

@@ -8,7 +8,7 @@
 |---|---|---|
 | `Core/Abstractions` | Shell 贡献契约：`IStatusBarItemContribution`（Abstractions/Contributions/）；工具视图 attribute `ToolViewAttribute` 与放置枚举 `ToolViewPlacement`（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）仅经 `RegisterToolViews` 扫描机制涉及，当前无标注类 | `DashBoardStatusBarItem.cs:1、11` 实现接口（using `DigitalWorkstation.Core.Abstractions.Contributions`，`DashBoardModule.cs:1`） |
 | `Core/Framework` | 间接获得 Prism（`IModule`、`IContainerRegistry`、`IEventAggregator`、`PubSubEvent`、`ThreadOption`）与 CommunityToolkit.Mvvm（`ObservableObject`、`[ObservableProperty]`、`[RelayCommand]`）的传递引用；运行期由其提供 `IoC` 初始化与 `RegisterToolViews` 工具视图注册扩展（Framework/Contributions/ToolViewRegistration.cs，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)） | `DashBoardModule.cs:2、6、12` `IModule` 与 `RegisterToolViews`（using `DigitalWorkstation.Core.Framework.Contributions`，第 2 行）；`DashBoardWindowViewModel.cs:1-2、12、69、78` |
-| `Core/Resource` | `Language` 本地化字符串：`DashBoardNavigationTitle`、`SplashStartingText`、`SplashPhaseCoreServices`、`SplashPhaseLoadingModules`、`SplashPhaseReady`、`SplashPhaseFailed`（Resource/Language.cs；中英值在 Language.resx / Language.en-US.resx） | `DashBoardStatusBarItem.Title` 属性（DashBoardStatusBarItem.cs:15）；`DashBoardWindowViewModel.cs:24、43-45、56` |
+| `Core/Resource` | `ResourceText` 查找机制、共享 `SharedResources.ProductName` | 私有启动进度与状态栏标题由本模块 `Resources/DashBoardResources.cs` 及同名中性/en-US resx 持有；DashBoardWindow 的产品名引用 SharedResources |
 | `Core/UIPackage` | `Icons` 图标路径常量：`Icons.DashBoard`（四宫格）（UIPackage/Icons.cs:18） | `DashBoardStatusBarItem.cs:17` |
 
 ### 传递依赖（未在 csproj 直接引用，但源码 using 其命名空间）

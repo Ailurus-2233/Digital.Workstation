@@ -33,11 +33,11 @@
 | Core/Abstractions | [Core/Abstractions/](Core/Abstractions/common.md) | 纯契约层：贡献接口与定位枚举（`Contributions/`）、菜单契约 `IMenuItemContribution` 与 `MenuGroupAttribute`/`MenuItemAttribute`（`Menus/`）、命令契约 `ICommandContribution` 与 `CommandAttribute`（`Commands/`，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）、设置契约 `SettingGroupAttribute`/`SettingItemAttribute`/`ISettingsService`（`Settings/`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）、`ShellRegions` 常量（`Regions/`）、窗口管理接口（`WindowManager/`），零实现 | 无项目依赖（包：Avalonia） |
 | Core/Common | [Core/Common/](Core/Common/common.md) | 基础设施静态门面：Serilog 静态日志 `Logger` 与 Prism 容器静态访问器 `IoC`，进程内单例 | Abstractions（包：Prism.Avalonia/DryIoc、Serilog） |
 | Core/Models | [Core/Models/](Core/Models/common.md) | 跨模块事件契约与负载 DTO 层：启动序列三件套 + 工作区交互三件套 + 设置变更事件 `SettingChangedEvent`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3，共 7 个事件），全是空 `PubSubEvent<T>` 子类与 record/枚举 | Common |
-| Core/Resource | [Core/Resource/](Core/Resource/common.md) | UI 文案资源层：静态类 `Language` + 中文中性 `Language.resx` / 英文 `Language.en-US.resx`，键缺失返回键名本身 | 无项目依赖 |
+| Core/Resource | [Core/Resource/](Core/Resource/common.md) | 共享本地化机制 `ResourceText.Get(Type, key)` 与产品名 `SharedResources`；模块私有文案随所属程序集，缺键返回键名 | 无项目依赖 |
 | Core/UIPackage | [Core/UIPackage/](Core/UIPackage/common.md) | 共享 UI 资源包：`WorkstationTheme` 聚合 4 个第三方主题包、`VSCodePalette` 深色色键、`Icons` 15 个 StreamGeometry path 常量 | 无项目依赖（包：Avalonia/Semi.Avalonia/Ursa） |
-| Core/Framework | [Core/Framework/](Core/Framework/common.md) | 应用框架层：`FrameworkApplication<TWindow>` 引导与三阶段启动序列（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）、`FrameworkWindow` 主题窗口基类（`Windows/`）、`CommandPalette` 命令面板控件（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）、`FrameworkWindowManager`（`WindowManager/`）、`ShellLayoutState` 布局状态机与 `LayoutPersistence` 布局持久化（`Layout/`）、`ShellContributionCollector` 贡献收集（`Contributions/`）、`MenuTreeBuilder` 菜单建树与 `RegisterMenus`/`RegisterCommands` attribute 菜单/命令注册（`Menus/`、`Commands/`）、`RegisterSettings` attribute 设置注册与 `SettingsService` 设置持久化/语言应用（`Settings/`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)） | Abstractions、Common、Models、UIPackage |
-| Modules/DashBoard | [Modules/DashBoard/](Modules/DashBoard/common.md) | 启动台模块：启动进度窗（进度/失败/继续退出决策）+ 向 shell 五个扩展点各贡献一条目的通路验证（tracer bullet） | Abstractions、Framework、Resource、UIPackage |
-| Modules/Settings | 尚无，待 deep-read 生成 | 设置页模块：向 MainContent 贡献设置页主视图（分组树 + 编辑器，含「重启后生效」标记与重启横幅 UX，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 5/7） | Abstractions、Framework、Resource、UIPackage |
+| Core/Framework | [Core/Framework/](Core/Framework/common.md) | 应用框架层：启动与窗口管理、Shell 布局和持久化、贡献注册收集及菜单建树、命令面板、设置存储与语言应用；框架自有文案在 `Resources/FrameworkResources.*` | Abstractions、Common、Models、UIPackage、Resource |
+| Modules/DashBoard | [Modules/DashBoard/](Modules/DashBoard/common.md) | 启动进度窗（进度/失败/继续退出决策）与启动台状态栏贡献；私有文案在 `Resources/DashBoardResources.*` | Abstractions、Framework、Resource、UIPackage |
+| Modules/Settings | 尚无独立深读目录；本页场景 8 记录本地化接口 | 设置页模块：普通 MainContent 主视图（分组树 + 枚举编辑器）；按贡献者的资源类型解析分组、设置项和选项；重启 UX 文案在 `Resources/SettingsResources.*` | Abstractions、Framework、Resource、UIPackage |
 | Modules/Workstation | [Modules/Workstation/](Modules/Workstation/common.md) | 应用宿主与 shell：`MainWindow` VS Code 式五区布局、`MainWindowViewModel` 驱动布局状态（含命令收集与手势 KeyBinding 接线，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)；ActivityBar 左下角"设置"纯导航按钮，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6）、`WorkstationApplication` 入口、shell 预置贡献 | Framework、Resource、UIPackage、DashBoard、Settings |
 | Launcher | [Launcher/](Launcher/common.md) | 程序入口与运行时引导器（WinExe）：Release 分类目录布局的程序集/native 库解析（`AssemblyLoader`）+ 启动 Avalonia/Prism 应用 | Workstation |
 
@@ -67,6 +67,7 @@ graph TD
   FW --> Com["Core/Common"]
   FW --> Mod["Core/Models"]
   FW --> UIP
+  FW --> Res
   Mod --> Com
   Com --> Abs
 ```
@@ -94,10 +95,11 @@ graph TD
 
 ### 2. 新增一条多语言文案
 
-1. [Core/Resource/common.md](Core/Resource/common.md)「常见修改场景 1」：三处必须同步——`Core/Resource/Language.resx`（中文）、`Language.en-US.resx`（英文）、`Language.cs`（`nameof` 属性）；漏加 en-US 不报错，静默回退中文。
-2. [Core/Resource/pitfalls.md](Core/Resource/pitfalls.md)：键与属性同名不变量、resx `data name` 必须手动同步重命名。
-3. 消费点定位：[Modules/Workstation/reference.md](Modules/Workstation/reference.md) 与 [Modules/DashBoard/reference.md](Modules/DashBoard/reference.md) 的「依赖关系」表列出了全部 `Language.*` 使用点（带行号）。
-4. 排查界面上出现英文键名：见 [Core/Resource/common.md](Core/Resource/common.md) 场景 5。
+1. 先确定文案归属：产品名放 `Core/Resource/SharedResources.*`；Framework、DashBoard、Settings、Workstation 私有文案分别放所属项目 `Resources/{Owner}Resources.cs`、`.resx`、`.en-US.resx`。仅字面相同不构成共享理由。
+2. [Core/Resource/common.md](Core/Resource/common.md)：所属资源族三处同步——中文中性资源、英文卫星资源、同名强类型属性；强类型入口调用 `ResourceText.Get(typeof(OwnerResources), nameof(Key))`，漏加英文键仍回退中文。
+3. [Core/Resource/pitfalls.md](Core/Resource/pitfalls.md)：资源类型全名必须与嵌入资源基名一致；`nameof` 不会重命名 resx 的 `data name`。不同资源类型可以使用相同键，查找不会跨资源类型兜底。
+4. 模块内部 C#/XAML 使用所属资源类；跨模块贡献的 attribute 显式传 `typeof(OwnerResources)` 与 `nameof(OwnerResources.Key)`，不向 Core 添加模块私有键。菜单路径与设置分组另用稳定 ID，见场景 7/8 与 Abstractions 文档。
+5. 菜单挂接与声明分开：`[MenuGroup("shell.file")]` 只向已有「文件」菜单贡献条目，无需引用 Shell 资源；新子菜单用 `[MenuGroup("shell.file/module.export", typeof(OwnerResources), nameof(OwnerResources.ExportTitle))]` 声明末端标题。无标题的挂接不会抢占后续标题声明。
 
 ### 3. 启动失败排查链
 
@@ -130,12 +132,14 @@ graph TD
 
 ### 7. 新增一个命令（出现在命令面板）
 
-1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：`ICommandContribution`/`CommandAttribute` 字段骨架（`Id` 默认「声明类全名.方法名」、`Title` 资源键、`Gesture`、`Order`；扁平模型，与菜单互不相干，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）。
-2. 模块侧：在任何类的方法上标 `[Command("标题键", Order=…, Gesture=…)]`（免类级 attribute，仅支持无参 `void`/`Task`），模块 `RegisterTypes` 保证调了 `RegisterCommands(Assembly)`——现成样例 [Modules/Workstation/](Modules/Workstation/common.md) 的 `ViewCommands`；标题键同步在 Core/Resource 加（或复用既有键）。
+1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：`ICommandContribution`/`CommandAttribute` 的 `Id` 默认「声明类全名.方法名」；attribute 显式携带 `ResourceType` 与 `Title` 资源键，贡献对象的 `Title` 已解析。`Gesture`、`Order` 与菜单互不相干。
+2. 模块侧：在公共实例方法上标 `[Command(typeof(OwnerResources), nameof(OwnerResources.Title), Order=…, Gesture=…)]`（免类级 attribute，仅支持无参 `void`/`Task`），模块 `RegisterTypes` 调 `RegisterCommands(Assembly)`。现成样例为 Workstation 的 `ViewCommands`，文案保存在 Workstation 自己的资源族。
 3. [Core/Framework/common.md](Core/Framework/common.md)：收集侧零改动——`ShellContributionCollector.GetCommands()` 统一排序去重；`CommandPalette`（Ctrl+P）与 `RegisterCommandGestures` 接线已在 shell 就位。
 
 ### 8. 新增一个设置项（出现在设置页）
 
-1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：`SettingGroupAttribute`（类级、可多处声明同名分组取最小 `Order`）/`SettingItemAttribute`（标公共静态可读属性作声明锚点，`Id` 默认「声明类全名.属性名」、`DefaultValue`、`Order`、`RequiresRestart`）与 `ISettingsService`（`Get<T>`/`Set<T>`/`IsPendingRestart`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）字段骨架；`Get` 对未修改值回退声明默认值，资源键缺失时界面显示键名本身（`Language.Get` 的 `?? key` 兜底）。
-2. 模块侧：在静态类上标 `[SettingGroup("分组名键", Order=…)]`、在静态可读属性上标 `[SettingItem("分组名键", "设置项名键", DefaultValue=…)]`，模块 `RegisterTypes` 保证调了 `RegisterSettings(Assembly)`；分组名/设置项名/枚举成员显示名（「设置项名称键 + 成员名」约定）三类键同步在 Core/Resource 加（见场景 2）——现成样例为 Framework 预置的 `GeneralSettings`。
-3. [Core/Framework/common.md](Core/Framework/common.md)：收集侧零改动——`ShellContributionCollector.GetSettingGroups()`/`GetSettingItems()` 统一合并排序去重；代码读写设置经注入 `ISettingsService`（`Set` 自动防抖落盘并广播 `SettingChangedEvent`），不读 attribute 属性值。
+1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：`SettingGroupAttribute(id, resourceType, name)` 声明稳定分组 ID 和资源来源，`SettingItemAttribute(group, resourceType, name)` 引用分组 ID。设置项 `Id` 仍默认「声明类全名.属性名」，是持久化和 `ISettingsService` 读写依据，不随分组或文案变更。
+2. 模块侧：`[SettingGroup("module.general", typeof(OwnerResources), nameof(OwnerResources.GroupName))]` 与 `[SettingItem("module.general", typeof(OwnerResources), nameof(OwnerResources.ItemName), DefaultValue=…)]`；模块 `RegisterTypes` 调 `RegisterSettings(Assembly)`。名称与枚举选项键都在贡献者的资源族，选项键仍为「设置项名称键 + 成员名」。现成样例为 `GeneralSettings`：分组 `framework.general`，资源 `FrameworkResources`。
+3. [Core/Framework/common.md](Core/Framework/common.md)：`GetSettingGroups()` 按稳定 `Id` 合并，同 ID 保留首份名称/资源来源、`Order` 取最小；无声明的分组显示其 ID，位次为 0。不同 ID 即使使用相同资源键也不合并。代码读写值继续经 `ISettingsService`，不读取声明锚点的属性值。
+4. `Modules/Settings/ViewModels/SettingGroupModel.cs` 的 `Key` 保存分组 ID，`Name` 按贡献的 `ResourceType`/`Name` 解析；`SettingItemModel` 与 `EnumSettingItemModel` 同样使用贡献者资源类型，缺键显示键名。设置页自己的重启标记、横幅、按钮使用 `Modules/Settings/Resources/SettingsResources.*`，不是 Framework 的语言设置名称资源。
+5. 验证：分别以中文、英文启动应用，打开「文件 → 首选项」，检查分组、设置项、枚举选项与重启横幅；语言仍是需重启设置，当前进程不热更新。既有设置文件中的语言设置项 ID 不变。

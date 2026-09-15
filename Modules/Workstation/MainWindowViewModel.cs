@@ -10,7 +10,7 @@ using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.Layout;
 using DigitalWorkstation.Core.Framework.Menus;
 using DigitalWorkstation.Core.Models.Events;
-using DigitalWorkstation.Core.Resource;
+using DigitalWorkstation.Workstation.Resources;
 using DigitalWorkstation.Core.UIPackage;
 using DigitalWorkstation.Workstation.Views;
 
@@ -151,7 +151,7 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary>
     ///     ActivityBar 底部"设置"入口按钮的标题（工具提示）
     /// </summary>
-    public string SettingsTitle => Language.SettingsNavigationTitle;
+    public string SettingsTitle => WorkstationResources.SettingsNavigationTitle;
 
     /// <summary>
     ///     SideBar 列宽：可见时为卡片宽度 + 4px 外边距间隙（布局模板的间隙约定），隐藏时归零，

@@ -35,3 +35,7 @@
 | 布局改动重启后丢了 | 该变更路径末尾是否调了 `ScheduleSave()`（七个现有变更点见 pitfalls.md）；落盘文件是 %AppData%/Digital.Workstation/layout.json（Framework `LayoutPersistence`，500ms 防抖） | 新增变更路径忘挂 `ScheduleSave`；或 500ms 防抖窗口内进程被杀 |
 | 工具视图拖不动/落放无反应 | 钉住项（`AllowMove=false`）本就不可拖（机制保留，当前无内置钉住项实例）；其余看：Framework `ToolViewButton.CanDrag` 绑定（主题模板里绑 `Contribution.AllowMove`）、`ToolViewBar` 的 ControlTheme 是否生效（`layout|ToolViewBar` 选择器匹配 StyleKey——控件若被加 `StyleKeyOverride` 会整体失效，见 Framework pitfalls）、`MoveTabCommand` 的拒绝分支（:442-445） | 钉住项不可拖是设计；底部钉住段（普通 ItemsControl）不接受拖放是设计；控件 StyleKeyOverride 破坏主题查找 |
 | 日志位置 | 本模块不写日志；启动期错误看 Framework `Logger`（Serilog 静态封装）输出 | — |
+
+## 本地化故障
+
+私有文案查找 owner 为 `WorkstationResources`。漏英文条目或英文卫星程序集时回退中文；中性资源也无键则显示原键。若整个资源清单缺失或 owner 命名空间与 manifest 不符，ResourceText 不捕获 MissingManifestResourceException，异常传播给调用方。检查本模块 Resources 下的同名 .cs/.resx/.en-US.resx，而不是在共享资源中补模块私有键。

@@ -9,12 +9,14 @@ namespace DigitalWorkstation.Settings.ViewModels;
 public sealed class SettingGroupModel(SettingGroupContribution contribution)
 {
     /// <summary>
-    ///     分组名称键（资源键），设置项按此键归组
+    ///     稳定分组 Id，设置项按此标识归组，与显示名资源键无关
     /// </summary>
-    public string Key { get; } = contribution.Name;
+    public string Key { get; } = contribution.Id;
 
     /// <summary>
     ///     分组显示名（已解析）
     /// </summary>
-    public string Name { get; } = Language.Get(contribution.Name);
+    public string Name { get; } = contribution.ResourceType is { } resourceType
+        ? ResourceText.Get(resourceType, contribution.Name)
+        : contribution.Name;
 }

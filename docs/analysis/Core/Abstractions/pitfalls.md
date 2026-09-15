@@ -11,12 +11,15 @@
 4. **视图类型必须注册到 DI 容器**：`ViewType` 注释为「经容器解析以支持依赖注入」；返回未注册的 `Type` 会在 shell 侧解析时失败。工具视图的 View 类型由 `RegisterToolViews` 扫描时自动 `Register(viewType)`，无需模块另行注册；主视图的 `ViewType` 仍需模块自己注册。
 5. **注册方式约定**：主视图/状态栏两接口注释一致——模块须「在 `Prism.Ioc.IContainerRegistry` 中以本接口注册实现」，以**接口**而非具体类型注册，shell 才能按接口收集。工具视图（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：不手写贡献类，View 类标 `ToolViewAttribute` 后在 `RegisterTypes` 调 `RegisterToolViews(Assembly)`，由 Framework 侧扫描生成 `ToolViewContribution` 元数据（单例注册）并注册 View 类型；非可实例化 `Control` 的标注类记 `Logger.Warning` 跳过。菜单例外（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）：`IMenuItemContribution` 通常不手写实现，模块类标注 `MenuGroupAttribute`/`MenuItemAttribute` 后在 `RegisterTypes` 调 `RegisterMenus(Assembly)`，由 Framework 侧扫描生成实现并以接口注册。
 6. **面板收起行为**：「面板收起期间其 tab 的激活操作会被 ShellLayoutState 拒绝」（Contributions/ToolViewContribution.cs 注释）——激活操作不是异常而是被拒绝，调用方不要依赖激活必然生效。
-7. **菜单路径与分组语义**（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）：路径段为 Language 资源键，各段 Trim 后按序精确匹配（Ordinal 大小写敏感）；含空段（`"A//B"`）的路径整体非法，扫描时记日志跳过；`MenuGroupAttribute` 的 `Group`/`GroupOrder`/`Order` 在单段路径与多段路径下语义不同（单段=方法项分组 + 顶层位次；多段=末端子菜单节点分组与位次，方法项进默认组）——深层子菜单内部分组必须拆类声明，一个 attribute 装不下两套分组参数。`MenuGroupAttribute.Order` 缺省 `int.MaxValue`（未声明 = 「无位次意见」，排最后且不参与取最小）——不要凭「数值缺省 0」的直觉推断位次，也别指望不写 `Order` 的类能抢前；`GroupOrder` 无此特例，缺省就是 0。
+7. **菜单路径、标题与位次独立**：路径段是稳定 Id，各段 Trim 后 Ordinal 大小写敏感匹配；含空段（`"A//B"`）整体非法。`MenuGroupAttribute.TitleKey` 只命名路径末端节点，不命名祖先。相同路径首个末端标题生效，位次仍取最小；先见子路径产生的隐式父节点，随后父路径自己的末端声明仍可命名它。不同路径即使同来源同键也不合并。`Group`/`GroupOrder`/`Order` 在单段路径描述方法项分组/顶层位次，在多段路径描述末端子菜单节点的父级位置，方法项进入默认组。`Order` 缺省 `int.MaxValue` 表示无位次意见，`GroupOrder` 缺省仍为 0。
 8. **设置项契约不变量**（Settings/ 目录，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）：
    - `SettingItemContribution.Id` **全局唯一**（Settings/SettingItemContribution.cs 第 13 行）：默认「声明类全名.属性名」，是 settings.json 的 key 与 `ISettingsService` 读写的依据——撞 Id 时收集侧保留先注册者并记 `Logger.Warning`，后注册者被丢弃（同命令 Id 冲突规则）。
    - `SettingItemAttribute` 只扫 `BindingFlags.Public | Static | DeclaredOnly` 属性：非公共/实例属性连候选都进不了，**静默忽略**（无日志，同菜单/命令扫描惯例）；无 getter 的属性扫描时记 `Logger.Warning` 跳过。
    - `DefaultValue`（Settings/SettingItemAttribute.cs 第 33 行）必须是属性类型的**编译期常量**（attribute 实参限制，无法写 `new` 或方法调用）；类型与属性类型不匹配时扫描时记日志跳过——不是运行时校验。
    - **声明属性体不会被执行**：扫描只读属性的类型与 attribute，不读属性值；读写一律走 `ISettingsService`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）。在标注属性的 getter/setter 里写逻辑（如「读到 X 就迁移」）是无效代码，永远不运行。
+   - 分组身份是 `SettingGroupContribution.Id`，不是 `Name`；同 Id 首个声明的 `ResourceType`/`Name` 生效，最小 `Order` 不改变标题来源。不同 Id 即使名称键或翻译相同也不得归并。
+   - 只有未声明的隐式分组使用 `ResourceType=null`，直接显示 `Id`；设置项来源必须非空。枚举缺键显示 `Name + 成员名` 完整键，而非成员名。
+   - 文本声明的资源来源必须显式传入；仅引用菜单路径的 `[MenuGroup("shell.file")]` 则不携带来源/标题，不参与首个非 null 标题选择。模块私有资源随所属程序集，不会回退搜索其他模块。语言下次启动生效，重建树不能重新翻译已解析的贡献。
 
 ## 易错改法
 
@@ -26,7 +29,7 @@
 4. **「统一」`GetWindow` 可空性**：`IWindowManager.GetWindow(Type)`（WindowManager/IWindowManager.cs 第 20 行）返回非空 `Window`，`WindowManagerExtenstion.GetWindow<TWindow>`（第 22 行）返回 `Window?`。把接口也改成 `Window?` 会让所有实现方收到可空性告警；把扩展改成非空则掩盖实现可能返回 null 的事实。
 5. **改 `ShellRegions` 常量值**：值经 `nameof` 生成，改标识符即改字符串值；若 shell 布局 XAML 或持久化布局状态中以字符串引用 Region 名，会静默失配（编译期不报错）。
 6. **以为 `ShowWindow(Window)` 实例版注释「对话框窗口」是语义**：IWindowManager.cs 中 `ShowWindow(Window window)` 的 XML 注释误写为「显示指定类型的对话框窗口」（与 ShowDialog 注释雷同），实际是非对话框的实例版重载——按注释理解行为会被误导。
-7. **`[MenuItem("...")]` 短名与 Avalonia `MenuItem` 控件歧义**：`MenuItemAttribute`（Menus/MenuItemAttribute.cs）的 attribute 短名 `MenuItem` 与 `Avalonia.Controls.MenuItem` 控件同名——菜单类文件若同时 `using Avalonia.Controls;`（例如需要 `Window`/`Separator` 等类型时），`[MenuItem(...)]` 编译报歧义。规避：菜单类文件避免 `using Avalonia.Controls;`（现有菜单类如 Modules/Workstation 的 Menus/FileMenus.cs 只 using `Avalonia` 与 `Avalonia.Controls.ApplicationLifetimes`），或写全名 `[MenuItemAttribute(...)]`。
+7. **`[MenuItem(typeof(ModuleResources), "...")]` 短名与 Avalonia 控件歧义**：菜单类同时 `using Avalonia.Controls;` 时，attribute 短名可能与 `Avalonia.Controls.MenuItem` 冲突。避免该 using，或写 `[MenuItemAttribute(typeof(ModuleResources), "...")]`。
 
 ## 历史踩坑线索
 

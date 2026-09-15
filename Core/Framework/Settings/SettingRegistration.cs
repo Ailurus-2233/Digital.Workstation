@@ -14,7 +14,7 @@ public static class SettingRegistration
 {
     /// <summary>
     ///     扫描 <paramref name="assembly" /> 中的设置分组与设置项并注册。模块在自身 RegisterTypes 中调用，
-    ///     传入本模块程序集。同名分组合并与位次取最小发生在收集侧（跨程序集），此处逐条注册声明
+    ///     传入本模块程序集。同 Id 分组合并与位次取最小发生在收集侧（跨程序集），此处逐条注册声明
     /// </summary>
     public static void RegisterSettings(this IContainerRegistry registry, Assembly assembly)
     {
@@ -23,7 +23,13 @@ public static class SettingRegistration
             foreach (var group in type.GetCustomAttributes<SettingGroupAttribute>())
             {
                 registry.RegisterSingleton(typeof(SettingGroupContribution),
-                    _ => new SettingGroupContribution { Name = group.Name, Order = group.Order });
+                    _ => new SettingGroupContribution
+                    {
+                        Id = group.Id,
+                        ResourceType = group.ResourceType,
+                        Name = group.Name,
+                        Order = group.Order
+                    });
             }
 
             foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Static |
@@ -54,6 +60,7 @@ public static class SettingRegistration
                 {
                     Id = item.Id ?? $"{type.FullName}.{property.Name}",
                     Group = item.Group,
+                    ResourceType = item.ResourceType,
                     Name = item.Name,
                     ValueType = property.PropertyType,
                     DefaultValue = item.DefaultValue,

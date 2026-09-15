@@ -27,7 +27,7 @@ Views/
 
 ### DashBoardStatusBarItem.cs
 
-`public class DashBoardStatusBarItem : IStatusBarItemContribution`（第 11 行）。`Id="dashboard.status"`、`Title=Language.DashBoardNavigationTitle`（启动台标题资源）、`IconPath=Icons.DashBoard`、`Order=20`（类注释：排在 shell 预置"就绪"(10) 之后）。无视图——状态栏项只显示标题与图标。
+`public class DashBoardStatusBarItem : IStatusBarItemContribution`（第 11 行）。`Id="dashboard.status"`、`Title=DashBoardResources.DashBoardNavigationTitle`（启动台标题资源）、`IconPath=Icons.DashBoard`、`Order=20`（类注释：排在 shell 预置"就绪"(10) 之后）。无视图——状态栏项只显示标题与图标。
 
 ### ViewModels/Windows/DashBoardWindowViewModel.cs
 
@@ -37,7 +37,7 @@ Views/
 |---|---|---|
 | `_eventAggregator` | 字段（第 14 行，`readonly`） | 构造注入的事件聚合器 |
 | `DashBoardWindowViewModel(IEventAggregator)` | 构造函数（第 16 行） | 订阅 `StartupProgressEvent`→`OnProgress`、`ModuleLoadFailedEvent`→`OnModuleFailed`（均 `ThreadOption.UIThread, true`） |
-| `_phaseText` → `PhaseText` | `[ObservableProperty]`（第 23-24 行） | 阶段文案，初值 `Language.SplashStartingText` |
+| `_phaseText` → `PhaseText` | `[ObservableProperty]`（第 23-24 行） | 阶段文案，初值 `DashBoardResources.SplashStartingText` |
 | `_moduleText` → `ModuleText` | `[ObservableProperty]`（第 29-30 行） | 模块名 + i/N，非加载模块阶段为空 |
 | `_isFailed` → `IsFailed` | `[ObservableProperty]`（第 32-33 行） | 失败态开关 |
 | `_errorMessage` → `ErrorMessage` | `[ObservableProperty]`（第 35-36 行） | 失败错误详情 |
@@ -51,8 +51,8 @@ Views/
 
 ### Views/Windows/DashBoardWindow.axaml(.cs)
 
-启动台窗口。axaml 第 1-13 行：`Window`，`CanResize="False"`、`SizeToContent="Height"`、`Width="440"`、`WindowStartupLocation="CenterScreen"`、`Title="启动台"`（硬编码中文，未走 Language）、`prism:ViewModelLocator.AutoWireViewModel="True"`。内容（第 14-32 行，`StackPanel Margin="24" Spacing="12"`）：
-- 标题 `TextBlock` 通过 `{x:Static resource:Language.ProductName}` 显示本地化产品名；
+启动台窗口。axaml 第 1-13 行：`Window`，`CanResize="False"`、`SizeToContent="Height"`、`Width="440"`、`WindowStartupLocation="CenterScreen"`、`Title="启动台"`（硬编码中文，未本地化）、`prism:ViewModelLocator.AutoWireViewModel="True"`。内容（第 14-32 行，`StackPanel Margin="24" Spacing="12"`）：
+- 标题 `TextBlock` 通过 `{x:Static resource:SharedResources.ProductName}` 显示本地化产品名；
 - `TextBlock Text="{Binding PhaseText}"`（FontSize 14）；
 - `ProgressBar Height="4" IsIndeterminate="{Binding !IsFailed}"`（失败时停止滚动）；
 - `TextBlock Text="{Binding ModuleText}"`（`Foreground=SemiColorText2`）；
@@ -60,3 +60,10 @@ Views/
 
 代码后置（.axaml.cs）：`public partial class DashBoardWindow : Window`，仅无参构造 `InitializeComponent()`。
 
+## 私有资源文件
+
+- `Resources/DashBoardResources.cs`：公开静态资源 facade。
+- `Resources/DashBoardResources.resx`：中文中性资源。
+- `Resources/DashBoardResources.en-US.resx`：英文卫星资源。
+
+三者同位、同基名；SDK 默认嵌入资源，基名等于 `DigitalWorkstation.DashBoard.Resources.DashBoardResources`。

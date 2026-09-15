@@ -6,8 +6,8 @@ namespace DigitalWorkstation.Settings.ViewModels;
 
 /// <summary>
 ///     枚举设置项的编辑器模型（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8：enum → 下拉框）：
-///     选项为枚举全部成员，显示名走 Language 资源键（键按「设置项名称键 + 成员名」约定生成，
-///     缺键回退成员名本身）；改选即写入 ISettingsService（落盘 + 广播变更事件）
+///     选项为枚举全部成员，显示名在贡献指定的资源所有者中按「设置项名称键 + 成员名」查找，
+///     缺键回退完整组合键本身；改选即写入 ISettingsService（落盘 + 广播变更事件）
 /// </summary>
 public sealed partial class EnumSettingItemModel : SettingItemModel
 {
@@ -22,7 +22,7 @@ public sealed partial class EnumSettingItemModel : SettingItemModel
         Options = Enum.GetValues(ValueType)
             .Cast<object>()
             .Select(value => new EnumOption(value,
-                Language.Get($"{NameKey}{Enum.GetName(ValueType, value)}")))
+                ResourceText.Get(contribution.ResourceType, $"{NameKey}{Enum.GetName(ValueType, value)}")))
             .ToArray();
         // 直接赋字段而不走属性，避免把「读取当前值」误触发成一次写入
         _selectedOption = Options.FirstOrDefault(option => Equals(option.Value, GetValue()));

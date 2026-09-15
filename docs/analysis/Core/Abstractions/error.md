@@ -2,7 +2,7 @@
 
 ## 本模块自身抛出的异常
 
-**无。** 本模块（Core/Abstractions/）是纯契约程序集：三个贡献接口（`IMainViewContribution`/`IMenuItemContribution`/`IStatusBarItemContribution`）只有属性签名，`ToolViewAttribute`/`ToolViewContribution` 只有属性声明，`IWindowManager`/`IMainWindowManager` 只有方法签名，`ShellRegions` 只有常量。唯一含方法体的是 `WindowManagerExtenstion`（WindowManager/IWindowManagerExtenstion.cs），其 7 个泛型方法全部是一行转发（如 `return manager.GetWindow(typeof(TWindow));`），无任何参数校验、无 `throw` 语句、无 try/catch。
+**无显式抛出。** 本模块是纯契约程序集：接口声明签名，attribute 构造只保存元数据，贡献类只保存属性，常量类提供稳定标识；WindowManagerExtenstion 的泛型方法只转发窗口管理调用，不做参数校验或异常包装。
 
 因此运行期异常只能来自**实现侧**或**调用侧违反契约**，本文件按「使用本契约时可能遇到的错误」组织。
 
@@ -28,3 +28,4 @@
 | 面板 tab 激活无效 | shell 侧 `ShellLayoutState` | 面板处于收起状态（设计行为，见上 5） |
 | `GetWindow<TWindow>` 返回 null | 实现侧窗口注册 | 窗口类型未注册；注意接口非空标注与扩展可空标注不一致 |
 | 主视图打不开 | `OpenMainViewEvent` 负载 Id 与 `IMainViewContribution.Id` 是否匹配 | Id 不匹配或前缀约定未遵守 |
+| 菜单/设置出现原始键或 Id | 文本 attribute 的 `ResourceType` 与键、菜单末端声明、设置分组 Id | 缺键返回键名；未声明菜单祖先显示稳定 Id 段、未声明设置分组显示 Id；这些回退不会搜索全局资源 |

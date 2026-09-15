@@ -4,13 +4,21 @@
     <value>以模块构建工作空间，将常用工具汇聚于一个桌面应用。</value>
     <comment>主页产品说明</comment>
   </data>
+  <data name="HomeLoadedModulesTitle" xml:space="preserve">
+    <value>已加载模块</value>
+    <comment>主页已加载模块区域标题</comment>
+  </data>
+  <data name="HomeModuleDescriptionTitle" xml:space="preserve">
+    <value>模块说明</value>
+    <comment>主页模块说明区域标题</comment>
+  </data>
   <data name="HomeCoreTitle" xml:space="preserve">
-    <value>核心加载</value>
-    <comment>主页核心组件列表标题</comment>
+    <value>系统核心</value>
+    <comment>主页系统核心分组标题</comment>
   </data>
   <data name="HomeCustomTitle" xml:space="preserve">
     <value>自定义模块</value>
-    <comment>主页自定义模块列表标题</comment>
+    <comment>主页自定义模块分组标题</comment>
   </data>
   <data name="HomeNoModules" xml:space="preserve">
     <value>暂无已加载的模块</value>
@@ -74,10 +82,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ProductName" xml:space="preserve">
-    <value>数字工作站</value>
-    <comment>产品显示名称</comment>
-  </data>
   <data name="AboutWindowTitle" xml:space="preserve">
     <value>关于 数字工作站</value>
     <comment>关于窗口标题</comment>
@@ -85,10 +89,6 @@
   <data name="SettingsNavigationTitle" xml:space="preserve">
     <value>设置</value>
     <comment>shell 预置"设置"导航项的标题</comment>
-  </data>
-  <data name="DashBoardNavigationTitle" xml:space="preserve">
-    <value>启动台</value>
-    <comment>DashBoard 导航项的标题</comment>
   </data>
   <data name="MenuFileTitle" xml:space="preserve">
     <value>文件</value>
@@ -153,61 +153,5 @@
   <data name="StatusReadyTitle" xml:space="preserve">
     <value>就绪</value>
     <comment>shell 预置状态栏"就绪"项的文本</comment>
-  </data>
-  <data name="SplashStartingText" xml:space="preserve">
-    <value>正在启动…</value>
-    <comment>启动台显示进度前的初始阶段文本</comment>
-  </data>
-  <data name="SplashPhaseCoreServices" xml:space="preserve">
-    <value>初始化核心服务</value>
-    <comment>启动台"初始化核心服务"阶段名</comment>
-  </data>
-  <data name="SplashPhaseLoadingModules" xml:space="preserve">
-    <value>加载模块</value>
-    <comment>启动台"加载模块"阶段名</comment>
-  </data>
-  <data name="SplashPhaseReady" xml:space="preserve">
-    <value>就绪</value>
-    <comment>启动台"就绪"阶段名</comment>
-  </data>
-  <data name="SplashPhaseFailed" xml:space="preserve">
-    <value>模块加载失败</value>
-    <comment>启动台"模块加载失败"阶段名</comment>
-  </data>
-  <data name="CommandPaletteWatermark" xml:space="preserve">
-    <value>输入命令以执行</value>
-    <comment>命令面板输入框的水印（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）</comment>
-  </data>
-  <data name="NoMatchingCommands" xml:space="preserve">
-    <value>无匹配命令</value>
-    <comment>命令面板无匹配结果时的空态文案（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）</comment>
-  </data>
-  <data name="SettingsGeneralGroupName" xml:space="preserve">
-    <value>常规</value>
-    <comment>设置页"常规"分组的显示名（Framework 预置设置分组，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）</comment>
-  </data>
-  <data name="SettingsLanguageName" xml:space="preserve">
-    <value>语言</value>
-    <comment>设置项"语言"的显示名（Framework 预置，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）</comment>
-  </data>
-  <data name="SettingsLanguageNameZhCN" xml:space="preserve">
-    <value>中文（简体）</value>
-    <comment>语言设置项成员 ZhCN 的显示名（键按「设置项名称键 + 成员名」约定生成，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8）</comment>
-  </data>
-  <data name="SettingsLanguageNameEnUS" xml:space="preserve">
-    <value>English (US)</value>
-    <comment>语言设置项成员 EnUS 的显示名（同上约定）</comment>
-  </data>
-  <data name="SettingsRestartPendingMark" xml:space="preserve">
-    <value>重启后生效</value>
-    <comment>设置页需重启设置项被修改后的项级标记文本（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）</comment>
-  </data>
-  <data name="SettingsRestartBannerText" xml:space="preserve">
-    <value>部分设置的更改将在重启后生效</value>
-    <comment>设置页顶部「存在未生效的需重启修改」横幅文本（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）</comment>
-  </data>
-  <data name="SettingsRestartNowButtonTitle" xml:space="preserve">
-    <value>立即重启</value>
-    <comment>设置页重启横幅上「立即重启」按钮的标题（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）</comment>
   </data>
 </root>

@@ -5,20 +5,16 @@ using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework;
 using DigitalWorkstation.Core.Models.Events;
-using DigitalWorkstation.Core.Resource;
+using DigitalWorkstation.Settings.Resources;
 
 namespace DigitalWorkstation.Settings.ViewModels;
 
 /// <summary>
-///     设置页 ViewModel：左侧设置分组树（按名称全局合并后的分组），右侧选中分组的设置项编辑器。
+///     设置页 ViewModel：左侧设置分组树（按稳定 Id 合并后的分组），右侧选中分组的设置项编辑器。
 ///     数据来自 ShellContributionCollector 的设置项收集（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 5：普通主视图贡献，无特权机制）。
 ///     另承载需重启 UX（决策 7）：订阅 SettingChangedEvent 刷新项级「重启后生效」标记与顶部横幅
 /// </summary>
 
-/// <summary>
-///     设置页 ViewModel：左侧设置分组树（按名称全局合并后的分组），右侧选中分组的设置项编辑器。
-///     数据来自 ShellContributionCollector 的设置项收集（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 5：普通主视图贡献，无特权机制）
-/// </summary>
 public sealed partial class SettingsPageViewModel : ObservableObject
 {
     private readonly IReadOnlyList<SettingItemContribution> _contributions;
@@ -65,12 +61,12 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// <summary>
     ///     横幅文本
     /// </summary>
-    public string RestartBannerText => Language.SettingsRestartBannerText;
+    public string RestartBannerText => SettingsResources.SettingsRestartBannerText;
 
     /// <summary>
     ///     横幅「立即重启」按钮标题
     /// </summary>
-    public string RestartNowButtonTitle => Language.SettingsRestartNowButtonTitle;
+    public string RestartNowButtonTitle => SettingsResources.SettingsRestartNowButtonTitle;
 
     /// <summary>
     ///     横幅「立即重启」：强制落盘后启动新进程并退出当前进程（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）

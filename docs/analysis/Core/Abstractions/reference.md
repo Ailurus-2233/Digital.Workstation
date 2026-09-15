@@ -10,6 +10,8 @@
 
 无项目引用（`ProjectReference`），本模块是解决方案依赖图的最底层之一。
 
+资源来源只以 `System.Type` 穿过契约层，Abstractions 不引用 Core/Resource 或任何模块资源。Framework 的注册实现与设置页负责调用 `ResourceText.Get(ResourceType, key)`；各模块私有资源随所属程序集。
+
 编译设置：`<TargetFramework>net10.0</TargetFramework>`、`<ImplicitUsings>enable</ImplicitUsings>`、`<Nullable>enable</Nullable>`。
 
 间接提及（XML 注释中出现但未直接引用的外部概念，实际引用由 shell 实现侧承担）：
@@ -59,7 +61,7 @@ Id (string) + Title (string) + IconPath (string) + Order (int)
   + 行为字段: ViewType / Command（IStatusBarItemContribution 无）
 ```
 
-`ToolViewContribution` 不是接口而是 sealed 元数据类（required init 属性），由 Framework 侧 `RegisterToolViews` 扫描 `ToolViewAttribute` 生成，模块不手写实现（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）。菜单契约 `IMenuItemContribution` 不适用此骨架（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）：无 `Id`、无定位枚举，字段为 `Title`/`IconPath?`/`Path`/`Group?`/`GroupOrder`/`NodeOrder`/`Order`/`Command`，定位由路径/分组模型表达。
+`ToolViewContribution` 是扫描生成的 sealed 元数据类，不由模块手写。菜单契约 `IMenuItemContribution` 不适用上述骨架：无 Id、无定位枚举，字段为 `Title`/`IconPath?`/`Path`/`PathTitle`/`Group?`/`GroupOrder`/`NodeOrder`/`Order`/`Command`。稳定 `Path` 定位，已解析 `PathTitle` 命名末端节点。设置元数据则保留 `ResourceType`/`Name` 到设置页构造时解析，分组身份使用稳定 `Id`。
 
 差异点（易混，见 glossary.md）：
 

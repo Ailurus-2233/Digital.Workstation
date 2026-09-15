@@ -82,9 +82,12 @@ internal sealed class ReflectedMenuItemContribution : IMenuItemContribution
     {
         _instance = instance;
         _method = method;
-        Title = Language.Get(item.Title);
+        Title = ResourceText.Get(item.ResourceType, item.Title);
         IconPath = item.Icon;
         Path = group.Path;
+        PathTitle = group is { ResourceType: { } resourceType, TitleKey: { } titleKey }
+            ? ResourceText.Get(resourceType, titleKey)
+            : null;
         Group = group.Group;
         GroupOrder = group.GroupOrder;
         NodeOrder = group.Order;
@@ -97,6 +100,8 @@ internal sealed class ReflectedMenuItemContribution : IMenuItemContribution
     public string? IconPath { get; }
 
     public string Path { get; }
+
+    public string? PathTitle { get; }
 
     public string? Group { get; }
 

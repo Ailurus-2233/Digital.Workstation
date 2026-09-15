@@ -2,6 +2,7 @@ using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DigitalWorkstation.Core.Abstractions.Settings;
 using DigitalWorkstation.Core.Resource;
+using DigitalWorkstation.Settings.Resources;
 
 namespace DigitalWorkstation.Settings.ViewModels;
 
@@ -27,7 +28,7 @@ public abstract partial class SettingItemModel(SettingItemContribution contribut
     /// <summary>
     ///     设置项显示名（已解析）
     /// </summary>
-    public string Name { get; } = Language.Get(contribution.Name);
+    public string Name { get; } = ResourceText.Get(contribution.ResourceType, contribution.Name);
 
     /// <summary>
     ///     名称资源键：枚举成员显示名按「本键 + 成员名」约定派生（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8）
@@ -42,7 +43,7 @@ public abstract partial class SettingItemModel(SettingItemContribution contribut
     /// <summary>
     ///     「重启后生效」项级标记的显示文本（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
     /// </summary>
-    public string RestartPendingMarkText => Language.SettingsRestartPendingMark;
+    public string RestartPendingMarkText => SettingsResources.SettingsRestartPendingMark;
 
     /// <summary>
     ///     是否显示「重启后生效」项级标记：需重启项且值已偏离本进程启动时的生效值（值已落盘、当前进程未生效）。

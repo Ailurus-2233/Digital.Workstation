@@ -1,30 +1,11 @@
 # Abstractions — 验证方式
 
-## 本模块的测试在哪
+本模块没有测试项目或测试框架引用。接口、attribute 构造与元数据没有资源查找、归并或持久化逻辑；这些行为在 Framework 与 Settings 模块验收，不为字段透传或窗口泛型转发新增测试。
 
-**本模块没有任何测试。** `Core/Abstractions/` 下只有 12 个文件（1 个 csproj + 11 个 .cs），不存在测试项目、测试目录或以 `*Test*`/`*Tests*` 命名的文件（已通读模块全部文件确认）。模块内无任何测试框架（xUnit/NUnit/MSTest）引用。
+## 契约变更的验收边界
 
-> 解决方案级是否有其他测试项目引用本模块，超出本模块深读范围（约束：不读其他模块目录），待进一步调查。
+1. 汇总全部调用方后统一编译，确认必填资源 Type、设置分组 Id、菜单可空 PathTitle 的签名迁移完整。单独编译 Abstractions 不能证明消费者已迁移。
+2. 用临时场景执行 Framework 的真实扫描/收集/建树代码，检查显式资源来源、菜单引用先到标题后到、设置稳定 Id 合并与隐式组回退；具体场景见 `../Framework/testing.md`。
+3. 最后启动应用，检查语言重启后菜单、工具视图与设置页的显示；不能仅用编译通过代替可观察行为。
 
-## 为什么可接受
-
-本模块是纯契约层：11 个 .cs 文件中 10 个只含接口/枚举/常量/attribute/元数据属性声明，唯一含方法体的 `WindowManagerExtenstion`（WindowManager/IWindowManagerExtenstion.cs）每个方法是一行 `manager.Xxx(typeof(TWindow))` 转发。可测试的数据逻辑（数据读写、转换、校验、计算）为零，符合桌面端「单元测试聚焦数据检测」的约定——这里没有数据逻辑可测。
-
-## 怎么跑
-
-无本模块测试可跑。改动本模块后的验证方式：
-
-1. **编译验证**：`dotnet build Core/Abstractions/Abstractions.csproj`。本模块是解决方案最底层契约，任何签名改动会导致所有实现方/调用方编译失败——**编译错误即测试**，应进一步对整个解决方案 `dotnet build` 确认级联影响。
-2. **数据检测点**：不适用（无数据逻辑）。若未来给 `WindowManagerExtenstion` 加了非平凡逻辑（参数校验、缓存等），才需要补测试。
-
-## 改完代码后的最小验证集
-
-- 本模块编译通过。
-- 全解决方案编译通过（本模块接口被 shell 与各模块实现，签名变更的破坏面在编译期完全暴露）。
-- 无需跑 UI 自动化（本仓库纯桌面端约定：不做 UI 自动化测试验收；且本模块不含任何 View/ViewModel）。
-
-## 测试约定（若未来需要新增）
-
-- 框架与命名：解决方案当前无先例可参照，待出现首个测试项目时确立；建议遵循 .NET 惯例 `DigitalWorkstation.Core.Abstractions.Tests` + xUnit。
-- 可测对象候选：`WindowManagerExtenstion` 的转发行为（可用 mock `IWindowManager` 断言 `typeof(TWindow)` 正确传递）——但目前属「测转发=测实现细节」的低价值测试，不建议为覆盖率而加。
-- UI 相关（窗口实际显隐效果）按仓库约定跳过自动化测试。
+解决方案现有 `UnitTest/Framework/ShellLayoutStateResizeTests.cs` 只覆盖布局尺寸，不覆盖本地化契约。并行改动时由集成方待所有改动完成后统一验收，避免半成品引起伪失败。

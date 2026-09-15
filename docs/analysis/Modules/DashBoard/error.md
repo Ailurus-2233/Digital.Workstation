@@ -26,3 +26,7 @@
 ## 日志
 
 本模块不直接写日志（无 `Logger` 调用）。启动台相关的日志在启动序列侧（Core/Framework `FrameworkApplication` 的 `Logger.Error/Fatal`）；排查启动问题时先看 Serilog 控制台输出，再对照启动台显示。
+
+## 本地化故障
+
+私有文案查找 owner 为 `DashBoardResources`。漏英文条目或英文卫星程序集时回退中文；中性资源也无键则显示原键。若整个资源清单缺失或 owner 命名空间与 manifest 不符，ResourceText 不捕获 MissingManifestResourceException，异常传播给调用方。检查本模块 Resources 下的同名 .cs/.resx/.en-US.resx，而不是在共享资源中补模块私有键。

@@ -48,7 +48,7 @@ public static class ToolViewRegistration
             var metadata = new ToolViewContribution
             {
                 Id = attribute.Id,
-                Title = Language.Get(attribute.TitleKey),
+                Title = ResourceText.Get(attribute.ResourceType, attribute.TitleKey),
                 IconPath = attribute.Icon,
                 Order = attribute.Order,
                 Placement = attribute.Default,

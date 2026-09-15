@@ -70,29 +70,37 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
             .ToArray();
     }
     /// <summary>
-    ///     收集全部设置分组（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）：按名称全局合并——同名声明多处时位次取最小；
-    ///     仅被设置项引用而无 <see cref="SettingGroupAttribute" /> 声明的分组补出，位次视为 0。
-    ///     按位次升序、同位次按名称键字典序（Ordinal）
+    ///     收集全部设置分组：按稳定 Id 全局合并，首个声明的资源来源与名称生效，位次取最小；
+    ///     仅被设置项引用而无声明的分组补出，直接显示 Id，ResourceType 为 null，位次为 0。
+    ///     按位次升序、同位次按 Id 字典序（Ordinal）；具体贡献类先过滤 DryIoc 幽灵实例
     /// </summary>
     public IReadOnlyList<SettingGroupContribution> GetSettingGroups()
     {
         var groups = containerProvider.Resolve<IEnumerable<SettingGroupContribution>>()
-            .GroupBy(group => group.Name, StringComparer.Ordinal)
-            .Select(group => new SettingGroupContribution
+            .Where(group => group.Id is not null)
+            .GroupBy(group => group.Id, StringComparer.Ordinal)
+            .Select(group =>
             {
-                Name = group.Key,
-                Order = group.Min(declaration => declaration.Order)
+                var first = group.First();
+                return new SettingGroupContribution
+                {
+                    Id = group.Key,
+                    ResourceType = first.ResourceType,
+                    Name = first.Name,
+                    Order = group.Min(declaration => declaration.Order)
+                };
             })
             .ToList();
-        var declaredNames = groups.Select(group => group.Name).ToHashSet(StringComparer.Ordinal);
+        var declaredIds = groups.Select(group => group.Id).ToHashSet(StringComparer.Ordinal);
         groups.AddRange(containerProvider.Resolve<IEnumerable<SettingItemContribution>>()
+            .Where(item => item.Id is not null)
             .Select(item => item.Group)
             .Distinct(StringComparer.Ordinal)
-            .Where(name => !declaredNames.Contains(name))
-            .Select(name => new SettingGroupContribution { Name = name, Order = 0 }));
+            .Where(id => !declaredIds.Contains(id))
+            .Select(id => new SettingGroupContribution { Id = id, ResourceType = null, Name = id, Order = 0 }));
         return groups
             .OrderBy(group => group.Order)
-            .ThenBy(group => group.Name, StringComparer.Ordinal)
+            .ThenBy(group => group.Id, StringComparer.Ordinal)
             .ToArray();
     }
     /// <summary>
@@ -103,6 +111,7 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
     {
         var ids = new HashSet<string>(StringComparer.Ordinal);
         return containerProvider.Resolve<IEnumerable<SettingItemContribution>>()
+            .Where(item => item.Id is not null)
             .Where(item =>
             {
                 if (ids.Add(item.Id))

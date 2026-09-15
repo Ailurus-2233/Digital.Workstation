@@ -1,5 +1,5 @@
 ﻿using DigitalWorkstation.Core.Abstractions.Contributions;
-using DigitalWorkstation.Core.Resource;
+using DigitalWorkstation.DashBoard.Resources;
 using DigitalWorkstation.Core.UIPackage;
 
 namespace DigitalWorkstation.DashBoard;
@@ -12,7 +12,7 @@ public class DashBoardStatusBarItem : IStatusBarItemContribution
 {
     public string Id => "dashboard.status";
 
-    public string Title => Language.DashBoardNavigationTitle;
+    public string Title => DashBoardResources.DashBoardNavigationTitle;
 
     public string IconPath => Icons.DashBoard;
 

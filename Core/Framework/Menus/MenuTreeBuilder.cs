@@ -1,6 +1,5 @@
 using DigitalWorkstation.Core.Abstractions.Menus;
 using DigitalWorkstation.Core.Common;
-using DigitalWorkstation.Core.Resource;
 
 namespace DigitalWorkstation.Core.Framework.Menus;
 
@@ -13,7 +12,7 @@ namespace DigitalWorkstation.Core.Framework.Menus;
 public static class MenuTreeBuilder
 {
     /// <summary>
-    ///     从全部菜单贡献构建顶层菜单列表；标题（路径段与条目）在此一次性解析
+    ///     从全部菜单贡献构建顶层菜单列表；按稳定路径归并，只消费已解析的标题
     /// </summary>
     public static IReadOnlyList<MenuTreeSubmenu> Build(IEnumerable<IMenuItemContribution> contributions)
     {
@@ -38,6 +37,8 @@ public static class MenuTreeBuilder
                     : node.Children[segment] = new NodeAccum(segment);
             }
 
+            node.DeclaredTitle ??= contribution.PathTitle;
+
             if (segments.Length == 1)
             {
                 // 单段路径：Order 声明顶层菜单位次，Group/GroupOrder 描述条目分组
@@ -56,7 +57,7 @@ public static class MenuTreeBuilder
 
         return roots.Values
             .OrderBy(node => node.NodeOrder)
-            .ThenBy(node => Language.Get(node.Segment), StringComparer.Ordinal)
+            .ThenBy(node => node.Title, StringComparer.Ordinal)
             .Select(Emit)
             .ToArray();
     }
@@ -71,7 +72,7 @@ public static class MenuTreeBuilder
         }
         foreach (var child in node.Children.Values)
         {
-            entries.Add((child.Group, child.GroupOrder, child.NodeOrder, Language.Get(child.Segment), Emit(child)));
+            entries.Add((child.Group, child.GroupOrder, child.NodeOrder, child.Title, Emit(child)));
         }
 
         var sorted = entries
@@ -95,7 +96,7 @@ public static class MenuTreeBuilder
             children.Add(entry.Entry);
         }
 
-        return new MenuTreeSubmenu(Language.Get(node.Segment), children);
+        return new MenuTreeSubmenu(node.Title, children);
     }
 
     private sealed record LeafAccum(string? Group, int GroupOrder, int Order, string Title, string? IconPath,
@@ -105,7 +106,10 @@ public static class MenuTreeBuilder
     {
         private bool _placementDeclared;
 
-        public string Segment { get; } = segment;
+        // 隐式祖先先显示稳定 Id；遇到首个以本节点为末端的声明后才采用其标题
+        public string? DeclaredTitle { get; set; }
+
+        public string Title => DeclaredTitle ?? segment;
 
         /// <summary>
         ///     节点在父菜单内的组（仅深度 ≥ 2 的节点由类 attribute 声明；顶层菜单恒为 null）

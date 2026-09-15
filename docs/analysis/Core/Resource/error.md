@@ -1,49 +1,12 @@
 # Core/Resource — 异常与排查
 
-## 模块可能抛出的异常/错误
+| 症状/异常 | 实际行为与排查入口 |
+|---|---|
+| 显示完整资源键 | owner 的中性资源也无此键；检查 attribute.ResourceType、nameof 与该 owner resx 的 data name（区分大小写）。不会搜索其他 owner |
+| en-US 显示中文 | 英文条目或卫星程序集缺失，ResourceManager 回退中文；检查 owner 的 `.en-US.resx` 与输出中的 `en-US/<owner程序集>.resources.dll` |
+| `MissingManifestResourceException` | owner 全名与资源基名不匹配，或整个中性资源清单未嵌入；首次查找时异常传播，不转换成键名。检查 namespace、同名 resx、RootNamespace、嵌入资源逻辑名 |
+| `InvalidOperationException` | `GetString` 命中了非字符串资源；只维护字符串 value |
+| null 参数 | 非法调用遵循 ConcurrentDictionary/ResourceManager 的参数异常，不是缺键回退；公共契约要求非 null Type/key |
+| 设置组显示稳定 Id | 未声明分组，collector 创建隐式组；补齐同 Id 的 SettingGroup 声明，不把 Id 换成资源键 |
 
-### 1. `MissingManifestResourceException`（`System.Resources`）
-
-- **触发条件**：`ResourceManager` 找不到基名 `"DigitalWorkstation.Core.Resource.Language"` 对应的资源清单。这不是"某个键缺失"，而是**整个资源文件没找到**。
-- **抛出位置**：首次访问 `Language` 任何属性/`Get` 时（`Language.cs:11-12` 的 `Manager` 初始化或 `Language.cs:19` 的 `Manager.GetString(key)` 内部）。
-- **常见原因**：
-  1. 重命名了 `Language.resx` 文件名（基名随之改变，但 `Language.cs:12` 的字符串字面量不会自动跟随）；
-  2. 改了项目根命名空间或把 resx 移进子文件夹（默认逻辑名 = 根命名空间 + 相对路径 + 文件名）；
-  3. resx 的 Build Action 被从 `EmbeddedResource` 改掉。
-- **排查**：`dotnet build` 后用 `Resource.dll` 反编译或 `strings` 确认内嵌资源名是否仍是 `DigitalWorkstation.Core.Resource.Language`；对照 `Language.cs:12` 的基名字符串。
-
-### 2. `MissingSatelliteAssemblyException`（`System.Resources`）
-
-- **触发条件**：`CurrentUICulture` 为 en-US 但 `en-US/Resource.resources.dll` 卫星程序集不在输出目录。
-- **抛出位置**：`Manager.GetString(key)`（`Language.cs:19`）内部。
-- **常见原因**：消费方项目（`Core/Framework`、`Modules/Workstation`、`Modules/DashBoard`）的输出目录拷贝不完整；手工裁剪了发布产物中的 `en-US/` 文件夹。
-- **注意**：默认情况下 .NET 对缺失卫星程序集是**回退到中性资源（中文）而非抛异常**；只有显式配置 `<SatelliteResourceLanguages>` 且中性程序集标记 `NeutralResourcesLanguage(UltimateResourceFallbackLocation.Satellite)` 之类才会抛。本模块未设 `NeutralResourcesLanguage` 特性，因此实际行为是**静默回退中文**。
-
-### 3. 键缺失——**不抛异常**（设计行为）
-
-- `Get`（`Language.cs:17-20`）对缺失键返回键名本身。界面上显示英文键名（如 `SplashPhaseReady`）即是此错误的可见症状。
-- **触发条件**：resx 两个文件都没有该 `data name`（拼写错误、漏加、重命名不同步）。
-- **排查**：对照 `Language.cs` 的属性名逐一核对 `Language.resx` 与 `Language.en-US.resx` 的 `data name`（两者当前各 27 条，必须一一对应）。
-
-## 错误处理路径
-
-本模块**没有 try/catch**，不做任何异常转换或包装：
-
-```
-调用方 → Language.XxxTitle / Language.Get
-    → ResourceManager.GetString
-        ├─ 键缺失 → 返回 null → ?? key → 返回键名（兜底，非异常）
-        ├─ 资源清单缺失 → MissingManifestResourceException 原样向调用方传播
-        └─ 正常 → 返回本地化字符串
-```
-
-异常沿调用栈直接传播到消费方（如 `DashBoardWindowViewModel.cs` 的 splash 初始化）。模块自身假设：资源清单一定存在（编译期保证），所以只对"键缺失"这一最可能的人为失误做了兜底。
-
-## 排查速查
-
-| 症状 | 看哪里 | 常见原因 |
-|---|---|---|
-| 界面显示英文键名 | 该键在两个 resx 中的 `data name` 与 `Language.cs` 属性名是否一致 | resx 漏加条目 / 重命名只改了 C# 侧 |
-| en-US 用户看到中文 | `Language.en-US.resx` 是否有该键；输出目录有无 `en-US/Resource.resources.dll` | 翻译漏配；卫星程序集未拷贝（静默回退） |
-| 启动即 `MissingManifestResourceException` | `Language.cs:12` 基名 vs resx 文件位置/文件名 | resx 重命名或移动、根命名空间变更 |
-| 某个值死活不更新 | resx `<value>` 改了但没重新编译；`obj/` 缓存 | 增量构建缓存（`Core/Resource/obj/`）可删了重建 |
+模块不记录日志、不吞异常、不切换 UI 区域性。`ResourceText.Get` 在每次读取时使用 CurrentUICulture，但注册时已解析的菜单/命令/工具视图标题不会自动刷新；语言设置下次启动生效。

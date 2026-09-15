@@ -15,7 +15,7 @@
 | **工具视图（Tool View）** | 带图标与标题的可停靠界面单元，统一取代原导航项/面板 tab 两契约（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)，docs/adr/0002-toolview-drag-persistence.md）：View 类标 `ToolViewAttribute`，经 Framework 侧 `RegisterToolViews(Assembly)` 扫描生成 `ToolViewContribution` 元数据并注册 View 类型；`Default` 是默认归属，用户拖拽后的实际归属以持久化布局为准 | Contributions/ToolViewAttribute.cs、Contributions/ToolViewContribution.cs |
 | **钉住项（Pinned Item）** | `AllowMove = false` 且 `Default = ActivityBar` 的工具视图（如设置），固定渲染在 ActivityBar 底部段，不参与拖拽（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md) 第 2 条） | Contributions/ToolViewAttribute.cs `AllowMove` 注释 |
 | **Placement（定位）** | 工具视图默认栖身 Bar 的枚举 `ToolViewPlacement`（`ActivityBar`/`AuxiliaryPanel`/`BottomPanel`）；菜单无定位枚举，用菜单路径/菜单组定位 | Contributions/ToolViewAttribute.cs 第 6-22 行 |
-| **菜单路径（Menu Path）** | 菜单项在菜单栏中的位置，以 "/" 分隔的多级名称（各段为 Language 资源键）。首段是顶层菜单；中间各段是子菜单节点；路径不限深度（与根 CONTEXT.md 一致） | Menus/IMenuItemContribution.cs `Path` 属性、Menus/MenuGroupAttribute.cs 构造参 |
+| **菜单路径（Menu Path）** | `"/"` 分隔的稳定 Id 层级，首段为顶层菜单，支持任意深度。与资源键/显示文案无关；`PathTitle` 单独为末端节点提供已解析标题 | Menus/IMenuItemContribution.cs、Menus/MenuGroupAttribute.cs |
 | **菜单组（Menu Group）** | 同一父菜单内、由分隔线（Separator）隔开的命名分区。不同组之间自动插入分隔线；组按 GroupOrder 排序，组内条目按 Order 排序。顶层菜单（菜单栏本身）不分组、不插分隔线，只按 Order 排序。未指定组的条目归入无名默认组，默认组排在所有命名组之前（与根 CONTEXT.md 一致） | Menus/IMenuItemContribution.cs `Group`/`GroupOrder` 属性 |
 | **Order** | 排序权重，小者靠前；作用域为同一 Bar/面板内。菜单契约另有两级位次：`GroupOrder`（组间）与 `NodeOrder`（顶层菜单/末端子菜单节点在父级中） | 各贡献契约 `Order` 属性 |
 | **IconPath** | 图标的 `StreamGeometry` path 字符串（非文件路径、非资源 key），由 `PathIcon` 消费并随主题变色；`ToolViewAttribute` 上对应属性名为 `Icon` | 各贡献契约 `IconPath` 属性、Contributions/ToolViewAttribute.cs `Icon` |
@@ -23,6 +23,8 @@
 | **OpenMainViewEvent** | shell 侧事件（不在本程序集）：SideBar 内交互请求打开主视图，负载为 `IMainViewContribution.Id` | Contributions/IMainViewContribution.cs 注释 |
 | **ShellLayoutState** | shell 侧类型（不在本程序集）：管理面板展开/收起状态，面板收起期间拒绝其 tab 的激活 | Contributions/ToolViewContribution.cs 注释 |
 | **IContainerRegistry（Prism）** | Prism 的 DI 注册接口，模块在此注册贡献（接口类以接口注册；工具视图/菜单经 `RegisterToolViews`/`RegisterMenus` 扩展扫描注册）；本程序集未引用 Prism，仅注释提及 | 各 `I*Contribution` 接口注释 |
+| **资源所属类型（ResourceType）** | 文本声明显式传入的 `Type`，其全名与程序集定位资源；不是声明方法/视图类型。仅引用菜单路径的 MenuGroup 没有文本声明，其来源与键均为 null | 六个贡献 attribute |
+| **设置分组 Id** | `SettingGroupAttribute.Id` / `SettingGroupContribution.Id` 的稳定标识，设置项 `Group` 引用它；同 Id 合并，名称键与翻译不参与归组 | Settings/ |
 
 ## 与同名通用概念的区别
 

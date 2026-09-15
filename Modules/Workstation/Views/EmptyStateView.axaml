@@ -2,6 +2,9 @@
     x:Class="DigitalWorkstation.Workstation.Views.EmptyStateView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:prism="http://prismlibrary.com/"
+    prism:ViewModelLocator.AutoWireViewModel="True"
+    xmlns:localResource="clr-namespace:DigitalWorkstation.Workstation.Resources"
     xmlns:resource="clr-namespace:DigitalWorkstation.Core.Resource;assembly=DigitalWorkstation.Core.Resource">
     <UserControl.Styles>
         <Style Selector="Border.module-card">
@@ -14,45 +17,56 @@
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Margin" Value="0,0,0,16" />
         </Style>
-        <Style Selector="TextBlock.module-name">
-            <Setter Property="Margin" Value="0,0,0,12" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="Foreground" Value="{DynamicResource SemiColorText1}" />
-        </Style>
     </UserControl.Styles>
     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
         <Grid Margin="32" MaxWidth="840" RowDefinitions="Auto,Auto" HorizontalAlignment="Stretch">
-            <StackPanel Spacing="14" Margin="0,16,0,36" HorizontalAlignment="Center">
-                <Image Width="112" Height="112" Source="avares://DigitalWorkstation.Workstation/Assets/AppIcon.png" />
-                <TextBlock Text="{x:Static resource:Language.ProductName}" FontSize="28" FontWeight="SemiBold"
-                           TextAlignment="Center" TextWrapping="Wrap" />
-                <TextBlock Text="{x:Static resource:Language.HomeDescription}" MaxWidth="520"
-                           Foreground="{DynamicResource SemiColorText2}" TextAlignment="Center" TextWrapping="Wrap" />
-            </StackPanel>
-            <Grid Grid.Row="1" ColumnDefinitions="*,16,*">
-                <Border Classes="module-card">
-                    <StackPanel>
-                        <TextBlock Classes="section-title" Text="{x:Static resource:Language.HomeCoreTitle}" />
-                        <ItemsControl x:Name="CoreList">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate><TextBlock Classes="module-name" Text="{Binding}" /></DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <TextBlock x:Name="CoreEmpty" Text="{x:Static resource:Language.HomeNoModules}" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource SemiColorText2}" />
-                    </StackPanel>
+            <Grid ColumnDefinitions="*,24,2*" Margin="0,16,0,36">
+                <Image Width="112" Height="112" HorizontalAlignment="Right" VerticalAlignment="Center"
+                       Source="avares://DigitalWorkstation.Workstation/Assets/AppIcon.png" />
+                <StackPanel Grid.Column="2" Spacing="14" MaxWidth="520"
+                            HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <TextBlock Text="{x:Static resource:SharedResources.ProductName}" FontSize="28" FontWeight="SemiBold"
+                               TextAlignment="Left" TextWrapping="Wrap" />
+                    <TextBlock Text="{x:Static localResource:WorkstationResources.HomeDescription}"
+                               Foreground="{DynamicResource SemiColorText2}" TextAlignment="Left" TextWrapping="Wrap" />
+                </StackPanel>
+            </Grid>
+            <Grid Grid.Row="1" ColumnDefinitions="2*,16,3*" RowDefinitions="Auto,Auto">
+                <TextBlock Classes="section-title" Text="{x:Static localResource:WorkstationResources.HomeLoadedModulesTitle}" TextWrapping="Wrap" />
+                <TextBlock Grid.Column="2" Classes="section-title" Text="{x:Static localResource:WorkstationResources.HomeModuleDescriptionTitle}" TextWrapping="Wrap" />
+                <Border Grid.Row="1" Classes="module-card">
+                    <TreeView x:Name="ModuleTree" SelectionChanged="OnModuleSelectionChanged"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <TreeView.Resources>
+                            <x:Double x:Key="TreeViewItemIndent">12</x:Double>
+                        </TreeView.Resources>
+                        <TreeView.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </TreeView.ItemTemplate>
+                            <TreeViewItem x:Name="CoreModules" ItemsSource="{Binding CoreModules}" IsExpanded="True">
+                                <TreeViewItem.Header>
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Static localResource:WorkstationResources.HomeCoreTitle}" TextWrapping="Wrap" />
+                                        <TextBlock x:Name="CoreEmpty" IsVisible="{Binding IsCoreEmpty}" Text="{x:Static localResource:WorkstationResources.HomeNoModules}"
+                                                   FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource SemiColorText2}" />
+                                    </StackPanel>
+                                </TreeViewItem.Header>
+                            </TreeViewItem>
+                            <TreeViewItem x:Name="CustomModules" ItemsSource="{Binding CustomModules}" IsExpanded="True">
+                                <TreeViewItem.Header>
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Static localResource:WorkstationResources.HomeCustomTitle}" TextWrapping="Wrap" />
+                                        <TextBlock x:Name="CustomEmpty" IsVisible="{Binding IsCustomEmpty}" Text="{x:Static localResource:WorkstationResources.HomeNoModules}"
+                                                   FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource SemiColorText2}" />
+                                    </StackPanel>
+                                </TreeViewItem.Header>
+                            </TreeViewItem>
+                    </TreeView>
                 </Border>
-                <Border Grid.Column="2" Classes="module-card">
-                    <StackPanel>
-                        <TextBlock Classes="section-title" Text="{x:Static resource:Language.HomeCustomTitle}" />
-                        <ItemsControl x:Name="CustomList">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate><TextBlock Classes="module-name" Text="{Binding}" /></DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <TextBlock x:Name="CustomEmpty" Text="{x:Static resource:Language.HomeNoModules}" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource SemiColorText2}" />
-                    </StackPanel>
+                <Border Grid.Row="1" Grid.Column="2" Classes="module-card">
+                    <TextBlock x:Name="SelectedModuleTitle" Text="{Binding SelectedModuleName}" TextWrapping="Wrap" />
                 </Border>
             </Grid>
         </Grid>

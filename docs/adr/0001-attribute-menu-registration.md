@@ -3,6 +3,8 @@
 ## 状态
 已接受
 
+2026-09-15 修订：资源由贡献者持有，菜单路径与显示键分离；本次替换原全局 `Language` 约束，其余排序、执行与注册模型不变。
+
 ## 上下文
 
 旧菜单贡献契约 `IMenuItemContribution` 用封闭枚举 `MenuPlacement { File, View, Help }` 定位，菜单栏是 `MainWindow.axaml` 里写死的三个顶层菜单，贡献项只能平铺填入，无法表达多级子菜单、分组与自动分隔线（视图菜单的对齐组/显隐组分隔线是 shell 侧特判插入的）。新需求要求任意深度菜单路径（`File/Export`、`Tools/Diagnostics/Performance`）、命名分组（Group/GroupOrder）与组间自动分隔线，并要求以 Attribute 声明、启动时反射扫描一次注册。
@@ -15,7 +17,7 @@
 2. Attribute（`MenuGroup` 标类、`MenuItem` 标方法）只是生成该契约实现的一种新注册方式；shell 保持单条「收集 → 建树 → 渲染」管道。
 3. 各模块在 `RegisterTypes` 显式调用 `RegisterMenus(Assembly)` 扫描本模块程序集，把菜单类注册进容器；shell 在既有的一次性收集点（`EnsureContributionsLoaded`）从容器解析并建树。不做全局程序集扫描。
 4. 顶层菜单的 Order 由指向首段路径的 `MenuGroup.Order` 声明；多处声明冲突取最小值。同名 Group 的 GroupOrder 冲突同样取最小值。`MenuGroup.Order` 未声明时视为"无位次意见"（缺省 `int.MaxValue`，排最后），不参与取最小——否则任何忘写 Order 的类会以缺省 0 把所在菜单钉到最前。
-5. Attribute 中的标题字符串是 `Language` 资源键，运行时解析，缺键回退键名本身（resx 既有行为）。
+5. `MenuGroup(path, resourceType, titleKey)` 声明末端菜单节点的标题；`MenuGroup(path)` 仅向既有稳定路径挂接条目，不声明标题，不查询全局资源。`MenuItem(resourceType, title)` 独立声明菜单项资源。收集构造贡献时通过 `ResourceText.Get(Type, key)` 解析，缺键返回键名。`IMenuItemContribution.PathTitle` 为已解析的末端节点标题，纯挂接贡献为 null。相同完整路径保留首个有标题声明的标题；隐式祖先显示稳定 ID 段，后续声明可补上标题。建树器不查资源。
 6. 既有 7 个菜单贡献实现（含参数化的 `TogglePanelContribution`/`PanelAlignmentContribution` 工厂循环）全部迁移为 attribute 菜单类；视图菜单的 shell 分隔线特判随之删除，由分组自然表达。
 7. 方法签名仅支持 `void M()` 与 `Task M()`；非法签名扫描时记日志跳过。`Task` 执行异常记日志不抛出。本期不做 CanExecute/禁用态与快捷键。
 8. 菜单图标保留：`MenuItem` attribute 带可选 `Icon` 属性（`Icons.Xxx` 的 path 字符串），契约的 `IconPath` 改为可空。弹出层内的项即使无图标也预留与图标同宽的槽位（空 `PathIcon` 占位），让文本与有图标项对齐；标题栏顶层菜单不预留（`MenuItemViewModel.IsTopLevel`）。预置项迁移后图标原样保留，无 UI 回退。
@@ -23,7 +25,7 @@
 10. 多段路径语义：`MenuGroup` 的 `Group`/`GroupOrder`/`Order` 描述该类在父菜单里**直接贡献的东西**——单段路径时是方法项的分组；多段路径时是末端子菜单节点在其父菜单内的分组与位次，此时方法项进入末端菜单的默认组。一个 attribute 只有一套分组参数；本期不支持在深层子菜单内部再分组（方法项一律进默认组）。
 11. 默认组：`Group` 未指定的条目归入无名默认组，`GroupOrder` 视为 `0` 排最前；`GroupOrder` 本身缺省值亦为 `0`。
 12. 菜单类以 singleton 注册进容器，`EnsureContributionsLoaded` 建树时解析一次，方法委托缓存进生成的贡献对象；实例寿命 = 应用寿命，不重复扫描、不重复解析。
-13. 路径归一化：各段 `Trim` 后按序精确匹配（Ordinal，大小写敏感）——路径段同时是定位标识和 `Language` 键，键的大小写敏感性与 resx 查找一致。含空段（`"File//Export"`）的路径整体非法，该类全部条目记日志跳过。
+13. 路径归一化：各段 `Trim` 后按序精确匹配（Ordinal，大小写敏感）。路径段是稳定 ID（预置根节点为 `shell.file`、`shell.view`、`shell.help`），不再兼作资源键；不同路径即使标题键相同也不合并。含空段（`"shell.file//module.export"`）的路径整体非法，该类全部条目记日志跳过。
 14. 平局规则：同 Group 同 Order 的条目按解析后的 Title 字典序（Ordinal）排序，与模块加载顺序无关，界面上可解释。
 
 ## 后果
@@ -32,3 +34,4 @@
 - 得：菜单类经容器解析，构造注入（`IEventAggregator`/`IWindowManager`）原样可用。
 - 失：`MenuPlacement` 枚举删除级联所有实现方（7 个）与收集方；菜单栏从静态 XAML 改为动态生成，`MainWindow.axaml` chrome 与 `MainWindowViewModel` 的三个菜单集合需要重写。
 - 失：冲突取最小值是静默规则，模块间分组位次写错时不报错，只能靠文档约定（建议模块名前缀）自律。
+- 本地化修订：模块新增私有菜单文案不再修改 Core；扩展既有 `shell.file` 可用无标题的挂接声明，无需引用 Workstation 资源或复制「文件」翻译。代价是新节点必须显式声明资源类型与标题，稳定路径需模块间约定；共同节点的标题由首份有标题声明决定，不能让翻译文本决定节点身份。

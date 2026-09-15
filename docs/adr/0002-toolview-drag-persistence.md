@@ -3,6 +3,8 @@
 ## 状态
 已接受
 
+2026-09-15 修订：工具视图标题改为显式资源类型与键，不再限定全局 `Language`；拖拽与持久化决策不变。
+
 ## 上下文
 
 shell 的可停靠内容有两个几乎同构的贡献契约：`IPanelTabContribution`（AuxiliaryPanel/BottomPanel 的 tab）与 `INavigationItemContribution`（ActivityBar 项，内容显示在 SideBar），字段同为 `Id/Title/IconPath/Order/ContentViewType`，唯一实质差异是放置枚举。新需求：(1) 这些条目可在三处 Bar 之间自由拖拽迁移（ActivityBar 底部的设置项除外），布局存为配置文件，启动时恢复；(2) 不再手写贡献类，视图用声明式标记表达「标题、图标、默认位置」。
@@ -11,14 +13,14 @@ shell 的可停靠内容有两个几乎同构的贡献契约：`IPanelTabContrib
 
 - 布局不可拖拽时，归属由贡献的静态 `Panel`/`Placement` 属性决定；可拖拽后归属是用户数据，必须持久化且优先于声明默认值。
 - `ShellLayoutState` 是纯 record（string/bool/double/字符串列表），天然可序列化；但仓库此前**零持久化基础设施**（连日志都不落盘），位置/格式/时机无现存约定。
-- Avalonia 的 attached property 写在 View 的 XAML 上，只有实例化后才读得到——违背「`ContentViewType` 只给类型、延迟解析」的设计；attribute 标在类上可反射读元数据，零实例化。`Icons.*` 是 `const string` 可直接作 attribute 参数；`Language.*` 是运行时属性，标题只能传资源键。
-- 仓库已有 attribute 扫描先例：菜单契约（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）由各模块 `RegisterMenus(自己的Assembly)` 按程序集扫描，标题传 `Language` 资源键运行时解析。
+- Avalonia 的 attached property 写在 View 的 XAML 上，只有实例化后才读得到——违背「`ContentViewType` 只给类型、延迟解析」的设计；attribute 标在类上可反射读元数据，零实例化。`Icons.*` 是 `const string` 可直接作 attribute 参数；强类型文案是运行时属性，attribute 用 `typeof(OwnerResources)` 与 `nameof(OwnerResources.Title)` 表达资源来源和键。
+- 仓库已有 attribute 扫描先例：菜单契约（[ADR-0001](0001-attribute-menu-registration.md)）由各模块 `RegisterMenus(自己的Assembly)` 按程序集扫描，按贡献者指定的资源类型解析标题。
 
 备选方案：(B) 拖拽只允许 AuxiliaryPanel ↔ BottomPanel，不动 ActivityBar——不满足「任何 Bar」的诉求，且留着两个同构契约；(C) 保留旧接口、attribute 生成适配器——双机制并存是永久理解负担，违背单一渲染管道原则（同 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 否掉 B 的理由）；(D) attached property + 实例化探测——启动时 new 出所有视图，慢且有副作用风险；(E) 不持久化，重启回默认——拖拽功能的价值随之坍塌。
 
 ## 决策
 
-1. **统一概念 ToolView（工具视图）**：`IPanelTabContribution` 与 `INavigationItemContribution` 合并删除，替换为标在 View 类上的 `ToolViewAttribute`：`Id`、`TitleKey`（Language 资源键，运行时解析）、`Icon`（`Icons.*` path 常量）、`Default`（`ToolViewPlacement { ActivityBar, AuxiliaryPanel, BottomPanel }`）、`Order`、`AllowMove`（默认 `true`）。`IMainViewContribution`、`IStatusBarItemContribution`、菜单契约不动。
+1. **统一概念 ToolView（工具视图）**：`IPanelTabContribution` 与 `INavigationItemContribution` 合并删除，替换为标在 View 类上的 `ToolViewAttribute(id, resourceType, titleKey)`：`Id`、`ResourceType`、`TitleKey`（指定资源类型中的键，注册时解析）、`Icon`（`Icons.*` path 常量）、`Default`（`ToolViewPlacement { ActivityBar, AuxiliaryPanel, BottomPanel }`）、`Order`、`AllowMove`（默认 `true`）。`IMainViewContribution`、`IStatusBarItemContribution`、菜单契约不动。
 2. **钉住区**：`AllowMove = false` 且 `Default = ActivityBar` 的项（设置）固定渲染在 ActivityBar 底部段，不参与拖拽；底部段不接受拖放，拖拽落点只有顶部段与两个面板。
 3. **注册入口**：新增 `RegisterToolViews(Assembly)`，各模块在 `RegisterTypes` 对本程序集调用（`RegisterMenus` 同构）；它扫描 `[ToolView]` 类型生成贡献元数据，并把 View 类型注册进容器——替代手写的 `RegisterSingleton<I*Contribution,…>` 与 `Register<XxxView>()`。不做 AppDomain 全局扫描。
 4. **拖拽语义**：同 Bar 拖动按指针位置重排；跨 Bar 插入目标 Bar 指针位置并激活该 tab；面板最后一个 tab 被拖走则自动隐藏，向隐藏面板拖入则自动显示；不提供浮动窗口。手势仿 `PanelResizer` 模式（控件事件 → ICommand → `ShellLayoutState` 转换），新增 `MoveTab` 转换方法。

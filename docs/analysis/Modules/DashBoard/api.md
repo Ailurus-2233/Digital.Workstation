@@ -14,7 +14,7 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 | `OnInitialized` | `void OnInitialized(IContainerProvider containerProvider)` | **空实现**（DashBoardModule.cs:18 注释：启动台窗口由 shell 启动序列在模块加载前显示（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)），模块自身不再开窗） |
 
 注册清单（DashBoardModule.cs:12-13）：
-- `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 12 行，Core/Framework `DigitalWorkstation.Core.Framework.Contributions` 扩展，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）——扫描程序集内 `[ToolView]` 类：**当前程序集无标注类**（原 `DashBoardNavigationView`/`DashBoardTasksView` 已删除），扫描注册为空，保留该行以覆盖将来新增；机制为对每个合法的（可实例化 `Control`、程序集内 Id 不重复）View 执行 `Register(viewType)` 并注册一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `Language.Get(TitleKey)` 解析），非法者记 `Logger.Warning` 跳过
+- `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 12 行，Core/Framework `DigitalWorkstation.Core.Framework.Contributions` 扩展，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）——扫描程序集内 `[ToolView]` 类：**当前程序集无标注类**（原 `DashBoardNavigationView`/`DashBoardTasksView` 已删除），扫描注册为空，保留该行以覆盖将来新增；机制为对每个合法的（可实例化 `Control`、程序集内 Id 不重复）View 执行 `Register(viewType)` 并注册一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `ResourceText.Get(ResourceType, TitleKey)` 解析），非法者记 `Logger.Warning` 跳过
 - `RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>()`（第 13 行）
 
 注意：`DashBoardWindow` 与 `DashBoardWindowViewModel` **不在** `RegisterTypes` 中注册——`DashBoardWindow` 由启动序列在模块加载前经 `Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:43）解析，Prism 容器对未注册的具体类型仍可构造解析（DryIoc 默认行为），ViewModel 由 ViewModelLocator 约定装配。
@@ -25,7 +25,7 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 
 | 类 | 实现接口 | `Id` | `Title` | `IconPath` | `Order` |
 |---|---|---|---|---|---|
-| `DashBoardStatusBarItem`（DashBoardStatusBarItem.cs:11） | `IStatusBarItemContribution` | `"dashboard.status"` | `Language.DashBoardNavigationTitle`（启动台标题资源） | `Icons.DashBoard` | 20 |
+| `DashBoardStatusBarItem`（DashBoardStatusBarItem.cs:11） | `IStatusBarItemContribution` | `"dashboard.status"` | `DashBoardResources.DashBoardNavigationTitle`（启动台标题资源） | `Icons.DashBoard` | 20 |
 
 原五个演示贡献已删除：两个 `[ToolView]` 工具视图（`DashBoardNavigationView` `"dashboard"` / `DashBoardTasksView` `"dashboard.tasks"`，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）与两个 `IMainViewContribution` 主视图（`"dashboard.overview"` / `"dashboard.recent"`，各暴露 `public const string ViewId` 供 `OpenMainViewEvent` 负载）——工具视图 attribute 机制与 `ViewId` 常量负载模式当前无本模块实例。
 
@@ -41,7 +41,7 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 
 | 绑定属性 | 字段 | 初值 | 语义 |
 |---|---|---|---|
-| `PhaseText` | `_phaseText`（第 24 行） | `Language.SplashStartingText`（"正在启动…"） | 当前阶段文案 |
+| `PhaseText` | `_phaseText`（第 24 行） | `DashBoardResources.SplashStartingText`（"正在启动…"） | 当前阶段文案 |
 | `ModuleText` | `_moduleText`（第 30 行） | `string.Empty` | 当前模块名 + `i/N`；非 LoadingModules 阶段为空 |
 | `IsFailed` | `_isFailed`（第 33 行） | `false` | 失败态：进度条停、错误区显示 |
 | `ErrorMessage` | `_errorMessage`（第 36 行） | `string.Empty` | 失败模块的错误详情 |
@@ -55,8 +55,8 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 
 **私有方法**（事件回调与格式化，模块外不可见但为行为关键）：
 
-- `private void OnProgress(StartupProgress progress)`（第 38 行）：`IsFailed=false`；`PhaseText` 按 `progress.Phase` 三值映射到 `Language.SplashPhaseCoreServices/SplashPhaseLoadingModules/SplashPhaseReady`，未知阶段 `_ => PhaseText` 保持原值；`ModuleText` 仅当 `Phase == StartupPhase.LoadingModules` 时取 `FormatModuleText(...)`，否则清空。
-- `private void OnModuleFailed(ModuleLoadFailure failure)`（第 53 行）：`IsFailed=true`、`PhaseText=Language.SplashPhaseFailed`、`ModuleText=FormatModuleText(failure.ModuleName, failure.ModuleIndex, failure.ModuleCount)`、`ErrorMessage=failure.ErrorMessage`。
+- `private void OnProgress(StartupProgress progress)`（第 38 行）：`IsFailed=false`；`PhaseText` 按 `progress.Phase` 三值映射到 `DashBoardResources.SplashPhaseCoreServices/SplashPhaseLoadingModules/SplashPhaseReady`，未知阶段 `_ => PhaseText` 保持原值；`ModuleText` 仅当 `Phase == StartupPhase.LoadingModules` 时取 `FormatModuleText(...)`，否则清空。
+- `private void OnModuleFailed(ModuleLoadFailure failure)`（第 53 行）：`IsFailed=true`、`PhaseText=DashBoardResources.SplashPhaseFailed`、`ModuleText=FormatModuleText(failure.ModuleName, failure.ModuleIndex, failure.ModuleCount)`、`ErrorMessage=failure.ErrorMessage`。
 - `private static string FormatModuleText(string? moduleName, int index, int count)`（第 61 行）：返回 `$"{moduleName}（{index}/{count}）"`（**全角括号**）。
 
 > 上游调查备注：Core/Framework 深读验证期间曾以 `SetProgress` 指称本类的进度回调方法。在 main @ 04cfd02 及全部 git 历史中（`git log -S SetProgress` 无结果），该类**从未存在**名为 `SetProgress` 的成员；真实的进度回调方法名是 `OnProgress`，失败回调是 `OnModuleFailed`。
@@ -86,3 +86,9 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 
 - 接口贡献类的属性（上表），字符串 Id；
 - 事件负载（定义在 Core/Models/Events，本模块只消费/回传）：`StartupProgress{Phase, ModuleName, ModuleIndex, ModuleCount}`、`ModuleLoadFailure{ModuleName, ModuleIndex, ModuleCount, ErrorMessage}`、`StartupFailureAction{Continue, Exit}`。
+
+## 资源接口
+
+`DigitalWorkstation.DashBoard.Resources.DashBoardResources` 是公开静态 facade，属性与本模块 resx 键同名，每次调用按 CurrentUICulture 查找。接口贡献的 Title 直接取 DashBoardResources 属性；工具视图声明首参为稳定 id，第二参 typeof(DashBoardResources)，第三参 nameof 标题键。
+
+向已有 shell 菜单加项时，类标 `[MenuGroup("shell.file")]` 并注册 RegisterMenus，菜单项以 typeof(DashBoardResources) + nameof 声明自己的标题。无需引用 WorkstationResources 或复制文件菜单标题；reference-only 路径的标题由 shell 声明补齐。

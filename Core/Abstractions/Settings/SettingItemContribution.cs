@@ -13,12 +13,17 @@ public sealed class SettingItemContribution
     public required string Id { get; init; }
 
     /// <summary>
-    ///     所属分组的名称键（SettingGroupAttribute.Name），按名称全局合并归组
+    ///     所属分组的稳定 Id（SettingGroupAttribute.Id），按 Id 全局合并归组
     /// </summary>
     public required string Group { get; init; }
 
     /// <summary>
-    ///     设置项显示名的 Language 资源键（非已解析文案），缺键回退键名本身
+    ///     设置项与枚举成员显示名的资源所属类型
+    /// </summary>
+    public required Type ResourceType { get; init; }
+
+    /// <summary>
+    ///     设置项显示名的资源键（非已解析文案），从 ResourceType 解析，缺键回退键名本身
     /// </summary>
     public required string Name { get; init; }
 

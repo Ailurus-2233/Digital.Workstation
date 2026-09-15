@@ -5,10 +5,15 @@ namespace DigitalWorkstation.Core.Abstractions.Menus;
 ///     方法签名仅支持无参 <c>void M()</c> 与 <c>Task M()</c>，非法签名在扫描时记日志跳过。
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-public sealed class MenuItemAttribute(string title) : Attribute
+public sealed class MenuItemAttribute(Type resourceType, string title) : Attribute
 {
     /// <summary>
-    ///     显示标题的 Language 资源键，运行时解析，缺键回退键名本身
+    ///     标题资源所属类型，其全名与程序集定位资源
+    /// </summary>
+    public Type ResourceType { get; } = resourceType;
+
+    /// <summary>
+    ///     显示标题的资源键，贡献实例化时从 ResourceType 解析，缺键回退键名本身
     /// </summary>
     public string Title { get; } = title;
 

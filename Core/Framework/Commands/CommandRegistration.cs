@@ -67,7 +67,7 @@ internal sealed class ReflectedCommandContribution : ICommandContribution
         _instance = instance;
         _method = method;
         Id = attribute.Id ?? $"{method.DeclaringType?.FullName}.{method.Name}";
-        Title = Language.Get(attribute.Title);
+        Title = ResourceText.Get(attribute.ResourceType, attribute.Title);
         Gesture = attribute.Gesture;
         Order = attribute.Order;
         IconPath = attribute.Icon;

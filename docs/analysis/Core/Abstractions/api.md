@@ -2,6 +2,8 @@
 
 命名空间六组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Commands`（Commands/ 目录，命令契约 + 注册 attribute 两类型，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，`ShellRegions` 与 `WellKnownViews` 两个常量类）、`DigitalWorkstation.Core.Abstractions.Settings`（Settings/ 目录，设置分组/设置项两 attribute + 两元数据类 + `ISettingsService`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
 
+文本声明必须显式携带资源所属类型 `ResourceType`，不依赖全局资源类，也不从声明方法/视图类型推断来源；例外是只引用既有菜单路径的 `MenuGroupAttribute(string path)`，它不声明标题、没有资源来源。资源类型全名与程序集定位其 `.resx`；查找机制为 Core/Resource 的 `ResourceText.Get(Type, string)`，按 `CurrentUICulture` 查询、回退中性中文，缺键返回键名。这里只保存契约，不引用资源程序集。工具视图在扫描时解析，菜单/命令在贡献 singleton 首次解析时解析，设置保留来源与键到设置页构造时解析；切换语言下次启动生效。
+
 ## Shell 贡献契约（Contributions/、Menus/ 与 Commands/，Region 与主视图 Id 常量在 Regions/）
 
 ### `ShellRegions`（static class，Regions/ShellRegions.cs）
@@ -32,16 +34,17 @@ shell 与模块共同知晓的主视图 Id 常量（[ADR-0006](https://github.co
 
 ### `ToolViewAttribute`（Contributions/ToolViewAttribute.cs）
 
-`[AttributeUsage(AttributeTargets.Class)]`（第 29 行），声明一个 View 类是**工具视图（Tool View）**（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md) `docs/adr/0002-toolview-drag-persistence.md`）：带图标与标题的可停靠界面单元。模块在 `RegisterTypes` 调 `RegisterToolViews(Assembly)`（Framework 侧 `ToolViewRegistration`）扫描注册；`Default` 只是默认归属——用户拖拽后的实际归属以持久化布局为准。主构造参 `string id, string titleKey`（第 30 行）。
+`[AttributeUsage(AttributeTargets.Class)]`，构造签名 `ToolViewAttribute(string id, Type resourceType, string titleKey)`。View 类标注后由模块 `RegisterTypes` 中的 `RegisterToolViews(Assembly)` 扫描注册。
 
 | 成员 | 类型 | 语义 |
 |---|---|---|
 | `Id`（构造参，get-only） | `string` | 稳定标识，全局唯一，约定模块名前缀（如 `"shell.outline"`） |
-| `TitleKey`（构造参，get-only） | `string` | 显示标题的 Language 资源键，注册时解析，缺键回退键名本身 |
-| `Icon`（命名属性） | `string?` | 图标的 StreamGeometry path 字符串（取 `Icons` 常量）；`null` = 无图标 |
-| `Default`（命名属性） | `ToolViewPlacement` | 默认栖身的 Bar；**缺省 `AuxiliaryPanel`**（第 50 行） |
-| `Order`（命名属性） | `int` | 同一 Bar 内的默认排序权重，小者靠前 |
-| `AllowMove`（命名属性） | `bool` | 是否允许用户拖拽迁移；**缺省 `true`**（第 60 行）；`false` 且 `Default` 为 `ActivityBar` 时钉在 ActivityBar 底部段（钉住项，Pinned Item） |
+| `ResourceType`（构造参，get-only） | `Type` | 标题资源所属类型 |
+| `TitleKey`（构造参，get-only） | `string` | 该来源中的标题资源键；扫描时解析，缺键回退键名 |
+| `Icon`（命名属性） | `string?` | StreamGeometry path；`null` = 无图标 |
+| `Default`（命名属性） | `ToolViewPlacement` | 默认归属，缺省 `AuxiliaryPanel`；用户拖拽后以持久化布局为准 |
+| `Order`（命名属性） | `int` | 同一 Bar 内默认位次，小者靠前 |
+| `AllowMove`（命名属性） | `bool` | 缺省 `true`；`false` 且 `Default=ActivityBar` 时钉在 ActivityBar 底部段 |
 
 ### `IMainViewContribution`（Contributions/IMainViewContribution.cs）
 
@@ -76,7 +79,8 @@ shell 与模块共同知晓的主视图 Id 常量（[ADR-0006](https://github.co
 |---|---|---|
 | `Title` | `string` | 显示标题，**已按当前 UI 区域性解析**（非资源键） |
 | `IconPath` | `string?` | 图标 StreamGeometry path 字符串，由 PathIcon 消费并随主题变色；`null` = 无图标 |
-| `Path` | `string` | 完整菜单路径：`"/"` 分隔，段为 Language 资源键，首段为顶层菜单；支持任意深度子菜单 |
+| `Path` | `string` | `"/"` 分隔的稳定 Id 路径，首段为顶层菜单；支持任意深度，资源键或翻译相同不会导致不同路径合并 |
+| `PathTitle` | `string?` | 路径末端节点的已解析标题；null 表示无标题意见，同一路径首个非 null 标题生效，隐式祖先显示 Id 段直到标题声明到来 |
 | `Group` | `string?` | 单段路径：本条目在该菜单内的组；多段路径：末端子菜单节点在其父菜单内的组。`null` = 默认组（排在命名组之前） |
 | `GroupOrder` | `int` | 组的排序权重，小者靠前；同名组多处声明冲突时取最小值 |
 | `NodeOrder` | `int` | 顶层菜单（单段路径）或末端子菜单节点（多段路径）在父级中的排序权重；多处声明取最小值 |
@@ -87,28 +91,33 @@ shell 与模块共同知晓的主视图 Id 常量（[ADR-0006](https://github.co
 
 ### `MenuGroupAttribute`（Menus/MenuGroupAttribute.cs）
 
-`[AttributeUsage(AttributeTargets.Class)]`（第 12 行），声明一个菜单类：类中标注 `MenuItemAttribute` 的公共实例方法成为菜单项，经 `MenuRegistration.RegisterMenus` 扫描注册。主构造参 `string path`（第 13 行）。
+`[AttributeUsage(AttributeTargets.Class)]`。构造有两种语义：`MenuGroupAttribute(string path)` 仅引用稳定菜单路径；`MenuGroupAttribute(string path, Type resourceType, string titleKey)` 同时声明末端标题，资源来源与键必须成对传入。菜单类中标注 `MenuItemAttribute` 的公共实例方法由 `RegisterMenus(Assembly)` 扫描为菜单项。
 
 | 成员 | 类型 | 语义 |
 |---|---|---|
-| `Path`（构造参，get-only） | `string` | 菜单路径：`"/"` 分隔的多级 Language 资源键，首段为顶层菜单；各段 Trim 后按序精确匹配（Ordinal 大小写敏感） |
-| `Group`（命名属性） | `string?` | 分组名；`null` = 默认组（GroupOrder 视为 0，排在命名组之前） |
-| `GroupOrder`（命名属性） | `int` | 组的排序权重，小者靠前；同名组多处声明冲突时取最小值 |
-| `Order`（命名属性） | `int` | 顶层菜单或末端子菜单节点在父级中的排序权重；多处声明取最小值。**缺省 `int.MaxValue`**（MenuGroupAttribute.cs 第 34 行）：未声明视为「无位次意见」，排最后，且不参与多处声明取最小——防止忘写 `Order` 的类以缺省 0 把所在菜单钉到最前 |
+| `Path`（构造参，get-only） | `string` | `"/"` 分隔的稳定 Id 路径，各段 Trim 后 Ordinal 大小写敏感匹配；不是资源键 |
+| `ResourceType`（get-only） | `Type?` | 末端标题的资源所属类型，与菜单项来源独立；仅引用路径时为 null |
+| `TitleKey`（get-only） | `string?` | 仅命名路径末端节点，不为祖先命名；仅引用路径时为 null |
+| `Group`（命名属性） | `string?` | 分组名；`null` = 默认组 |
+| `GroupOrder`（命名属性） | `int` | 组位次，小者靠前；冲突取最小 |
+| `Order`（命名属性） | `int` | 顶层或末端节点在父级中的位次，冲突取最小；缺省 `int.MaxValue` 表示无位次意见 |
 
-路径段数决定三个命名属性的语义（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 第 10 条）：**单段路径**（如 `"MenuFileTitle"`）时 `Group`/`GroupOrder` 描述方法项在该菜单内的分组，`Order` 描述顶层菜单在菜单栏的位次；**多段路径**（如 `"MenuFileTitle/Export"`）时三者描述末端子菜单节点在其父菜单内的分组与位次，方法项进入末端菜单的默认组。一个 attribute 只有一套分组参数，深层子菜单内部分组需拆类声明。含空段（`"A//B"`）的路径整体非法，扫描时记日志跳过。
+单段路径（如 `"shell.file"`）时 `Group`/`GroupOrder` 描述方法项分组、`Order` 描述顶层位次；多段路径（如 `"shell.file/export"`）时三者描述末端子菜单在父级中的位置，方法项进入末端默认组。含空段的路径整体非法，扫描时记日志跳过。标题首个声明生效与位次取最小是两条独立规则；先出现子路径、后出现父路径时，父路径仍能获得自己的标题。现有 shell 根 Id 为 `shell.file`、`shell.view`、`shell.help`。
+
+外部模块可直接标 `[MenuGroup("shell.file")]` 并用自己的资源声明菜单项，不需引用 WorkstationResources 或复制 shell 标题。引用贡献先到、所有者标题后到也能命名原节点；null 不占用「首个标题」位置。这是独立的路径引用语义，不是旧资源键路径的兼容入口。
 
 ### `MenuItemAttribute`（Menus/MenuItemAttribute.cs）
 
-`[AttributeUsage(AttributeTargets.Method)]`（第 7 行），声明一个菜单项，标注在菜单类（`MenuGroupAttribute`）的公共实例方法上。主构造参 `string title`（第 8 行）。
+`[AttributeUsage(AttributeTargets.Method)]`，构造签名 `MenuItemAttribute(Type resourceType, string title)`；标注在菜单类的公共实例方法上。
 
 | 成员 | 类型 | 语义 |
 |---|---|---|
-| `Title`（构造参，get-only） | `string` | 显示标题的 Language 资源键，运行时解析，缺键回退键名本身 |
-| `Order`（命名属性） | `int` | 同组内的排序权重，小者靠前；同 `Order` 按解析后的标题字典序 |
-| `Icon`（命名属性） | `string?` | 图标的 StreamGeometry path 字符串（取 `Icons` 常量）；`null` = 无图标 |
+| `ResourceType`（构造参，get-only） | `Type` | 菜单项标题资源所属类型，不继承类级分组来源 |
+| `Title`（构造参，get-only） | `string` | 该来源中的资源键；贡献首次解析时取显示文本，缺键返回键名 |
+| `Order`（命名属性） | `int` | 同组内位次，小者靠前；同值按已解析标题 Ordinal 排序 |
+| `Icon`（命名属性） | `string?` | StreamGeometry path；`null` = 无图标 |
 
-方法签名仅支持无参 `void M()` 与 `Task M()`；非法签名（带参、返回值非 `void`/`Task`）在扫描时记 `Logger.Warning` 跳过（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 第 7 条）。
+仅支持公共实例无参 `void M()` / `Task M()`；带参或返回类型非法者扫描时记 `Logger.Warning` 跳过。
 
 ### `ICommandContribution`（Commands/ICommandContribution.cs）
 
@@ -127,17 +136,18 @@ shell 与模块共同知晓的主视图 Id 常量（[ADR-0006](https://github.co
 
 ### `CommandAttribute`（Commands/CommandAttribute.cs）
 
-`[AttributeUsage(AttributeTargets.Method)]`（第 8 行），声明一个命令，标注在**任何类**的公共实例方法上（免类级 attribute，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) 决策 2）。主构造参 `string title`（第 9 行）。
+`[AttributeUsage(AttributeTargets.Method)]`，构造签名 `CommandAttribute(Type resourceType, string title)`。任何类的公共实例方法均可标注，无需类级 attribute；模块调用 `RegisterCommands(Assembly)` 扫描。
 
 | 成员 | 类型 | 语义 |
 |---|---|---|
-| `Title`（构造参，get-only） | `string` | 显示标题的 Language 资源键，收集时解析，缺键回退键名本身 |
-| `Id`（命名属性） | `string?` | 稳定标识；`null` = 默认「声明类全名.方法名」 |
-| `Icon`（命名属性） | `string?` | 图标的 StreamGeometry path 字符串（取 `Icons` 常量）；`null` = 无图标 |
-| `Gesture`（命名属性） | `string?` | 快捷键文本（如 `"Ctrl+Shift+P"`）；`null` = 无快捷键 |
-| `Order`（命名属性） | `int` | 命令列表中的排序权重，小者靠前；同 `Order` 按解析后的标题字典序 |
+| `ResourceType`（构造参，get-only） | `Type` | 命令标题资源所属类型 |
+| `Title`（构造参，get-only） | `string` | 该来源中的资源键；收集时解析，缺键回退键名 |
+| `Id`（命名属性） | `string?` | 稳定标识；`null` =「声明类全名.方法名」 |
+| `Icon`（命名属性） | `string?` | StreamGeometry path；`null` = 无图标 |
+| `Gesture`（命名属性） | `string?` | 快捷键声明；`null` = 无快捷键 |
+| `Order`（命名属性） | `int` | 命令列表位次；同值按已解析标题 Ordinal 排序 |
 
-方法签名仅支持无参 `void M()` 与 `Task M()`；非法签名（带参、返回值非 `void`/`Task`）在扫描时记 `Logger.Warning` 跳过（与菜单同规则）。
+方法签名仅支持无参 `void M()` / `Task M()`；非法签名扫描时记 `Logger.Warning` 跳过，与菜单同规则。
 
 ### `IStatusBarItemContribution`（Contributions/IStatusBarItemContribution.cs）
 
@@ -156,50 +166,60 @@ shell 与模块共同知晓的主视图 Id 常量（[ADR-0006](https://github.co
 
 ### `SettingGroupAttribute`（Settings/SettingGroupAttribute.cs）
 
-`[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]`（第 9 行），声明一个设置分组，标注在任何类上。主构造参 `string name`（第 10 行）。
+`[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]`，构造签名 `SettingGroupAttribute(string id, Type resourceType, string name)`。
 
 | 成员 | 类型 | 语义 |
 |---|---|---|
-| `Name`（构造参，get-only，第 15 行） | `string` | 分组显示名的 Language 资源键，运行时解析，缺键回退键名本身；同名分组全局合并 |
-| `Order`（命名属性，第 20 行） | `int` | 分组在设置页分组树中的排序权重，小者靠前；同名多处声明冲突时取最小值（同 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 决策 4）。缺省 `0` |
+| `Id`（构造参，get-only） | `string` | 稳定分组标识，跨模块合并依据，与名称/资源键无关 |
+| `ResourceType`（构造参，get-only） | `Type` | 分组名称的资源所属类型 |
+| `Name`（构造参，get-only） | `string` | 该来源中的名称资源键；设置页构造时解析，缺键返回键名 |
+| `Order`（命名属性） | `int` | 缺省 `0`，小者靠前；同 Id 多处声明取最小 |
 
-仅被设置项引用而无本 attribute 声明的分组也可用——由设置项引用隐式产生，位次视为 0（收集侧补出）。
+同 Id 保留首个声明的 `ResourceType`/`Name`；只被设置项引用而无声明的分组由收集侧补出，`Name=Id`、`ResourceType=null`、`Order=0`，直接显示 Id。
 
 ### `SettingItemAttribute`（Settings/SettingItemAttribute.cs）
 
-`[AttributeUsage(AttributeTargets.Property)]`（第 9 行），声明一个设置项，标注在公共静态可读属性上。主构造参 `string group, string name`（第 10 行）。**属性只是声明锚点**：属性类型即设置值类型，扫描不读取属性值，读写一律经 `ISettingsService`；非公共/非静态/无 getter 的属性静默忽略（同菜单/命令扫描惯例）。
+`[AttributeUsage(AttributeTargets.Property)]`，构造签名 `SettingItemAttribute(string group, Type resourceType, string name)`。扫描只取 `Public | Static | DeclaredOnly` 属性；无 getter 者记 Warning 跳过。属性只作声明锚点，扫描不读属性值，读写一律经 `ISettingsService`。
 
 | 成员 | 类型 | 语义 |
 |---|---|---|
-| `Group`（构造参，get-only，第 21 行） | `string` | 所属分组的名称键（`SettingGroupAttribute.Name`），按名称全局合并归组 |
-| `Name`（构造参，get-only，第 26 行） | `string` | 设置项显示名的 Language 资源键，运行时解析，缺键回退键名本身（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 2） |
-| `Id`（命名属性，第 16 行） | `string?` | 稳定标识；`null` = 默认「声明类全名.属性名」（仿命令 Id 规则，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）；全局唯一，是 settings.json 的 key 与 `ISettingsService` 读写的依据 |
-| `DefaultValue`（命名属性，第 33 行） | `object?` | 默认值：用户从未修改时 `Get<T>` 的返回值（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）；必须是属性类型的编译期常量（attribute 实参限制），类型不匹配扫描时记日志跳过；枚举成员显示名走 Language 资源键，键按「设置项名称键 + 成员名」约定生成（决策 8）。缺省 `null` |
-| `Order`（命名属性，第 38 行） | `int` | 同分组内的排序权重，小者靠前；同 `Order` 按名称键字典序。缺省 `0` |
-| `RequiresRestart`（命名属性，第 43 行） | `bool` | 是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动由消费方读取生效（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）。缺省 `false` |
+| `Group`（构造参，get-only） | `string` | 所属分组稳定 Id（`SettingGroupAttribute.Id`），不是名称资源键 |
+| `ResourceType`（构造参，get-only） | `Type` | 设置项与枚举选项显示名的资源所属类型 |
+| `Name`（构造参，get-only） | `string` | 名称资源键，设置页构造时解析，缺键返回键名 |
+| `Id`（命名属性） | `string?` | 缺省「声明类全名.属性名」，全局唯一，作为 settings.json key |
+| `DefaultValue`（命名属性） | `object?` | 未修改时 `Get<T>` 的返回值；须为属性类型的编译期常量，类型不匹配扫描时记日志跳过，缺省 `null` |
+| `Order`（命名属性） | `int` | 同分组内位次，缺省 `0`；同值按名称键 Ordinal 排序 |
+| `RequiresRestart`（命名属性） | `bool` | 缺省 `false`；需重启项修改后存储，当前进程行为不变，下次启动由消费方读取 |
+
+枚举显示名从同一个 `ResourceType` 查询，键为 `Name + 成员名`；缺键回退完整组合键，不是裸成员名。枚举落盘值与显示名称独立。
 
 ### `SettingGroupContribution`（sealed class，Settings/SettingGroupContribution.cs）
 
-设置分组的贡献元数据：**不由模块手写**，由 Framework 侧 `RegisterSettings` 扫描 `SettingGroupAttribute` 生成并注册进容器；收集时按 `Name` 全局合并（多处声明取最小 `Order`），仅被设置项引用而无声明的分组由收集侧补出（`Order` 视为 0）。全部属性为 `required init`（第 13、18 行）。
+扫描生成并注册的分组元数据；全部属性为 `required init`。收集器先过滤 DryIoc `Id=null` 幽灵实例，再按 Id 合并、补出隐式分组，最后按 `(Order, Id Ordinal)` 排序。
 
 | 属性 | 类型 | 语义 |
 |---|---|---|
-| `Name` | `string` | 分组显示名的 Language 资源键（**非已解析文案**），运行时经 Language.Get 解析，缺键回退键名本身 |
-| `Order` | `int` | 分组在设置页分组树中的排序权重，小者靠前；同名多处声明取最小值 |
+| `Id` | `string` | 稳定分组标识；设置页分组模型 `Key` 使用它 |
+| `ResourceType` | `Type?` | 首个声明的资源所属类型；仅未声明的隐式分组为 `null` |
+| `Name` | `string` | 首个声明的名称资源键；隐式分组为 Id 原文 |
+| `Order` | `int` | 同 Id 声明取最小；隐式分组为 `0` |
+
+显示名：来源非空时 `ResourceText.Get(ResourceType, Name)`，否则直接用 `Name`，不会把隐式 Id 当作资源键。
 
 ### `SettingItemContribution`（sealed class，Settings/SettingItemContribution.cs）
 
-设置项的贡献元数据：**不由模块手写**，由 Framework 侧 `RegisterSettings` 扫描 `SettingItemAttribute` 生成并注册进容器；设置页据此渲染编辑器（控件由 `ValueType` 推断，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8），`ISettingsService` 据此取 `DefaultValue` 作为未修改时的读值。全部属性为 `required init`（第 13-43 行）。
+扫描生成并注册的设置项元数据；全部属性为 `required init`。设置页依据 `ValueType` 选择编辑器，`ISettingsService` 依据 `DefaultValue` 提供未修改值；收集器先过滤 `Id=null` 幽灵实例，再按项 Id 去重（首个注册生效），按 `(Order, Name Ordinal)` 排序。
 
 | 属性 | 类型 | 语义 |
 |---|---|---|
-| `Id` | `string` | 稳定标识，全局唯一：默认「声明类全名.属性名」；settings.json 的 key 与 `ISettingsService` 读写的依据 |
-| `Group` | `string` | 所属分组的名称键（`SettingGroupAttribute.Name`），按名称全局合并归组 |
-| `Name` | `string` | 设置项显示名的 Language 资源键（**非已解析文案**），缺键回退键名本身 |
-| `ValueType` | `Type` | 设置值类型（声明属性的类型）：编辑器推断与 JSON 反序列化的依据 |
-| `DefaultValue` | `object?` | 默认值：用户从未修改时的取值，不是单独存储层（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3） |
-| `Order` | `int` | 同分组内的排序权重，小者靠前；同 `Order` 按 `Name` 键字典序 |
-| `RequiresRestart` | `bool` | 是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动生效（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7） |
+| `Id` | `string` | 全局唯一设置项标识，settings.json key |
+| `Group` | `string` | 分组稳定 Id（`SettingGroupAttribute.Id`） |
+| `ResourceType` | `Type` | 设置项与枚举显示名的资源所属类型，不能为 null |
+| `Name` | `string` | 未解析名称资源键 |
+| `ValueType` | `Type` | 声明属性类型，编辑器推断与 JSON 反序列化依据 |
+| `DefaultValue` | `object?` | 用户未修改时的取值，不在单独存储层 |
+| `Order` | `int` | 同分组内位次，同值按 `Name` Ordinal 排序 |
+| `RequiresRestart` | `bool` | 当前进程行为不变，下次启动生效 |
 
 ### `ISettingsService`（Settings/ISettingsService.cs）
 

@@ -195,7 +195,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
 
     /// <summary>
     ///     按已存语言设置应用 UI 区域性（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7：下次启动由消费方读取生效）。
-    ///     必须先于一切模块 RegisterTypes——菜单/工具视图标题在注册扫描时经 Language.Get 一次性解析；
+    ///     必须先于一切模块 RegisterTypes——菜单/工具视图标题在注册扫描时经 ResourceText.Get 一次性解析；
     ///     未存值时回退声明默认值（zh-CN），与操作系统区域性无关
     /// </summary>
     private void ApplyLanguageSetting(ISettingsService settings)
@@ -205,7 +205,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
         CultureInfo.DefaultThreadCurrentUICulture = culture;
         CultureInfo.CurrentCulture = culture;
         CultureInfo.CurrentUICulture = culture;
-        Name = Language.ProductName;
+        Name = SharedResources.ProductName;
     }
 
     /// <summary>

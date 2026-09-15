@@ -65,3 +65,7 @@ RunStartupSequenceAsync
 | 重启后布局回默认/布局改动没记住 | Console 日志找 `[WRN]` 且来源 `LayoutPersistence`（`Layout/LayoutPersistence.cs:49、55、64、126`） | layout.json 损坏/版本不识别/反序列化失败 → `Load` 返回 null 静默回默认（设计行为）；或 `Flush` 写盘失败（权限/磁盘） |
 | 手工编辑 layout.json 后布局全丢 | 同上，`Load` 的 Warning（:64，异常类型名会打在日志里） | 枚举值必须是 `"Center"`/`"BottomPanel"` 形态字符串（`JsonStringEnumConverter`，:27）；非法枚举字符串让 System.Text.Json 抛 `JsonException`，整份文件被丢弃回默认——容错设计不是 bug |
 | 「重置布局」后旧布局又复活 | `LayoutPersistence.Delete`（:86-102）的 pending 作废气锁（:88-92） | 若有代码绕过 `Delete` 直接删文件，在途的防抖回调会把 layout.json 重建——必须走 `Delete` |
+| 菜单/命令/工具视图显示资源键 | 声明的 ResourceType、资源类型全名/程序集与键 | 来源资源集中无键时返回原键；不会搜索其他模块。标题已固化在 singleton，修正语言后需重启 |
+| 菜单节点显示稳定 Id | MenuGroup 是否有标题声明、PathTitle 是否非 null | 只引用路径或隐式祖先没有标题是合法回退；后到所有者声明应覆盖 Id 显示，但不得覆盖已有非 null 标题 |
+| 设置组重复或错误归组 | SettingGroupContribution.Id 与 SettingItemContribution.Group | 身份按稳定 Id 匹配，与名称键无关；同 Id 首个声明来源生效，未声明 Id 直接显示 |
+| 枚举选项显示组合键 | SettingItemContribution.ResourceType 中的 `Name + 成员名` 键 | 缺键回退完整键名，不是裸成员名；翻译键与枚举持久化值互不影响 |

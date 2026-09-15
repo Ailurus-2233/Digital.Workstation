@@ -13,11 +13,10 @@
 
 若将来补测试，值得覆盖的纯数据点是 `DashBoardWindowViewModel` 的事件→属性转换（构造注入 `IEventAggregator`，可用 Prism 真实 `EventAggregator` 实例驱动，无需 mock 框架）：
 
-1. `OnProgress` 的阶段文案映射（DashBoardWindowViewModel.cs:41-47）：发布 `StartupProgress(StartupPhase.CoreServices/LoadingModules/Ready, ...)` 后断言 `PhaseText` 等于对应 `Language.SplashPhase*`；发布未知 `StartupPhase` 值断言 `PhaseText` 保持原值。
+1. `OnProgress` 的阶段文案映射（DashBoardWindowViewModel.cs:41-47）：发布 `StartupProgress(StartupPhase.CoreServices/LoadingModules/Ready, ...)` 后断言 `PhaseText` 等于对应 `DashBoardResources.SplashPhase*`；发布未知 `StartupPhase` 值断言 `PhaseText` 保持原值。
 2. `ModuleText` 条件清空（第 48-50 行）：`LoadingModules` 阶段 `ModuleText == "name（i/N）"`（全角括号，见 `FormatModuleText` 第 61 行）；其余阶段为空字符串。
-3. 失败态转换（`OnModuleFailed` 第 53-59 行）：发布 `ModuleLoadFailure` 后 `IsFailed==true`、`PhaseText==Language.SplashPhaseFailed`、`ErrorMessage==failure.ErrorMessage`；随后再发 `StartupProgress` 断言 `IsFailed` 复位为 `false`（第 40 行）。
+3. 失败态转换（`OnModuleFailed` 第 53-59 行）：发布 `ModuleLoadFailure` 后 `IsFailed==true`、`PhaseText==DashBoardResources.SplashPhaseFailed`、`ErrorMessage==failure.ErrorMessage`；随后再发 `StartupProgress` 断言 `IsFailed` 复位为 `false`（第 40 行）。
 4. 决策回传（`Continue`/`Exit` 第 70、79 行）：订阅 `StartupFailureActionEvent` 后执行 `ContinueCommand`/`ExitCommand`，断言收到对应 `StartupFailureAction`。
-5. 贡献声明的声明值：`DashBoardStatusBarItem` 的属性矩阵（`Id="dashboard.status"`、`Title=Language.DashBoardNavigationTitle`、`IconPath=Icons.DashBoard`、`Order=20`，DashBoardStatusBarItem.cs:11-19）纯声明断言（价值低，防误改排序约定时才有意义）。
 
 ## 当前的验证方式（手动冒烟）
 

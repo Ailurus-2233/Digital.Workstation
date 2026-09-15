@@ -1,6 +1,6 @@
 ﻿# Framework — 对外接口与调用方式
 
-命名空间八组：`DigitalWorkstation.Core.Framework`（根）、`.Framework.Layout`（布局状态机、面板分隔条与布局持久化）、`.Framework.Menus`（菜单建树/注册/呈现模型）、`.Framework.Commands`（命令注册，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）、`.Framework.Contributions`（贡献收集器与工具视图注册）、`.Framework.Settings`（设置注册与持久化，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）、`.Framework.Windows`（窗口基类、命令面板与主题）、`.Framework.WindowManager`。类型均 public，例外：`Menus/MenuRegistration.cs` 的 `ReflectedMenuItemContribution` 与 `Commands/CommandRegistration.cs` 的 `ReflectedCommandContribution` 两个 attribute 扫描生成的贡献实现为 internal（见第 12、14 节）。
+命名空间为 `DigitalWorkstation.Core.Framework` 及其 `.Layout`、`.Menus`、`.Commands`、`.Contributions`、`.Settings`、`.Resources`、`.Windows`、`.WindowManager`。类型通常 public；attribute 扫描生成的 `ReflectedMenuItemContribution` 与 `ReflectedCommandContribution` 为 internal。
 
 ## 1. `FrameworkApplication<TWindow>`（FrameworkApplication.cs:20）
 
@@ -29,7 +29,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
 - `RunStartupSequenceAsync()`（第 68 行）：三阶段启动，见 common.md 状态流转。阶段 2 取 `moduleCatalog.Modules.ToList()` 快照后以 `for (var i = 0; i < total; i++)` 按下标推进（`total = modules.Count`）：每模块先 `Publish(new StartupProgress(StartupPhase.LoadingModules, module.ModuleName, i + 1, total))`（序号从 1 起），再 `await Task.Run(() => moduleManager.LoadModule(module.ModuleName))`（第 92 行）。
 - `WaitForFailureActionAsync(IEventAggregator)`（第 121 行）：一次性订阅 `StartupFailureActionEvent`，返回 `true` = Continue。
 - `ShowMainWindow()`（第 131 行）：先做两个模式匹配守卫——`MainWindow is not Window window` 或 `ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime lifetime` 时**静默 return**（不抛异常、不动作）；通过后依次 `lifetime.MainWindow = window` → `_windowManager?.ShowMainWindow()` → `_windowManager?.CloseWindowsExceptMain()`。
-- `RegisterFrameworkServices`（第 146 行）/ `ResolveFrameworkServices`（第 175 行）：前者依次注册窗口管理器双接口单例、`ShellContributionCollector` 单例、`LayoutPersistence` 单例，随后**显式构造 `SettingsService` 并立即 `Load()`**（第 163-165 行，仿 windowManager 工厂注册模式，时机明确）注册为 `ISettingsService` 单例、`RegisterSettings` 注册 Framework 自身「常规/语言」设置项（第 168 行）、`ApplyLanguageSetting` 按已存语言设置应用 UI 区域性（第 170 行，必须先于一切模块 `RegisterTypes`——标题注册期经 `Language.Get` 解析定死，见第 16 节），末尾调后者；后者用 `Container.Resolve<IEventAggregator>()` 与 `Container.Resolve<IMainWindowManager>()` 把两个服务存入 `_eventAggregator`/`_windowManager` 私有字段。RegisterTypes 阶段 `Container` 已可用（`RegisterFrameworkServices` 首行 `IoC.Initialize(containerRegistry, Container)` 即以它为参），且 `IMainWindowManager` 单例刚在本方法前段注册，故可立即解析。
+- `RegisterFrameworkServices` / `ResolveFrameworkServices`：前者初始化 IoC、注册窗口管理器双接口单例、贡献收集器与布局持久化服务，显式构造 `SettingsService` 并立即 `Load()`，注册 `ISettingsService` 与 Framework 的常规/语言设置；再 `ApplyLanguageSetting` 按持久化语言设置当前及默认线程区域性，并用 `SharedResources.ProductName` 设置 Application.Name。必须先于模块 `RegisterTypes`：工具视图扫描时解析文本，菜单/命令首次收集时解析。设置元数据保留来源与键，设置页构造时才解析。末尾 `ResolveFrameworkServices` 解析并保存事件聚合器与主窗口管理器。
 
 ### ViewModel 定位约定（ConfigureViewModelLocator，第 237-269 行）
 
@@ -242,8 +242,8 @@ public class ShellContributionCollector(IContainerProvider containerProvider)
 | `GetMenuItems()`（:34，**无参数**） | 无（路径/分组模型下不再按定位枚举过滤） | 无（分组排序建树由 `MenuTreeBuilder` 负责，见第 11 节） |
 | `GetStatusBarItems()`（:63） | 无 | `Order` 升序 |
 | `GetCommands()`（:42，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)） | Id 冲突去重：保留先注册者，后者丢弃并记 `Logger.Warning` | `Order` 升序，同 Order 按解析后 `Title` 字典序（Ordinal） |
-| `GetSettingGroups()`（:74，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)） | 按名称全局合并：同名 `SettingGroupAttribute` 多处声明时位次取最小；仅被设置项引用而无声明的隐式分组补出、`Order` 视为 0 | `Order` 升序，同 Order 按名称键字典序（Ordinal） |
-| `GetSettingItems()`（:99，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)） | Id 冲突去重：保留先注册者，后者丢弃并记 `Logger.Warning`（同 `GetCommands`） | `Order` 升序，同 Order 按名称键字典序（Ordinal） |
+| `GetSettingGroups()` | 先过滤声明/设置项中的 `Id=null` DryIoc 幽灵实例；按稳定分组 Id 合并，首个声明的 `ResourceType`/`Name` 保留、Order 取最小；仅引用未声明 Id 时补 `Name=Id, ResourceType=null, Order=0` | `Order` 升序，同值按 `Id` Ordinal |
+| `GetSettingItems()` | 先过滤 `Id=null` 幽灵实例，再按项 Id 去重：保留先注册者，后者记 `Logger.Warning` 并丢弃 | `Order` 升序，同值按名称键 `Name` Ordinal |
 
 返回类型均为 `IReadOnlyList<T>`（快照数组）。贡献类型中 `ToolViewContribution`（sealed class，由 `RegisterToolViews` 扫描 `[ToolView]` 生成，见第 13 节）、`IMainViewContribution`、`IStatusBarItemContribution` 与枚举 `ToolViewPlacement` 在 Core/Abstractions 的 `Contributions/` 目录；`IMenuItemContribution` 在 `Menus/` 目录（形状已按 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 改为路径/分组模型）；`ICommandContribution` 在 `Commands/` 目录（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) 扁平模型）；`SettingGroupContribution`/`SettingItemContribution` 在 `Settings/` 目录（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)，见 Abstractions 文档）。
 
@@ -293,15 +293,16 @@ public static class MenuTreeBuilder
 }
 ```
 
-纯函数、无状态建树器：把扁平贡献列表构建为分组排序好的顶层菜单列表，标题（路径段与条目）在建树时经 `Language.Get` 一次性解析（:59、:74、:98）。规则（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）：
+纯函数、无状态建树器：把扁平贡献构建为分组排序好的顶层菜单列表。只消费已解析文本，完全不查资源；`Path` 是稳定 Id 路径，`PathTitle` 是可空末端标题。规则：
 
-- **路径切分与跳过**：`Path.Split('/', TrimEntries)`（:23），含空段记 `Logger.Warning` 跳过该条目（:24-29）。
-- **单段路径**（顶层菜单直下条目）：`Order` 经 `NodeAccum.MergeNodeOrder` 声明顶层菜单位次（多处声明取最小，:126-135）；`Group`/`GroupOrder` 描述条目分组（:41-47）。
-- **多段路径**：`Group`/`GroupOrder`/`NodeOrder` 经 `MergePlacement` 声明末端子菜单节点的位次（多处声明：`NodeOrder`/`GroupOrder` 取最小，`Group` 取 `GroupOrder` 最小声明的组名、同值取组名 Ordinal 小者，:141-159）；条目进末端菜单默认组（:48-54）。
-- **顶层排序**：只按 `(NodeOrder, Language.Get(段) Ordinal)` 排序，不分组不插分隔线（:57-61）。
-- **子菜单内排序与分组**（`Emit`，:64）：条目与递归子节点统一按 `(GroupOrder, null 组优先, Group Ordinal, Order, Title Ordinal)` 排序（:77-83）；相邻条目组变化处插 `MenuTreeSeparator.Instance`（:87-96），天然不产生开头/结尾/连续分隔线。
+- **路径切分与跳过**：`Path.Split('/', TrimEntries)`，按 Ordinal 稳定段逐层索引；含空段记 Warning 跳过该条目。同资源键或同翻译的不同路径不会合并。
+- **标题声明**：只把末端节点的第一个非 null `PathTitle` 记入 `DeclaredTitle`；引用贡献的 null 无标题意见，不占首个位置。隐式祖先或只有引用的节点先显示稳定 Id 段；之后到达的所有者声明仍能命名它。
+- **单段路径**：`NodeOrder` 经 `MergeNodeOrder` 声明顶层位次，多处取最小；`Group`/`GroupOrder` 描述条目分组。
+- **多段路径**：`Group`/`GroupOrder`/`NodeOrder` 经 `MergePlacement` 声明末端子菜单位次；`NodeOrder`/`GroupOrder` 取最小，Group 取 GroupOrder 最小声明的组名、同值取 Ordinal 小者；条目进末端默认组。位次合并不覆盖已声明标题。
+- **顶层排序**：按 `(NodeOrder, Title Ordinal)`，不分组不插分隔线。
+- **子菜单内排序**：条目与递归子节点按 `(GroupOrder, null 组优先, Group Ordinal, Order, Title Ordinal)` 排序，相邻组变化处插单例分隔线，不产生开头/结尾/连续分隔线。
 
-内部累积结构（建树期临时对象，不外泄）：`LeafAccum` record（:101，一条叶子的分组/位次/标题/图标/命令）与 `NodeAccum` class（:104，路径段节点：子节点字典 `Children`（Ordinal 键）、条目列表 `Items`、合并位次的 `MergeNodeOrder`/`MergePlacement`）。
+内部临时结构：`LeafAccum` 保存叶子的分组/位次/标题/图标/命令；`NodeAccum` 的 `Children` 按稳定段索引，`Items` 保存叶子，`DeclaredTitle` 可空，`Title` 在无声明时回退段 Id。`MergeNodeOrder`/`MergePlacement` 保留既有最小位次规则。
 
 ## 12. `MenuRegistration.RegisterMenus`（Menus/MenuRegistration.cs:14）
 
@@ -317,7 +318,7 @@ attribute 菜单注册扩展（[ADR-0001](https://github.com/Ailurus-2233/Digita
 
 ### `ReflectedMenuItemContribution`（internal，:75）
 
-由 `RegisterMenus` 生成的 `IMenuItemContribution` 实现。构造期（:80-93）把 attribute 元数据落成契约属性：`Title = Language.Get(item.Title)`（注册时即按 UI 区域性解析）、`IconPath = item.Icon`、`Path`/`Group`/`GroupOrder` 取自类级 `MenuGroupAttribute`、`NodeOrder = group.Order`、`Order = item.Order`、`Command = new DelegateCommand(Execute)`。点击时 `Execute` fire-and-forget 调 `ExecuteAsync`（:111-114）：反射 `_method.Invoke(_instance, null)`，返回 `Task` 则 `await`（:120-123）；异常解包 `TargetInvocationException` 后 `Logger.Error` 记录，**不抛出**（:125-132）。
+由 `RegisterMenus` 生成的 `IMenuItemContribution` 实现，首次从容器解析 singleton 时构造。`Title = ResourceText.Get(item.ResourceType, item.Title)`；类级 `MenuGroup` 同时有来源与键时 `PathTitle = ResourceText.Get(group.ResourceType, group.TitleKey)`，仅引用路径时为 null。`Path`/`Group`/`GroupOrder` 来自类级，`NodeOrder=group.Order`、条目 Order/图标来自方法级，`Command` 包装反射执行。`ExecuteAsync` 等待 Task，解包 `TargetInvocationException` 后记 Error，不抛出。外部模块用 `[MenuGroup("shell.file")]` 挂接已有根、用自己资源声明条目即可，不依赖 WorkstationResources；所有者标题可晚于引用贡献到达。
 
 ## 13. `ToolViewRegistration.RegisterToolViews`（Contributions/ToolViewRegistration.cs:14）
 
@@ -330,7 +331,7 @@ attribute 工具视图注册扩展（[ADR-0002](https://github.com/Ailurus-2233/
 1. 遍历 `assembly.DefinedTypes`，取标注 `ToolViewAttribute` 的类（:23-29）。
 2. 类非可实例化 `Control`（abstract 或非 `Control` 派生）记 `Logger.Warning` 跳过（:31-36）。
 3. `Id` 在**本程序集内**重复（`seenIds` 局部 HashSet，:22）记 `Logger.Warning` 跳过（:38-44）；跨程序集重复不在此处检测。
-4. 合法者：`registry.Register(viewType)` 注册 View 类型本身（:47，供激活时按 `ViewType` 解析），并把 attribute 元数据落成 `ToolViewContribution` 后 `RegisterSingleton(typeof(ToolViewContribution), _ => metadata)`（:48-58）；`Title` 在扫描时经 `Language.Get(attribute.TitleKey)` 解析（:51），`Placement` 取 attribute 的 `Default`（:54）。
+4. 合法者注册 View 类型并生成 singleton 元数据；`Title = ResourceText.Get(attribute.ResourceType, attribute.TitleKey)` 在扫描时解析，`Placement` 取 attribute.Default。资源所属程序集由显式 Type 决定，与被扫描程序集可以不同。
 
 真实调用点：`Modules/Workstation/WorkstationApplication.cs:27`、`Modules/DashBoard/DashBoardModule.cs:14`。
 
@@ -348,7 +349,7 @@ attribute 命令注册扩展，与 `RegisterMenus` 同构但**免类级 attribut
 
 ### `ReflectedCommandContribution`（internal，:60）
 
-由 `RegisterCommands` 生成的 `ICommandContribution` 实现。构造期（:65-75）把 attribute 元数据落成契约属性：`Id = attribute.Id ?? $"{method.DeclaringType?.FullName}.{method.Name}"`（默认「声明类全名.方法名」）、`Title = Language.Get(attribute.Title)`（收集时按 UI 区域性解析）、`Gesture`/`IconPath`/`Order` 透传、`Command = new DelegateCommand(Execute)`。执行路径与菜单完全同构：`Execute` fire-and-forget 调 `ExecuteAsync`（:86-89）：反射调用，返回 `Task` 则 `await`；异常解包 `TargetInvocationException` 后 `Logger.Error` 记录，**不抛出**（:91-104）。
+由 `RegisterCommands` 生成的 `ICommandContribution` 实现。构造期（首次收集）以 `ResourceText.Get(attribute.ResourceType, attribute.Title)` 解析标题；Id 缺省「声明类全名.方法名」，Gesture/IconPath/Order 透传，Command 包装反射执行。执行路径与菜单同构：fire-and-forget 调异步执行，Task 等待，异常解包后记 Error、不抛出。解析后文本随该 singleton 存活，语言切换下次启动生效。
 
 ## 15. `CommandPalette`（Windows/CommandPalette.cs:18，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）
 
@@ -378,9 +379,9 @@ public static void RegisterSettings(this IContainerRegistry registry, Assembly a
 
 attribute 设置注册扩展（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1），与 `RegisterMenus`/`RegisterCommands` 同构。模块在自身 `RegisterTypes` 中调用并传入本模块程序集，**不做全局程序集扫描**；扫描只在注册时发生一次。规则（:21-66）：
 
-1. 遍历 `assembly.DefinedTypes`（:21），类上每条 `SettingGroupAttribute` 声明注册一个 `SettingGroupContribution` 单例（:23-27，attribute 允许 `AllowMultiple`；同名分组的合并与位次取最小发生在收集侧，见第 8 节 `GetSettingGroups`）。
+1. 遍历 `assembly.DefinedTypes`，类上每个 `SettingGroupAttribute` 生成一个 singleton 元数据，透传 `Id`/`ResourceType`/`Name`/`Order`；扫描期不查资源。同 Id 合并、首个来源/名称保留与最小 Order 均在收集侧完成。
 2. 取该类 `Public | Static | DeclaredOnly` 属性中标注 `SettingItemAttribute` 者（:29-36）；无 getter（:38-43）或 `DefaultValue` 非空且类型与属性类型不匹配（:45-51）记 `Logger.Warning` 跳过。属性只是声明锚点——扫描不读属性值，读写一律走 `ISettingsService`。
-3. 每个合法属性注册一个 `SettingItemContribution` 单例（:53-63）：`Id = attribute.Id ?? "声明类全名.属性名"`（:55，仿命令默认 Id 规则）、`ValueType` 取属性类型（:58）、`Group`/`Name`/`DefaultValue`/`Order`/`RequiresRestart` 透传。
+3. 合法属性生成 singleton 元数据，Id 缺省「声明类全名.属性名」、ValueType 取属性类型，透传稳定 `Group`、`ResourceType`、名称键 `Name`、默认值/位次/重启标志。设置页分组 Key 使用 Id；显式分组、设置项与枚举选项在页面构造时各自从元数据来源查询，隐式分组直接显示 Id。
 
 真实调用点：`FrameworkApplication.cs:168`（Framework 自身「常规/语言」设置项）。
 
@@ -422,11 +423,15 @@ Framework 预置「常规/语言」设置项的值类型（[ADR-0006](https://gi
 ### `GeneralSettings`（Settings/GeneralSettings.cs:10）
 
 ```csharp
-[SettingGroup("SettingsGeneralGroupName", Order = 0)]
+[SettingGroup(GeneralSettings.GroupId, typeof(FrameworkResources), nameof(FrameworkResources.SettingsGeneralGroupName), Order = 0)]
 public static class GeneralSettings
 ```
 
-Framework 预置设置项的声明类（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 9）。成员：`public static readonly string LanguageSettingId`（:15，默认规则「声明类全名.属性名」，供启动序列等消费方读写）；`[SettingItem("SettingsGeneralGroupName", "SettingsLanguageName", DefaultValue = UiLanguage.ZhCN, RequiresRestart = true)] public static UiLanguage Language`（:20-22）——属性体只是声明锚点不会被读取，读写一律经 `ISettingsService`。
+Framework 预置常规/语言设置声明类。`public const string GroupId = "framework.general"` 是稳定分组 Id；`LanguageSettingId` 继续使用「声明类全名.属性名」，持久化 key 不变。语言属性声明为 `[SettingItem(GroupId, typeof(FrameworkResources), nameof(FrameworkResources.SettingsLanguageName), DefaultValue = UiLanguage.ZhCN, RequiresRestart = true)]`。属性体只作声明锚点，读写经 `ISettingsService`。
+
+### `FrameworkResources`（Resources/）
+
+`DigitalWorkstation.Core.Framework.Resources.FrameworkResources` 为 public static 资源所属类型，`.cs`、中性中文 `.resx`、`.en-US.resx` 同目录同基名。包含命令面板水印/空态与常规/语言设置名称、两种枚举选项名称；强类型属性经 `ResourceText.Get(typeof(FrameworkResources), nameof(Key))` 查找。不承载模块私有文字，产品名使用 Core/Resource 的 `SharedResources`。
 
 ## 17. `ApplicationRestarter`（ApplicationRestarter.cs:14，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
 

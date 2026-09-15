@@ -27,7 +27,7 @@ public enum ToolViewPlacement
 ///     <see cref="Default" /> 只是默认归属——用户拖拽后的实际归属以持久化布局为准。
 /// </summary>
 [AttributeUsage(AttributeTargets.Class)]
-public sealed class ToolViewAttribute(string id, string titleKey) : Attribute
+public sealed class ToolViewAttribute(string id, Type resourceType, string titleKey) : Attribute
 {
     /// <summary>
     ///     稳定标识，全局唯一，约定模块名前缀（如 "shell.outline"）
@@ -35,7 +35,12 @@ public sealed class ToolViewAttribute(string id, string titleKey) : Attribute
     public string Id { get; } = id;
 
     /// <summary>
-    ///     显示标题的 Language 资源键，注册时解析，缺键回退键名本身
+    ///     标题资源所属类型，其全名与程序集定位资源
+    /// </summary>
+    public Type ResourceType { get; } = resourceType;
+
+    /// <summary>
+    ///     显示标题的资源键，注册时从 ResourceType 解析，缺键回退键名本身
     /// </summary>
     public string TitleKey { get; } = titleKey;
 

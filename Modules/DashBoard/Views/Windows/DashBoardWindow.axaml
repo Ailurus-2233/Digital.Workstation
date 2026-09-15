@@ -13,7 +13,7 @@
     xmlns:prism="http://prismlibrary.com/"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <StackPanel Margin="24" Spacing="12">
-        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Static resource:Language.ProductName}" />
+        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Static resource:SharedResources.ProductName}" />
         <TextBlock FontSize="14" Text="{Binding PhaseText}" />
         <ProgressBar Height="4" IsIndeterminate="{Binding !IsFailed}" />
         <TextBlock Foreground="{DynamicResource SemiColorText2}" Text="{Binding ModuleText}" />

@@ -7,7 +7,7 @@ namespace DigitalWorkstation.Core.Abstractions.Settings;
 ///     非公共/非静态/无 getter 的属性连候选都进不了（静默忽略，同菜单/命令扫描惯例）
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
-public sealed class SettingItemAttribute(string group, string name) : Attribute
+public sealed class SettingItemAttribute(string group, Type resourceType, string name) : Attribute
 {
     /// <summary>
     ///     稳定标识；null = 默认「声明类全名.属性名」（仿命令 Id 规则，ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）。
@@ -16,19 +16,24 @@ public sealed class SettingItemAttribute(string group, string name) : Attribute
     public string? Id { get; set; }
 
     /// <summary>
-    ///     所属分组的名称键（<see cref="SettingGroupAttribute.Name" />），按名称全局合并归组
+    ///     所属分组的稳定 Id（<see cref="SettingGroupAttribute.Id" />），按 Id 全局合并归组
     /// </summary>
     public string Group { get; } = group;
 
     /// <summary>
-    ///     设置项显示名的 Language 资源键，运行时解析，缺键回退键名本身（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 2）
+    ///     设置项与枚举成员显示名的资源所属类型
+    /// </summary>
+    public Type ResourceType { get; } = resourceType;
+
+    /// <summary>
+    ///     设置项显示名的资源键，设置页构造时从 ResourceType 解析，缺键回退键名本身
     /// </summary>
     public string Name { get; } = name;
 
     /// <summary>
     ///     默认值：用户从未修改时 <see cref="ISettingsService.Get{T}" /> 的返回值（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）。
     ///     必须是属性类型的编译期常量（attribute 实参限制）；类型不匹配在扫描时记日志跳过。
-    ///     枚举成员显示名走 Language 资源键，键按「设置项名称键 + 成员名」约定生成，缺键回退成员名本身（决策 8）
+    ///     枚举成员显示名从 ResourceType 解析，键按「设置项名称键 + 成员名」约定生成，缺键回退完整键名
     /// </summary>
     public object? DefaultValue { get; set; }
 

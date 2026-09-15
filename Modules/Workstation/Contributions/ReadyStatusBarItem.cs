@@ -1,5 +1,5 @@
 ﻿using DigitalWorkstation.Core.Abstractions.Contributions;
-using DigitalWorkstation.Core.Resource;
+using DigitalWorkstation.Workstation.Resources;
 using DigitalWorkstation.Core.UIPackage;
 
 namespace DigitalWorkstation.Workstation.Contributions;
@@ -11,7 +11,7 @@ public class ReadyStatusBarItem : IStatusBarItemContribution
 {
     public string Id => "shell.status.ready";
 
-    public string Title => Language.StatusReadyTitle;
+    public string Title => WorkstationResources.StatusReadyTitle;
 
     public string IconPath => Icons.Ready;
 

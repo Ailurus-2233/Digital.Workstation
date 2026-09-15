@@ -1,36 +1,21 @@
 # Core/Resource — 验证方式
 
-## 测试在哪
+本模块没有独立测试；仓库现有 Framework resize 测试不覆盖资源机制。资源迁移不靠为每条翻译增加永久测试验收。
 
-**本模块没有任何测试，整个解决方案目前也没有任何测试项目。** `Digital.Workstation.slnx` 只含 `Core/Models`、`Core/Resource`、`Core/UIPackage`、`Modules/*` 等源码项目，不存在 `*Tests*.csproj`。`Core/Resource/` 目录下也没有测试文件。
+## 集成检查
 
-如实结论：本模块的正确性当前完全靠编译期检查（`nameof` 保证属性名合法）+ 运行时可见症状（键缺失时界面显示键名）来保证。
+- 比较迁移前后中性/en-US 的键与 value/comment：每个原键只落到一个 owner，两种语言保持配对。
+- 在完成全部调用方迁移后统一构建，检查 owner 全名对应的 manifest 与各程序集英文卫星输出。
+- 运行应用分别使用中文/en-US：观察产品名、主页、菜单、命令面板、启动台进度、设置分组/枚举名/重启横幅。语言设置重启后生效。
+- 用一次性真实资源调用检查未知区域性回退中文、缺键返回完整 key、错误 owner 抛 manifest 异常；同键不同 owner 不串值。
+- 修改区域性做探针时保存并恢复 CurrentUICulture；不要让探针改变用户持久化设置。
 
-## 怎么跑
+## 本次迁移验证记录（2026-09-15）
 
-无可跑的测试命令。若将来补测试，按仓库纯桌面端约定：
+- 38 个原键的中文/en-US value 和 comment 均保留，且每个键只属于一个资源族。编译后逐个调用五个资源类的全部强类型属性，两种语言的 38 个返回值均与迁移前一致；错误资源类型仍抛 `MissingManifestResourceException`。
+- `dotnet run --project Launcher/Launcher.csproj -c Debug` 编译通过；当前会话在原生渲染初始化时遇到 `Avalonia.Native was not able to start the RenderTimer`（错误码 `-6661`），未完成原生桌面视觉验收。构建另提示 `EmptyStateView.axaml` 的 AVLN3001（无公共无参构造函数）。
+- 临时程序使用真实 Launcher/Workstation 启动链与 Skia 离屏绘制，替换平台为 Avalonia.Headless；生产代码、依赖与渲染配置未为验证修改。中文启动 → 设置下拉改选英文并落盘 → 新进程读取同份配置以英文启动，通过；两种语言的主页、命令面板/空态、设置页和重启横幅均保存并检查了渲染图。
+- 临时贡献程序集验证：不同资源类型中的同名键不串值；相同键对应的不同菜单路径/设置分组 ID 不合并；菜单先挂接/先子节点后声明父标题仍正确；同设置分组 ID 保留首份资源来源并取最小 Order；未声明分组显示 ID；工具视图、命令、枚举选项使用贡献者资源，命令能执行；未知区域性回退中文，缺键不跨资源类型查询。
+- 验证配置通过 `CFFIXED_USER_HOME` 隔离，并在任何写入前校验实际设置路径位于临时目录；用户配置未改动。临时程序与配置验证后移除，没有新增永久测试或包依赖。
 
-- **UI 相关不做自动化测试验收**（View/ViewModel 绑定、窗口交互跳过单元测试）。
-- **聚焦数据检测**：本模块唯一值得测的"数据逻辑"是资源查找与回退行为。
-
-## 改完代码后的最小验证集（手工/将来自动化）
-
-修改本模块后按以下数据检测点验证：
-
-1. **编译**：`dotnet build Core/Resource/Resource.csproj` 通过（`nameof` 引用不出错）。
-2. **键集合一致性**（最重要，可写成单元测试）：枚举 `typeof(Language)` 的 29 个公开静态属性，对每个属性名断言 `Language.Get(属性名) != 属性名`（即键在两个 resx 中都存在，没有走 `?? key` 兜底）。
-3. **en-US 回退检测**：把 `CultureInfo.CurrentUICulture` 设为 `en-US`，断言每个属性返回英文值（如 `Language.MenuExitTitle == "Exit"`）；设为 `zh-CN` 或未识别区域性，断言返回中文值（如 `Language.MenuExitTitle == "退出"`）。
-4. **缺失键行为**：`Language.Get("不存在的键")` 应返回 `"不存在的键"` 本身而非 `null`/异常。
-5. **冒烟**：启动应用，肉眼确认 shell 菜单/面板/状态栏标题、DashBoard splash 阶段文案显示为目标语言而非键名。
-
-## 测试约定（若新增测试项目）
-
-- 框架：仓库尚无先例，按 .NET 主流建议 xUnit。
-- 命名：建议 `Resource.Tests/LanguageTests.cs`；测试方法 `方法_条件_期望` 或仓库将来约定。
-- 夹具：无需 mock——`ResourceManager` 查的是真实嵌入资源，直接测真资源即可；唯一需要在测试间隔离的状态是 `CultureInfo.CurrentUICulture`（用 `IDisposable` 夹具在测试后还原，避免污染其他测试）。
-- 新增一条文案时对应的测试动作：无需为该条文案单独写测试——上面的"键集合一致性"测试通过反射自动覆盖新属性。
-
-## 注意事项
-
-- `CultureInfo.CurrentUICulture` 是线程级状态，测试并行运行时必须在各自线程设置，不能依赖进程全局。
-- 改 resx 的 `<value>` 不改键名时，编译可能命中增量缓存，验证前必要时删 `Core/Resource/obj/` 重建。
+**仍需人工验收**：在正常桌面会话启动上述命令，检查启动进度、顶部系统菜单、Ctrl+P 命令面板和「文件 → 首选项」；改选语言后点击「立即重启」，检查窗口、菜单、分组、枚举选项与重启提示一致切换。离屏结果不替代原生菜单交互、窗口合成和重启按钮的人工验收。

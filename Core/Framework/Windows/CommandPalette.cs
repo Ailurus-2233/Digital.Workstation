@@ -6,7 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using DigitalWorkstation.Core.Abstractions.Commands;
-using DigitalWorkstation.Core.Resource;
+using DigitalWorkstation.Core.Framework.Resources;
 
 namespace DigitalWorkstation.Core.Framework.Windows;
 
@@ -36,7 +36,7 @@ public class CommandPalette : Border
         _input = new TextBox
         {
             Classes = { "command-input" },
-            Watermark = Language.CommandPaletteWatermark
+            Watermark = FrameworkResources.CommandPaletteWatermark
         };
         _list = new ListBox
         {
@@ -48,7 +48,7 @@ public class CommandPalette : Border
         {
             Classes = { "placeholder" },
             Margin = new Thickness(0, 8, 0, 12),
-            Text = Language.NoMatchingCommands
+            Text = FrameworkResources.NoMatchingCommands
         };
         Grid.SetRow(_list, 1);
         Grid.SetRow(_emptyState, 1);

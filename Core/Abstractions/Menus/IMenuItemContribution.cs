@@ -21,9 +21,14 @@ public interface IMenuItemContribution
     string? IconPath { get; }
 
     /// <summary>
-    ///     完整菜单路径："/" 分隔，段为 Language 资源键，首段为顶层菜单
+    ///     完整菜单路径："/" 分隔，段为稳定 Id，首段为顶层菜单，不参与本地化
     /// </summary>
     string Path { get; }
+
+    /// <summary>
+    ///     路径末端菜单节点的已解析标题；null = 无标题意见，同一路径首个非 null 标题生效
+    /// </summary>
+    string? PathTitle { get; }
 
     /// <summary>
     ///     单段路径：本条目在该菜单内的组；多段路径：末端子菜单节点在其父菜单内的组。null = 默认组

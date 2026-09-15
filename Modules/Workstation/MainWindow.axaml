@@ -3,7 +3,7 @@
     MinHeight="600"
     MinWidth="960"
     Padding="0,32,0,0"
-    Title="{x:Static resource:Language.ProductName}"
+    Title="{x:Static resource:SharedResources.ProductName}"
     Width="1280"
     d:DesignHeight="800"
     d:DesignWidth="1280"

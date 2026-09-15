@@ -1,17 +1,18 @@
 ﻿<Window
     CanResize="False"
     Height="160"
-    Title="{x:Static resource:Language.AboutWindowTitle}"
+    Title="{x:Static localResource:WorkstationResources.AboutWindowTitle}"
     Width="360"
     WindowStartupLocation="CenterOwner"
     x:Class="DigitalWorkstation.Workstation.Views.AboutWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:resource="clr-namespace:DigitalWorkstation.Core.Resource;assembly=DigitalWorkstation.Core.Resource"
+    xmlns:localResource="clr-namespace:DigitalWorkstation.Workstation.Resources"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <StackPanel Margin="20" Spacing="8">
-        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Static resource:Language.ProductName}" />
+        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Static resource:SharedResources.ProductName}" />
         <TextBlock Foreground="{DynamicResource SemiColorText2}" Text="模块化 Avalonia 桌面工作站" />
     </StackPanel>
 </Window>
