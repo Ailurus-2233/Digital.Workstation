@@ -15,6 +15,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <AvaloniaResource Include="..\..\Launcher\Assets\AppIcon.png" Link="Assets\AppIcon.png" />
+    </ItemGroup>
+
+    <ItemGroup>
       <Compile Update="Views\EmptyStateView.axaml.cs">
         <DependentUpon>EmptyStateView.axaml</DependentUpon>
       </Compile>

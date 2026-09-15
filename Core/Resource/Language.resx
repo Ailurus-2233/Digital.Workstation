@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
+  <data name="HomeDescription" xml:space="preserve">
+    <value>以模块构建工作空间，将常用工具汇聚于一个桌面应用。</value>
+    <comment>主页产品说明</comment>
+  </data>
+  <data name="HomeCoreTitle" xml:space="preserve">
+    <value>核心加载</value>
+    <comment>主页核心组件列表标题</comment>
+  </data>
+  <data name="HomeCustomTitle" xml:space="preserve">
+    <value>自定义模块</value>
+    <comment>主页自定义模块列表标题</comment>
+  </data>
+  <data name="HomeNoModules" xml:space="preserve">
+    <value>暂无已加载的模块</value>
+    <comment>主页未加载模块时的提示</comment>
+  </data>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">

@@ -27,6 +27,7 @@ dotnet test UnitTest/Framework --filter "FullyQualifiedName~ShellLayoutStateResi
 | `MainWindowViewModel` 交互逻辑（贡献收集、缓存、命令转发、布局持久化接线） | 无单元测试覆盖；手动 `dotnet run` 冒烟：启动 → 点 ActivityBar 导航项（SideBar 展开/再点收起；底部段应只见 shell 内置"设置"导航按钮，点击应打开设置页主视图；钉住区为空）→ Ctrl+B/Ctrl+J/Ctrl+Alt+B → 拖三条分隔条（边界应停在 Min/Max）→ 视图菜单三个切换项 → 文件>退出、帮助>关于；持久化：改布局后退出重进应恢复 → 视图菜单 Layout 组"重置布局"后应回全默认且 %AppData%/Digital.Workstation/layout.json 被删除 |
 | 工具视图 `[ToolView]` attribute 与菜单类 attribute（Id/Order/图标/文案/默认位置/分组位次） | 手动验证渲染位置与排序（ActivityBar 顶部段/钉住区/两个面板，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）；Id 类问题看 error.md 排查表，条目缺席看注册日志（工具视图：非可实例化 `Control`/同程序集重复 Id 被 `ToolViewRegistration` 记 `Logger.Warning` 跳过；菜单：非法签名/空段路径被跳过） |
 | MainWindow.axaml 样式/布局 | 纯视觉，启动目验 |
+| 主页品牌与加载清单 | `dotnet run --project Launcher/Launcher.csproj -c Debug`：主页上部显示图标/名称/简介，无快捷键列表；左列显示实际加载的六个 Core 程序集，右列显示成功初始化的 DashBoardModule、SettingsModule。打开设置后文件菜单“回到主页”应恢复双列；缩小可用主区域后可滚动查看完整清单。切换 UI 语言并重启检查简介、标题与空提示；模块失败后跳过时不得出现在成功加载列表中。 |
 
 ## 测试约定（若将来为本模块新增测试）
 

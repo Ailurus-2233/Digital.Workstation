@@ -2,10 +2,11 @@
 
 ## 模块做什么
 
-`Launcher/` 是 Digital.Workstation 解决方案的**程序入口与运行时引导器**（WinExe，`net10.0`，程序集名 `Launcher`，Launcher.csproj:3-9）。它只做一件事：把"分类目录布局"的发布产物正确启动起来。具体职责有两个：
+`Launcher/` 是 Digital.Workstation 解决方案的**程序入口、运行时引导器与应用图标宿主**（WinExe，`net10.0`，程序集名 `Launcher`，Launcher.csproj:3-10）。它只做三件事：把"分类目录布局"的发布产物正确启动起来，并把统一的模块化工作台图标作为默认窗口图标、以及支持平台的桌面应用图标输入注入 Avalonia。具体职责有：
 
-1. **自定义程序集/native 库解析**（`AssemblyLoader`，AssemblyLoader.cs:12）：Release 发布布局中 DLL 不堆在输出根目录，而是按用途分到 `core/`、`modules/`、`libraries/<包分类>/`、`runtimes/<rid>/native/` 等子目录，CLR 默认 probing 找不到。`AssemblyLoader` 负责预加载启动关键 DLL、注册 `AppDomain.AssemblyResolve` 兜底解析器、注册 `NativeLibrary.SetDllImportResolver` 并预加载所有 native 库。
+1. **自定义程序集/native 库解析**（`AssemblyLoader`，AssemblyLoader.cs:12）：Release 发布布局中 DLL 不堆在输出根目录，而是按用途分到 `core/`、`modules/`、`libraries/<包分类>/`、`runtimes/<rid>/native/` 等子目录。`AssemblyLoader` 负责预加载启动关键 DLL、注册 `AppDomain.AssemblyResolve` 兜底解析器、注册 `NativeLibrary.SetDllImportResolver` 并预加载所有 native 库。
 2. **启动 Avalonia/Prism 应用**（`Launcher`，Launcher.cs:16）：指定 `WorkstationApplication`（Modules/Workstation）为 Avalonia Application，构建 `AppBuilder` 并以经典桌面生命周期启动。
+3. **提供默认应用图标**：`Launcher/Assets/AppIcon.svg` 是可编辑的模块化工作台图稿，`AppIcon.ico` 是包含 16–256px 多尺寸 PNG 图层的运行时图标；`Launcher.csproj` 的 `ApplicationIcon` 交给 Avalonia build targets 注册为默认 `Window.Icon`，覆盖启动台窗口与主窗口。
 
 ## 核心设计逻辑
 

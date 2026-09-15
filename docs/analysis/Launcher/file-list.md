@@ -1,13 +1,17 @@
 # Launcher — 文件结构与功能
 
-目录树（相对 `Launcher/`，共 4 个文件，全部位于目录根部，无子目录）：
+目录树（相对 `Launcher/`，不含 `obj/`、`Output/`）：
 
 ```
 Launcher/
-├── Launcher.csproj      项目文件
+├── Launcher.csproj      WinExe 项目定义、程序集名与 `ApplicationIcon` 配置
 ├── Program.cs           进程入口 + Avalonia 设计器入口
 ├── Launcher.cs          启动流程编排（引导顺序控制 + AppBuilder 构建）
-└── AssemblyLoader.cs    自定义程序集/native 库加载器（本模块主体，438 行）
+├── AssemblyLoader.cs    自定义程序集/native 库加载器（438 行）
+└── Assets/
+    ├── AppIcon.ico      默认窗口/桌面图标（16–256px 多尺寸）
+    ├── AppIcon.png      SVG 导出的 256px 透明位图，由 Workstation 链接嵌入用于主页
+    └── AppIcon.svg      图标源稿（模块化工作台与中心工具效果）
 ```
 
 ## Launcher.csproj

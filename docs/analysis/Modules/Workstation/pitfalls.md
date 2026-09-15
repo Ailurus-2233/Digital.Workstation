@@ -2,6 +2,7 @@
 
 ## 隐含不变量
 
+- **主页需经容器创建**：`EmptyStateView(IModuleCatalog)` 无无参构造，不能通过 XAML URI 的运行时 loader 创建；Avalonia 编译会提示 AVLN3001。实际启动链使用容器解析并调用 `InitializeComponent`，已验证可正常展示。不要在构造期捕获模块清单：那时 Prism 尚未完成初始化，需在可视树挂载时读取。
 - **贡献收集只发生一次且晚于构造**：`MainWindowViewModel` 构造函数不读任何贡献；`EnsureContributionsLoaded()`（MainWindowViewModel.cs:170-193）由 `MainWindow.axaml.cs:13-17` 的 `Opened` 事件触发，`_contributionsLoaded`（:38）守卫保证只执行一次。推论：**窗口首次显示之后才注册进容器的贡献永远不会出现**；也不能指望构造函数里就有导航项。
 - **`State` 是布局的唯一事实来源（其管辖范围内）**：所有显隐/宽高/选中/tab/拖拽迁移状态都必须经 `ShellLayoutState` 转换方法改（`State = State.Xxx(...)`），不许另存布尔或宽度字段。布局 XAML 全部单向绑定 `State.*` 或其派生属性（现位于 Framework 的 `FrameworkWindowTheme.axaml`，如 :65、:93、:149——后两个绑 `AuxiliaryPanelRevealed`/`BottomPanelRevealed` 派生属性，拖拽会话期间临时显露隐藏面板，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）。`ResizePanel`（:429-432）是分隔条增量进入状态的唯一路径；`TogglePanel`（:488-497）是显隐切换的唯一路径；`MoveTab`（:440-483）是拖拽落放的唯一路径。**例外：面板对齐档位不在 `State` 里**——`FrameworkWindow.PanelAlignment` 依赖属性是布局定义的唯一入口，`MainWindowViewModel.PanelAlignment`（:85）只是双向绑定的镜像属性。
 - **UI 线程亲和**：全部事件订阅（:48-51）、`ToolViewDragSession.ActiveChanged` 订阅（:53）、命令、集合变更都假定 UI 线程；模块从后台线程发布 `OpenMainViewEvent` 时由 Prism 事件聚合器的线程选项决定（默认订阅在发布线程执行——本模块订阅未指定 `ThreadOption`，发布方若在后台线程会直接碰 `ObservableCollection`，调用方责任）。

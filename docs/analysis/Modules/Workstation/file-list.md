@@ -23,11 +23,12 @@ Menus/
 Commands/
   ViewCommands.cs                   shell 预置命令类（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：四个 [Command] 方法（三面板显隐切换 + 重置布局，复用视图菜单标题键与事件通路；三面板命令带 Icons.PanelLeft/PanelBottom/PanelRight 图标（与对应菜单项一致）与 Gesture（Ctrl+B/Ctrl+J/Ctrl+Alt+B，即面板显隐快捷键））
 Views/
-  EmptyStateView.axaml(.cs)         shell 内置空状态页：快捷键提示（Ctrl+B/J、Ctrl+Alt+B），不依赖任何模块
+  EmptyStateView.axaml(.cs)         产品主页：品牌区 + 核心/自定义模块双列；构造注入 IModuleCatalog，可视树挂载时刷新加载快照
   AboutWindow.axaml(.cs)            "关于"对话框：360×160 不可调大小、CenterOwner，硬编码中文文案
 ```
 
 ## 逐文件说明
+- **Workstation.csproj**：链接 `Launcher/Assets/AppIcon.png` 为 `Assets/AppIcon.png` Avalonia 资源，供主页 Image 使用；更换 SVG 图稿时需同步导出 PNG。
 - **主页导航接线**：`MainWindowViewModel` 构造时缓存 `_homeContent` 并订阅 `ReturnHomeEvent`；`ReturnHome` 清除活动主视图、恢复缓存主页，不重置面板布局。`FileNavigationMenus` 同时被菜单与命令扫描发现，新增后共六个菜单类，命令宿主为 `ViewCommands` 与 `FileNavigationMenus`。
 - **WorkstationApplication.cs**：不在构造期设置 `Application.Name`；产品名由 Framework 载入已存语言后统一赋值，避免 macOS 最左侧应用菜单提前固化为中性资源中文。其余成员负责模块目录、贡献注册与启动台创建。
 - **MainWindow.axaml**：标题通过 `{x:Static resource:Language.ProductName}` 本地化。窗口顶部为标题栏预留 32px；`u|TitleBar` 与 `TitleBarContent` 同高，标题文本垂直居中并下移 2px 做 macOS 光学校正。

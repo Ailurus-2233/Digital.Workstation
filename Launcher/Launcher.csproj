@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <TargetFramework>net10.0</TargetFramework>
         <AssemblyName>Launcher</AssemblyName>
+        <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>

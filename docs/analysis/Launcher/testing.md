@@ -45,6 +45,7 @@ Output\Release\Launcher.exe          # 双击或命令行启动
 | 动 `BootRequiredAssemblyFiles`/`BaseFolderPath`/`NativeLibraryDir` | 同上，另加从非程序目录启动（验收点 4） |
 | 动 `Launcher.BuildAvaloniaApp`/`RunAvalonia` | Debug `dotnet run` 正常启动；IDE axaml 预览器正常渲染 |
 | 动 `Program.Main` 结构 | 同上一行，且确认 `Main` 体内仍不直接引用 Avalonia 类型（见 pitfalls.md） |
+| 添加/更换 `ApplicationIcon` | Debug 启动后检查启动台窗口与主窗口使用模块化工作台图标；在支持的平台检查标题栏/任务栏图标，Release 构建后同样启动检查发布产物图标 |
 
 ## 如何"新增一个测试"
 

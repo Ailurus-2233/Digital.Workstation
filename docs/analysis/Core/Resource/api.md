@@ -16,6 +16,10 @@
 | 属性 | 中文值 | 英文值 | 用途（resx comment） |
 |---|---|---|---|
 | `ProductName` | 数字工作站 | Digital Workstation | 产品显示名称 |
+| `HomeDescription` | 以模块构建工作空间，将常用工具汇聚于一个桌面应用。 | A modular workspace that brings your everyday tools together in one desktop application. | 主页产品说明 |
+| `HomeCoreTitle` | 核心加载 | Core components | 主页左列标题 |
+| `HomeCustomTitle` | 自定义模块 | Custom modules | 主页右列标题 |
+| `HomeNoModules` | 暂无已加载的模块 | No modules loaded | 主页空列表提示 |
 | `AboutWindowTitle` | 关于 数字工作站 | About Digital Workstation | 关于窗口标题 |
 | `SettingsNavigationTitle`（:25） | 设置 | Settings | shell 预置"设置"导航项标题 |
 | `DashBoardNavigationTitle`（:30） | 启动台 | Launch Pad | DashBoard 导航项标题 |

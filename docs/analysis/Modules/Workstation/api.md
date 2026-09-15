@@ -145,9 +145,11 @@ public partial class MainWindowViewModel : ObservableObject
 
 注册方是 `WorkstationApplication.cs:27`、`:31` 与 `:33` 的三行 attribute 扫描——`RegisterToolViews`（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）扫 `[ToolView]` View 类（非可实例化 `Control` 与程序集内重复 Id 记 `Logger.Warning` 跳过），`RegisterMenus`（[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）扫 `[MenuGroup]` 类（菜单类 RegisterSingleton、每个合法 `[MenuItem]` 方法注册一个 `IMenuItemContribution` 工厂），`RegisterCommands`（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）扫 `[Command]` 方法（免类级 attribute；宿主类 RegisterSingleton、每个合法方法注册一个 `ICommandContribution` 工厂；非法签名记日志跳过，详见 Framework 文档）。`PanelAlignment`/`TogglePanelTarget` 新增枚举成员时需要在此手工加对应方法（不像旧工厂循环那样自动覆盖，见 pitfalls.md）。
 
-## 6. 内置视图（Views/，均为无逻辑静态视图）
+## 6. 内置视图（Views/）
 
-`EmptyStateView`（EmptyStateView.axaml）是静态快捷键提示页（Ctrl+B/Ctrl+J/Ctrl+Alt+B 三个键帽 + 引导文案）。`AboutWindow`（AboutWindow.axaml）：`Window`，360×160、`CanResize="False"`、`WindowStartupLocation="CenterOwner"`，标题与正文为**硬编码中文**（未走 `Language`，见 pitfalls.md）。原四个 `[ToolView]` 演示占位 UserControl（axaml 各只有一行"XX（占位）" `TextBlock`）已删除，本模块 `Views/` 不再有工具视图声明。
+`EmptyStateView(IModuleCatalog moduleCatalog)` 由容器解析，展示产品图标、名称、说明与加载清单。`OnAttachedToVisualTree` 在启动完成后及回到主页时更新核心程序集和已初始化 Prism 模块的只读快照；不订阅后台加载事件，不把“目录已登记”误认为“已加载”。分组及过滤约定见 common.md。
+
+`AboutWindow` 保持原行为。`Views/` 无工具视图声明。
 
 ## 典型调用序列
 

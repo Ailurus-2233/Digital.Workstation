@@ -19,9 +19,9 @@
 | SkiaSharp / HarfBuzzSharp / Avalonia.Native（NuGet，经传递） | 仅以 `typeof(...)` 取程序集对象注册 native resolver：`SkiaSharp.SKImageInfo`、`HarfBuzzSharp.Blob`；`Avalonia.Native` 因目标类 internal 改按程序集名从 `AppDomain.GetAssemblies()` 查找 | `AssemblyLoader.RegisterNativeResolversForAvalonia`（AssemblyLoader.cs:323-333） |
 | .NET BCL | `System.Reflection`（`Assembly`/`AssemblyName`）、`System.Runtime.InteropServices`（`NativeLibrary`/`DllImportResolver`/`RuntimeInformation`/`OSPlatform`）、`System.Collections.Concurrent`（`ConcurrentDictionary`）、`AppDomain.AssemblyResolve`、`AppContext.BaseDirectory` | AssemblyLoader.cs:1-3 using 及全文件 |
 
-### 编译设置（Launcher.csproj:1-14）
+### 编译设置（Launcher.csproj:3-16）
 
-`Microsoft.NET.Sdk`、`OutputType=WinExe`（:4）、`ImplicitUsings`+`Nullable` enable（:5-6）、`TargetFramework=net10.0`（:7）、**显式 `AssemblyName=Launcher`**（:8）——覆盖了 `Build/Base.props:35` 默认会拼出的 `DigitalWorkstation.Launcher`（Launcher 不在 `Core/`/`Modules/`/`UnitTest/` 任何一路径规则内）。csproj 不 import 任何 Build 脚本；仓库根的 `Directory.Build.props`/`Directory.Build.targets` 统一 import `Build/Base.props`、`Build/Base.targets`、`Build/ManageDlls.props`、`Build/ManageDlls.targets`。
+`Microsoft.NET.Sdk`、`OutputType=WinExe`（:4）、`ImplicitUsings`+`Nullable` enable（:5-6）、`TargetFramework=net10.0`（:7）、**显式 `AssemblyName=Launcher`**（:8，覆盖 `Build/Base.props:35` 默认会拼出的 `DigitalWorkstation.Launcher`）以及 `ApplicationIcon=Assets\AppIcon.ico`（:9）——后者经 Avalonia build targets 注册为默认 `Window.Icon`，并作为 Windows 桌面应用图标输入。csproj 不 import 任何 Build 脚本；仓库根的 `Directory.Build.props`/`Directory.Build.targets` 统一 import `Build/Base.props`、`Build/Base.targets`、`Build/ManageDlls.props`、`Build/ManageDlls.targets`。
 
 ### 发布布局（Release）——与运行时解析的对偶关系
 

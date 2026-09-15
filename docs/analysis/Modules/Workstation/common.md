@@ -9,6 +9,8 @@
 ### 主页与文件菜单导航
 
 - 主页是启动时的 `EmptyStateView`，不是 DashBoard 主视图贡献。VM 将启动时解析的实例保存在 `_homeContent`，回到主页不重新解析。
+- 主页上部为应用图标、产品名与简介，下部双列展示加载清单，不再显示快捷键提示（快捷键注册不变）。`EmptyStateView` 构造注入 `IModuleCatalog`，每次挂入可视树时刷新只读快照：左列枚举当前 AppDomain 已加载的 `DigitalWorkstation.Core.*` 程序集，排除动态程序集与 `.resources` 卫星程序集；右列仅取 Prism 目录中 `ModuleState.Initialized` 的模块，失败或未初始化的模块不列入。两列按名称排序，空列显示本地化提示；高度不足时整体滚动。此处“核心加载”表示程序集已加载，不表示逐项服务健康检查；“自定义模块”表示 Prism 功能模块，包含内置 DashBoard、Settings，不区分第三方来源。
+- 主页图标为 `Launcher/Assets/AppIcon.svg` 导出的 256px `AppIcon.png`，由 Workstation 项目以链接资源嵌入 `Assets/AppIcon.png`，不依赖运行时当前目录。
 - `Menus/FileNavigationMenus.cs` 声明文件菜单 Navigation 组（GroupOrder 100）：“回到主页”（Order 100）、“首选项”（Order 200）；原 `FileMenus` 的 Application 组（GroupOrder 1000）保持“退出”，组间自动插分隔线。
 - `FileNavigationMenus` 的两个导航方法均标注 `[MenuItem]` 与 `[Command]`，菜单与命令面板执行同一方法。`ReturnHome` 发布无负载 `ReturnHomeEvent`，不声明快捷键；`OpenPreferences` 发布 `OpenMainViewEvent(WellKnownViews.Settings)`，通过 `Gesture = "Ctrl+OemComma"` 注册 Ctrl+,。左下角设置入口保留。
 - `MainWindowViewModel.ReturnHome` 仅清除 `State.MainContent.ActiveView` 并恢复 `_homeContent`；面板布局、对齐、持久化文件及主视图缓存均不变。已在主页且活动主视图为空时直接返回。设置页再次打开复用原实例。

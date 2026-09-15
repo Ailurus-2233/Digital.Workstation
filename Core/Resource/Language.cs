@@ -24,6 +24,15 @@ public static class Language
     /// </summary>
     public static string ProductName => Get(nameof(ProductName));
 
+    /// <summary>主页产品说明。</summary>
+    public static string HomeDescription => Get(nameof(HomeDescription));
+    /// <summary>主页核心组件列表标题。</summary>
+    public static string HomeCoreTitle => Get(nameof(HomeCoreTitle));
+    /// <summary>主页自定义模块列表标题。</summary>
+    public static string HomeCustomTitle => Get(nameof(HomeCustomTitle));
+    /// <summary>主页未加载模块时的提示。</summary>
+    public static string HomeNoModules => Get(nameof(HomeNoModules));
+
     /// <summary>
     ///     关于窗口标题
     /// </summary>

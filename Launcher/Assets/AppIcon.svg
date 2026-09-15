@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#172331"/>
+      <stop offset="1" stop-color="#0b1119"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#70e5ff"/>
+      <stop offset="1" stop-color="#3994bc"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#bd9cff"/>
+      <stop offset="1" stop-color="#7555d8"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+  <rect x="38" y="38" width="948" height="948" rx="190" fill="none" stroke="#263849" stroke-width="10"/>
+
+  <!-- Assembled tool effect: a dominant, precise diamond of square modules -->
+  <g filter="url(#glow)" stroke="#0b1119" stroke-width="16" stroke-linejoin="round">
+    <rect x="460" y="224" width="104" height="104" rx="14" fill="url(#cyan)"/>
+
+    <rect x="342" y="342" width="104" height="104" rx="14" fill="url(#violet)"/>
+    <rect x="460" y="342" width="104" height="104" rx="14" fill="url(#cyan)"/>
+    <rect x="578" y="342" width="104" height="104" rx="14" fill="url(#violet)"/>
+
+    <rect x="224" y="460" width="104" height="104" rx="14" fill="url(#cyan)"/>
+    <rect x="342" y="460" width="104" height="104" rx="14" fill="url(#violet)"/>
+    <rect x="460" y="460" width="104" height="104" rx="14" fill="#f2fdff"/>
+    <rect x="578" y="460" width="104" height="104" rx="14" fill="url(#violet)"/>
+    <rect x="696" y="460" width="104" height="104" rx="14" fill="url(#cyan)"/>
+
+    <rect x="342" y="578" width="104" height="104" rx="14" fill="url(#violet)"/>
+    <rect x="460" y="578" width="104" height="104" rx="14" fill="url(#cyan)"/>
+    <rect x="578" y="578" width="104" height="104" rx="14" fill="url(#violet)"/>
+
+    <rect x="460" y="696" width="104" height="104" rx="14" fill="url(#cyan)"/>
+  </g>
+</svg>

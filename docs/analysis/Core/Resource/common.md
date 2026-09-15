@@ -47,6 +47,7 @@
    漏加 en-US 条目不会报错，en-US 用户会静默看到中文（回退行为）。
    设置相关键（`SettingsGeneralGroupName`/`SettingsLanguageName` 及枚举成员显示名键，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）走同一流程；其中枚举成员键按「设置项名称键 + 成员名」约定生成（如 `SettingsLanguageNameZhCN`），见 [README 场景 8](../../README.md)。
    文件导航使用 `ReturnHomeTitle`（回到主页 / Go Home）及 `MenuPreferencesTitle`（首选项 / Preferences），均由菜单与命令共用；左下角设置按钮继续使用 `SettingsNavigationTitle`。
+   产品主页使用 `HomeDescription`、`HomeCoreTitle`、`HomeCustomTitle`、`HomeNoModules` 表示简介、核心加载标题、自定义模块标题和空列表提示；程序集与 Prism 模块名作为技术标识原样显示，不作翻译。
 
 2. **改某条文案的措辞**：只改 `Language.resx` 的 `<value>`（中文）和 `Language.en-US.resx` 的 `<value>`（英文）。键名和 `Language.cs` 不动。例如把"启动台"改成"主页"：改 `DashBoardNavigationTitle` 的两个 `<value>`。
 
