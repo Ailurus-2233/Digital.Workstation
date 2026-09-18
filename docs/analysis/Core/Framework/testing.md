@@ -19,6 +19,18 @@
 
 原因：`Gesture` 是按键声明；`CommandPalette.FormatGesture` 必须使用 Avalonia 平台格式化生成显示文案，不直接输出声明字符串。最终验收由用户确认。
 
+## 多屏最大化菜单手动回归
+
+启动 `dotnet run --project Launcher/Launcher.csproj -c Debug`，使用 Windows 扩展桌面，不需要硬件或仿真器：
+
+1. 将主窗口移到右侧屏幕并最大化，点击“文件”；整份菜单应显示在该屏幕内、按钮下方，不能跳到左屏。
+2. 切换“视图”“帮助”，应正常向下展开；按 Esc 或点击菜单外部应关闭菜单。
+3. 还原窗口，在同一屏幕内移动后重新打开“文件”；菜单应仍贴合按钮下方。
+4. 移到左侧屏幕最大化，重复“文件”；菜单不能越过该屏幕边界。
+5. 若有上下排列或不同缩放比例的屏幕，在各屏幕重复以上操作；不得依赖固定像素补偿。
+
+诊断时可用 UI Automation 比较菜单项 BoundingRectangle 与 Screen Bounds；坐标检查不替代最终视觉验收。根因与定位约束见 pitfalls.md“最大化菜单跨屏”。最终验收由用户确认。
+
 ## 测试在哪、用什么框架
 
 测试项目：`UnitTest/Framework/Framework.csproj`（解决方案 `Digital.Workstation.slnx` 的 `/UnitTest/` 文件夹，第 15 行），是**全仓唯一的测试项目**。

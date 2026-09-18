@@ -47,7 +47,7 @@ Core/Framework/
 │   ├── FrameworkWindow.cs                 带基础布局的窗口基类（内置 VS Code 式五区 shell + 标题栏菜单栏 + 命令面板浮层与 Ctrl+P）
 │   ├── CommandPalette.cs                  命令面板控件（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：过滤/键盘导航/MRU 内存置顶、平台快捷键标签格式化，ItemsSource 宽松绑定 Commands
 │   ├── FrameworkWindowTheme.axaml         基础布局主题资源（四份布局模板 + 共享部件模板 + shell 样式 + 菜单样式 + 命令面板样式；ActivityBar 底部段 Grid(*,Auto) 分隔、StackPanel 承载钉住区 + 内置"设置"导航按钮；PanelResizer 经 xmlns:layout 引用）
-│   └── FrameworkWindowTheme.cs            主题加载器（StyleInclude 强制加载，BaseUri 指向 Windows/ 目录）
+│   └── FrameworkWindowTheme.cs            主题加载器（StyleInclude 强制加载）与顶层菜单跨屏锚定矩形裁剪
 └── WindowManager/
     └── FrameworkWindowManager.cs          IWindowManager + IMainWindowManager 实现
 ```
@@ -127,7 +127,7 @@ Core/Framework/
 无 x:Class 的 Styles 根（662 行）。`Styles.Resources`：`NavigationItemTemplate`（:9，按钮为 ToolViewButton，绑 CanDrag/DragTabId）、六个共享部件 DataTemplate（`ShellActivityBar` :27 / `ShellSideBar` :59 / `ShellMainContent` :75 / `ShellAuxiliaryPanel` :87 / `ShellBottomPanel` :142 / `ShellStatusBar` :198——三处可投放 Bar 用 layout:ToolViewBar 承载并绑 MoveCommand/TargetBar/Orientation，ActivityBar 底部段为 StackPanel（:41-53）：钉住区普通 ItemsControl（`BottomNavigationItems`，当前无钉住项实例）+ shell 内置"设置"导航按钮（`OpenSettingsCommand`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6））、四份布局 DataTemplate（`WindowLayoutLeft` :227 / `WindowLayoutRight` :293 / `WindowLayoutCenter` :359 / `WindowLayoutJustify` :424，差异为 BottomPanel 及分隔条的 `Grid.Column`/`ColumnSpan` 与侧栏的 `Grid.RowSpan`，ActivityBar 恒 `RowSpan=2` 通高）、`ToolViewBar` 的 ControlTheme（:492，透明背景使整条带参与命中测试，模板含 `PART_InsertionLine` 拖拽占位线）。样式（:513 起）自 Modules/Workstation/MainWindow.axaml 迁入；`layout|ToolViewBar.drag-over`（:554）为拖拽悬停整 Bar 高亮；Auxiliary/Bottom 面板卡片 `IsVisible` 绑 `AuxiliaryPanelRevealed`/`BottomPanelRevealed`（拖拽会话期间临时显露隐藏面板，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）。末尾 4 个标题栏菜单样式（:611-628）：顶层 MenuItem 紧凑行高、Popup#PART_Popup VerticalOffset=-8 贴合标题栏下缘、`Menu.chrome-menu MenuItem` 的 ItemsSource/Command/AutomationProperties.Name 样式绑定、PathIcon 前景色。
 
 ### `Windows/FrameworkWindowTheme.cs`
-`public class FrameworkWindowTheme : Styles`（第 12 行）：`StyleInclude`（BaseUri `avares://DigitalWorkstation.Core.Framework/Windows/`，:14；Source 相对 `FrameworkWindowTheme.axaml`，:20）加载主题，构造时 `_ = include.Loaded` 强制加载（:22）再 `Add(include)`（:23）。
+`public class FrameworkWindowTheme : Styles`：`StyleInclude`（BaseUri `avares://DigitalWorkstation.Core.Framework/Windows/`；Source 相对 `FrameworkWindowTheme.axaml`）加载主题，构造时 `_ = include.Loaded` 强制加载后 `Add(include)`。静态 `MenuPopupPlacement` 回调供 axaml 顶层菜单 Popup 使用，按按钮中心所在屏幕裁剪锚定矩形，避免最大化 chrome 边缘越界导致选错屏幕。
 
 ### `Contributions/ShellContributionCollector.cs`
 `ShellContributionCollector(IContainerProvider)` 提供七个收集入口。工具视图按 Order 排序，具体类先过滤 Id=null 幽灵实例；主视图不排序，菜单不排序不过滤；命令按 Id 去重后按 Order/Title 排序，状态栏按 Order 排序。设置分组先过滤声明/设置项幽灵实例，按稳定 Id 合并（首个 ResourceType/Name、最小 Order），补无声明分组为 Name=Id、ResourceType=null、Order=0，再按 Order/Id 排序；设置项先过滤幽灵实例、按项 Id 去重，再按 Order/Name 排序。

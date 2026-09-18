@@ -1,4 +1,7 @@
 ﻿using Avalonia.Markup.Xaml.Styling;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives.PopupPositioning;
 using Avalonia.Styling;
 
 namespace DigitalWorkstation.Core.Framework.Windows;
@@ -12,6 +15,26 @@ namespace DigitalWorkstation.Core.Framework.Windows;
 public class FrameworkWindowTheme : Styles
 {
     private static readonly Uri BaseUri = new("avares://DigitalWorkstation.Core.Framework/Windows/");
+
+    /// <summary>
+    ///     供标题栏菜单样式使用：锚定矩形不得跨出菜单按钮中心所在屏幕。
+    /// </summary>
+    public static CustomPopupPlacementCallback MenuPopupPlacement { get; } = placement =>
+    {
+        placement.Anchor = PopupAnchor.BottomLeft;
+        placement.Gravity = PopupGravity.BottomRight;
+        if (TopLevel.GetTopLevel(placement.Target) is not { } topLevel ||
+            topLevel.Screens?.ScreenFromPoint(topLevel.PointToScreen(placement.AnchorRectangle.Center)) is not { } screen)
+        {
+            return;
+        }
+
+        // 最大化 chrome 的边缘可能落在相邻屏幕；原生定位器按锚定矩形左上角选屏，而非按钮中心。
+        var screenBounds = new Rect(
+            topLevel.PointToClient(screen.Bounds.Position),
+            topLevel.PointToClient(screen.Bounds.BottomRight));
+        placement.AnchorRectangle = placement.AnchorRectangle.Intersect(screenBounds);
+    };
 
     public FrameworkWindowTheme()
     {

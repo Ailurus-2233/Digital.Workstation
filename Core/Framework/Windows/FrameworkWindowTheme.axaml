@@ -615,6 +615,8 @@
     <!--  顶层菜单弹出层贴合标题栏下缘（模板内边距 8 与默认偏移 -4 相抵后仍留 4px 缝）  -->
     <Style Selector="Menu.chrome-menu > MenuItem /template/ Popup#PART_Popup">
         <Setter Property="VerticalOffset" Value="-8" />
+        <Setter Property="Placement" Value="Custom" />
+        <Setter Property="CustomPopupPlacementCallback" Value="{x:Static windows:FrameworkWindowTheme.MenuPopupPlacement}" />
     </Style>
     <!--  菜单项（容器由 ItemsSource 生成）：子项来源、命令与无障碍名经样式绑定；
           叶子 Children 为空、节点 Command 为 null，均无副作用  -->

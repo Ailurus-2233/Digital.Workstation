@@ -133,13 +133,15 @@ public abstract class FrameworkWindow : UrsaWindow
 | `Center`（默认，switch 兜底） | `WindowLayoutCenter` | 列 2 跨 1（仅 MainContent 列下方）；SideBar 与 AuxiliaryPanel 及各自分隔条 `RowSpan=2` 通高到底 |
 | `Justify` | `WindowLayoutJustify` | 列 1 跨 3（三列全宽）；侧栏只占第 0 行 |
 
-## 5. `FrameworkWindowTheme`（Windows/FrameworkWindowTheme.cs:12）
+## 5. `FrameworkWindowTheme`（Windows/FrameworkWindowTheme.cs）
 
 ```csharp
 public class FrameworkWindowTheme : Styles
 ```
 
-FrameworkWindow 的基础布局主题。加载机制：构造函数（:16-24）创建 `StyleInclude`（BaseUri `avares://DigitalWorkstation.Core.Framework/Windows/`，:14；Source 相对 `FrameworkWindowTheme.axaml`，:20），先 `_ = include.Loaded` **强制加载**（:22，保证窗口构造期即可查到布局模板资源）再 `Add(include)`。与 Semi/Ursa 主题同款机制；不用 x:Class code-behind 的原因见 common.md「核心设计逻辑」。
+FrameworkWindow 的基础布局主题。加载机制：构造函数创建 `StyleInclude`（BaseUri `avares://DigitalWorkstation.Core.Framework/Windows/`；Source 相对 `FrameworkWindowTheme.axaml`），先 `_ = include.Loaded` **强制加载**（保证窗口构造期即可查到布局模板资源）再 `Add(include)`。与 Semi/Ursa 主题同款机制；不用 x:Class code-behind 的原因见 common.md「核心设计逻辑」。
+
+`public static CustomPopupPlacementCallback MenuPopupPlacement { get; }` 是 axaml 的定位回调入口，仅用于 `Menu.chrome-menu > MenuItem /template/ Popup#PART_Popup`（`Placement=Custom`）。它按锚定矩形中心所在屏幕裁剪 AnchorRectangle，设置 BottomLeft 锚点和 BottomRight 重力；Offset、ConstraintAdjustment 保留调用方值。无 TopLevel/屏幕信息时仍保持向下左对齐。子菜单保持主题原有定位。
 
 资源清单（`Windows/FrameworkWindowTheme.axaml`，全部在 `Styles.Resources` 内）：
 
