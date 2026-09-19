@@ -1,4 +1,5 @@
 using System.Reflection;
+using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Abstractions.Settings;
 using DigitalWorkstation.Core.Common;
 
@@ -22,7 +23,7 @@ public static class SettingRegistration
         {
             foreach (var group in type.GetCustomAttributes<SettingGroupAttribute>())
             {
-                registry.RegisterSingleton(typeof(SettingGroupContribution),
+                registry.RegisterShellContribution<SettingGroupContribution>(
                     _ => new SettingGroupContribution
                     {
                         Id = group.Id,
@@ -67,7 +68,7 @@ public static class SettingRegistration
                     Order = item.Order,
                     RequiresRestart = item.RequiresRestart
                 };
-                registry.RegisterSingleton(typeof(SettingItemContribution), _ => metadata);
+                registry.RegisterShellContribution<SettingItemContribution>( _ => metadata);
             }
         }
     }

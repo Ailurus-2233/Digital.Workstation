@@ -27,8 +27,8 @@
 
 | 症状 | 看哪里 | 常见原因 |
 |---|---|---|
-| 点了导航项 SideBar 没内容 | `SelectActivity`（:291-296）→ `SyncSideBarSelection`（:311-326）的分支条件：`State.SideBar.Visible` 与 `State.SideBar.ContentFor`；再看该工具视图的 `ViewType` 是否经 `RegisterToolViews` 注册（扫描跳过会记日志） | `[ToolView]` 标在抽象类/非 Control 上被跳过；或 `ShellLayoutState.SelectActivity` 语义是"再点收起" |
-| 发布 `OpenMainViewEvent` 没反应 | `OpenMainView`（:344）的静默 return；核对事件负载字符串与 `IMainViewContribution.Id` 是否逐字符一致 | Id 不匹配（字符串级契约）；或 `EnsureContributionsLoaded` 尚未执行（窗口未 Opened） |
+布局集合、选中或内容不一致时检查 ApplyLayout；恢复/快照转换查 Framework.ShellLayoutConfiguration。跨区与重置都必须先清空旧宿主，空面板不能跳过同步。
+| 发布 `OpenMainViewEvent` 没反应 | `OpenMainView`（:344）的静默 return；核对事件负载字符串与 `IMainViewContribution.Id` 是否逐字符一致 | Id 不匹配（字符串级契约）；或 `EnsureContributionsLoaded` 尚未执行（启动准备尚未完成） |
 | 菜单/面板 tab 顺序不对 | 工具视图（含面板 tab）：持久化 placements 优先（`LoadToolViews.MovableIn`，MainWindowViewModel.cs:209-219 按配置 Index 排序），无配置条目才按 `ShellContributionCollector.GetToolViews` 的 `Order` 升序兜底（`ShellContributionCollector.cs:15-20`）；菜单：`MenuTreeBuilder` 规则——顶层按 `(NodeOrder, 标题)`、子菜单按 `(GroupOrder, 组名)` 分组 + 组内 `(Order, Title)`（核对各 attribute 值，矩阵见 api.md 第 5 节）；条目缺席看注册日志（工具视图：非 Control/重复 Id 被 `ToolViewRegistration` 跳过；菜单：非法签名/空段路径被跳过）；持久化里有但贡献已删除的孤儿条目随贡献迭代自然丢弃 | tab Order 撞值（容器解析顺序决定先后）；菜单 attribute 位次撞值（取最小声明）；layout.json 存的是旧配置 |
 | 拖拽分隔条面板不动/乱跳 | `PanelResizer.GetParentGrid`（`Core/Framework/Layout/PanelResizer.cs:46`）是否仍返回 null；方向换算取反（同文件 :54-63 的负号） | `GetParentGrid` 被"修复"成返回 base → GridSplitter 原生重排与 `ShellLayoutState` 打架；Auxiliary/Bottom 忘了取反导致方向反 |
 | 应用启动即崩溃 | `MainWindowViewModel` 构造函数 :41-55 解析 `EmptyStateView`；`WorkstationApplication.RegisterCustomService` 是否先执行（Framework `RegisterTypes` 保证先 `RegisterFrameworkServices` 后 `RegisterCustomService`） | 注册顺序/遗漏 |
@@ -39,3 +39,10 @@
 ## 本地化故障
 
 私有文案查找 owner 为 `WorkstationResources`。漏英文条目或英文卫星程序集时回退中文；中性资源也无键则显示原键。若整个资源清单缺失或 owner 命名空间与 manifest 不符，ResourceText 不捕获 MissingManifestResourceException，异常传播给调用方。检查本模块 Resources 下的同名 .cs/.resx/.en-US.resx，而不是在共享资源中补模块私有键。
+
+
+## 本次修复的错误边界
+
+ApplyLayout 若检测同一缓存对象同时作为多个目标宿主内容，会抛 InvalidOperationException，且在修改状态/宿主之前停止。必要内容解析也发生在提交之前。正常隐藏不销毁缓存，重置保留主视图；空面板旧内容必须归零。
+
+贡献宿主构造失败由 Framework 的模块准备阶段处理；宿主基础贡献或 Shell 呈现准备失败发生在 Ready 前并终止启动，不再延迟到 Opened。

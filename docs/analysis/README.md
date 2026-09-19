@@ -1,6 +1,6 @@
 # Digital.Workstation — 模块深读文档索引
 
-本目录是对 Digital.Workstation 桌面应用全部源码模块的系统性深读产物，面向**没读过源码的 agent 与人**：先按模块索引定位模块，进模块目录先读 `common.md`，再按场景指南跨模块串读。
+本目录收录 Digital.Workstation 桌面应用的原始模块深读文档与后续源码同步记录，面向**没读过源码的 agent 与人**：先按模块索引定位模块，进模块目录先读 `common.md`，再按场景指南跨模块串读。
 
 - 仓库来源：本地仓库 `D:/Sources/Person/Digital.Workstation`
 - 版本：commit `04cfd02`（`04cfd0275aa418ed7061cd26037a450f49700bac`）
@@ -9,7 +9,7 @@
 
 ## 每个模块目录的结构
 
-9 个模块目录各自包含同一组 8 个文件（以 `Core/Abstractions/` 为例，标题即文件用途）：
+原始 9 个深读模块目录各自包含同一组 8 个文件（以 `Core/Abstractions/` 为例，标题即文件用途）：
 
 | 文件 | 内容 |
 |---|---|
@@ -21,6 +21,8 @@
 | `error.md` | 异常与排查：每类错误的触发条件、行为、排查步骤 |
 | `testing.md` | 验证方式：测试项目、框架、怎么跑、覆盖边界 |
 | `file-list.md` | 文件结构与功能：目录树逐文件一句话职责 |
+
+后续新增的 `Modules/Settings/common.md` 是源码同步入口，尚未执行 ABC 闭卷验证；它将页面管线、修改入口与手动验证集中在一页，不套用原始深读的完成声明。
 
 **阅读规则：进任何模块先读 `common.md`**；要改代码再读同目录 `pitfalls.md` 与 `api.md`；要理解跨模块关系读 `reference.md`。
 
@@ -37,7 +39,7 @@
 | Core/UIPackage | [Core/UIPackage/](Core/UIPackage/common.md) | 共享 UI 资源包：`WorkstationTheme` 聚合 4 个第三方主题包、`VSCodePalette` 深色色键、`Icons` 15 个 StreamGeometry path 常量 | 无项目依赖（包：Avalonia/Semi.Avalonia/Ursa） |
 | Core/Framework | [Core/Framework/](Core/Framework/common.md) | 应用框架层：启动与窗口管理、Shell 布局和持久化、贡献注册收集及菜单建树、命令面板、设置存储与语言应用；框架自有文案在 `Resources/FrameworkResources.*` | Abstractions、Common、Models、UIPackage、Resource |
 | Modules/DashBoard | [Modules/DashBoard/](Modules/DashBoard/common.md) | 启动进度窗（进度/失败/继续退出决策）与启动台状态栏贡献；私有文案在 `Resources/DashBoardResources.*` | Abstractions、Framework、Resource、UIPackage |
-| Modules/Settings | 尚无独立深读目录；本页场景 8 记录本地化接口 | 设置页模块：普通 MainContent 主视图（分组树 + 枚举编辑器）；按贡献者的资源类型解析分组、设置项和选项；重启 UX 文案在 `Resources/SettingsResources.*` | Abstractions、Framework、Resource、UIPackage |
+| Modules/Settings | [Modules/Settings/](Modules/Settings/common.md)（源码同步入口） | 设置页模块：普通 MainContent 主视图（分组树 + 枚举编辑器）；按贡献者的资源类型解析分组、设置项和选项；重启 UX 文案在 `Resources/SettingsResources.*` | Abstractions、Framework、Resource、UIPackage |
 | Modules/Workstation | [Modules/Workstation/](Modules/Workstation/common.md) | 应用宿主与 shell：`MainWindow` VS Code 式五区布局、`MainWindowViewModel` 驱动布局状态（含命令收集与手势 KeyBinding 接线，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)；ActivityBar 左下角"设置"纯导航按钮，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6）、`WorkstationApplication` 入口、shell 预置贡献 | Framework、Resource、UIPackage、DashBoard、Settings |
 | Launcher | [Launcher/](Launcher/common.md) | 程序入口与运行时引导器（WinExe）：Release 分类目录布局的程序集/native 库解析（`AssemblyLoader`）+ 启动 Avalonia/Prism 应用 | Workstation |
 
@@ -83,15 +85,15 @@ graph TD
 
 每个场景给出涉及模块的文档路径与建议阅读顺序；场景内论断均可沿所引路径核实。
 
-### 1. 新增一个业务模块并向 shell 贡献导航项/面板 tab/菜单项
+### 1. 新增业务模块并向 Shell 贡献工具视图、主视图、状态栏或菜单
 
-1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：5 个 `I*Contribution` 接口的字段骨架（导航/主视图/面板/状态栏为 `Id`/`Title`/`IconPath`/`Order` + 定位枚举；`IMenuItemContribution` 为 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 路径/分组模型，通常不经手写实现而由 `MenuGroupAttribute`/`MenuItemAttribute` + `RegisterMenus` 声明注册）。
+1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：工具视图使用 `ToolViewAttribute`/`ToolViewContribution`；主视图和状态栏使用各自接口；`IMenuItemContribution` 为 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 路径/分组模型，通常不经手写实现而由 `MenuGroupAttribute`/`MenuItemAttribute` + `RegisterMenus` 声明注册）。
 2. [Core/Abstractions/pitfalls.md](Core/Abstractions/pitfalls.md)：`Id` 唯一性分级（主视图 Id 跨模块全局唯一，建议模块名前缀）与 `Order`「小者靠前」的作用域。
-3. [Modules/DashBoard/common.md](Modules/DashBoard/common.md) + [reference.md](Modules/DashBoard/reference.md)：现成模板——DashBoard 是工具视图/主视图/状态栏三类扩展点各贡献一条的 tracer bullet，`DashBoardModule.RegisterTypes` 是注册样板（工具视图一行 `RegisterToolViews(typeof(...).Assembly)`，接口贡献逐行 `RegisterSingleton`），贡献类属性矩阵在 reference.md。
+3. [Modules/DashBoard/common.md](Modules/DashBoard/common.md) + [reference.md](Modules/DashBoard/reference.md)：现成状态栏样例是 `DashBoardModule.RegisterTypes` 的 `RegisterShellContribution<IStatusBarItemContribution, DashBoardStatusBarItem>()`；原演示工具视图和主视图已删除，工具视图扫描行目前为空。主视图样例见 [Modules/Settings/common.md](Modules/Settings/common.md)。扫描器和手写贡献均进入批次目录，直接 DI 注册贡献接口不会被收集。
 4. [Core/Resource/common.md](Core/Resource/common.md)：贡献项 `Title` 文案的来源（见场景 2）。
 5. [Core/UIPackage/common.md](Core/UIPackage/common.md)：贡献项 `IconPath` 的来源（`Icons.Xxx` 常量）。
-6. [Modules/Workstation/common.md](Modules/Workstation/common.md)：shell 侧如何收集（`EnsureContributionsLoaded` → `ShellContributionCollector`）并渲染；`WorkstationApplication.ConfigureModuleCatalog` 里 `AddModule<新模块>()`。
-7. [Core/Framework/common.md](Core/Framework/common.md)：`ShellContributionCollector` 的过滤/排序语义。
+6. [Modules/Workstation/common.md](Modules/Workstation/common.md)：启动序列如何在 Ready 前经 `PrepareShell` → `EnsureContributionsLoaded` → `ShellContributionCollector` 准备呈现；`WorkstationApplication.ConfigureModuleCatalog` 里 `AddModule<新模块>()`。
+7. [Core/Framework/common.md](Core/Framework/common.md)：`ShellContributionCatalog` 的批次准备、提交和失败隔离，以及 `ShellContributionCollector` 的过滤/排序语义。
 
 ### 2. 新增一条多语言文案
 
@@ -105,7 +107,7 @@ graph TD
 
 1. [Launcher/error.md](Launcher/error.md)：分水岭判据——看不到 `"Application startup."` 日志 = 崩在 `AssemblyLoader` 引导阶段；看到后才崩 = Avalonia 启动后的问题。Release 分类目录布局与 `Build/ManageDlls.targets` 的对偶关系见 [Launcher/reference.md](Launcher/reference.md)。
 2. [Core/Common/common.md](Core/Common/common.md)：日志只有 Console sink，GUI 子系统无附加控制台时不可见——先确认日志是否可达。
-3. [Core/Framework/common.md](Core/Framework/common.md)「状态流转」：三阶段启动序列（CoreServices → LoadingModules → Ready）逐步骤，含模块加载失败的捕获与决策回传（`RunStartupSequenceAsync`）。
+3. [Core/Framework/common.md](Core/Framework/common.md)「状态流转」：三阶段启动序列（CoreServices → LoadingModules → Ready）逐步骤，含模块加载及 UI 线程贡献工厂准备失败的捕获与决策回传（`RunStartupSequenceAsync`）。失败批次被拒绝，依赖失败模块的后续模块在加载前进入失败决策；普通 DI 注册与其他副作用不回滚。宿主无批次贡献及最终 Shell 准备完成后才发布 Ready。
 4. [Core/Models/common.md](Core/Models/common.md)：启动事件三件套的负载语义（`StartupProgress`/`ModuleLoadFailure`/`StartupFailureAction`）。
 5. [Modules/DashBoard/common.md](Modules/DashBoard/common.md)「启动台链」：进度/失败在启动台 UI 上的呈现与「继续/退出」回传路径。
 
@@ -126,7 +128,7 @@ graph TD
 ### 6. 新增一种 shell 贡献类型（新扩展点）
 
 1. [Core/Abstractions/common.md](Core/Abstractions/common.md) 场景 1：新建 `IXxxContribution.cs`（放 `Abstractions/Contributions/`），仿现有 `I*Contribution` 字段结构（`Id`/`Title`/`IconPath`/`Order` + 定位枚举；注意 `IMenuItemContribution` 已是路径/分组模型并配 attribute 注册，不宜作通用模板）；如需新 Region 在 `ShellRegions.cs`（`Abstractions/Regions/`）加常量。**这是破坏性变更**——最底层契约的签名改动会级联全部实现方与收集方。
-2. [Core/Framework/common.md](Core/Framework/common.md) 场景 3：`ShellContributionCollector` 加一个 `Get*` 收集方法（Resolve → Where → OrderBy → ToArray 模式）。
+2. [Core/Framework/common.md](Core/Framework/common.md) 场景 3：新增贡献先经 `RegisterShellContribution` 登记到 `ShellContributionCatalog`，再由 `ShellContributionCollector` 的 `Get*` 从目录读取并执行该类型的过滤/排序规则。不要绕过目录直接解析贡献集合。
 3. [Modules/Workstation/common.md](Modules/Workstation/common.md)：shell 侧消费（`MainWindowViewModel` 的集合、缓存字典、XAML 呈现点）。
 4. [Modules/DashBoard/common.md](Modules/DashBoard/common.md)：模块侧第一个实现样例（含 `RegisterTypes` 注册行）。
 
@@ -140,6 +142,6 @@ graph TD
 
 1. [Core/Abstractions/common.md](Core/Abstractions/common.md) + [api.md](Core/Abstractions/api.md)：`SettingGroupAttribute(id, resourceType, name)` 声明稳定分组 ID 和资源来源，`SettingItemAttribute(group, resourceType, name)` 引用分组 ID。设置项 `Id` 仍默认「声明类全名.属性名」，是持久化和 `ISettingsService` 读写依据，不随分组或文案变更。
 2. 模块侧：`[SettingGroup("module.general", typeof(OwnerResources), nameof(OwnerResources.GroupName))]` 与 `[SettingItem("module.general", typeof(OwnerResources), nameof(OwnerResources.ItemName), DefaultValue=…)]`；模块 `RegisterTypes` 调 `RegisterSettings(Assembly)`。名称与枚举选项键都在贡献者的资源族，选项键仍为「设置项名称键 + 成员名」。现成样例为 `GeneralSettings`：分组 `framework.general`，资源 `FrameworkResources`。
-3. [Core/Framework/common.md](Core/Framework/common.md)：`GetSettingGroups()` 按稳定 `Id` 合并，同 ID 保留首份名称/资源来源、`Order` 取最小；无声明的分组显示其 ID，位次为 0。不同 ID 即使使用相同资源键也不合并。代码读写值继续经 `ISettingsService`，不读取声明锚点的属性值。
-4. `Modules/Settings/ViewModels/SettingGroupModel.cs` 的 `Key` 保存分组 ID，`Name` 按贡献的 `ResourceType`/`Name` 解析；`SettingItemModel` 与 `EnumSettingItemModel` 同样使用贡献者资源类型，缺键显示键名。设置页自己的重启标记、横幅、按钮使用 `Modules/Settings/Resources/SettingsResources.*`，不是 Framework 的语言设置名称资源。
+3. [Core/Framework/common.md](Core/Framework/common.md)：`ShellContributionCollector` 与 `SettingsService` 共用 `SettingCatalog`：设置项按 Id 保留首个当前可见声明，再排序；服务不缓存另一份声明。分组按稳定 Id 合并，同 Id 保留首份名称/资源来源、Order 取最小，仅有效设置项引用的未声明分组才补出并显示 Id、位次为 0。不同 Id 即使使用相同资源键也不合并。值继续经 `ISettingsService` 读写，不读取声明锚点属性值。
+4. [Modules/Settings/common.md](Modules/Settings/common.md)：页面注册、编辑器与重启状态的入口。`Modules/Settings/ViewModels/SettingGroupModel.cs` 的 `Key` 保存分组 ID，`Name` 按贡献的 `ResourceType`/`Name` 解析；`SettingItemModel` 与 `EnumSettingItemModel` 同样使用贡献者资源类型，缺键显示键名。设置页自己的重启标记、横幅、按钮使用 `Modules/Settings/Resources/SettingsResources.*`，不是 Framework 的语言设置名称资源。
 5. 验证：分别以中文、英文启动应用，打开「文件 → 首选项」，检查分组、设置项、枚举选项与重启横幅；语言仍是需重启设置，当前进程不热更新。既有设置文件中的语言设置项 ID 不变。

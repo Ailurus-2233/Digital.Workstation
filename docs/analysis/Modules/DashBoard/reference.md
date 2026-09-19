@@ -7,7 +7,7 @@
 | 依赖 | 用到的能力 | 本模块使用点 |
 |---|---|---|
 | `Core/Abstractions` | Shell 贡献契约：`IStatusBarItemContribution`（Abstractions/Contributions/）；工具视图 attribute `ToolViewAttribute` 与放置枚举 `ToolViewPlacement`（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）仅经 `RegisterToolViews` 扫描机制涉及，当前无标注类 | `DashBoardStatusBarItem.cs:1、11` 实现接口（using `DigitalWorkstation.Core.Abstractions.Contributions`，`DashBoardModule.cs:1`） |
-| `Core/Framework` | 间接获得 Prism（`IModule`、`IContainerRegistry`、`IEventAggregator`、`PubSubEvent`、`ThreadOption`）与 CommunityToolkit.Mvvm（`ObservableObject`、`[ObservableProperty]`、`[RelayCommand]`）的传递引用；运行期由其提供 `IoC` 初始化与 `RegisterToolViews` 工具视图注册扩展（Framework/Contributions/ToolViewRegistration.cs，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)） | `DashBoardModule.cs:2、6、12` `IModule` 与 `RegisterToolViews`（using `DigitalWorkstation.Core.Framework.Contributions`，第 2 行）；`DashBoardWindowViewModel.cs:1-2、12、69、78` |
+| `Core/Framework` | 间接获得 Prism（`IModule`、`IContainerRegistry`、`IEventAggregator`、`PubSubEvent`、`ThreadOption`）与 CommunityToolkit.Mvvm（`ObservableObject`、`[ObservableProperty]`、`[RelayCommand]`）的传递引用；运行期由其提供 `IoC` 初始化、`RegisterShellContribution` 批次贡献登记与 `RegisterToolViews` 工具视图注册扩展（Framework/Contributions/ToolViewRegistration.cs，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)） | `DashBoardModule.RegisterTypes` 的 `RegisterShellContribution` 与 `RegisterToolViews`（using `DigitalWorkstation.Core.Framework.Contributions`，第 2 行）；`DashBoardWindowViewModel.cs:1-2、12、69、78` |
 | `Core/Resource` | `ResourceText` 查找机制、共享 `SharedResources.ProductName` | 私有启动进度与状态栏标题由本模块 `Resources/DashBoardResources.cs` 及同名中性/en-US resx 持有；DashBoardWindow 的产品名引用 SharedResources |
 | `Core/UIPackage` | `Icons` 图标路径常量：`Icons.DashBoard`（四宫格）（UIPackage/Icons.cs:18） | `DashBoardStatusBarItem.cs:17` |
 
@@ -26,7 +26,7 @@
 | 依赖方 | 引用方式 | 用在什么场景 |
 |---|---|---|
 | `Modules/Workstation`（Workstation.csproj） | ProjectReference | 应用宿主：`WorkstationApplication.cs:18` `moduleCatalog.AddModule<DashBoardModule>()` 注册模块；`WorkstationApplication.cs:41-44` `CreateSplashWindow()` 重写返回 `Container.Resolve<DashBoardWindow>()`——启动序列逐模块加载前直接解析显示启动台（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)） |
-| `Digital.Workstation.slnx`（第 11 行） | 解决方案成员 | `/Modules/` 文件夹下两个项目之一（另一个是 Workstation） |
+| `Digital.Workstation.slnx`（第 11 行） | 解决方案成员 | `/Modules/` 文件夹下的模块项目（同级有 Workstation、Settings） |
 
 除 Workstation 宿主外**无任何项目引用 DashBoard**；shell（Workstation 内）对贡献的消费全部经 Abstractions 接口完成，不引用本模块程序集。`UnitTest/` 下无 DashBoard 测试项目（见 testing.md）。
 

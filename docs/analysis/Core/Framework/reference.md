@@ -1,4 +1,4 @@
-﻿# Framework — 模块关系链
+# Framework — 模块关系链
 
 ## 依赖关系
 
@@ -10,7 +10,7 @@
 | `Core/Common` | `IoC`（一次性容器引用持有者）、`Logger`（Serilog 静态封装） | `FrameworkApplication.cs:148` `IoC.Initialize(...)`；`FrameworkWindowManager.cs:37` `IoC.Provider.Resolve(type)`；`FrameworkApplication.cs:96、113` `Logger.Error/Fatal`；`Layout/LayoutPersistence.cs` 全部失败路径 `Logger.Warning` |
 | `Core/Models` | 启动事件三件套：`StartupProgressEvent`/`StartupProgress`/`StartupPhase`、`ModuleLoadFailedEvent`/`ModuleLoadFailure`、`StartupFailureActionEvent`/`StartupFailureAction`（均位于 `Models/Events/`） | `FrameworkApplication.cs:73-108` 发布进度与失败事件；`:121-129` 订阅失败决策事件 |
 | `Core/UIPackage` | `WorkstationTheme`（Semi/Ursa 等四个主题包的 Styles 集合）、`VSCodePalette.ApplyTo`（VS Code Dark+ 色键写入） | `FrameworkApplication.cs:29、31`，全应用唯一主题装载点 |
-| `Core/Resource` | `ResourceText.Get(Type, string)`（显式所属类型，按 CurrentUICulture 查找，回退中性中文，缺键返回键名）与共享产品名 SharedResources | MenuRegistration/CommandRegistration 首次收集时解析文本，ToolViewRegistration 扫描时解析；FrameworkResources 强类型属性使用查询机制，FrameworkApplication 在应用语言后读取 SharedResources.ProductName。MenuTreeBuilder 不查资源 |
+| `Core/Resource` | `ResourceText.Get(Type, string)`（显式所属类型，按 CurrentUICulture 查找，回退中性中文，缺键返回键名）与共享产品名 SharedResources | MenuRegistration/CommandRegistration 启动准备时解析文本，ToolViewRegistration 扫描时解析；FrameworkResources 强类型属性使用查询机制，FrameworkApplication 在应用语言后读取 SharedResources.ProductName。MenuTreeBuilder 不查资源 |
 
 ### NuGet 包（Framework.csproj:18-23）
 
@@ -48,7 +48,7 @@ ShellLayoutState (Layout/ShellLayoutState.cs:7)
 
 `PanelResizeTarget`（Layout/PanelResizeTarget.cs:6）：`Resize` 的目标枚举，三成员对应三个可调区域。
 
-关系要点：`ShellLayoutState` 只持有数据与转换方法，不感知贡献收集与视图解析；`Tabs` 列表由消费方（MainWindowViewModel）从 `ShellContributionCollector.GetToolViews` 的结果按 `Placement` 分派填入；`ContentFor`/`ActiveTab`/`ActiveView` 的字符串 Id 与 Abstractions 贡献类型的 `Id` 对应（`SelectedActivity` ↔ ActivityBar 工具视图的 `ToolViewContribution.Id`，`ActiveView` ↔ `IMainViewContribution.Id`，`ActiveTab` ↔ 面板工具视图的 `ToolViewContribution.Id`）。
+关系要点：`ShellLayoutState` 只持有数据与转换方法，不感知贡献收集与视图解析；`Tabs` 列表由消费方（MainWindowViewModel）将 `ShellContributionCollector.GetToolViews` 的结果交给 ShellLayoutConfiguration.Restore 分派填入；`ContentFor`/`ActiveTab`/`ActiveView` 的字符串 Id 与 Abstractions 贡献类型的 `Id` 对应（`SelectedActivity` ↔ ActivityBar 工具视图的 `ToolViewContribution.Id`，`ActiveView` ↔ `IMainViewContribution.Id`，`ActiveTab` ↔ 面板工具视图的 `ToolViewContribution.Id`）。
 
 ### 布局持久化 DTO 族（Layout/ShellLayoutDto.cs，均为 `sealed record`，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）
 
@@ -62,7 +62,7 @@ ShellLayoutDto (Layout/ShellLayoutDto.cs:10)        const CurrentVersion=1（:15
 └── BottomPanel : BottomPanelLayoutDto? (:81)       Visible(true) / Height(160) / ActiveTab(string?)
 ```
 
-关系要点：与 `ShellLayoutState` 是**两套独立 record**——状态机管流转语义，DTO 管序列化兼容（`Version` 不识别即整份丢弃，刻意不做迁移）；两者由消费方 `MainWindowViewModel.CaptureLayout`/`RestoreLayout` 单向转换；读写经 `LayoutPersistence`（`Layout/LayoutPersistence.cs:12`，注册为单例于 `FrameworkApplication.cs:159`；序列化为 WriteIndented + camelCase + `JsonStringEnumConverter`，枚举落成 `"Center"` 形态字符串）。
+关系要点：状态机和 DTO 是独立 record，由 ShellLayoutConfiguration.Capture/Restore 转换。LayoutPersistence 容错读取 DTO，并将写入/删除交给 ConfigurationPersistence 创建的 `DebouncedJsonFile<ShellLayoutDto>`；格式仍为 WriteIndented、camelCase 和字符串枚举。
 
 ### 窗口注册表（WindowManager/FrameworkWindowManager.cs）
 
@@ -101,3 +101,19 @@ MenuTreeEntry (abstract record, MenuTreeEntry.cs:10)
 | `ShellContributionCollector` 的四个返回类型 | `ToolViewContribution`/`IMainViewContribution`/`IStatusBarItemContribution`（Core/Abstractions/Contributions/）、`IMenuItemContribution`（Core/Abstractions/Menus/） |
 | `FrameworkApplication<TWindow>` | `Prism.DryIoc.PrismApplication`（Prism.DryIoc.Avalonia 包） |
 | 启动事件负载 | `StartupProgress`/`ModuleLoadFailure`/`StartupPhase`/`StartupFailureAction`（Core/Models/Events/） |
+
+## 配置文件生命周期关系
+
+FrameworkApplication 创建唯一 ConfigurationPersistence 并注册，SettingsService 构造时登记设置文件，LayoutPersistence 构造时登记布局文件。两者保持读取/领域规则的所有权，仅共享文件写入时序。
+
+SettingsService.Set 在其内存锁内复制字典并提交快照 → 文件锁内登记防抖 → Timer 在文件锁内序列化/写入/提交。文件写入器不会反向取得设置内存锁。ApplicationRestarter 在启动新进程前调用 owner.FlushPending；正常 Exit 调用 owner.Dispose，完成最终保存并停止计时器。
+
+
+## 贡献与设置声明关系
+
+扫描器/手写模块 → RegisterShellContribution → descriptor（ContributionType、Batch、Lazy 实例）
+→ ShellContributionCatalog（本批候选或已提交批次）→ ShellContributionCollector → Workstation.PrepareShell。
+
+SettingsService 与 ShellContributionCollector 的设置接口都依赖 SettingCatalog，后者从 ShellContributionCatalog 取可见元数据。没有第二份按 Id 覆盖的声明缓存。模块构造读取本批默认值属于候选视图，失败后不再对其余上下文可见。
+
+Workstation.ApplyLayout 只协调视觉宿主和呈现集合；ShellLayoutState 管转换语义，ShellLayoutConfiguration 管 DTO 解释，ShellLayoutMetrics 管主题尺寸，LayoutPersistence/ConfigurationPersistence 管文件生命周期。

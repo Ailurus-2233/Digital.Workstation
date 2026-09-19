@@ -8,6 +8,9 @@
 4. **UI 线程亲和**：两个事件订阅均为 `ThreadOption.UIThread`（DashBoardWindowViewModel.cs:19-20），回调里直接写 `[ObservableProperty]` 属性依赖这一点；改成 `PublisherThread` 会引入跨线程访问异常。
 5. **窗口单实例**：`FrameworkWindowManager` 保证同类型窗口同时只有一个实例，关闭（`Closing`）后从映射移除、可再 `ShowWindow`（见 docs/analysis/Core/Framework/）——不要假设重复打开拿到的是同一个实例。
 
+6. **手写贡献须进入贡献目录**：使用 `RegisterShellContribution<IStatusBarItemContribution, DashBoardStatusBarItem>()`。直接向 DI 注册贡献接口不会被 `ShellContributionCatalog` 收集。扫描器也使用同一登记入口；贡献工厂在本模块 Load 完成后的 UI 准备阶段构造，异常仍归本模块。
+7. **继续仅跳过失败批次贡献**：失败批次拒绝后不再接受迟到登记，也不对 Shell 可见。已有普通 DI 注册与事件订阅不回滚；不要把 Continue 当作容器事务回滚。后续模块若依赖失败模块，会在加载前进入失败决策。
+
 ## 易错改法
 
 1. **在 `DashBoardModule.OnInitialized` 里开窗**：方法体为空是**有意的**（DashBoardModule.cs:18 注释，[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）。在模块初始化时显示启动台已经太晚（启动进度窗的用途是显示模块加载进度本身），且会再造一个窗口实例。

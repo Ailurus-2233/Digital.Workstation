@@ -32,13 +32,21 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
         // shell 预置命令：三面板显隐切换 + 重置布局（attribute 扫描注册，ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）
         containerRegistry.RegisterCommands(typeof(WorkstationApplication).Assembly);
         // shell 预置状态栏项"就绪"
-        containerRegistry.RegisterSingleton<IStatusBarItemContribution, ReadyStatusBarItem>();
+        containerRegistry.RegisterShellContribution<IStatusBarItemContribution, ReadyStatusBarItem>();
         // "关于"对话框：经窗口管理器按需解析
         containerRegistry.Register<AboutWindow>();
     }
 
     /// <summary>
-    ///     启动台：DashBoard 模块的进度窗（ADR-0004 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）；模块逐模块加载前由 shell 直接解析显示
+    ///     Ready 前收集已准备好的贡献并连接菜单与命令手势。
+    /// </summary>
+    protected override void PrepareShell()
+    {
+        if (MainWindow is MainWindow window) window.PrepareContributions();
+    }
+
+    /// <summary>
+    ///     启动台在模块逐一加载前显示。
     /// </summary>
     protected override Window CreateSplashWindow()
     {

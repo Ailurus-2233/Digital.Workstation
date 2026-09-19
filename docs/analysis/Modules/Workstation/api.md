@@ -24,7 +24,7 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
 | `Register<EmptyStateView>()`（:29） | 视图（瞬态） | MainContent 空状态页，MainWindowViewModel 构造时解析 |
 | `containerRegistry.RegisterMenus(typeof(WorkstationApplication).Assembly)`（:31） | 菜单（attribute 扫描，[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)） | Framework `MenuRegistration.RegisterMenus` 扩展扫描本程序集的 `[MenuGroup]` 类：`FileMenus`（文件>退出，Application 组 GroupOrder 1000）、`ViewPanelMenus`（视图>Panels 组三个显隐切换）、`ViewAlignmentMenus`（视图>Alignment 组四档对齐）、`ViewLayoutMenus`（视图>Layout 组重置布局）、`HelpMenus`（帮助>关于）；每个 `[MenuItem]` 方法注册一个 `IMenuItemContribution` 工厂，菜单类本身 RegisterSingleton |
 | `containerRegistry.RegisterCommands(typeof(WorkstationApplication).Assembly)`（:33） | 命令（attribute 扫描，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)） | Framework `CommandRegistration.RegisterCommands` 扩展扫描本程序集的 `[Command]` 方法（免类级 attribute）：`ViewCommands`（三面板显隐切换 + 重置布局，复用视图菜单的标题键与事件通路）；宿主类本身 RegisterSingleton，每个合法方法注册一个 `ICommandContribution` 工厂 |
-| `RegisterSingleton<IStatusBarItemContribution, ReadyStatusBarItem>()`（:35） | 贡献 | 状态栏"就绪" |
+| `RegisterShellContribution<IStatusBarItemContribution, ReadyStatusBarItem>()`（:35） | 贡献 | 状态栏"就绪" |
 | `Register<AboutWindow>()`（:37） | 窗口（瞬态） | "关于"对话框，经 `IWindowManager` 按需解析 |
 
 补充注册：`Menus/FileNavigationMenus.cs` 由既有 `RegisterMenus` 与 `RegisterCommands` 扫描同时覆盖，无手动注册。文件菜单 Navigation 组在 Application 组之前；`ReturnHome()` 同时是菜单项与命令（`ReturnHomeTitle`，命令 Order 500，无 Gesture），发布 `ReturnHomeEvent`；`OpenPreferences()` 同时是菜单项与命令（`MenuPreferencesTitle`、`Icons.Settings`，命令 Order 600，Gesture 为 `"Ctrl+OemComma"`，即 Ctrl+,），发布 `OpenMainViewEvent(WellKnownViews.Settings)`。
@@ -50,33 +50,36 @@ public partial class MainWindowViewModel : ObservableObject
 | `AuxiliaryContent` / `BottomContent` | `object?`（:126、:132） | 两个面板当前活动 tab 的内容 |
 | `TopNavigationItems` / `BottomNavigationItems` | `ObservableCollection<NavigationItemViewModel>`（:98、:100） | ActivityBar 顶部/底部导航项（顶部段顺序与 `State.ActivityBarItems` 同步）；`BottomNavigationItems` 是钉住区集合——机制保留，当前无内置钉住项实例，默认为空 |
 | `AuxiliaryTabs` / `BottomTabs` | `ObservableCollection<PanelTabViewModel>`（:101、:103） | 两个面板的 tab 栏（顺序与 `State.X.Tabs` 同步） |
-| `MenuBarItems` | `ObservableCollection<MenuItemViewModel>` | 全部菜单贡献经 `MenuTreeBuilder.Build` 建树生成；macOS 由 `MainWindow.OnOpened` 传给 `FrameworkWindow.RegisterNativeMenu` 后显示在系统菜单栏，其他平台由 `FrameworkWindow` 的标题栏 `Menu.chrome-menu` 绑定呈现 |
+| `MenuBarItems` | `ObservableCollection<MenuItemViewModel>` | 全部菜单贡献经 `MenuTreeBuilder.Build` 建树生成；macOS 由 `MainWindow.PrepareContributions` 传给 `FrameworkWindow.RegisterNativeMenu` 后显示在系统菜单栏，其他平台由 `FrameworkWindow` 的标题栏 `Menu.chrome-menu` 绑定呈现 |
 | `StatusBarItems` | `ObservableCollection<StatusBarItemViewModel>`（:114） | 状态栏条目 |
 | `Commands` | `IReadOnlyList<ICommandContribution>`（[ObservableProperty]，:120；`ICommandContribution` 类型在 Abstractions：`Core/Abstractions/Commands/ICommandContribution.cs`，经 `using DigitalWorkstation.Core.Abstractions.Commands` 解析，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)） | 全部命令贡献：`GetCommands()` 一次收集（`Order`/标题排序、Id 冲突去重）；Framework `CommandPalette` 宽松绑定 `"Commands"` 作为命令面板数据源（Ctrl+P），`MainWindow.axaml.cs:22` 的 `RegisterCommandGestures` 接线把带 Gesture 的命令落成窗口级 KeyBinding |
 | `CollapseBottomIcon` / `CollapseAuxiliaryIcon` | `Geometry`（:136 `Icons.ChevronDown`、:141 `Icons.ChevronRight`） | 两个面板收起按钮图标 |
 | `SettingsIcon` / `SettingsTitle` | `Geometry` / `string`（:146 `StreamGeometry.Parse(Icons.Settings)`、:151 `WorkstationResources.SettingsNavigationTitle`） | ActivityBar 底部"设置"入口按钮的图标几何与标题（工具提示/无障碍名）；该按钮是 shell 内置纯导航按钮（非工具视图，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6），绑定点在 Framework 的 `FrameworkWindowTheme.axaml:46-52` |
-| `SideBarColumnWidth` / `AuxiliaryColumnWidth` | `GridLength`（:157-158、:163-164） | 可见（Auxiliary 取 Revealed）时面板宽度 + 4px 间隙（布局模板间隙约定），隐藏归零使 BottomPanel 跨度自然伸缩；供 Framework 布局模板的列宽绑定 |
+| `SideBarColumnWidth` / `AuxiliaryColumnWidth` | `GridLength`（:157-158、:163-164） | 由 ShellLayoutMetrics.PanelColumn 使用主题共享外边距投影（Auxiliary 取 Revealed），隐藏归零使 BottomPanel 跨度自然伸缩；供 Framework 布局模板的列宽绑定 |
 
-### 命令（[RelayCommand] 生成，XAML 绑定名 = 方法名 + Command）
+### 命令与事件入口
 
-| `SelectActivityCommand` | `SelectActivity(NavigationItemViewModel)`（:291） | 选中导航项并驱动 SideBar 展开/收起：`State = State.SelectActivity(item.Id)` 后调 `SyncSideBarSelection()`（:311，统一出口：遍历 `_itemsById.Values` 同步 `IsSelected`；SideBar 可见且 `ContentFor` 有对应贡献时设置 `SideBarTitle` 与缓存内容）；末尾 `ScheduleSave()` 防抖落盘（:295） |
-| `ActivateAuxTabCommand` | `ActivateAuxTab(PanelTabViewModel)`（:365） | 激活 AuxiliaryPanel tab：先 `State.ActivateAuxTab(tab.Id)` 得 `next`；面板收起时 `ShellLayoutState` 拒绝并原样返回原实例，`ReferenceEquals(next, State)`（:368）为 true → 直接 return，不赋 `State`、不调 `SyncPanelTab`、不落盘；状态变化时 `State = next` 并调 `SyncPanelTab(ToolViewPlacement.AuxiliaryPanel)`（:374）同步各 tab 的 `IsActive` 与缓存的内容视图，末尾 `ScheduleSave()`（:375） |
-| `ActivateBottomTabCommand` | `ActivateBottomTab(PanelTabViewModel)`（:382） | 同上，针对 BottomPanel（`State.ActivateBottomTab(tab.Id)`，:385；`ScheduleSave()` 在 :392） |
-| `ToggleAuxiliaryPanelCommand` | `ToggleAuxiliaryPanel()`（:399） | 收起按钮（快捷键 Ctrl+Alt+B 已迁移为 `ViewCommands` 的命令 Gesture） |
-| `ToggleBottomPanelCommand` | `ToggleBottomPanel()`（:408） | 收起按钮（快捷键 Ctrl+J 已迁移为 `ViewCommands` 的命令 Gesture） |
-| `ResizePanelCommand` | `ResizePanel(PanelResize)`（:429） | 分隔条拖拽的唯一路径：Framework 的 `PanelResizer` 经 `Target` + `ResizeCommand` 声明式调用（code-behind 不再参与拖拽）；`State = State.Resize(resize.Target, resize.Delta)`，增量经状态转换应用并 clamp 到合法区间；面板收起时尺寸记录保留；末尾 `ScheduleSave()`（:432）。面板对齐切换不是命令：视图菜单对齐项发布 `SetPanelAlignmentEvent`，构造函数订阅（:50）调私有 `SetPanelAlignment`（:417）写入 `PanelAlignment` 镜像属性并 `ScheduleSave()`（:420） |
-| `MoveTabCommand` | `MoveTab(ToolViewMove)`（:440，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)） | 工具视图拖拽落放的唯一路径：Framework 的 `ToolViewBar` 在 Drop 时经 `MoveCommand` 声明式调用。钉住项/未知 Id 拒绝（:442-445，`AllowMove=false` 不发起状态转换）；`State.MoveTab` 拒绝（原地落放等）时 `ReferenceEquals` 早退（:448-451）；**内容实例随 tab 走**：先把被拖内容从三个显示区属性置空脱离源视觉树（:454-468，同一 Control 不能同时挂两棵视觉树），再 `State = next`（:470），经 `SyncBarCollection` 把三个 Bar 集合对齐到 State 的有序 Id 列表（:472-477），最后 `SyncSideBarSelection` + 两个 `SyncPanelTab` 同步高亮与内容（:479-481），`ScheduleSave()` 落盘（:482） |
-| `OpenSettingsCommand` | `OpenSettings()`（:303-306，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6） | ActivityBar 底部"设置"入口（shell 内置纯导航按钮，非工具视图）：经构造缓存的 `_eventAggregator` 发布 `OpenMainViewEvent(WellKnownViews.Settings)`，由本类 `OpenMainView` 订阅打开 Settings 模块贡献的设置页主视图；`WellKnownViews.Settings`（`"settings.main"`）在 Abstractions：`Core/Abstractions/Regions/WellKnownViews.cs`，经 `using DigitalWorkstation.Core.Abstractions.Regions` 解析；不落盘 |
+| 入口 | 行为 |
+|---|---|
+| SelectActivityCommand | State.SelectActivity 后交 ApplyLayout，重复选择仍保留原有收起语义 |
+| ActivateAuxTabCommand / ActivateBottomTabCommand | State 激活；隐藏面板拒绝，成功交 ApplyLayout |
+| ResizePanelCommand | State.Resize clamp 后交 ApplyLayout |
+| MoveTabCommand | 拒绝未知/钉住 Id；State.MoveTab 后交 ApplyLayout |
+| ToggleAuxiliaryPanelCommand / ToggleBottomPanelCommand / TogglePanelVisibilityEvent | 统一走 TogglePanel，再 ApplyLayout |
+| SetPanelAlignmentEvent | ApplyLayout(State, alignment)，协调模板变化与保存 |
+| ResetLayoutEvent | LoadToolViews(null) 恢复默认、保留当前主视图，然后删除配置 |
+| OpenSettingsCommand | 发布 OpenMainViewEvent(WellKnownViews.Settings) |
+| OpenMainViewEvent / ReturnHomeEvent | 主视图对象与 ActiveView 同步；不写入布局 DTO |
 
-### 公开方法
+### 初始化、配置与呈现同步
 
-| `EnsureContributionsLoaded` | `public void` | 仅 `MainWindow.OnOpened` 调用；收集工具视图、主视图、菜单、状态栏和命令贡献。完成后 `OnOpened` 调 `RegisterNativeMenu(MenuBarItems)`（macOS 原生系统菜单，其他平台 no-op），再调 `RegisterCommandGestures(Commands)` |
+EnsureContributionsLoaded() 只在启动准备阶段调用一次：收集贡献、LoadToolViews、建主视图索引/菜单/状态栏/命令集合；成功末尾设置 _contributionsLoaded。MainWindow.PrepareContributions 在此后接线原生菜单和快捷键。
 
-### 私有方法（改行为时直接面对）
+LoadToolViews(layout) 建立工具视图元数据索引，调用 Framework 的 ShellLayoutConfiguration.Restore(_toolViews, layout, State.MainContent)，再 ApplyLayout(restored.State, restored.Alignment, persist:false)。
 
-`ReturnHome()`：构造函数订阅 `ReturnHomeEvent`；清除 `State.MainContent.ActiveView`，恢复启动时缓存的 `EmptyStateView`。不改变面板、不落盘、不清理主视图缓存；主页重复执行无变化。
+ApplyLayout(next, alignment?, persist=true) 是布局提交边界：先解析三个目标内容，检查同一缓存对象不能占多个宿主；先清空所有变化的旧宿主，再更新 State/PanelAlignment、SyncBarCollection、导航/Tab 高亮和内容。保存只调用 ShellLayoutConfiguration.Capture(next, alignment)，不枚举 UI 集合。重置不清视图实例缓存，默认空面板会清空宿主。
 
-`TogglePanel(TogglePanelTarget)`（:488-497，switch：SideBar→`State.ToggleSideBar()`、AuxiliaryPanel→`State.ToggleAuxiliaryPanel()`、默认 `_`→`State.ToggleBottomPanel()`，末尾 `ScheduleSave()` :496——事件/快捷键/按钮各路线显隐切换统一在此落盘）、`SetPanelAlignment(PanelAlignment)`（:417-421，事件处理，`PanelAlignment = alignment` + `ScheduleSave()`）、`OpenMainView(string viewId)`（:344-360，未知 Id 静默返回）、**`LoadToolViews(ShellLayoutDto?)`**（:200-236：先把全部贡献登记进 `_contributionsById`（:204-207）；钉住项（`AllowMove=false`）恒落 ActivityBar 底部段（:225-226）；可移动项「配置优先、默认兜底」——局部函数 `MovableIn(bar)`（:209-219）先取持久化 `placements` 里归属该 bar 的（按 `Index` 排序），再把无配置条目且 attribute `Default == bar` 的按 `Order` 追加；孤儿条目随贡献迭代自然丢弃，无配置的新工具视图落到 Default Bar 末尾。ActivityBar 顶部段顺序写入 `State.ActivityBarItems`（:222-223）后 `LoadItems` 填两个导航集合、`LoadPanelTabs` 填两个面板（透传 `layout?.XxxPanel?.ActiveTab` 作 `preferredActiveTab`）；`layout` 非 null 再 `RestoreLayout`（:242）恢复显隐/尺寸（clamp）/选中项（必须是顶部段当前成员，否则按孤儿丢弃）/对齐档位）、**`ResetLayout()`**（:503-521，删持久化文件、清集合与索引、State/对齐回初值、`LoadToolViews(null)` 全默认重建；`_toolViewContents` 视图实例缓存保留）、**`CaptureLayout()`**（:527-573，快照当前布局为 DTO）、**`ScheduleSave()`**（:578-581，统一防抖落盘出口）、**`LoadPanelTabs`**（:586-618，建 tab 索引 `_tabsById`、定活动 tab、写 State.Tabs/ActiveTab、调 `SyncPanelTab`）、**`SyncPanelTab(ToolViewPlacement)`**（:624-646，按 State 同步 tab 高亮与内容区，无活动 tab 清空内容）、**`SyncSideBarSelection()`**（:311-326，按 State 同步导航项高亮与 SideBar 标题/内容）、**`ContentFor(string id)`**（:331-340，工具视图内容实例统一入口，`_toolViewContents` 按 Id 单实例缓存，未命中经 `_containerProvider.Resolve(ViewType)` 创建）、**`SyncBarCollection<TItem>`**（:663-702，static：把 Bar 呈现集合对齐到有序 Id 列表——移出删除、缺失经工厂创建并缓存复用、错位 `Move`）、`LoadItems`（:648-657，登记 `_itemsById` 并填导航集合）。
+ContentFor(id) 维持全局工具视图实例缓存；SyncBarCollection 保持集合与 State 有序 Id 对齐并复用呈现模型。原局部 SyncSideBarSelection、SyncPanelTab、LoadItems、LoadPanelTabs，以及 VM 内 CaptureLayout、RestoreLayout、ScheduleSave 已移除，新增动作不得另写一条局部同步路径。
 
 ## 3. 呈现模型（包装贡献元数据，构造时解析图标几何）
 

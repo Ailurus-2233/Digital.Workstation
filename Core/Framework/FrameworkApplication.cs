@@ -9,6 +9,7 @@ using DigitalWorkstation.Core.Abstractions.WindowManager;
 using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.Layout;
+using DigitalWorkstation.Core.Framework.Persistence;
 using DigitalWorkstation.Core.Framework.Settings;
 using DigitalWorkstation.Core.Framework.WindowManager;
 using DigitalWorkstation.Core.Models.Events;
@@ -82,22 +83,35 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
 
             // 阶段 2：逐模块异步加载；加载移出 UI 线程，启动台进度不被阻塞
             var moduleManager = Container.Resolve<IModuleManager>();
-            var modules = moduleCatalog.Modules.ToList();
+            var modules = moduleCatalog.CompleteListWithDependencies(moduleCatalog.Modules).ToList();
+            var contributions = Container.Resolve<ShellContributionCatalog>();
+            var availableModules = new HashSet<string>(StringComparer.Ordinal);
             var total = modules.Count;
             for (var i = 0; i < total; i++)
             {
                 var module = modules[i];
                 progressEvent.Publish(new StartupProgress(StartupPhase.LoadingModules, module.ModuleName, i + 1, total));
+                using var batch = ShellContributionCatalog.BeginBatch(module.ModuleName);
                 try
                 {
+                    var unavailable = module.DependsOn.FirstOrDefault(name => !availableModules.Contains(name));
+                    if (unavailable is not null)
+                        throw new InvalidOperationException($"Required module {unavailable} is unavailable.");
                     await Task.Run(() => moduleManager.LoadModule(module.ModuleName));
+                    if (module.State != ModuleState.Initialized)
+                        throw new InvalidOperationException($"Module {module.ModuleName} did not finish initialization.");
+                    // 回到 UI 线程后构造菜单/命令宿主；此时异常仍归属于当前模块。
+                    contributions.Prepare(batch);
+                    availableModules.Add(module.ModuleName);
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex, $"Failed to load module {module.ModuleName}");
+                    batch.Reject();
+                    Logger.Error(ex, $"Failed to prepare module {module.ModuleName}");
+                    var failureAction = WaitForFailureActionAsync(eventAggregator);
                     eventAggregator.GetEvent<ModuleLoadFailedEvent>().Publish(
                         new ModuleLoadFailure(module.ModuleName, i + 1, total, ex.Message));
-                    if (!await WaitForFailureActionAsync(eventAggregator))
+                    if (!await failureAction)
                     {
                         (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
                         return;
@@ -106,6 +120,8 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
             }
 
             // 阶段 3：就绪——启动台关闭、工作区显示
+            contributions.PrepareUnowned();
+            PrepareShell();
             progressEvent.Publish(new StartupProgress(StartupPhase.Ready, null, total, total));
             ShowMainWindow();
         }
@@ -128,6 +144,11 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
         actionEvent.Unsubscribe(token);
         return action == StartupFailureAction.Continue;
     }
+
+    /// <summary>
+    ///     全部可用贡献准备完毕后、发布 Ready 前，由宿主完成布局、菜单和手势接线。
+    /// </summary>
+    protected virtual void PrepareShell() { }
 
     private void ShowMainWindow()
     {
@@ -154,14 +175,24 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
         containerRegistry.RegisterSingleton<IWindowManager>(() => windowManager);
         
         // 注册 shell 贡献收集器
+        containerRegistry.RegisterSingleton<ShellContributionCatalog>();
+        containerRegistry.RegisterSingleton<SettingCatalog>();
         containerRegistry.RegisterSingleton<ShellContributionCollector>();
+
+        // 在真正退出时统一保存并释放计时器；关闭被取消时继续保留防抖保存能力。
+        var persistence = new ConfigurationPersistence();
+        containerRegistry.RegisterInstance(persistence);
+        if (ApplicationLifetime is IControlledApplicationLifetime lifetime)
+        {
+            lifetime.Exit += (_, _) => persistence.Dispose();
+        }
 
         // 注册布局持久化服务（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：layout.json 读/防抖写/删，机制在 Framework、接线在 shell 模块
         containerRegistry.RegisterSingleton<LayoutPersistence>();
 
         // 注册设置服务（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4）：与窗口管理器同型——显式构造实例并以工厂注册，
         // 以便启动时一次性 Load 入内存的时机明确
-        var settingsService = new SettingsService(Container.Resolve<IEventAggregator>(), Container);
+        var settingsService = new SettingsService(Container.Resolve<IEventAggregator>(), Container.Resolve<SettingCatalog>(), persistence);
         settingsService.Load();
         containerRegistry.RegisterSingleton<ISettingsService>(() => settingsService);
 

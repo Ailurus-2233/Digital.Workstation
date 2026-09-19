@@ -55,7 +55,7 @@ public static class ToolViewRegistration
                 AllowMove = attribute.AllowMove,
                 ViewType = viewType
             };
-            registry.RegisterSingleton(typeof(ToolViewContribution), _ => metadata);
+            registry.RegisterShellContribution<ToolViewContribution>( _ => metadata);
         }
     }
 }

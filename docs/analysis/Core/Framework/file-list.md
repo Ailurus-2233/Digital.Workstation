@@ -1,4 +1,4 @@
-﻿# Framework — 文件结构与功能
+# Framework — 文件结构与功能
 
 目录树（相对 `Core/Framework/`，省略 `obj/` 与 `Output/` 构建产物）：
 
@@ -6,13 +6,18 @@
 Core/Framework/
 ├── Framework.csproj                       项目文件：net10.0；引用 Abstractions/Common/Models/UIPackage/Resource 五项目与 Avalonia/Prism/Ursa 相关包
 ├── FrameworkApplication.cs                应用入口基类与启动序列（含设置服务注册、启动时语言应用及本地化 Application.Name，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）
-├── ApplicationRestarter.cs                「立即重启」（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）：强制落盘设置 → 启动新进程 → 正常生命周期退出当前进程
+├── ApplicationRestarter.cs                统一保存配置，成功后启动新进程并退出；保存失败取消重启
+├── Persistence/
+│   ├── ConfigurationPersistence.cs         配置文件 owner：统一刷新、退出收尾；内部 IConfigurationFile 契约
+│   └── DebouncedJsonFile.cs                单文件防抖、写盘/删除互斥、完整临时文件替换与失败重试
 ├── Layout/                                  命名空间 DigitalWorkstation.Core.Framework.Layout
 │   ├── ShellLayoutState.cs                布局状态根 record + 全部转换方法
 │   ├── SideBarState.cs                    SideBar 区域状态 record
 │   ├── AuxiliaryPanelState.cs             AuxiliaryPanel 区域状态 record
 │   ├── BottomPanelState.cs                BottomPanel 区域状态 record
 │   ├── MainContentState.cs                MainContent 区域状态 record
+│   ├── ShellLayoutConfiguration.cs      State 与 DTO 的恢复/捕获边界
+│   ├── ShellLayoutMetrics.cs            模板与列宽共用尺寸来源
 │   ├── ShellLayoutDto.cs                  布局持久化落盘 DTO record 族（独立于 ShellLayoutState，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）
 │   ├── LayoutPersistence.cs               布局持久化服务：layout.json 读/防抖写/删，全路径容错只记日志
 │   ├── PanelResizeTarget.cs               可调尺寸区域枚举
@@ -32,11 +37,13 @@ Core/Framework/
 ├── Commands/                                命名空间 DigitalWorkstation.Core.Framework.Commands（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）
 │   └── CommandRegistration.cs             attribute 命令注册扩展（免类级 attribute）+ internal 反射贡献实现
 ├── Contributions/                           命名空间 DigitalWorkstation.Core.Framework.Contributions
+│   ├── ShellContributionCatalog.cs      贡献登记描述、批次可见性与单次构造
 │   ├── ShellContributionCollector.cs      shell 贡献收集器（含设置分组/设置项收集，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）
 │   └── ToolViewRegistration.cs            attribute 工具视图注册扩展（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）
 ├── Settings/                                命名空间 DigitalWorkstation.Core.Framework.Settings（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）
 │   ├── SettingRegistration.cs             attribute 设置注册扩展（与 RegisterMenus/RegisterCommands 同构）
-│   ├── SettingsService.cs                 ISettingsService 实现：settings.json 启动一次加载、内存读、防抖落盘、事件广播、「重启后生效」判定（IsPendingRestart）与立即落盘（FlushPending）
+│   ├── SettingCatalog.cs               有效设置声明与分组合并
+│   ├── SettingsService.cs                 ISettingsService 实现：加载、内存读写、独立快照提交、事件和重启标记
 │   ├── UiLanguage.cs                      界面语言枚举（zh-CN/en-US）+ ToCultureInfo 扩展
 │   └── GeneralSettings.cs                 Framework 预置「常规/语言」设置项声明类
 ├── Resources/                               命名空间 DigitalWorkstation.Core.Framework.Resources
@@ -63,11 +70,20 @@ Core/Framework/
 - `OnFrameworkInitializationCompleted()`（第 39 行）→ `RunStartupSequenceAsync()`（第 68 行）：三阶段启动序列（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）。
 - `OnInitialized()`（第 48 行）、`InitializeModules()`（第 55 行）：两个故意的空覆盖。
 - `CreateSplashWindow()`（第 62 行，abstract）/`RegisterCustomService()`（第 215 行，virtual）：子类扩展点。
-- `RegisterTypes` → `RegisterFrameworkServices`：初始化 IoC，注册窗口管理器双接口、贡献收集器、布局持久化单例；显式构造 SettingsService 并立即 Load，注册 ISettingsService 与 Framework 自身设置项。随后 `ApplyLanguageSetting` 按持久化语言设置当前/默认线程区域性，再以 `SharedResources.ProductName` 设置 Application.Name；此顺序先于模块 RegisterTypes，保证工具视图扫描和菜单/命令首次收集使用正确语言。菜单树自身不查资源，设置名称由设置页构造时按来源解析。
+- `RegisterTypes` → `RegisterFrameworkServices`：初始化 IoC，注册窗口管理器、贡献收集器、配置持久化 owner 与布局单例；owner 在真正 Exit 时 Dispose。显式构造 SettingsService(SettingCatalog, owner) 并 Load，注册 ISettingsService 与框架设置，再 ApplyLanguageSetting。语言应用时机仍先于模块注册。
 - `ConfigureViewModelLocator()`（第 237 行）：约定式 ViewModel 定位解析器。
 
-### `ApplicationRestarter.cs`
-`public static class ApplicationRestarter`（第 14 行，命名空间 `DigitalWorkstation.Core.Framework`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）：`Restart()`（:19）——① 经 `IoC.Provider` 解析 `ISettingsService`，是 `SettingsService` 则 `FlushPending()` 强制落盘（防抖 500ms 窗口内重启会让新进程读到旧配置）；② `Environment.ProcessPath` + 原始命令行参数 `Process.Start` 启动新进程（路径取不到记 `Logger.Error` 中止）；③ `IClassicDesktopStyleApplicationLifetime.Shutdown()` 退出当前进程（与启动失败退出同路径）。真实调用点：设置页重启横幅按钮（`Modules/Settings` 的 `RestartNowCommand`）。
+### ApplicationRestarter.cs
+
+Restart 先通过 ConfigurationPersistence.FlushPending 完成设置与布局保存；失败则记英文 Error 并停止重启。成功后仍以当前可执行路径和原始参数启动新进程，再走正常 Shutdown。设置页调用方式不变。
+
+### Persistence/ConfigurationPersistence.cs
+
+公开 owner 由 FrameworkApplication 显式注册；内部 `CreateFile<T>` 登记两个真实配置文件，FlushPending 尝试全部文件并返回汇总结果，Dispose 最后保存并释放 Timer。接线使用 IControlledApplicationLifetime.Exit，取消关闭不会释放 owner。
+
+### Persistence/DebouncedJsonFile.cs
+
+内部泛型文件实现。ScheduleSave 缓存独立快照并防抖 500ms；同一文件锁覆盖写入、刷新、删除和释放。序列化到同目录唯一临时文件，Flush(true) 后替换目标。失败记 Warning 并保留 pending，删除先等待在途写入再作废 pending；释放后拒绝新写入/删除。
 
 ### `Layout/ShellLayoutState.cs`
 `public sealed record ShellLayoutState`（第 9 行）：`SelectedActivity`（:14）与 `ActivityBarItems`（:20，ActivityBar 顶部段有序 Id 列表，钉住项不入列，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）+ 五个区域状态属性 + `static Initial`（:30）。转换方法：`SelectActivity`（:36）、`ToggleSideBar`（:53）、`ToggleAuxiliaryPanel`（:61）、`ToggleBottomPanel`（:69）、`ActivateAuxTab`（:77）、`ActivateBottomTab`（:90）、`MoveTab`（:109，跨 Bar 迁移/同 Bar 重排）、`OpenMainView`（:236）、`Resize`（:244）、私有 `Clamp`（:275）。注释自述："原型验证过的 reducer 的正式实现"。
@@ -87,8 +103,9 @@ Core/Framework/
 ### `Layout/ShellLayoutDto.cs`
 布局持久化 DTO record 族（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：layout.json 落盘的专用格式，独立于 `ShellLayoutState`（状态机只管流转语义，不管序列化兼容）。`ShellLayoutDto`（第 10 行）：`const CurrentVersion=1`（:15）与 `Version`（:17，不识别的文件由 LayoutPersistence 整体丢弃）、`PanelAlignment`（:22，对齐档位不在状态机内、由 FrameworkWindow 依赖属性持有，一并持久化）、`Placements: Dictionary<string, ToolViewPlacementEntry>`（:29，可移动工具视图 Id → 归属 Bar 与 Bar 内序号；钉住项恒在 ActivityBar 底部段不入表；孤儿条目丢弃、无条目的新工具视图落回 Default）、三个可空子 DTO `SideBar`/`AuxiliaryPanel`/`BottomPanel`（:31-35）。`ToolViewPlacementEntry`（:41）：`Bar`（`ToolViewPlacement`）+ `Index`（Bar 内序号，小者靠前）。`SideBarLayoutDto`（:54）：`Visible`、`Width=240`、`Selected`（收起时也保留，与 `SideBarState.ContentFor` 同语义）。`PanelLayoutDto`（:69）：`Visible=true`、`Width=280`、`ActiveTab`。`BottomPanelLayoutDto`（:81）：`Visible=true`、`Height=160`、`ActiveTab`。
 
-### `Layout/LayoutPersistence.cs`
-`public sealed class LayoutPersistence`（第 12 行）：布局持久化服务（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)），%AppData%/Digital.Workstation/layout.json 的读/写/删，全部失败路径只记日志不打断应用。成员：`public static readonly string FilePath`（:17-19）；`Load()`（:37，文件缺失返回 null 且无日志——首次启动常态；内容为空/`Version≠CurrentVersion` 记 `Logger.Warning` 后返回 null；`catch (Exception)` 全捕获兜底，:62-67）；`ScheduleSave(ShellLayoutDto)`（:73，`System.Threading.Timer` 防抖 500ms——`DebounceMilliseconds` :21——内的连续布局变更合并为最后一次落盘）；`Delete()`（:86，先在锁内作废 pending 保存——清 `_pending`、停 Timer，:88-92——再 `File.Delete`，否则防抖回调会把文件重建；删除失败记 Warning）；私有 `Flush`（:104，Timer 回调：取出并清空 `_pending` 后 `Directory.CreateDirectory` + 序列化写盘，try/catch 全捕获记 Warning——注释自述"回调里的异常无人处理会拖垮进程"，:118）。序列化选项（:23-28）：`WriteIndented`、camelCase 属性名、`JsonStringEnumConverter`（枚举落成 `"Center"`/`"BottomPanel"` 形态字符串）。线程安全经 `Lock _gate`（:30）。
+### Layout/LayoutPersistence.cs
+
+构造接收 ConfigurationPersistence 并创建布局文件写入器；保留 FilePath、Load、ScheduleSave、Delete。Load 继续检查 Version、处理缺失/损坏；后两个操作委托 DebouncedJsonFile。它不再自行拥有 pending、Timer 或 Flush 回调。WriteIndented、camelCase、枚举字符串格式保持不变。
 
 ### `Layout/PanelResizeTarget.cs`
 `public enum PanelResizeTarget`（第 6 行）：`SideBar` / `AuxiliaryPanel` / `BottomPanel`，`ShellLayoutState.Resize` 的目标参数。
@@ -130,7 +147,7 @@ Core/Framework/
 `public class FrameworkWindowTheme : Styles`：`StyleInclude`（BaseUri `avares://DigitalWorkstation.Core.Framework/Windows/`；Source 相对 `FrameworkWindowTheme.axaml`）加载主题，构造时 `_ = include.Loaded` 强制加载后 `Add(include)`。静态 `MenuPopupPlacement` 回调供 axaml 顶层菜单 Popup 使用，按按钮中心所在屏幕裁剪锚定矩形，避免最大化 chrome 边缘越界导致选错屏幕。
 
 ### `Contributions/ShellContributionCollector.cs`
-`ShellContributionCollector(IContainerProvider)` 提供七个收集入口。工具视图按 Order 排序，具体类先过滤 Id=null 幽灵实例；主视图不排序，菜单不排序不过滤；命令按 Id 去重后按 Order/Title 排序，状态栏按 Order 排序。设置分组先过滤声明/设置项幽灵实例，按稳定 Id 合并（首个 ResourceType/Name、最小 Order），补无声明分组为 Name=Id、ResourceType=null、Order=0，再按 Order/Id 排序；设置项先过滤幽灵实例、按项 Id 去重，再按 Order/Name 排序。
+`ShellContributionCollector(ShellContributionCatalog, SettingCatalog)` 提供七个入口。工具视图/状态栏按 Order；主视图与菜单保持登记序；命令按 Id 首个生效再按 Order/Title 排序；设置项和分组统一由 SettingCatalog 解释，不再直接枚举容器的贡献类型。
 
 ### `Contributions/ToolViewRegistration.cs`
 `ToolViewRegistration.RegisterToolViews(IContainerRegistry, Assembly)` 只扫描传入程序集。非可实例化 Control 或程序集内 Id 重复记 Warning 跳过；合法者注册 View 类型并生成 singleton 元数据，扫描时经 `ResourceText.Get(attribute.ResourceType, attribute.TitleKey)` 解析标题。
@@ -138,8 +155,9 @@ Core/Framework/
 ### `Settings/SettingRegistration.cs`
 `SettingRegistration.RegisterSettings(IContainerRegistry, Assembly)` 只扫描传入程序集。分组声明透传 Id/ResourceType/Name/Order 生成 singleton；公共静态声明属性无 getter 或默认值类型不符记 Warning 跳过，合法项保存稳定 Group、资源来源、名称键与值元数据。扫描不执行属性体、不查资源；跨程序集分组归并由收集器完成。
 
-### `Settings/SettingsService.cs`
-`public sealed class SettingsService(IEventAggregator, IContainerProvider) : ISettingsService`（第 17 行，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4）：%AppData%/Digital.Workstation/settings.json 的读/防抖写，启动时经 `Load()`（:64）一次性加载入内存并复制为启动值快照 `_sessionStartValues`（:52，「重启后生效」判定基准，决策 7）。成员：`public static readonly string FilePath`（:23-25）；`Load()`（文件缺失静默返回——首次启动常态；内容为空或一切异常记 `Logger.Warning` 按无修改处理，:75-93，容错仿 LayoutPersistence）；`Get<T>(string)`（:97，纯内存读——`_values` 命中反序列化返回、单项失败记 Warning 逐项回退默认值，未修改经 `FindContribution` 回退声明 `DefaultValue`，未声明记 Warning 返回 `default`）；`Set<T>(string, T)`（:126，锁内更新内存 + 500ms `Timer` 防抖 + `TrackPendingRestart`（:158，与启动值 `JsonElement.DeepEquals` 比较维护 `_pendingRestartIds`，:57），锁外广播 `SettingChangedEvent`）；`IsPendingRestart(string)`（:146，决策 7 判定查询）；`FlushPending()`（:198，停防抖 Timer + 同步写盘，供「立即重启」在启动新进程前调用）；私有 `FindContribution`（:179，声明缓存按 Id 惰性填充、未命中重新枚举容器以允许模块后到注册）；私有 `Flush`/`TakeSnapshot`/`Save`（:208/:213/:222，Timer 回调写盘，`Save` 对一切异常就地吞掉记 Warning——纪律同 `LayoutPersistence.Flush`）。序列化选项（:29-33）：`WriteIndented` + `JsonStringEnumConverter`——枚举落盘为 `JsonStringEnumMemberName` 字符串。
+### Settings/SettingsService.cs
+
+构造接收 IEventAggregator、IContainerProvider、ConfigurationPersistence；Load 一次性建立内存和启动值快照，Get/Set、默认值查找、事件和重启标记仍由本类拥有。Set 在内存锁内提交独立字典快照给 DebouncedJsonFile，按 Set 的先后排序；没有独立 Timer 或 FlushPending，退出和重启刷新归统一 owner。
 
 ### `Settings/UiLanguage.cs`
 `public enum UiLanguage`（第 12 行）：`[JsonStringEnumMemberName("zh-CN")] ZhCN` / `[JsonStringEnumMemberName("en-US")] EnUS`——attribute 值即对应 `CultureInfo` 名称，落盘值与区域性名称同源。同文件 `public static class UiLanguageExtensions`（:30）：`ToCultureInfo(this UiLanguage)`（:32，反射读 `JsonStringEnumMemberName` 值作 `CultureInfo.GetCultureInfo` 名称）。
@@ -163,7 +181,7 @@ Framework 预置常规/语言设置的声明类；`GroupId = "framework.general"
 `MenuRegistration.RegisterMenus(IContainerRegistry, Assembly)` 扫描菜单类，非法路径或方法签名记 Warning 跳过，注册类与每个合法方法的 singleton 工厂。同文件 internal `ReflectedMenuItemContribution` 首次解析时按方法来源查 Title、按类级标题声明查 PathTitle；`MenuGroup(path)` 只引用时 PathTitle=null。点击反射调用并等待 Task，异常记日志、不抛出。
 
 ### `Commands/CommandRegistration.cs`
-`CommandRegistration.RegisterCommands(IContainerRegistry, Assembly)` 扫描方法级声明，无需类级标记；非法签名记 Warning 跳过，注册宿主类及每个合法方法的 singleton 工厂。internal `ReflectedCommandContribution` 首次收集时按显式 ResourceType 查 Title；默认 Id 为声明类全名+方法名，Gesture/IconPath/Order 透传。执行反射调用、等待 Task、异常记日志不抛出。
+`CommandRegistration.RegisterCommands(IContainerRegistry, Assembly)` 扫描方法级声明，无需类级标记；非法签名记 Warning 跳过，注册宿主类及每个合法方法的 singleton 工厂。internal `ReflectedCommandContribution` 启动准备时按显式 ResourceType 查 Title；默认 Id 为声明类全名+方法名，Gesture/IconPath/Order 透传。执行反射调用、等待 Task、异常记日志不抛出。
 
 ### `WindowManager/FrameworkWindowManager.cs`
 `public class FrameworkWindowManager : IWindowManager, IMainWindowManager`（第 12 行，命名空间 `DigitalWorkstation.Core.Framework.WindowManager`）。内部状态 `_windowMap: Dictionary<Type, Window>`（:17）与 `_mainWindow`（:22）。入口：`GetWindow`（:35）、`InitializeWindow`（:45，私有）、`ShowWindow` 四重载（:57-111）、`ShowDialog` 四重载（:113-141）、`CloseWindow`（:144）、`HideWindow`（:150）、`HandleMainWindow`（:158）、`HideMainWindow`/`ShowMainWindow`（:169-170）、`CloseWindowsExceptMain`（:172）。
@@ -175,3 +193,19 @@ UnitTest/Framework/
 ├── Framework.csproj                  xUnit 测试项目：Microsoft.NET.Test.Sdk 17.6.0 + xunit 2.4.2 + xunit.runner.visualstudio 2.4.5
 └── ShellLayoutStateResizeTests.cs    11 个 [Fact]：Resize 增减/clamp/区域隔离/收起恢复保留尺寸
 ```
+
+### Contributions/ShellContributionCatalog.cs
+
+ShellContributionCatalog 从内部 descriptor 集合读取贡献，按批次可见性过滤；ShellContributionRegistration 提供统一登记扩展；ContributionBatch 负责 AsyncLocal 归属、登记锁和准备/提交/拒绝生命周期。该文件不处理普通 DI 注册回滚。
+
+### Layout/ShellLayoutConfiguration.cs
+
+Restore 从贡献和可选 DTO 构造规范状态；Capture 从状态生成版本 1 DTO。保留 MainContent、过滤失效 Id、恢复归属顺序、校验位置/对齐并 clamp 尺寸，避免 Workstation 重复解释配置。
+
+### Layout/ShellLayoutMetrics.cs
+
+统一卡片外边距、容器内边距、ActivityBar 外边距及列宽投影；FrameworkWindowTheme.axaml 与 Workstation 的列宽派生属性使用同一来源。
+
+### Settings/SettingCatalog.cs
+
+设置项 Id 冲突首个生效；分组首个资源/名称、最小 Order；隐式分组只来自有效项。查询不保留未提交批次的声明缓存，重复声明日志按实例去重。

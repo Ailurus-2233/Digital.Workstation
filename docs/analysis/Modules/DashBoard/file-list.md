@@ -22,7 +22,7 @@ Views/
 
 ### DashBoardModule.cs
 
-`public class DashBoardModule : IModule`（第 6 行）。`RegisterTypes`（第 8 行）：`RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 12 行，`DigitalWorkstation.Core.Framework.Contributions` 扩展，using 在第 2 行）扫描本程序集 `[ToolView]` 类——当前无标注类（原 `DashBoardNavigationView`/`DashBoardTasksView` 已删除），注册为空，保留以覆盖将来新增（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）；再注册 1 个 `IStatusBarItemContribution` 单例（第 13 行）。`OnInitialized`（第 16 行）空实现，注释说明启动台窗口由 shell 启动序列在模块加载前显示（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）。
+`public class DashBoardModule : IModule`（第 6 行）。`RegisterTypes`（第 8 行）：`RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 12 行，`DigitalWorkstation.Core.Framework.Contributions` 扩展，using 在第 2 行）扫描本程序集 `[ToolView]` 类——当前无标注类（原 `DashBoardNavigationView`/`DashBoardTasksView` 已删除），注册为空，保留以覆盖将来新增（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）；再调用 `RegisterShellContribution<IStatusBarItemContribution, DashBoardStatusBarItem>()`，登记当前启动批次的贡献工厂，由批次准备构造并在成功后对 Shell 可见。`OnInitialized`（第 16 行）空实现，注释说明启动台窗口由 shell 启动序列在模块加载前显示（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）。
 
 
 ### DashBoardStatusBarItem.cs

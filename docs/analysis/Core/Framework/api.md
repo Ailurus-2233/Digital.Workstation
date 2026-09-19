@@ -1,4 +1,4 @@
-﻿# Framework — 对外接口与调用方式
+# Framework — 对外接口与调用方式
 
 命名空间为 `DigitalWorkstation.Core.Framework` 及其 `.Layout`、`.Menus`、`.Commands`、`.Contributions`、`.Settings`、`.Resources`、`.Windows`、`.WindowManager`。类型通常 public；attribute 扫描生成的 `ReflectedMenuItemContribution` 与 `ReflectedCommandContribution` 为 internal。
 
@@ -21,15 +21,16 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
 | `CreateSplashWindow` | `protected abstract Window CreateSplashWindow()` | 子类提供启动台窗口；模块加载进度与失败决策均经启动台呈现 |
 | `RegisterTypes` | `protected override void RegisterTypes(IContainerRegistry)` | **密封式编排**（注释明确"子类不需要重写"）：先 `RegisterFrameworkServices` 后 `RegisterCustomService`（第 189-193 行） |
 | `RegisterCustomService` | `protected virtual void RegisterCustomService(IContainerRegistry)` | 子类注册自定义服务的钩子，默认空实现（第 215 行） |
+| `PrepareShell` | `protected virtual void PrepareShell()` | Ready 前准备呈现；Workstation 在此收集贡献并接线菜单和手势，失败按序列级异常退出 |
 | `CreateShell` | `protected override AvaloniaObject CreateShell()` | `Container.Resolve<TWindow>()`（第 224 行）——主窗口经容器解析，支持构造注入 |
 | `ConfigureViewModelLocator` | `protected override void ConfigureViewModelLocator()` | 约定式 ViewModel 定位（第 237-269 行），见下 |
 
 ### 私有启动序列成员（改行为时直接面对）
 
-- `RunStartupSequenceAsync()`（第 68 行）：三阶段启动，见 common.md 状态流转。阶段 2 取 `moduleCatalog.Modules.ToList()` 快照后以 `for (var i = 0; i < total; i++)` 按下标推进（`total = modules.Count`）：每模块先 `Publish(new StartupProgress(StartupPhase.LoadingModules, module.ModuleName, i + 1, total))`（序号从 1 起），再 `await Task.Run(() => moduleManager.LoadModule(module.ModuleName))`（第 92 行）。
+- `RunStartupSequenceAsync()`：按依赖顺序逐模块建立贡献批次，后台 LoadModule 后回 UI 线程准备工厂并提交。依赖不可用、模块未完成初始化、注册或贡献构造失败都进入 Continue/Exit；失败批次不可见。全部完成后准备宿主贡献与 Shell 呈现，再发布 Ready。
 - `WaitForFailureActionAsync(IEventAggregator)`（第 121 行）：一次性订阅 `StartupFailureActionEvent`，返回 `true` = Continue。
 - `ShowMainWindow()`（第 131 行）：先做两个模式匹配守卫——`MainWindow is not Window window` 或 `ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime lifetime` 时**静默 return**（不抛异常、不动作）；通过后依次 `lifetime.MainWindow = window` → `_windowManager?.ShowMainWindow()` → `_windowManager?.CloseWindowsExceptMain()`。
-- `RegisterFrameworkServices` / `ResolveFrameworkServices`：前者初始化 IoC、注册窗口管理器双接口单例、贡献收集器与布局持久化服务，显式构造 `SettingsService` 并立即 `Load()`，注册 `ISettingsService` 与 Framework 的常规/语言设置；再 `ApplyLanguageSetting` 按持久化语言设置当前及默认线程区域性，并用 `SharedResources.ProductName` 设置 Application.Name。必须先于模块 `RegisterTypes`：工具视图扫描时解析文本，菜单/命令首次收集时解析。设置元数据保留来源与键，设置页构造时才解析。末尾 `ResolveFrameworkServices` 解析并保存事件聚合器与主窗口管理器。
+- `RegisterFrameworkServices` / `ResolveFrameworkServices`：前者初始化 IoC、注册窗口管理器双接口单例、贡献收集器与布局持久化服务，显式构造 `SettingsService` 并立即 `Load()`，注册 `ISettingsService` 与 Framework 的常规/语言设置；再 `ApplyLanguageSetting` 按持久化语言设置当前及默认线程区域性，并用 `SharedResources.ProductName` 设置 Application.Name。必须先于模块 `RegisterTypes`：工具视图扫描时解析文本，菜单/命令启动准备时解析。设置元数据保留来源与键，设置页构造时才解析。末尾 `ResolveFrameworkServices` 解析并保存事件聚合器与主窗口管理器。
 
 ### ViewModel 定位约定（ConfigureViewModelLocator，第 237-269 行）
 
@@ -202,54 +203,62 @@ public sealed record ToolViewPlacementEntry  // ShellLayoutDto.cs:41
 public sealed record SideBarLayoutDto        // ShellLayoutDto.cs:54
 public sealed record PanelLayoutDto          // ShellLayoutDto.cs:69
 public sealed record BottomPanelLayoutDto    // ShellLayoutDto.cs:81
-public sealed class LayoutPersistence        // LayoutPersistence.cs:12
+public sealed class LayoutPersistence(ConfigurationPersistence persistence)
 ```
 
 落盘格式（`ShellLayoutDto` 族）独立于 `ShellLayoutState`——状态机只管流转语义，不管序列化兼容（文件注释自述）。`ShellLayoutDto` 成员：`Version`（:17，`Load` 对不识别版本整份丢弃）、`PanelAlignment`（:22，对齐档位由 `FrameworkWindow` 依赖属性持有、不在状态机内，一并持久化）、`Placements: Dictionary<string, ToolViewPlacementEntry>`（:29，可移动工具视图 Id → `{ Bar, Index }`，恢复时优先于 attribute 的 `Default`；**钉住项恒在 ActivityBar 底部段、不入此表**；无对应贡献的孤儿条目丢弃，无条目的新工具视图落回 `Default`）、三个可空子 DTO `SideBar`/`AuxiliaryPanel`/`BottomPanel`（:31-35，各记显隐/尺寸/选中项或活动 tab；为 null 表示该区域无持久化数据，恢复时保持默认）。序列化选项（`LayoutPersistence.cs:23-28`）：`WriteIndented` + camelCase 属性名 + `JsonStringEnumConverter`——枚举落成 `"Center"`/`"BottomPanel"` 形态字符串。
 
-`LayoutPersistence` 是 `%AppData%/Digital.Workstation/layout.json` 的读/写/删，注册为单例（`FrameworkApplication.cs:159`；注释自述"机制在 Framework、接线在 shell 模块"）：
+LayoutPersistence 以 singleton 注册，构造时接收统一的 ConfigurationPersistence；路径与 JSON 格式保持不变。
 
-| 成员 | 签名/位置 | 语义 |
+| 成员 | 接口 | 语义 |
 |---|---|---|
-| `FilePath` | `public static readonly string`（:17-19） | 布局配置文件路径：`%AppData%/Digital.Workstation/layout.json` |
-| `Load` | `public ShellLayoutDto? Load()`（:37） | 文件缺失返回 null（首次启动常态，**无日志**）；内容为空记 Warning 返回 null（:47-51）；`Version ≠ CurrentVersion` 记 Warning 返回 null（:53-58）；反序列化/IO 等一切异常 `catch (Exception)` 记 Warning 返回 null（:62-67） |
-| `ScheduleSave` | `public void ScheduleSave(ShellLayoutDto)`（:73） | 防抖写：`lock (_gate)` 内记下 `_pending` 并把 `System.Threading.Timer` 重置到 500ms（`DebounceMilliseconds`，:21）后单次触发——500ms 内的连续调用只落盘最后一份布局 |
-| `Delete` | `public void Delete()`（:86） | 删除布局配置文件（重置布局用）：先在锁内作废未落盘的防抖保存（清 `_pending`、停 Timer，:88-92）再 `File.Delete`——**顺序不可换**，否则在途的防抖回调会把文件重建；删除失败记 Warning（:98-101） |
-| `Flush` | `private void Flush(object?)`（:104） | Timer 回调：锁内取出并清空 `_pending`（null 直接返回），`Directory.CreateDirectory` + 序列化写盘（:121-122）；注释自述"Timer 回调里的异常无人处理会拖垮进程"（:118），故 `catch (Exception)` 就地吞掉记 Warning（:124-127） |
+| FilePath | public static readonly string | %AppData%/Digital.Workstation/layout.json |
+| Load | public ShellLayoutDto? Load() | 缺失静默返回 null；空内容、未知 Version、读取/反序列化失败记 LayoutPersistence Warning 并返回 null |
+| ScheduleSave | public void ScheduleSave(ShellLayoutDto layout) | 提交独立 DTO 快照，由 DebouncedJsonFile 合并 500ms 内变更 |
+| Delete | public void Delete() | 等待同文件在途写入，在同一锁内作废 pending 并删文件；删除失败记 ConfigurationPersistence Warning |
 
-容错矩阵（全部失败路径只记 `Logger.Warning`、来源标记 `LayoutPersistence`，不打断应用）：
-
-| 场景 | 行为 |
-|---|---|
-| 文件缺失 | `Load` 返回 null，无日志（首次启动常态） |
-| 内容为空 / 版本不识别 | `Load` 记 Warning 返回 null |
-| JSON 损坏、枚举字符串非法等反序列化失败 | `Load` 记 Warning 返回 null（整份文件丢弃，回默认布局——容错设计不是 bug） |
-| 写盘失败（`Flush`） | 记 Warning，静默放弃本次保存 |
-| 删文件失败（`Delete`） | 记 Warning；pending 保存已作废 |
-
-**典型消费**（真实代码）：`Modules/Workstation/MainWindowViewModel.cs:41-42` 构造注入；`EnsureContributionsLoaded` 里 `_toolViews = _collector.GetToolViews(); LoadToolViews(_persistence.Load());`（:178-179）——`LoadToolViews`（:200）按「钉住项恒落 ActivityBar 底部段、可移动项配置优先默认兜底」分派三处 Bar，layout 非 null 再调 `RestoreLayout`（:242）恢复显隐/尺寸（clamp 到各区域 record 常量）/选中项/对齐档位，layout 为 null 即全默认（重置布局复用此路径）；`ResetLayout`（:503，订阅 `ResetLayoutEvent`）先 `_persistence.Delete()` 再 `LoadToolViews(null)` 重建默认；`CaptureLayout`（:527）+ `ScheduleSave()`（:578）在 `SelectActivity`/`ActivateAuxTab`/`ActivateBottomTab`/`SetPanelAlignment`/`ResizePanel`/`TogglePanel`/`MoveTab`（拖拽落放，:440）末尾调度防抖保存。事件契约 `ResetLayoutEvent`（无负载）在 Core/Models/Events，由视图菜单「重置布局」项发布（`Modules/Workstation/Menus/ViewLayoutMenus.cs`）。
-
-## 8. `ShellContributionCollector`（Contributions/ShellContributionCollector.cs:12）
+### 配置写入生命周期（Persistence/）
 
 ```csharp
-public class ShellContributionCollector(IContainerProvider containerProvider)
+public sealed class ConfigurationPersistence : IDisposable
+{
+    public bool FlushPending();
+    public void Dispose();
+}
 ```
 
-主构造注入 Prism `IContainerProvider`。注册为单例（`FrameworkApplication.cs:156`）。七个收集方法；菜单方法自 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 起不过滤不排序（建树器负责分组排序），工具视图自 [ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md) 起不再按定位枚举过滤（三处 Bar 与钉住区的分派由消费方按 `Placement`/`AllowMove` 决定）：
+FrameworkApplication 注册唯一 owner；SettingsService 与 LayoutPersistence 通过内部 `CreateFile<T>` 各注册一个文件。FlushPending 等待各文件在途写入并保存 pending，任一失败返回 false，但仍尝试其余文件；失败快照留待下一次修改或显式刷新时重试。Dispose 在真正 Exit 时进行最后一次保存并释放计时器，幂等；此后 ScheduleSave/Delete 属生命周期误用，会抛 ObjectDisposedException。
 
-| 方法 | 过滤 | 排序 |
-|---|---|---|
-| `GetToolViews()`（:18） | 过滤 DryIoc 零注册幽灵实例（默认构造、`Id=null` 的条目，:23 的 `Where`；三处 Bar 的分派由消费方决定，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)） | `Order` 升序 |
-| `GetMainViews()`（:27） | 无（全部） | 无（保持容器解析顺序） |
-| `GetMenuItems()`（:34，**无参数**） | 无（路径/分组模型下不再按定位枚举过滤） | 无（分组排序建树由 `MenuTreeBuilder` 负责，见第 11 节） |
-| `GetStatusBarItems()`（:63） | 无 | `Order` 升序 |
-| `GetCommands()`（:42，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)） | Id 冲突去重：保留先注册者，后者丢弃并记 `Logger.Warning` | `Order` 升序，同 Order 按解析后 `Title` 字典序（Ordinal） |
-| `GetSettingGroups()` | 先过滤声明/设置项中的 `Id=null` DryIoc 幽灵实例；按稳定分组 Id 合并，首个声明的 `ResourceType`/`Name` 保留、Order 取最小；仅引用未声明 Id 时补 `Name=Id, ResourceType=null, Order=0` | `Order` 升序，同值按 `Id` Ordinal |
-| `GetSettingItems()` | 先过滤 `Id=null` 幽灵实例，再按项 Id 去重：保留先注册者，后者记 `Logger.Warning` 并丢弃 | `Order` 升序，同值按名称键 `Name` Ordinal |
+内部 `DebouncedJsonFile<T>` 不向业务模块公开。文件锁覆盖 ScheduleSave、Timer 回调、FlushPending、Delete、Dispose；JSON 先写同目录唯一临时文件并 Flush(true)，成功后 File.Move(overwrite:true) 替换。异常就地记录英文 Warning，旧目标文件与 pending 保留，临时文件尽力清理。回调不获取 SettingsService 的内存锁，设置提交快照的锁顺序固定为“设置内存 → 文件”。
 
-返回类型均为 `IReadOnlyList<T>`（快照数组）。贡献类型中 `ToolViewContribution`（sealed class，由 `RegisterToolViews` 扫描 `[ToolView]` 生成，见第 13 节）、`IMainViewContribution`、`IStatusBarItemContribution` 与枚举 `ToolViewPlacement` 在 Core/Abstractions 的 `Contributions/` 目录；`IMenuItemContribution` 在 `Menus/` 目录（形状已按 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md) 改为路径/分组模型）；`ICommandContribution` 在 `Commands/` 目录（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) 扁平模型）；`SettingGroupContribution`/`SettingItemContribution` 在 `Settings/` 目录（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)，见 Abstractions 文档）。
+## 8. 贡献目录与收集器（Contributions/）
 
-**典型消费**：`Modules/Workstation/MainWindowViewModel.cs:41-42` 构造注入 `ShellContributionCollector`，`EnsureContributionsLoaded()`（:170）先调一次 `GetToolViews()`（:178）存 `_toolViews`，再 `LoadToolViews(_persistence.Load())`（:179）把分派与持久化恢复交给 `LoadToolViews`（:200-236：钉住项恒落 ActivityBar 底部段，可移动项持久化 placements 优先、attribute `Default` 兜底），并收集主视图与状态栏项；菜单走 `MenuTreeBuilder.Build(_collector.GetMenuItems())`（:184）建树后转为菜单 ViewModel。
+```csharp
+public sealed class ShellContributionCatalog(IContainerProvider provider);
+public IReadOnlyList<T> Get<T>() where T : class;
+public static void RegisterShellContribution<T>(this IContainerRegistry registry,
+    Func<IContainerProvider, T> factory) where T : class;
+public static void RegisterShellContribution<T, TImplementation>(this IContainerRegistry registry)
+    where T : class where TImplementation : class, T;
+public class ShellContributionCollector(ShellContributionCatalog catalog, SettingCatalog settings);
+```
+
+登记入口把工厂封装为内部 descriptor，捕获当前启动批次，按 Lazy 单次构造。内部 BeginBatch/Prepare/Reject/Dispose 由启动序列编排；模块不操纵批次。Prepare 关闭登记后解析该批全部工厂，全部成功才发布；失败批次留存的 descriptor 永不被 Get 返回。无批次的框架设置可在应用语言前读取，宿主其余贡献在 Ready 前准备。普通 DI 服务不回滚，工具视图内容不预创建。手写贡献必须用上述入口，直接注册贡献接口不能被该目录收集。
+
+| 收集入口 | 规则 |
+|---|---|
+| GetToolViews() | 从目录读取显式工具视图，按 Order；零登记返回空集合 |
+| GetMainViews() | 按登记顺序返回主视图元数据 |
+| GetMenuItems() | 返回预构造的菜单项；建树与排序仍由 MenuTreeBuilder 负责 |
+| GetCommands() | Id 首个生效，再按 Order、Title Ordinal 排序 |
+| GetStatusBarItems() | 按 Order 排序 |
+| GetSettingItems()/GetSettingGroups() | 委托同一 SettingCatalog，与 SettingsService 共享声明规则 |
+
+### 布局配置投影与模板尺寸
+
+ShellLayoutConfiguration.Restore(contributions, layout, mainContent) 返回 (State, Alignment)：保存当前主视图状态，恢复可移动项归属和顺序、活动项、选中项、尺寸与对齐；丢弃孤儿与非法位置并使用默认值。Capture(state, alignment) 只读取状态的有序 Id，不枚举呈现集合；钉住项不写入 placements。
+
+ShellLayoutMetrics.CardMargin/ContainerPadding/ActivityBarMargin 被主题 x:Static 引用；PanelColumn(contentWidth, visible) 使用同一 CardMargin 水平尺寸生成 GridLength，隐藏时为零。
 
 ## 9. `MenuItemViewModel`（Menus/MenuItemViewModel.cs:13）
 
@@ -316,7 +325,7 @@ attribute 菜单注册扩展（[ADR-0001](https://github.com/Ailurus-2233/Digita
 
 1. 遍历 `assembly.DefinedTypes`，取标注 `MenuGroupAttribute` 的类（:22-28）；类路径含空段记 `Logger.Warning` 整类跳过（:30-35）。
 2. 取该类 `Public | Instance | DeclaredOnly` 方法中标注 `MenuItemAttribute` 者（:37-40）；带参或返回值非 `void`/`Task` 的记 `Logger.Warning` 跳过（:44-51）——因此**静态方法与泛型方法**（非实例/含参）天然进不了候选或被签名校验挡下。
-3. 类内无合法方法则整体跳过（:55-58）；否则菜单类本体 `RegisterSingleton(menuType)`（:61），每个合法方法注册一个 `IMenuItemContribution` 工厂（:62-66），工厂内 `provider.Resolve(menuType)` 取菜单类 singleton 实例（建树时经容器解析一次，之后复用）。
+3. 类内无合法方法则整体跳过（:55-58）；否则菜单类本体 `RegisterSingleton(menuType)`（:61），每个合法方法经 RegisterShellContribution 注册一个 `IMenuItemContribution` 工厂（:62-66），工厂内 `provider.Resolve(menuType)` 取菜单类 singleton 实例（启动准备时经容器解析一次，之后复用）。
 
 ### `ReflectedMenuItemContribution`（internal，:75）
 
@@ -347,11 +356,11 @@ attribute 命令注册扩展，与 `RegisterMenus` 同构但**免类级 attribut
 
 1. 遍历 `assembly.DefinedTypes`，取 `Public | Instance | DeclaredOnly` 方法中标注 `CommandAttribute` 者（:24-26）——任何类的方法都可成为命令，类仅作 DI 宿主。
 2. 带参或返回值非 `void`/`Task` 的记 `Logger.Warning` 跳过（:30-36）——静态方法与泛型方法天然进不了候选或被签名校验挡下。
-3. 类内无合法方法则整体跳过（:39-42）；否则宿主类本体 `RegisterSingleton(hostType)`（:45），每个合法方法注册一个 `ICommandContribution` 工厂（:46-50），工厂内 `provider.Resolve(hostType)` 取宿主类 singleton 实例（收集时经容器解析一次，之后复用）。
+3. 类内无合法方法则整体跳过（:39-42）；否则宿主类本体 `RegisterSingleton(hostType)`（:45），每个合法方法经 RegisterShellContribution 注册一个 `ICommandContribution` 工厂（:46-50），工厂内 `provider.Resolve(hostType)` 取宿主类 singleton 实例（启动准备时经容器解析一次，之后复用）。
 
 ### `ReflectedCommandContribution`（internal，:60）
 
-由 `RegisterCommands` 生成的 `ICommandContribution` 实现。构造期（首次收集）以 `ResourceText.Get(attribute.ResourceType, attribute.Title)` 解析标题；Id 缺省「声明类全名.方法名」，Gesture/IconPath/Order 透传，Command 包装反射执行。执行路径与菜单同构：fire-and-forget 调异步执行，Task 等待，异常解包后记 Error、不抛出。解析后文本随该 singleton 存活，语言切换下次启动生效。
+由 `RegisterCommands` 生成的 `ICommandContribution` 实现。构造期（启动准备）以 `ResourceText.Get(attribute.ResourceType, attribute.Title)` 解析标题；Id 缺省「声明类全名.方法名」，Gesture/IconPath/Order 透传，Command 包装反射执行。执行路径与菜单同构：fire-and-forget 调异步执行，Task 等待，异常解包后记 Error、不抛出。解析后文本随该 singleton 存活，语言切换下次启动生效。
 
 ## 15. `CommandPalette`（Windows/CommandPalette.cs:18，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）
 
@@ -387,31 +396,30 @@ attribute 设置注册扩展（[ADR-0006](https://github.com/Ailurus-2233/Digita
 
 真实调用点：`FrameworkApplication.cs:168`（Framework 自身「常规/语言」设置项）。
 
-### `SettingsService`（Settings/SettingsService.cs:17）
+### SettingCatalog（Settings/SettingCatalog.cs）
+
+构造注入 ShellContributionCatalog。GetItems() 对当前可见声明按 Id 首个生效，再排序；Find(id) 使用同一有效集合，不按无关查询覆盖缓存。重复实例只记一次英文 Warning。GetGroups() 对显式分组按 Id 合并，保留首个名称/来源、Order 取最小；隐式分组仅由有效设置项补齐，被丢弃的重复项不会产生空分组。每次读取当前目录，接受后加载模块，并撤销失败批次的候选声明。
+
+### SettingsService（Settings/SettingsService.cs）
 
 ```csharp
-public sealed class SettingsService(IEventAggregator eventAggregator, IContainerProvider containerProvider)
-    : ISettingsService
+public sealed class SettingsService(
+    IEventAggregator eventAggregator,
+    SettingCatalog catalog,
+    ConfigurationPersistence persistence) : ISettingsService
 ```
 
-`ISettingsService` 实现（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4），`%AppData%/Digital.Workstation/settings.json` 的读/防抖写。注册方式特殊：**显式构造实例、立即 `Load()`、以工厂注册**（`FrameworkApplication.cs:163-165`，仿 windowManager 模式），使启动时一次性加载的时机明确。成员：
+FrameworkApplication 显式构造并 Load，再以 ISettingsService 工厂单例注册。FilePath 仍指向 %AppData%/Digital.Workstation/settings.json，枚举使用原有字符串格式。
 
-| 成员 | 签名/位置 | 语义 |
-|---|---|---|
-| `FilePath` | `public static readonly string`（:23-25） | 设置配置文件路径：`%AppData%/Digital.Workstation/settings.json` |
-| `Load` | `public void Load()`（:64） | 启动时一次性加载入内存镜像 `_values`，并把载入内容原样复制为 `_sessionStartValues`（:86，「重启后生效」判定的基准）；文件缺失静默返回（:68-71，首次启动常态）；内容为空（:75-79）或一切异常 `catch (Exception)`（:89-93）记 Warning 按无修改处理——容错仿 `LayoutPersistence` |
-| `Get<T>` | `public T? Get<T>(string settingId)`（:97） | 纯内存读：`_values` 命中则按 `T` 反序列化返回，单项失败记 Warning 后**逐项**回退默认值（:103-112，与 layout.json 整份丢弃不同）；未修改时经 `FindContribution` 回退声明的 `DefaultValue`（:116-123）；未声明记 Warning 返回 `default` |
-| `Set<T>` | `public void Set<T>(string settingId, T value)`（:126） | 未声明记 Warning 但仍写入（:129-132）；锁内更新 `_values`、把 500ms 防抖 Timer 重置到单次触发并 `TrackPendingRestart` 维护重启判定（:134-141），锁外广播 `SettingChangedEvent`（:143） |
-| `IsPendingRestart` | `public bool IsPendingRestart(string settingId)`（:146） | 锁内查 `_pendingRestartIds`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7「重启后生效」判定；服务不感知 RequiresRestart，过滤在调用方） |
-| `TrackPendingRestart` | `private void`（:158） | 重启判定维护（调用方须持 `_gate`）：当前值与启动时生效值经 `JsonElement.DeepEquals` 比较——快照命中取快照值，快照不含则以声明默认值序列化结果为基准（:160-163）；偏离记入 `_pendingRestartIds`、改回启动值即移出 |
-| `FindContribution` | `private SettingItemContribution?`（:179） | 声明默认值缓存：按 Id 缓存，未命中重新枚举容器中的全部声明刷新缓存——模块在启动序列阶段 2 才注册各自设置项，缓存必须允许后到的声明（:42-46 注释） |
-| `FlushPending` | `public void FlushPending()`（:198） | 立即落盘：锁内停掉在途防抖 Timer，锁外 `Save(TakeSnapshot())` 同步写盘。「立即重启」启动新进程前调用——防抖有 500ms 窗口，不强制落盘新进程可能读到旧配置 |
-| `Flush` | `private void Flush(object?)`（:208） | Timer 回调：`Save(TakeSnapshot())` |
-| `TakeSnapshot` / `Save` | `private`（:213 / :222） | 锁内快照 `_values` / `Directory.CreateDirectory` + 序列化写盘；`Save` 对一切异常 `catch (Exception)` 就地吞掉记 Warning（:221 注释，纪律同 `LayoutPersistence.Flush`） |
+| 成员 | 接口/语义 |
+|---|---|
+| Load() | 一次性加载内存值和启动值快照；缺失静默返回，损坏记 Warning 按默认值处理 |
+| `Get<T>(string settingId)` | 纯内存读取，单项反序列化失败回落贡献默认值；未声明返回 default 并记 Warning |
+| `Set<T>(string settingId, T value)` | 内存锁内更新值、向文件写入模块提交独立字典快照、维护重启标记；锁外广播 SettingChangedEvent |
+| IsPendingRestart(string settingId) | 回答值是否偏离启动值；RequiresRestart 过滤仍由消费方负责 |
+| FindContribution(string settingId) | 委托 SettingCatalog.Find；无服务私有声明缓存，拒绝批次不会污染后续查询 |
 
-内部状态：`_values`（:40，落盘内容内存镜像）、`_declared`（:46，声明惰性缓存）、`_sessionStartValues`（:52，进程启动时生效值快照）、`_pendingRestartIds`（:57，已偏离启动值的项）、`_timer`（:59，防抖）；全部经 `_gate`（:35）保护。
-
-序列化选项（:29-33）：`WriteIndented` + `JsonStringEnumConverter`——枚举落盘为 `JsonStringEnumMemberName` 指定的字符串（`UiLanguage` 为 `"zh-CN"`/`"en-US"`）。落盘文件只存**用户已修改的值**（`_values` 的镜像），默认值不进存储层。
+SettingsService 不再拥有 Timer、FlushPending、TakeSnapshot 或 Save。生命周期刷新统一通过 ConfigurationPersistence；调用方不应将 ISettingsService 转为具体类做保存。SettingsService 内存锁内提交快照以保持 Set 顺序，文件回调只处理收到的快照。
 
 ### `UiLanguage` 与 `UiLanguageExtensions`（Settings/UiLanguage.cs:12）
 
@@ -441,8 +449,7 @@ Framework 预置常规/语言设置声明类。`public const string GroupId = "f
 public static class ApplicationRestarter { public static void Restart(); } // :19
 ```
 
-「立即重启」：设置页重启横幅按钮的动作（真实调用点 `Modules/Settings/ViewModels/SettingsPageViewModel.cs` 的 `RestartNowCommand`）。顺序固定三步：① 经 `IoC.Provider` 解析 `ISettingsService`，是 `SettingsService` 则 `FlushPending()` 强制落盘（:21-25，防抖 500ms 窗口内重启会让新进程读到旧配置）；② `Environment.ProcessPath` 取当前可执行文件路径（为 null 记 `Logger.Error` 中止，:27-32），以原始命令行参数（`Environment.GetCommandLineArgs().Skip(1)`）`Process.Start` 启动新进程（:35）；③ `IClassicDesktopStyleApplicationLifetime.Shutdown()` 走正常桌面生命周期退出当前进程（:36，与启动失败退出同路径）。重启前记一行 `Logger.Information`（:34）。新进程会再次经过启动台，属预期行为。
-
+“立即重启”仍由设置页横幅触发。ApplicationRestarter.Restart 先解析 ConfigurationPersistence，统一 FlushPending 设置和布局；返回 false 时记录 "Failed to save pending configuration; restart aborted" 并保留当前进程。成功后检查 Environment.ProcessPath，沿用原始参数启动新进程，再 Shutdown 当前进程；Exit 会进行最后收尾且不会重复写入已清空的 pending。路径缺失时记录 Error 中止。它不再解析或强转 ISettingsService。
 
 ## 容器注册清单（对外可解析的服务）
 
@@ -452,7 +459,10 @@ public static class ApplicationRestarter { public static void Restart(); } // :1
 |---|---|---|
 | `IMainWindowManager` | Singleton | 同一 `FrameworkWindowManager` 实例 |
 | `IWindowManager` | Singleton | 同一 `FrameworkWindowManager` 实例 |
-| `ShellContributionCollector` | Singleton | 自身 |
+| `ShellContributionCatalog` | Singleton | 显式贡献、批次可见性与单次构造 |
+| `SettingCatalog` | Singleton | 设置声明唯一解释入口 |
+| `ShellContributionCollector` | Singleton | 从目录读取并排序 |
+| `ConfigurationPersistence` | 显式实例 | 统一持久化 owner；Exit 时 Dispose，重启前 FlushPending |
 | `LayoutPersistence` | Singleton | 自身（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)；机制在 Framework、接线在 shell 模块） |
 | `ISettingsService` | Singleton（工厂） | 显式构造的 `SettingsService` 实例，注册前已 `Load()`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4） |
 | `IoC.Registry` / `IoC.Provider` | 静态初始化 | `IoC.Initialize(containerRegistry, Container)`（Common 模块） |

@@ -14,8 +14,8 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 | `OnInitialized` | `void OnInitialized(IContainerProvider containerProvider)` | **空实现**（DashBoardModule.cs:18 注释：启动台窗口由 shell 启动序列在模块加载前显示（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)），模块自身不再开窗） |
 
 注册清单（DashBoardModule.cs:12-13）：
-- `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 12 行，Core/Framework `DigitalWorkstation.Core.Framework.Contributions` 扩展，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）——扫描程序集内 `[ToolView]` 类：**当前程序集无标注类**（原 `DashBoardNavigationView`/`DashBoardTasksView` 已删除），扫描注册为空，保留该行以覆盖将来新增；机制为对每个合法的（可实例化 `Control`、程序集内 Id 不重复）View 执行 `Register(viewType)` 并注册一个 `ToolViewContribution` 元数据单例（`Title` 扫描时经 `ResourceText.Get(ResourceType, TitleKey)` 解析），非法者记 `Logger.Warning` 跳过
-- `RegisterSingleton<IStatusBarItemContribution, DashBoardStatusBarItem>()`（第 13 行）
+- `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 12 行，Core/Framework `DigitalWorkstation.Core.Framework.Contributions` 扩展，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）——扫描程序集内 `[ToolView]` 类：**当前程序集无标注类**（原 `DashBoardNavigationView`/`DashBoardTasksView` 已删除），扫描注册为空，保留该行以覆盖将来新增；机制为对每个合法的（可实例化 `Control`、程序集内 Id 不重复）View 执行 `Register(viewType)` 并经 `RegisterShellContribution` 登记一个 `ToolViewContribution` 元数据工厂（`Title` 扫描时经 `ResourceText.Get(ResourceType, TitleKey)` 解析），非法者记 `Logger.Warning` 跳过
+- `RegisterShellContribution<IStatusBarItemContribution, DashBoardStatusBarItem>()`（`DashBoardModule.RegisterTypes`）：登记归属当前启动批次的工厂，批次准备时在 UI 线程构造一次；成功提交后才供 Shell 收集
 
 注意：`DashBoardWindow` 与 `DashBoardWindowViewModel` **不在** `RegisterTypes` 中注册——`DashBoardWindow` 由启动序列在模块加载前经 `Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:43）解析，Prism 容器对未注册的具体类型仍可构造解析（DryIoc 默认行为），ViewModel 由 ViewModelLocator 约定装配。
 
@@ -76,7 +76,9 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 1. 宿主把模块加进目录：`moduleCatalog.AddModule<DashBoardModule>()`（Modules/Workstation/WorkstationApplication.cs:17）。
 2. 启动序列在模块加载前显示启动台：`Container.Resolve<DashBoardWindow>()`（WorkstationApplication.cs:40，`CreateSplashWindow` 重写）；ViewModel 由 `prism:ViewModelLocator.AutoWireViewModel="True"`（DashBoardWindow.axaml:3）按约定装配，构造时完成事件订阅。
 3. 启动序列逐模块发布 `StartupProgressEvent`/`ModuleLoadFailedEvent`，ViewModel 回调更新属性；用户点"继续/退出"时 ViewModel 发布 `StartupFailureActionEvent`。
-4. 模块加载时 Prism 调 `RegisterTypes` 注册贡献；shell 收集渲染。
+4. 模块加载时 Prism 调 `RegisterTypes` 登记贡献；`ShellContributionCatalog.Prepare` 在 UI 线程解析工厂，成功才提交当前批次。随后启动序列在 Ready 前准备 Shell 集合；失败批次的贡献不参与收集。
+
+模块注册或贡献工厂准备失败均可进入启动台失败决策；`Continue` 隐藏失败批次贡献，依赖失败模块的后续模块仍会进入自己的失败决策。此机制不回滚普通 DI 注册和任意副作用。
 
 **消费事件的发布方**（反向依赖）：`StartupProgressEvent`/`ModuleLoadFailedEvent` 由 Core/Framework 的 `FrameworkApplication.RunStartupSequenceAsync` 发布；`StartupFailureActionEvent` 由同一处订阅等待（`WaitForFailureActionAsync`）。`OpenMainViewEvent` 由 shell（MainWindowViewModel）订阅。详见 docs/analysis/Core/Framework/ 与 docs/analysis/Core/Models/ 文档。
 

@@ -111,6 +111,9 @@
     <File Path="docs/analysis/Modules/DashBoard/reference.md" />
     <File Path="docs/analysis/Modules/DashBoard/testing.md" />
   </Folder>
+  <Folder Name="/_docs/analysis/Modules/Settings/">
+    <File Path="docs/analysis/Modules/Settings/common.md" />
+  </Folder>
   <Folder Name="/_docs/analysis/Modules/Workstation/">
     <File Path="docs/analysis/Modules/Workstation/api.md" />
     <File Path="docs/analysis/Modules/Workstation/common.md" />

@@ -27,7 +27,7 @@
         <DataTemplate x:Key="ShellActivityBar">
             <Border
                 Background="{DynamicResource SemiColorNavBackground}"
-                Margin="0,0,2,0"
+                Margin="{x:Static layout:ShellLayoutMetrics.ActivityBarMargin}"
                 Width="48">
                 <!--  Grid（*,Auto）替代 DockPanel：钉住段硬约束在栏内底部——DockPanel 的
                       bottom dock 会把钉住段排到状态栏区域（溢出约 36px 被裁剪不可见）  -->
@@ -63,7 +63,7 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 IsVisible="{Binding State.SideBar.Visible}"
-                Margin="2">
+                Margin="{x:Static layout:ShellLayoutMetrics.CardMargin}">
                 <Grid RowDefinitions="Auto,*">
                     <TextBlock Classes="region-title" Text="{Binding SideBarTitle}" />
                     <ContentControl Content="{Binding SideBarContent}" Grid.Row="1" />
@@ -78,7 +78,7 @@
                 BorderBrush="{DynamicResource SemiColorBorder}"
                 BorderThickness="1"
                 CornerRadius="8"
-                Margin="2">
+                Margin="{x:Static layout:ShellLayoutMetrics.CardMargin}">
                 <ContentControl Content="{Binding MainContent}" />
             </Border>
         </DataTemplate>
@@ -91,7 +91,7 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 IsVisible="{Binding AuxiliaryPanelRevealed}"
-                Margin="2">
+                Margin="{x:Static layout:ShellLayoutMetrics.CardMargin}">
                 <Grid RowDefinitions="Auto,*">
                     <Border BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="0,0,0,1">
                         <DockPanel>
@@ -147,7 +147,7 @@
                 CornerRadius="8"
                 Height="{Binding State.BottomPanel.Height}"
                 IsVisible="{Binding BottomPanelRevealed}"
-                Margin="2">
+                Margin="{x:Static layout:ShellLayoutMetrics.CardMargin}">
                 <Grid RowDefinitions="Auto,*">
                     <Border BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="0,0,0,1">
                         <DockPanel>
@@ -221,13 +221,13 @@
         <!--  四份静态布局：差异为 BottomPanel 及其分隔条的 Grid.Column/ColumnSpan 与侧栏的 Grid.RowSpan，切换档位即整体替换模板。
               面板容器：底色与 ActivityBar 一致，面板以圆角卡片浮于其上，缝隙透出底色；
               Padding 2 + 卡片 Margin 2 → 外圈与卡片间间隙恒为 4，与面板显隐无关。
-              列 1/3 宽度由 ViewModel 数据驱动（可见=卡片宽度+4px 间隙，隐藏=0），BottomPanel 跨度随之自然伸缩  -->
+              列 1/3 宽度由 ShellLayoutMetrics 与卡片共享尺寸来源（可见=卡片宽度+水平外边距，隐藏=0），BottomPanel 跨度随之自然伸缩  -->
 
         <!--  左对齐：BottomPanel 贴左，横跨列 1-2（SideBar + MainContent 下方）；AuxiliaryPanel 通高到底  -->
         <DataTemplate x:Key="WindowLayoutLeft">
             <DockPanel>
                 <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellStatusBar}" DockPanel.Dock="Bottom" />
-                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="2">
+                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="{x:Static layout:ShellLayoutMetrics.ContainerPadding}">
                     <Grid RowDefinitions="*,Auto">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -293,7 +293,7 @@
         <DataTemplate x:Key="WindowLayoutRight">
             <DockPanel>
                 <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellStatusBar}" DockPanel.Dock="Bottom" />
-                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="2">
+                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="{x:Static layout:ShellLayoutMetrics.ContainerPadding}">
                     <Grid RowDefinitions="*,Auto">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -359,7 +359,7 @@
         <DataTemplate x:Key="WindowLayoutCenter">
             <DockPanel>
                 <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellStatusBar}" DockPanel.Dock="Bottom" />
-                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="2">
+                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="{x:Static layout:ShellLayoutMetrics.ContainerPadding}">
                     <Grid RowDefinitions="*,Auto">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -424,7 +424,7 @@
         <DataTemplate x:Key="WindowLayoutJustify">
             <DockPanel>
                 <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ShellStatusBar}" DockPanel.Dock="Bottom" />
-                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="2">
+                <Border Background="{DynamicResource SemiColorNavBackground}" Padding="{x:Static layout:ShellLayoutMetrics.ContainerPadding}">
                     <Grid RowDefinitions="*,Auto">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />

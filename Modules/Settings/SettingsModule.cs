@@ -1,5 +1,6 @@
 using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Settings.Views;
+using DigitalWorkstation.Core.Framework.Contributions;
 
 namespace DigitalWorkstation.Settings;
 
@@ -12,7 +13,7 @@ public class SettingsModule : IModule
 {
     public void RegisterTypes(IContainerRegistry containerRegistry)
     {
-        containerRegistry.RegisterSingleton<IMainViewContribution, SettingsMainView>();
+        containerRegistry.RegisterShellContribution<IMainViewContribution, SettingsMainView>();
         containerRegistry.Register<SettingsPageView>();
     }
 

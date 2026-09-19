@@ -1,4 +1,4 @@
-﻿# Framework — 异常与排查
+# Framework — 异常与排查
 
 ## 模块可能抛出的异常
 
@@ -20,14 +20,14 @@
 
 ```
 RunStartupSequenceAsync
-├── 单模块加载失败（catch 第 91 行）
-│     → Logger.Error(ex, $"模块 {name} 加载失败")（第 93 行，Console sink）
-│     → Publish ModuleLoadFailedEvent(ModuleLoadFailure(name, i+1, total, ex.Message))（第 94-95 行）
-│     → WaitForFailureActionAsync() 等待启动台决策（第 96 行）
-│         Continue → 跳过该模块继续循环
+├── 模块加载、依赖不可用或贡献准备失败
+│     → Logger.Error(ex, $"Failed to prepare module {name}")（第 93 行，Console sink）
+│     → Reject 批次；先调用 WaitForFailureActionAsync 订阅决策
+│     → Publish ModuleLoadFailedEvent；等待已订阅的决策
+│         Continue → 拒绝该批贡献，继续其余模块；依赖者同样进入失败决策
 │         Exit     → (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown()（第 98 行）
 └── 序列级异常（阶段 1/3 或意料外异常，catch 第 108 行）
-      → Logger.Fatal(ex, "启动序列执行失败")（第 110 行）
+      → Logger.Fatal(ex, "Startup sequence failed")（第 110 行）
       → Shutdown()（第 111 行）——应用直接退出，无重试
 ```
 
@@ -41,9 +41,13 @@ RunStartupSequenceAsync
 
 `ShellLayoutState` 不抛任何异常：非法操作（面板收起时 `ActivateAuxTab`/`ActivateBottomTab`、未知 `PanelResizeTarget`）返回等值状态（`return this`，`ShellLayoutState.cs:73、86、130`）；`Resize` 用 `Clamp`（第 134 行）把越界值钳到 Min/Max。错误语义是"拒绝并保持现状"，由调用方（MainWindowViewModel）自然忽略。
 
-### 布局持久化
+### 配置持久化
 
-`LayoutPersistence`（`Layout/LayoutPersistence.cs`）不抛任何异常，语义是"静默回落到默认布局"：文件缺失时 `Load` 直接返回 null（**无日志**，首次启动常态，:41-44）；内容为空（:47-51）与版本不识别（:53-58）记 `Logger.Warning` 后返回 null；反序列化/IO 异常被 `catch (Exception)` 兜底（:62-67）。写路径 `Flush` 是 `System.Threading.Timer` 回调——注释自述"回调里的异常无人处理会拖垮进程"（:118），写盘失败就地吞掉记 Warning（:119-127）；`Delete` 先作废 pending 防抖保存再删文件，删除失败同样只记 Warning（:94-101）。用户可见的唯一后果是布局没恢复/没记住。
+LayoutPersistence.Load 保留文件缺失静默返回 null、空内容/未知版本/反序列化失败记 Warning 后回默认的语义。SettingsService.Load/Get 继续按原有规则回落默认值。
+
+两类文件的写入和删除统一记录来源 ConfigurationPersistence 的英文日志：Failed to write configuration、Failed to delete configuration、Failed to remove temporary configuration。写入失败不覆盖旧目标，并保留待写快照供下一次调度或 FlushPending 重试。FlushPending 返回 false 时 ApplicationRestarter 记录 Failed to save pending configuration; restart aborted，不启动新进程。
+
+正常 Exit 最后尝试保存并释放计时器；如果磁盘仍不可写，只能记录失败并继续退出，不能声称配置已保存。Dispose 后继续 ScheduleSave/Delete 是生命周期误用，抛 ObjectDisposedException。进程强制终止不经过该收尾。
 
 ### 命令面板快捷键标签
 
@@ -62,10 +66,19 @@ RunStartupSequenceAsync
 | 拖分隔条尺寸不动/跳变 | `Resize` 的 Clamp（第 103-132 行）与各 record 的 Min/Max 常量 | delta 累计后被钳在边界；或消费方未用返回的新实例替换旧状态 |
 | 窗口构造即抛"布局模板资源缺失：{key}" | `FrameworkWindow.UpdateLayoutTemplate`（`Windows/FrameworkWindow.cs:82-95`）的键映射 vs `Windows/FrameworkWindowTheme.axaml` 的 `WindowLayout*` 资源键 | 键名漂移（改了一侧没改另一侧），或 axaml 未作为编译资源进程序集（`FrameworkWindowTheme.cs` 经 `StyleInclude` 从 `avares://` 加载，构造时已强制 `Loaded`） |
 | 工具视图没出现在任何 Bar | 日志找 `Logger.Warning` 的 `工具视图 ... 已跳过`（`Contributions/ToolViewRegistration.cs:33、40`） | 类非可实例化 `Control` 或 `Id` 在程序集内重复被跳过；或模块 `RegisterTypes` 未调 `RegisterToolViews`（扫描不做全局发现，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)） |
-| 重启后布局回默认/布局改动没记住 | Console 日志找 `[WRN]` 且来源 `LayoutPersistence`（`Layout/LayoutPersistence.cs:49、55、64、126`） | layout.json 损坏/版本不识别/反序列化失败 → `Load` 返回 null 静默回默认（设计行为）；或 `Flush` 写盘失败（权限/磁盘） |
+| 重启后布局回默认/布局改动没记住 | 读取看 LayoutPersistence Warning；写入看 ConfigurationPersistence Warning | 损坏/未知版本按默认读取；权限、磁盘或文件占用导致保存失败，待写快照在进程内可重试 |
 | 手工编辑 layout.json 后布局全丢 | 同上，`Load` 的 Warning（:64，异常类型名会打在日志里） | 枚举值必须是 `"Center"`/`"BottomPanel"` 形态字符串（`JsonStringEnumConverter`，:27）；非法枚举字符串让 System.Text.Json 抛 `JsonException`，整份文件被丢弃回默认——容错设计不是 bug |
-| 「重置布局」后旧布局又复活 | `LayoutPersistence.Delete`（:86-102）的 pending 作废气锁（:88-92） | 若有代码绕过 `Delete` 直接删文件，在途的防抖回调会把 layout.json 重建——必须走 `Delete` |
+| 「重置布局」后旧布局又复活 | LayoutPersistence.Delete → DebouncedJsonFile.Delete | 检查是否绕过统一写入模块或把文件提交移出锁；仅停 Timer 不会等待已经开始的回调 |
 | 菜单/命令/工具视图显示资源键 | 声明的 ResourceType、资源类型全名/程序集与键 | 来源资源集中无键时返回原键；不会搜索其他模块。标题已固化在 singleton，修正语言后需重启 |
 | 菜单节点显示稳定 Id | MenuGroup 是否有标题声明、PathTitle 是否非 null | 只引用路径或隐式祖先没有标题是合法回退；后到所有者声明应覆盖 Id 显示，但不得覆盖已有非 null 标题 |
 | 设置组重复或错误归组 | SettingGroupContribution.Id 与 SettingItemContribution.Group | 身份按稳定 Id 匹配，与名称键无关；同 Id 首个声明来源生效，未声明 Id 直接显示 |
 | 枚举选项显示组合键 | SettingItemContribution.ResourceType 中的 `Name + 成员名` 键 | 缺键回退完整键名，不是裸成员名；翻译键与枚举持久化值互不影响 |
+
+
+## 架构修复后的排查入口
+
+- 菜单/命令宿主构造失败：在对应模块 Prepare 内捕获，启动台显示失败；继续后不再解析该批工厂。部分 RegisterTypes 失败同样隐藏已登记的贡献。
+- 日志 Required module ... is unavailable：依赖模块未通过准备。后继未执行 LoadModule，不是新的容器解析失败。
+- Contribution registration for ... is closed：模块在完成 RegisterTypes 或被拒绝后仍有后台登记，修正模块登记时机。
+- 宿主基础贡献、PrepareShell 建树/布局恢复失败：Ready 尚未发布，按序列级 Fatal 退出。该路径不假装成某个可跳过模块。
+- 重复设置 Id：SettingCatalog 英文 Warning 指出被丢弃的后到声明。服务默认值、页面编辑器与重启属性保持首个有效声明；检查跨模块 Id，不通过读取其他 Id 刷新缓存。

@@ -12,15 +12,15 @@
 |---|---|---|
 | 启动台窗口打开但无任何进度文字/ViewModel 不工作 | `prism:ViewModelLocator.AutoWireViewModel="True"`（DashBoardWindow.axaml:3）的约定装配失败——ViewModel 命名/目录不符合 `Views.Windows.*` ↔ `ViewModels.Windows.*` 约定，或 `DashBoardWindowViewModel` 改名 | 窗口 DataContext 是否为 `DashBoardWindowViewModel` 实例；README 第 46 行"按 Views ↔ ViewModels 的命名/目录约定自动绑定" |
 | 启动台进度不动、失败不显示 | 事件未到达：订阅在构造函数（DashBoardWindowViewModel.cs:19-20），若 ViewModel 未创建则无人订阅；或发布方（FrameworkApplication）未到对应阶段 | Serilog 控制台启动日志（docs/agents/verification.md 约定）；确认 `StartupProgressEvent` 发布 |
-| 工具视图或接口贡献项不显示或顺序不对 | 工具视图不出现：`[ToolView]` 标注的类非可实例化 `Control`、或程序集内 Id 重复——`RegisterToolViews` 记 `Logger.Warning` 跳过（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）；Id 跨模块冲突（唯一性约束，见 docs/analysis/Core/Abstractions/error.md）；`Order` 值与其他贡献相同导致相对顺序不稳 | Serilog 日志的 Warning；`ToolViewRegistration` 的跳过规则与 `ShellContributionCollector.GetToolViews()` 的排序（Core/Framework）；全仓搜索重复 Id 字符串 |
+| 工具视图或接口贡献项不显示或顺序不对 | 先确认所属模块批次准备成功、手写贡献经 `RegisterShellContribution` 登记；直接注册贡献接口不会进入目录。工具视图不出现：`[ToolView]` 标注的类非可实例化 `Control`、或程序集内 Id 重复——`RegisterToolViews` 记 `Logger.Warning` 跳过（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）；Id 跨模块冲突（唯一性约束，见 docs/analysis/Core/Abstractions/error.md）；`Order` 值与其他贡献相同导致相对顺序不稳 | Serilog 日志的 Warning；`ToolViewRegistration` 的跳过规则与 `ShellContributionCollector.GetToolViews()` 的排序（Core/Framework）；全仓搜索重复 Id 字符串 |
 | 按钮点击后绑定命令不执行 | XAML 绑定名 `ContinueCommand`/`ExitCommand` 与源生成命令名不匹配——命令名 = `[RelayCommand]` 方法名 + "Command"，改方法名后 XAML 运行期绑定静默失败 | DashBoardWindow.axaml:27-28 的 `Command="{Binding ...}"` 与 DashBoardWindowViewModel.cs:70、79 的方法名 |
 
 ## 错误处理路径
 
 模块内无错误转换/传播层：
 
-- **进入模块的异常**：`RegisterTypes` 与贡献类属性求值中的异常 → 冒泡到 Prism 模块初始化 → 启动序列捕获 → `ModuleLoadFailedEvent`（含 `ErrorMessage`）→ 本模块 `DashBoardWindowViewModel.OnModuleFailed` 显示。例外：`RegisterToolViews` 对非法 `[ToolView]` 类（非可实例化 Control、程序集内 Id 重复）只记 `Logger.Warning` 跳过，不抛异常。
-- **模块发出的决策**：`StartupFailureActionEvent` 是唯一的"错误后续"通道，`Continue` 让启动序列跳过失败模块，`Exit` 终止应用。
+- **模块登记或贡献工厂异常**：`RegisterTypes`/`OnInitialized` 在模块加载时抛错，或 Load 完成后 UI 线程的 `ShellContributionCatalog.Prepare` 解析工厂抛错 → 启动序列拒绝本批贡献 → 先订阅决策，再发布 `ModuleLoadFailedEvent`（含 `ErrorMessage`）→ `DashBoardWindowViewModel.OnModuleFailed` 显示。贡献属性由后续 Shell 准备访问时抛错，则走整体启动失败，不应与工厂异常混为一谈。例外：`RegisterToolViews` 对非法 `[ToolView]` 类（非可实例化 Control、程序集内 Id 重复）只记 `Logger.Warning` 跳过，不抛异常。
+- **模块发出的决策**：`StartupFailureActionEvent` 是唯一的"错误后续"通道，`Continue` 让启动序列跳过失败模块，其贡献不进入 Shell；依赖它的后续模块在加载前进入失败决策。`Exit` 终止应用。普通 DI 注册、事件订阅与其他副作用不回滚。
 - **UI 线程亲和**：两个事件订阅都用 `ThreadOption.UIThread`，事件回调直接修改可观察属性是安全的；若改为 `PublisherThread`，跨线程改属性会抛 Avalonia 线程访问异常。
 
 ## 日志

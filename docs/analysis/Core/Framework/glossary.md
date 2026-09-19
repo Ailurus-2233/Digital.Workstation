@@ -1,4 +1,4 @@
-﻿# Framework — 术语表
+# Framework — 术语表
 
 | 术语 | 定义 | 首次出现/定义位置 |
 |---|---|---|
@@ -23,7 +23,7 @@
 | **ViewModel 定位约定** | `ConfigureViewModelLocator` 的命名映射规则：`Views`→`ViewModels` 命名空间替换 + `Window`/`Page`/`View` 后缀补 `ViewModel`/`Model`；View 侧需 `AutoWireViewModel="True"` | `FrameworkApplication.cs:237-269` |
 | **面板对齐（Panel Alignment）** | BottomPanel 在窗口底部的水平跨度，类比文本对齐。四档：左（贴左，横跨 SideBar 与 MainContent 下方，AuxiliaryPanel 通高到底）、右（贴右，横跨 MainContent 与 AuxiliaryPanel 下方，SideBar 通高到底）、居中（仅占 MainContent 下方，默认，两侧栏通高）、两端（横跨三列全宽）。完整领域定义（含与"面板位置"的区分）见根目录 CONTEXT.md | `Layout/PanelAlignment.cs:7` |
 | **FrameworkWindow** | 带基础布局的窗口基类（继承 UrsaWindow）：内置 VS Code 式五区 shell + 状态栏 + 标题栏菜单栏（代码创建的 `Menu` 宽松绑定 ViewModel 的 `MenuBarItems`，[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)），布局档位由 `PanelAlignment` 依赖属性决定，切换即整体替换布局模板。真实子类：Modules/Workstation 的 `MainWindow`。与"主窗口（MainWindow）"词条的区别：那是**角色**（启动序列登记的那个窗口实例），这是**类型基类** | `Windows/FrameworkWindow.cs:19` |
-| **布局持久化（Layout Persistence）** | [ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md) 引入的 shell 布局落盘机制：`%AppData%/Digital.Workstation/layout.json` 记录可移动工具视图归属（`Placements`）、SideBar/两个面板的显隐/尺寸/选中项或活动 tab、面板对齐档位。读容错（缺失/损坏/版本不识别 → 返回 null 静默回默认布局）、写防抖（500ms 合并连续变更）、重置经 `Delete`（先作废 pending 再删文件）。机制在 Framework（`LayoutPersistence` + `ShellLayoutDto` 族），接线在 Modules/Workstation 的 `MainWindowViewModel`；事件契约 `ResetLayoutEvent` 在 Core/Models/Events | `Layout/LayoutPersistence.cs:12`、`Layout/ShellLayoutDto.cs:10` |
+| **布局持久化（Layout Persistence）** | layout.json 的独立 DTO 记录工具视图位置、显隐、尺寸、选择和面板对齐；容错读取由 LayoutPersistence 负责，防抖写入与重置删除由统一配置写入模块负责。重置等待在途写入，正常 Exit 完成保存 | Layout/LayoutPersistence.cs、Persistence/ |
 | **拖拽会话（Drag Session）** | 一次工具视图拖拽的存续期：`ToolViewButton` 在 `DoDragDropAsync` 期间把 `ToolViewDragSession.IsActive` 置 true 并广播 `ActiveChanged`；shell 借此临时显露隐藏面板作为投放区 | `Layout/ToolViewDragSession.cs:11` |
 | **命令（Command）** | 以标题与可选快捷键（Gesture）声明的全局动作（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：方法标 `CommandAttribute` 经 `RegisterCommands` 扫描生成 `ICommandContribution`（扁平模型，稳定 `Id` 默认「声明类全名.方法名」），与菜单体系互不相干；完整领域定义见根目录 CONTEXT.md | `Core/Abstractions/Commands/CommandAttribute.cs`；注册端 `Commands/CommandRegistration.cs:14` |
 | **命令面板（Command Palette）** | 窗口顶部居中的命令检索浮层（Ctrl+P 唤起）：子串过滤、↑↓/Enter/Esc 导航、单击执行、失焦关闭、MRU 内存置顶。自包含控件 `CommandPalette`，VM 只暴露 `Commands` 集合（宽松绑定）；`FrameworkWindow` 构造时内置 | `Windows/CommandPalette.cs:18`、`Windows/FrameworkWindow.cs:36-44` |
@@ -47,7 +47,14 @@
 | `PanelAlignment` | 面板对齐：BottomPanel 的水平跨度档位 |
 | `ToolViewRegistration` | 工具视图装配扫描器：attribute 扫描生成元数据并注册 View 类型 |
 | `PanelResize` / `PanelResizer` | 分隔条拖拽的一次增量（命令参数）/ 发出增量的分隔条控件 |
-| `LayoutPersistence` | 布局配置文件的读写门卫：容错读 / 防抖写 / 重置删，全路径只记日志不抛异常 |
+| `LayoutPersistence` | 布局配置的读取与格式校验；写入/删除委托统一文件模块 |
+| `ConfigurationPersistence` | 配置写入生命周期的所有者：统一刷新与退出收尾 |
+| `DebouncedJsonFile<T>` | 内部单文件实现：快照防抖、串行提交/删除、失败保留 |
 | `ShellLayoutDto` 族 | layout.json 的落盘格式：带版本字段、独立于运行时状态机的 DTO record |
 | `ToolViewButton` / `ToolViewBar` | 工具视图的拖拽源按钮（tab 头/导航项）/ Bar 投放目标（算落点、显示占位线、发出 `ToolViewMove`） |
 | `ToolViewMove` / `ToolViewDragSession` | 一次拖拽落点的命令参数 / 拖拽进行中的全局信号 |
+
+| **贡献批次（ContributionBatch）** | 一次模块加载产生的 Shell 贡献登记边界，准备成功后发布，失败后不可见；不等于 DI 事务 | Contributions/ShellContributionCatalog.cs |
+| **有效设置目录（SettingCatalog）** | 按 Id 首个生效的设置项与分组解释，设置服务和页面共享 | Settings/SettingCatalog.cs |
+| **布局配置投影** | ShellLayoutConfiguration 在独立 DTO 与 State 之间转换，不读取 UI 集合 | Layout/ShellLayoutConfiguration.cs |
+| **共享布局尺寸** | ShellLayoutMetrics 为卡片模板和列宽提供同一外边距来源 | Layout/ShellLayoutMetrics.cs |

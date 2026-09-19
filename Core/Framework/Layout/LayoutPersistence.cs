@@ -1,15 +1,16 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DigitalWorkstation.Core.Common;
+using DigitalWorkstation.Core.Framework.Persistence;
 
 namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
 ///     布局持久化服务（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：%AppData%/Digital.Workstation/layout.json 的读/写/删。
 ///     读容错：文件缺失/损坏/版本不识别 → 返回 null，调用方静默按默认布局启动；
-///     写防抖：500ms 内的连续布局变更合并为最后一次落盘。全部失败路径只记日志不打断应用
+///     写防抖：500ms 内的连续布局变更合并为最后一次落盘。文件读写失败只记日志不打断应用
 /// </summary>
-public sealed class LayoutPersistence
+public sealed class LayoutPersistence(ConfigurationPersistence persistence)
 {
     /// <summary>
     ///     布局配置文件路径
@@ -18,8 +19,6 @@ public sealed class LayoutPersistence
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "Digital.Workstation", "layout.json");
 
-    private const int DebounceMilliseconds = 500;
-
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         WriteIndented = true,
@@ -27,9 +26,7 @@ public sealed class LayoutPersistence
         Converters = { new JsonStringEnumConverter() }
     };
 
-    private readonly Lock _gate = new();
-    private ShellLayoutDto? _pending;
-    private System.Threading.Timer? _timer;
+    private readonly DebouncedJsonFile<ShellLayoutDto> _file = persistence.CreateFile<ShellLayoutDto>(FilePath, SerializerOptions);
 
     /// <summary>
     ///     读取持久化布局；文件缺失返回 null（首次启动常态），损坏/版本不识别记 Warning 后返回 null
@@ -73,60 +70,14 @@ public sealed class LayoutPersistence
     /// </summary>
     public void ScheduleSave(ShellLayoutDto layout)
     {
-        lock (_gate)
-        {
-            _pending = layout;
-            _timer ??= new System.Threading.Timer(Flush, null, Timeout.Infinite, Timeout.Infinite);
-            _timer.Change(DebounceMilliseconds, Timeout.Infinite);
-        }
+        _file.ScheduleSave(layout);
     }
 
     /// <summary>
-    ///     删除布局配置文件（重置布局用）；同时作废未落盘的防抖保存，避免文件被重建
+    ///     等待在途写入，作废未落盘的防抖快照，再删除配置文件，避免旧回调重新创建文件。
     /// </summary>
     public void Delete()
     {
-        lock (_gate)
-        {
-            _pending = null;
-            _timer?.Change(Timeout.Infinite, Timeout.Infinite);
-        }
-
-        try
-        {
-            File.Delete(FilePath);
-        }
-        catch (Exception exception)
-        {
-            Logger.Warning($"Failed to delete layout configuration ({exception.GetType().Name}): {FilePath}",
-                nameof(LayoutPersistence));
-        }
-    }
-
-    private void Flush(object? state)
-    {
-        ShellLayoutDto? layout;
-        lock (_gate)
-        {
-            layout = _pending;
-            _pending = null;
-        }
-
-        if (layout is null)
-        {
-            return;
-        }
-
-        // Timer 回调里的异常无人处理会拖垮进程，写入失败必须就地吞掉记日志
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(layout, SerializerOptions));
-        }
-        catch (Exception exception)
-        {
-            Logger.Warning($"Failed to write layout configuration ({exception.GetType().Name}): {FilePath}",
-                nameof(LayoutPersistence));
-        }
+        _file.Delete();
     }
 }

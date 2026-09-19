@@ -35,24 +35,28 @@ FrameworkApplication.RunStartupSequenceAsync（Core/Framework）
         ModuleText=FormatModuleText(...), ErrorMessage=failure.ErrorMessage
   → 用户点击"继续"/"退出"按钮（绑定 ContinueCommand/ExitCommand）
   → Publish StartupFailureActionEvent(StartupFailureAction.Continue|Exit)
-  → 启动序列 WaitForFailureActionAsync 收到决策，跳过该模块继续或终止应用
+  → 启动序列已先订阅 WaitForFailureActionAsync，再发布失败事件；收到决策后跳过该模块或终止应用
+      → 失败批次贡献不进入 Shell；依赖该模块的后续模块也进入失败决策，不继续初始化
 ```
 
-### 贡献链（进入工作区后）
+### 贡献链（显示工作区前完成准备）
 
 ```
 DashBoardModule.RegisterTypes（DashBoardModule.cs:8-14）
   → `RegisterToolViews(typeof(DashBoardModule).Assembly)`（第 12 行，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）扫描程序集内 `[ToolView]` 类——当前无，注册为空；
-    另注册 1 个 `IStatusBarItemContribution` 单例（第 13 行）
-  → ShellContributionCollector（Core/Framework）收集：状态栏项按 Order 排序
+    另经 `RegisterShellContribution<IStatusBarItemContribution, DashBoardStatusBarItem>()` 登记状态栏贡献工厂
+  → 启动序列在模块 Load 完成后回到 UI 线程，ShellContributionCatalog.Prepare 构造本批贡献，成功后提交批次
+  → Ready 前准备 Shell 集合；ShellContributionCollector 只收集可见批次，状态栏项按 Order 排序
   → shell 渲染：状态栏出现"启动台"条目（位于"就绪"之后）
 ```
+
+启动失败范围：模块 RegisterTypes/OnInitialized 与贡献工厂准备的异常均归当前模块，拒绝其批次后由启动台呈现；普通 DI 注册、事件订阅及其他副作用不随批次回滚。宿主无批次贡献与最终 Shell 准备失败属于整体启动失败，详见 [Framework/common.md](../../Core/Framework/common.md)。
 
 副作用与状态修改：ViewModel 只修改自身四个可观察属性；`StartupFailureActionEvent` 的发布是仅有的对外副作用；模块不持有任何可变共享状态。
 
 ## 常见修改场景
 
-1. **要加一个新的 shell 工具视图（如面板 tab，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）**：不用新建贡献类——新建 `UserControl` View 并在类上标 `[ToolView("dashboard.xxx", typeof(DashBoardResources), nameof(DashBoardResources.NewTitle), Icon = Icons.Xxx, Default = ToolViewPlacement.BottomPanel, Order = n)]`（模块内当前无实例；机制见 [ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）；`RegisterTypes` 的 `RegisterToolViews` 行已保留，扫描时自动生成 `ToolViewContribution` 元数据并把 View 注册进容器，无需加行。主视图/状态栏贡献仍走接口：实现 `IMainViewContribution`/`IStatusBarItemContribution` 并在 `RegisterTypes` 加一行 `RegisterSingleton`（现存实例：`DashBoardStatusBarItem`）。标题与图标分别在 Modules/DashBoard/Resources 的 `DashBoardResources` 与 Core/UIPackage 的 `Icons` 中新增。
+1. **要加一个新的 shell 工具视图（如面板 tab，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）**：不用新建贡献类——新建 `UserControl` View 并在类上标 `[ToolView("dashboard.xxx", typeof(DashBoardResources), nameof(DashBoardResources.NewTitle), Icon = Icons.Xxx, Default = ToolViewPlacement.BottomPanel, Order = n)]`（模块内当前无实例；机制见 [ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）；`RegisterTypes` 的 `RegisterToolViews` 行已保留，扫描时自动生成 `ToolViewContribution` 元数据并把 View 注册进容器，无需加行。主视图/状态栏贡献仍走接口：实现 `IMainViewContribution`/`IStatusBarItemContribution` 并在 `RegisterTypes` 调 `RegisterShellContribution<TContribution, TImplementation>()`（现存实例：`DashBoardStatusBarItem`）。贡献工厂由启动批次在 UI 线程准备，成功后才对 Shell 可见；直接 `RegisterSingleton<TContribution, TImplementation>()` 不会进入贡献目录。标题与图标分别在 Modules/DashBoard/Resources 的 `DashBoardResources` 与 Core/UIPackage 的 `Icons` 中新增。
 2. **要改启动台的显示内容/行为**：进度文案映射在 `DashBoardWindowViewModel.OnProgress`（DashBoardWindowViewModel.cs:41-47）的 switch 与 `FormatModuleText`（第 61 行，格式 `$"{moduleName}（{index}/{count}）"`，全角括号）；失败呈现逻辑在 `OnModuleFailed`（第 53 行）；布局在 `Views/Windows/DashBoardWindow.axaml`（错误区是第 19-31 行的 `Border`，`IsVisible="{Binding IsFailed}"`）。新增绑定属性用 `[ObservableProperty]`，新增按钮动作用 `[RelayCommand]` 私有方法（命令属性名 = 方法名 + "Command"）。
 3. **要让启动台窗口在启动后也能再次打开**：当前没有通路（原"文件菜单打开启动台"项与同名命令面板的菜单/命令贡献已删除）。加回方式：菜单——新建 `[MenuGroup]` 菜单类加 `[MenuItem]` 方法调 `IWindowManager.ShowWindow<DashBoardWindow>()`，并在 `RegisterTypes` 补一行 `RegisterMenus(Assembly)`；命令——方法标 `[Command]` 并补 `RegisterCommands(Assembly)` 行（参照 Modules/Workstation 的 `ViewCommands`）。
 4. **要改模块注册的内容**：全部集中在 `DashBoardModule.RegisterTypes`（DashBoardModule.cs:8-14）。注意不要在 `OnInitialized` 里加开窗逻辑——启动台由启动序列负责（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)，见 pitfalls.md）。

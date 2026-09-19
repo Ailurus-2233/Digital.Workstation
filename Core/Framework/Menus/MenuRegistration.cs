@@ -1,4 +1,5 @@
 using System.Reflection;
+using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Abstractions.Menus;
 using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Resource;
@@ -9,7 +10,7 @@ namespace DigitalWorkstation.Core.Framework.Menus;
 ///     attribute 菜单注册：扫描程序集中标注 <see cref="MenuGroupAttribute" /> 的类，
 ///     把菜单类注册为 singleton，并为每个合法的 <see cref="MenuItemAttribute" /> 方法
 ///     生成一个 <see cref="IMenuItemContribution" /> 实现注册进容器（ADR-0001 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）。
-///     扫描只在模块注册时发生一次；菜单类实例在 shell 建树时经容器解析一次，之后复用
+///     扫描只在模块注册时发生一次；菜单类实例在启动准备时经容器解析一次，之后复用
 /// </summary>
 public static class MenuRegistration
 {
@@ -61,7 +62,7 @@ public static class MenuRegistration
             registry.RegisterSingleton(menuType);
             foreach (var (method, item) in valid)
             {
-                registry.RegisterSingleton(typeof(IMenuItemContribution),
+                registry.RegisterShellContribution<IMenuItemContribution>(
                     provider => new ReflectedMenuItemContribution(provider.Resolve(menuType), method, item, group));
             }
         }

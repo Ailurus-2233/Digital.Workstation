@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using DigitalWorkstation.Core.Abstractions.Settings;
 using DigitalWorkstation.Core.Common;
+using DigitalWorkstation.Core.Framework.Persistence;
 using DigitalWorkstation.Core.Models.Events;
 
 namespace DigitalWorkstation.Core.Framework.Settings;
@@ -9,12 +10,13 @@ namespace DigitalWorkstation.Core.Framework.Settings;
 /// <summary>
 ///     设置服务（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4）：%AppData%/Digital.Workstation/settings.json 的读/防抖写。
 ///     启动时经 <see cref="Load" /> 一次性加载入内存；<see cref="Get{T}" /> 纯内存读
-///     （未修改时回退声明的默认值，默认值经容器中的 SettingItemContribution 惰性按 Id 缓存）；
+///     （未修改时回退声明的默认值，有效声明由 SettingCatalog 与设置页共享）；
 ///     <see cref="Set{T}" /> 更新内存 + 防抖落盘 + 广播 SettingChangedEvent。
 ///     读容错仿 LayoutPersistence：文件缺失/损坏一律按无修改处理，只记日志不打断应用。
 ///     默认值的容器解析假定 UI 线程调用（与 ShellContributionCollector 同约定）
 /// </summary>
-public sealed class SettingsService(IEventAggregator eventAggregator, IContainerProvider containerProvider)
+public sealed class SettingsService(IEventAggregator eventAggregator, SettingCatalog catalog,
+    ConfigurationPersistence persistence)
     : ISettingsService
 {
     /// <summary>
@@ -23,8 +25,6 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
     public static readonly string FilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "Digital.Workstation", "settings.json");
-
-    private const int DebounceMilliseconds = 500;
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -40,12 +40,6 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
     private readonly Dictionary<string, JsonElement> _values = new(StringComparer.Ordinal);
 
     /// <summary>
-    ///     设置项声明的惰性缓存：按 Id 缓存，缓存未命中时重新枚举容器
-    ///     （启动早期模块设置项尚未注册，不能一次性定死）
-    /// </summary>
-    private readonly Dictionary<string, SettingItemContribution> _declared = new(StringComparer.Ordinal);
-
-    /// <summary>
     ///     进程启动时的生效值快照（Load 载入内容的副本）：「重启后生效」判定的基准，
     ///     快照不含的项以声明默认值为基准（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
     /// </summary>
@@ -56,7 +50,8 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
     /// </summary>
     private readonly HashSet<string> _pendingRestartIds = new(StringComparer.Ordinal);
 
-    private System.Threading.Timer? _timer;
+    private readonly DebouncedJsonFile<Dictionary<string, JsonElement>> _file =
+        persistence.CreateFile<Dictionary<string, JsonElement>>(FilePath, SerializerOptions);
 
     /// <summary>
     ///     启动时一次性加载 settings.json 入内存；文件缺失/损坏记 Warning 后按无修改处理
@@ -137,8 +132,7 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
         {
             var element = JsonSerializer.SerializeToElement(value, SerializerOptions);
             _values[settingId] = element;
-            _timer ??= new System.Threading.Timer(Flush, null, Timeout.Infinite, Timeout.Infinite);
-            _timer.Change(DebounceMilliseconds, Timeout.Infinite);
+            _file.ScheduleSave(new Dictionary<string, JsonElement>(_values, StringComparer.Ordinal));
             TrackPendingRestart(settingId, element, contribution);
         }
 
@@ -174,64 +168,5 @@ public sealed class SettingsService(IEventAggregator eventAggregator, IContainer
         }
     }
 
-    /// <summary>
-    ///     按 Id 查设置项声明；未命中时重新枚举容器中的全部声明刷新缓存
-    ///     （模块在启动序列阶段 2 才注册各自设置项，缓存必须允许后到的声明）
-    /// </summary>
-    private SettingItemContribution? FindContribution(string settingId)
-    {
-        if (_declared.TryGetValue(settingId, out var cached))
-        {
-            return cached;
-        }
-
-        foreach (var contribution in containerProvider.Resolve<IEnumerable<SettingItemContribution>>())
-        {
-            _declared[contribution.Id] = contribution;
-        }
-
-        return _declared.GetValueOrDefault(settingId);
-    }
-
-    /// <summary>
-    ///     立即落盘：作废在途的防抖保存并同步写入。
-    ///     「立即重启」启动新进程前调用——防抖有 500ms 窗口，不强制落盘新进程可能读到不含本次修改的旧配置
-    /// </summary>
-    public void FlushPending()
-    {
-        lock (_gate)
-        {
-            _timer?.Change(Timeout.Infinite, Timeout.Infinite);
-        }
-
-        Save(TakeSnapshot());
-    }
-
-    private void Flush(object? state)
-    {
-        Save(TakeSnapshot());
-    }
-
-    private Dictionary<string, JsonElement> TakeSnapshot()
-    {
-        lock (_gate)
-        {
-            return new Dictionary<string, JsonElement>(_values, StringComparer.Ordinal);
-        }
-    }
-
-    // Timer 回调（Flush）里的异常无人处理会拖垮进程，写入失败必须就地吞掉记日志（同 LayoutPersistence.Flush）
-    private static void Save(Dictionary<string, JsonElement> snapshot)
-    {
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(snapshot, SerializerOptions));
-        }
-        catch (Exception exception)
-        {
-            Logger.Warning($"Failed to write settings configuration ({exception.GetType().Name}): {FilePath}",
-                nameof(SettingsService));
-        }
-    }
+    private SettingItemContribution? FindContribution(string settingId) => catalog.Find(settingId);
 }
