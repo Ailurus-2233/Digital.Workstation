@@ -1,5 +1,3 @@
-using System;
-
 namespace DigitalWorkstation.Core.Abstractions.WindowManager;
 
 /// <summary>

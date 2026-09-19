@@ -19,7 +19,7 @@ public static class WindowManagerExtenstion {
     /// <returns>
     /// 从容器中解析得到的窗口实例
     /// </returns>
-    public static Window? GetWindow<TWindow>(this IWindowManager manager) where TWindow : Window {
+    public static Window GetWindow<TWindow>(this IWindowManager manager) where TWindow : Window {
         return manager.GetWindow(typeof(TWindow));
     }
     
