@@ -13,8 +13,8 @@ public static class WorkstationResources
     /// <summary>主页已加载模块区域标题。</summary>
     public static string HomeLoadedModulesTitle => ResourceText.Get(typeof(WorkstationResources), nameof(HomeLoadedModulesTitle));
 
-    /// <summary>主页模块说明区域标题。</summary>
-    public static string HomeModuleDescriptionTitle => ResourceText.Get(typeof(WorkstationResources), nameof(HomeModuleDescriptionTitle));
+    /// <summary>主页已加载插件区域标题。</summary>
+    public static string HomeLoadedPluginsTitle => ResourceText.Get(typeof(WorkstationResources), nameof(HomeLoadedPluginsTitle));
 
     /// <summary>主页系统核心分组标题。</summary>
     public static string HomeCoreTitle => ResourceText.Get(typeof(WorkstationResources), nameof(HomeCoreTitle));
@@ -24,6 +24,9 @@ public static class WorkstationResources
 
     /// <summary>主页未加载模块时的提示。</summary>
     public static string HomeNoModules => ResourceText.Get(typeof(WorkstationResources), nameof(HomeNoModules));
+
+    /// <summary>主页未加载插件时的提示。</summary>
+    public static string HomeNoPlugins => ResourceText.Get(typeof(WorkstationResources), nameof(HomeNoPlugins));
 
     /// <summary>
     ///     关于窗口标题

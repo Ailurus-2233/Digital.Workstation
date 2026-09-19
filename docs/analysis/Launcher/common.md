@@ -56,5 +56,9 @@ Program.Main(args)                                     [Program.cs:13]
 1. **新增一个启动早期就要用的程序集**（如在 `InitializeCore` 里要用某个库）：把它的相对路径加进 `BootRequiredAssemblyFiles`（AssemblyLoader.cs:23-31），保证 `AssemblyResolve` 注册前已被 `LoadFile` 预加载；否则该程序集的依赖解析可能发生在引导完成前而失败。
 2. **接入一个新的含 native 资产的第三方包**（如新图像库）：若它在 Avalonia 加载之后才使用，在 `RegisterNativeResolversForAvalonia`（AssemblyLoader.cs:323-333）里加一行 `NativeLibrary.SetDllImportResolver(typeof(新包某类型).Assembly, ResolveNativeLibrary)`；若 DllImport 名与磁盘文件名不一致，检查 `NativeFilePatterns`（AssemblyLoader.cs:428-435）是否覆盖该命名（Windows `name.dll`、macOS `libname.dylib`、Linux `libname.so`）。
 3. **更换/包装启动的应用类型**：改 `Launcher.BuildAvaloniaApp()`（Launcher.cs:66-73）中 `AppBuilder.Configure<WorkstationApplication>()` 的泛型实参与链式配置；注意保持 `RunAvalonia` 的 `NoInlining` 拆分结构不变。
-4. **调整 Release 发布目录分类**（如新增 `plugins/` 目录）：改 `Build/ManageDlls.targets` 的分类逻辑，同时必须把新目录加进 `BaseFolderPath`（AssemblyLoader.cs:36-43）并给出合适的子目录递归深度，否则运行时解析找不到。
+4. **调整宿主 Release 发布目录分类**：同步 Build/ManageDlls.targets 与 BaseFolderPath。插件是独立边界：plugins/ 由 Framework 的 PluginDiscovery/PluginLoadContext 管理，不能加入宿主搜索路径或 PATH，否则会打破私有依赖归属。
 5. **处理启动参数**：`args` 从 `Program.Main` 原样透传到 `StartWithClassicDesktopLifetime(args)`（Launcher.cs:63）；要拦截参数应在 `Launcher.Run`（Launcher.cs:45-49）里 `Logger.Information` 之后、进入 `RunAvalonia` 之前处理，避免在 `Main` 里直接引用 Avalonia 类型。
+
+## 插件与宿主解析边界
+
+Launcher 的构建引用自动纳入 Plugins 下项目，但 ReferenceOutputAssembly=false，不建立运行时插件声明。Release 的插件目录不进入宿主 AssemblyLoader 搜索范围、PATH 或 native 预加载。宿主解析器忽略插件上下文发起的请求，并在全局已加载程序集查询中排除插件私有程序集；插件私有依赖由 Framework 独立解析。宿主 LoadFile 引导不变，公共程序集共享必须复用其实际 Assembly 实例，不能假定都在 Default 上下文。

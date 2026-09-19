@@ -58,3 +58,9 @@
 | **有效设置目录（SettingCatalog）** | 按 Id 首个生效的设置项与分组解释，设置服务和页面共享 | Settings/SettingCatalog.cs |
 | **布局配置投影** | ShellLayoutConfiguration 在独立 DTO 与 State 之间转换，不读取 UI 集合 | Layout/ShellLayoutConfiguration.cs |
 | **共享布局尺寸** | ShellLayoutMetrics 为卡片模板和列宽提供同一外边距来源 | Layout/ShellLayoutMetrics.cs |
+
+## 插件相关术语
+
+- **插件（Plugin）**：领域定义见根 CONTEXT.md；技术入口为标记 PluginAttribute 的 IModule。
+- **插件加载上下文（PluginLoadContext）**：Release 中一个插件私有依赖的解析与缓存范围，进程内常驻；公共契约共享宿主实际程序集。
+- **共享程序集清单**：Build/PluginSharedAssemblies.txt 的简单名/前缀规则，构建排除副本与运行时共享同源。

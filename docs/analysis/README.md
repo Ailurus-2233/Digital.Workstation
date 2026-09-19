@@ -41,6 +41,7 @@
 | Modules/DashBoard | [Modules/DashBoard/](Modules/DashBoard/common.md) | 启动进度窗（进度/失败/继续退出决策）与启动台状态栏贡献；私有文案在 `Resources/DashBoardResources.*` | Abstractions、Framework、Resource、UIPackage |
 | Modules/Settings | [Modules/Settings/](Modules/Settings/common.md)（源码同步入口） | 设置页模块：普通 MainContent 主视图（分组树 + 枚举编辑器）；按贡献者的资源类型解析分组、设置项和选项；重启 UX 文案在 `Resources/SettingsResources.*` | Abstractions、Framework、Resource、UIPackage |
 | Modules/Workstation | [Modules/Workstation/](Modules/Workstation/common.md) | 应用宿主与 shell：`MainWindow` VS Code 式五区布局、`MainWindowViewModel` 驱动布局状态（含命令收集与手势 KeyBinding 接线，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)；ActivityBar 左下角"设置"纯导航按钮，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6）、`WorkstationApplication` 入口、shell 预置贡献 | Framework、Resource、UIPackage、DashBoard、Settings |
+| Plugins/Sample | [Plugins/Sample/](Plugins/Sample/common.md)（源码同步入口） | 自动发现的 IModule 插件样例，提供状态栏提示与中英文资源 | Abstractions、Framework、Resource、UIPackage |
 | Launcher | [Launcher/](Launcher/common.md) | 程序入口与运行时引导器（WinExe）：Release 分类目录布局的程序集/native 库解析（`AssemblyLoader`）+ 启动 Avalonia/Prism 应用 | Workstation |
 
 另有 `UnitTest/Framework`（xUnit 测试项目，仅测 `ShellLayoutState`，引用 Framework），不是被索引模块；其内容见 [Core/Framework/testing.md](Core/Framework/testing.md)。
@@ -145,3 +146,7 @@ graph TD
 3. [Core/Framework/common.md](Core/Framework/common.md)：`ShellContributionCollector` 与 `SettingsService` 共用 `SettingCatalog`：设置项按 Id 保留首个当前可见声明，再排序；服务不缓存另一份声明。分组按稳定 Id 合并，同 Id 保留首份名称/资源来源、Order 取最小，仅有效设置项引用的未声明分组才补出并显示 Id、位次为 0。不同 Id 即使使用相同资源键也不合并。值继续经 `ISettingsService` 读写，不读取声明锚点属性值。
 4. [Modules/Settings/common.md](Modules/Settings/common.md)：页面注册、编辑器与重启状态的入口。`Modules/Settings/ViewModels/SettingGroupModel.cs` 的 `Key` 保存分组 ID，`Name` 按贡献的 `ResourceType`/`Name` 解析；`SettingItemModel` 与 `EnumSettingItemModel` 同样使用贡献者资源类型，缺键显示键名。设置页自己的重启标记、横幅、按钮使用 `Modules/Settings/Resources/SettingsResources.*`，不是 Framework 的语言设置名称资源。
 5. 验证：分别以中文、英文启动应用，打开「文件 → 首选项」，检查分组、设置项、枚举选项与重启横幅；语言仍是需重启设置，当前进程不热更新。既有设置文件中的语言设置项 ID 不变。
+
+### 9. 新增自动发现插件
+
+先读 [ADR-0007](../adr/0007-startup-plugin-loading.md)、[Abstractions 插件契约](Core/Abstractions/api.md)、[Framework 插件启动](Core/Framework/common.md)，再看 [Sample](Plugins/Sample/common.md)。入口实现 IModule 并标记 PluginAttribute；源码放 Plugins/<项目名>/。Launcher 的构建引用自动纳入插件项目，运行时无需 AddModule。Release 私有依赖与 .deps.json 保存在 plugins/<项目名>/，共享名单与构建过滤见 [Launcher/reference.md](Launcher/reference.md)。手动验证见 [Framework/testing.md](Core/Framework/testing.md)。

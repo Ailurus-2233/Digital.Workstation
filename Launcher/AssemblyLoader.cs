@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Loader;
 
 namespace DigitalWorkstation.Launcher;
 
@@ -210,6 +211,8 @@ public sealed class AssemblyLoader
     /// </summary>
     private Assembly? ResolveAssembly(object? sender, ResolveEventArgs args)
     {
+        // Plugin contexts own private dependencies; do not supply a global fallback.
+        if (args.RequestingAssembly is { } requesting && IsPluginAssembly(requesting)) return null;
         var assemblyName = new AssemblyName(args.Name).Name;
         if (string.IsNullOrWhiteSpace(assemblyName)) return null;
         if (assemblyName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) return null;
@@ -236,6 +239,7 @@ public sealed class AssemblyLoader
     {
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
+            if (IsPluginAssembly(asm)) continue;
             var name = asm.GetName().Name;
             if (name == null || !name.Equals(assemblyName, StringComparison.OrdinalIgnoreCase)) continue;
             _resolvedCache[assemblyName] = asm;
@@ -243,6 +247,16 @@ public sealed class AssemblyLoader
         }
 
         return null;
+    }
+
+    private static bool IsPluginAssembly(Assembly assembly)
+    {
+        if (AssemblyLoadContext.GetLoadContext(assembly)?.Name?.StartsWith(
+                "DigitalWorkstation.Plugin:", StringComparison.Ordinal) == true) return true;
+        if (assembly.IsDynamic || string.IsNullOrEmpty(assembly.Location)) return false;
+        var relative = Path.GetRelativePath(Path.Combine(BaseDirectory, "plugins"), assembly.Location);
+        return !Path.IsPathRooted(relative) && relative != ".." &&
+               !relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal);
     }
 
     private Assembly? ResolveAssemblyFromSearchPaths(string assemblyName)

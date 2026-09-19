@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
@@ -11,6 +11,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Modules\Workstation\Workstation.csproj"/>
+        <!-- 只建立构建依赖：dotnet run/F5 会构建插件，宿主仍通过扫描发现入口 -->
+        <ProjectReference Include="..\Plugins\**\*.csproj"
+                          Exclude="..\Plugins\**\obj\**;..\Plugins\**\bin\**"
+                          ReferenceOutputAssembly="false" Private="false"
+                          PrivateAssets="all" ExcludeAssets="all" />
     </ItemGroup>
 </Project>
-        

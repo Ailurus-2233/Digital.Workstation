@@ -3,7 +3,9 @@
 ## 隐含不变量
 
 - **主页依赖在 ViewModel 注入**：`EmptyStateView()` 保持公开无参构造，避免 AVLN3001；通过 Prism AutoWireViewModel 和既有命名规则找到 `ViewModels.EmptyStateViewModel`。不要把 IModuleCatalog 再移回 View 构造，也不要用全局容器查找代替注入。ViewModel 构造不读取加载清单：启动时 Prism 尚未完成初始化，读取放在 View 挂载时调用的 Refresh。
-- **刷新清空模型名称及树选择**：Refresh 显式清空 SelectedModuleName，View 清空 SelectedItem，右侧通过绑定更新；不能只依赖给已为空的 SelectedItem 再赋 null 触发事件。分组选中对象是 TreeViewItem，只有字符串叶子才是模块名称，由 View 将其映射给模型；模型不依赖 Avalonia 控件类型。区域标题不随选择或折叠清空。
+- **主页分类使用实际类型与初始化状态**：仅处理 `ModuleState.Initialized` 的模块目录项，以已加载程序集完整身份解析 `ModuleType` 后检查宿主 `[Plugin]` 标记。Debug 插件也在默认加载上下文，不能按路径或上下文名称分类；不要改成默认 `Type.GetType` 导致 Release 插件解析丢失或再次加载 DLL。
+- **主页条目是快照，不是导航状态**：三个列表元素均为 `LoadedComponentItem`，统一模板绑定 `Name` 与 `Description`，不是字符串叶子。挂载只清空树选择并刷新列表；右侧插件列表独立于左侧选择，不把树事件接入 Shell 状态或配置。
+- **悬浮说明保留真实来源**：`AssemblyDescriptionAttribute` 非空时使用声明值，否则回退程序集或入口类型身份。模块目录与插件标记没有业务描述字段，不应从名称推测说明；程序集描述本身不由 Workstation 的资源系统翻译。
 - **贡献收集只发生一次且晚于模块准备**：VM 构造不收集，由 PrepareShell → PrepareContributions 在 Ready 前调用 EnsureContributionsLoaded；只有成功末尾才设置标志。启动后动态增加贡献不会自动重建 Shell。
 - **State 是布局事实来源**：所有布局转换结果交 ApplyLayout，同步宿主、四个集合、高亮与配置。PanelAlignment 仍在 State 外，但也由同一出口协调；不得新增局部 State=next + Sync 路径。
 - **UI 线程亲和**：全部事件订阅（:48-51）、`ToolViewDragSession.ActiveChanged` 订阅（:53）、命令、集合变更都假定 UI 线程；模块从后台线程发布 `OpenMainViewEvent` 时由 Prism 事件聚合器的线程选项决定（默认订阅在发布线程执行——本模块订阅未指定 `ThreadOption`，发布方若在后台线程会直接碰 `ObservableCollection`，调用方责任）。

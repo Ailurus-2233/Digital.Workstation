@@ -1,6 +1,6 @@
-# Abstractions — 对外接口与调用方式
+﻿# Abstractions — 对外接口与调用方式
 
-命名空间六组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Commands`（Commands/ 目录，命令契约 + 注册 attribute 两类型，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，`ShellRegions` 与 `WellKnownViews` 两个常量类）、`DigitalWorkstation.Core.Abstractions.Settings`（Settings/ 目录，设置分组/设置项两 attribute + 两元数据类 + `ISettingsService`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。全部为 `public`；项目无 internal 类型。
+命名空间七组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Commands`（Commands/ 目录，命令契约 + 注册 attribute 两类型，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，`ShellRegions` 与 `WellKnownViews` 两个常量类）、`DigitalWorkstation.Core.Abstractions.Settings`（Settings/ 目录，设置分组/设置项两 attribute + 两元数据类 + `ISettingsService`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。另有 `DigitalWorkstation.Core.Abstractions.Plugins`（插件入口标记，见下）。全部为 `public`；项目无 internal 类型。
 
 文本声明必须显式携带资源所属类型 `ResourceType`，不依赖全局资源类，也不从声明方法/视图类型推断来源；例外是只引用既有菜单路径的 `MenuGroupAttribute(string path)`，它不声明标题、没有资源来源。资源类型全名与程序集定位其 `.resx`；查找机制为 Core/Resource 的 `ResourceText.Get(Type, string)`，按 `CurrentUICulture` 查询、回退中性中文，缺键返回键名。这里只保存契约，不引用资源程序集。工具视图在扫描时解析，菜单/命令在贡献 singleton 首次解析时解析，设置保留来源与键到设置页构造时解析；切换语言下次启动生效。
 
@@ -282,3 +282,20 @@ shell 与模块共同知晓的主视图 Id 常量（[ADR-0006](https://github.co
 - **贡献契约**：无主动调用方 API。接口类贡献（`IMainViewContribution`/`IStatusBarItemContribution`）由模块实现接口并在 `Prism.Ioc.IContainerRegistry` 以接口注册（生命周期由模块注册方式决定），shell 收集消费；工具视图/菜单/命令/设置例外——模块在 `RegisterTypes` 分别调 `RegisterToolViews(Assembly)`（View 类标 `ToolViewAttribute`）、`RegisterMenus(Assembly)`（菜单类标 `MenuGroupAttribute`/`MenuItemAttribute`）、`RegisterCommands(Assembly)`（方法标 `CommandAttribute`，免类级标记）、`RegisterSettings(Assembly)`（类标 `SettingGroupAttribute`、公共静态可读属性标 `SettingItemAttribute`），由 Framework 侧扫描生成 `ToolViewContribution` 元数据/`IMenuItemContribution`/`ICommandContribution` 实现/`SettingGroupContribution`/`SettingItemContribution` 元数据并注册；设置值读写则由消费方注入 `ISettingsService` 调 `Get<T>`/`Set<T>`。本模块内无调用点——本程序集是纯定义层，典型调用序列发生在 shell/Framework 与其他模块（不在本模块范围）。
 - **窗口管理**：调用方注入 `IWindowManager`/`IMainWindowManager`，调 `ShowWindow<MyDialog>(vm)` 这类泛型扩展或直接 `ShowWindow(typeof(MyDialog), vm)`。窗口实例来源是 DI 容器（`GetWindow` 注释：「从容器中解析得到的窗口实例」）。
 - **数据结构**：本模块不定义任何 DTO/记录类；对外数据完全由上述接口属性承载，字段语义见上。
+
+## 插件发现契约（Plugins/）
+
+`PluginAttribute` 是无参、不可继承、不可重复的类级标记。入口须为 public、非 abstract、无开放泛型参数且实现 Prism `IModule` 的类；一个 DLL 只能有一个标记入口，Release 的每个插件文件夹也只能有一个入口。插件入口的类型全名是启动身份。插件入口类型全名和主程序集简单名分别必须全局唯一；冲突的所有候选都会失败。
+
+`string[] DependsOn { get; set; } = []` 声明显式内置模块的 `ModuleName`，名称按 Ordinal 匹配。可省略；不可包含空白名称；不支持依赖其他插件。宿主先完成所有内置模块，再检查依赖可用性并启动插件。例：
+
+```csharp
+[Plugin(DependsOn = new[] { "SettingsModule" })]
+public sealed class DevicePlugin : IModule
+{
+    public void RegisterTypes(IContainerRegistry registry) { }
+    public void OnInitialized(IContainerProvider provider) { }
+}
+```
+
+标记仅参与发现，不自动扫描菜单、工具视图或设置；插件仍在 RegisterTypes 调对应贡献登记方法。发现和私有程序集解析机制见 ../Framework/common.md。

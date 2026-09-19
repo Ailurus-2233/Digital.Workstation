@@ -14,4 +14,16 @@ dotnet run --project Launcher/Launcher.csproj -c Debug
 
 一次性诊断已通过重置主视图 ID/对象一致、空宿主清理、跨区移动/重置期间对象宿主唯一和配置往返顺序；诊断没有真实可视树，拖拽、焦点、边距与窗口效果仍需目验。
 
-其他受影响的常用路径：主页模块树刷新清空选择与说明；文件菜单退出、帮助关于；macOS 原生菜单与其他平台标题栏菜单；命令面板过滤、上下导航、Enter/Esc、快捷键标签。按实际修改平台检查，不把编译成功视为 UI 已验收。
+其他受影响的常用路径：主页挂载刷新模块与插件快照并清空树选择；文件菜单退出、帮助关于；macOS 原生菜单与其他平台标题栏菜单；命令面板过滤、上下导航、Enter/Esc、快捷键标签。按实际修改平台检查，不把编译成功视为 UI 已验收。
+
+## 主页模块与插件列表
+
+以下步骤需在 Debug 和 Release 各执行一次；Debug 使用上方启动命令，Release 使用 `dotnet run --project Launcher/Launcher.csproj -c Release`。
+
+1. 保留示例插件并启动应用。主页左侧“系统核心”“自定义模块”包含相应 Core 程序集及 DashBoard、Settings，左侧不出现 `SamplePlugin`；右侧标题为“已加载插件”，当前示例仅显示一个 `SamplePlugin`。两栏按 1:1 等宽，中间间距为 16px。
+2. 鼠标分别悬停 Core、内置模块和插件条目，均出现说明提示。当前未声明程序集描述时，Core 显示程序集完整身份，模块显示入口类型全名，示例插件显示 `DigitalWorkstation.Sample.SamplePlugin`；具有非空 `AssemblyDescriptionAttribute` 的条目应显示声明值。
+3. 点击左侧不同叶子或分组，右侧插件列表保持；打开首选项后用“回到主页”返回，树选择清空、列表重新取快照，面板显隐、尺寸和对齐不变。
+4. 将应用语言设为英文并重启。右侧标题显示 `Loaded plugins`，插件名和身份提示保持原值；移除插件后的空提示应为 `No plugins loaded`。程序集自带描述沿用声明内容，不要求随界面语言改变。
+5. 关闭应用，临时移走 Debug 根目录的 `DigitalWorkstation.Sample.dll` 或 Release 的整个 `plugins/Sample` 目录。直接运行现有 `Output/Debug/Launcher.exe` 或 `Output/Release/Launcher.exe`，避免构建将插件复制回来；主页右侧显示“暂无已加载的插件”（英文为上述空提示），左侧仍正常，状态栏无示例插件条目。关闭后恢复文件，再运行现有程序，右侧插件项及状态栏提示恢复。
+
+本轮插件加载与主页展示已由用户确认验收通过。Debug/Release 编译均通过（0 警告、0 错误）；等宽调整因运行中应用占用正常输出，使用临时输出目录完成 Debug 编译检查。

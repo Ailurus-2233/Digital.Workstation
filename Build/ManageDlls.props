@@ -1,5 +1,5 @@
 <Project>
-    <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ItemDefinitionGroup Condition="'$(Configuration)'=='Release' and '$(_InPlugins)' != 'true'">
         <ProjectReference>
             <Private>false</Private> <!-- 对项目引用关闭复制 -->
         </ProjectReference>

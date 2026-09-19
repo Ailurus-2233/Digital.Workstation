@@ -82,3 +82,7 @@ LayoutPersistence.Load 保留文件缺失静默返回 null、空内容/未知版
 - Contribution registration for ... is closed：模块在完成 RegisterTypes 或被拒绝后仍有后台登记，修正模块登记时机。
 - 宿主基础贡献、PrepareShell 建树/布局恢复失败：Ready 尚未发布，按序列级 Fatal 退出。该路径不假装成某个可跳过模块。
 - 重复设置 Id：SettingCatalog 英文 Warning 指出被丢弃的后到声明。服务默认值、页面编辑器与重启属性保持首个有效声明；检查跨模块 Id，不通过读取其他 Id 刷新缓存。
+
+## 插件发现与准备失败
+
+PluginDiscovery 将已识别插件的非法入口、重复身份与程序集加载失败作为 Error 返回；Framework 将其与初始化/贡献准备异常统一发布 ModuleLoadFailedEvent，等待 Continue/Exit。DependsOn 引用了非内置模块名称，或所需内置模块不在 availableModules 中，也在插件自己的启动项失败。Continue 拒绝贡献批次，不撤销其他副作用。根目录无插件、普通依赖 DLL 不含标记时不构成模块失败。

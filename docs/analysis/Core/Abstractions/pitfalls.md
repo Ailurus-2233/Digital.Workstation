@@ -1,4 +1,4 @@
-# Abstractions — 不变量与陷阱
+﻿# Abstractions — 不变量与陷阱
 
 ## 隐含不变量（全部仅由 XML 注释约定，代码无法强制）
 
@@ -36,3 +36,9 @@
 - `IWindowManagerExtenstion.cs` 类注释自称「窗口管理器扩展方法，提供泛型版本的窗口管理操作」，但文件名前缀是 `I`（`IWindowManagerExtenstion.cs`）而类名无 `I`——文件命名与类命名不一致，按文件名找接口会扑空。
 - 防御性线索：泛型扩展层用 `Window?` 返回（`GetWindow<TWindow>`），暗示历史上 `GetWindow(Type)` 实现确实返回过 null，接口的非空标注与实际行为脱节。
 - 注释中引用的 `Prism.Ioc.IContainerRegistry`、`ShellLayoutState`、`OpenMainViewEvent` 都不在本程序集（本模块未引用 Prism），`<see cref>` 无法解析——文档注释与程序集引用脱节，说明这些注释是写给实现侧读者的约定，不是编译期可验证的事实。
+
+## 插件入口约束
+
+- 实现 IModule 本身不会被扫描认作插件；入口类必须直接标记 PluginAttribute。标记不继承，也不代替入口类公共、可实例化、非开放泛型的要求。
+- DependsOn 使用内置模块目录中的 ModuleName，不是程序集名、插件类型全名或显示标题。插件间依赖当前被拒绝。
+- Release 插件应引用宿主共享的 Abstractions/Prism 实例；复制契约并在独立上下文加载会产生不同的接口身份，发现检查将拒绝入口。共享清单和私有依赖规则见 Framework 文档。

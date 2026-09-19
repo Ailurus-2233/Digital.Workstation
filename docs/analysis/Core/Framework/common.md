@@ -2,7 +2,7 @@
 
 ## 模块做什么
 
-Core/Framework 是 Digital.Workstation 桌面应用的**应用框架层**，位于抽象层（Abstractions/Common/Models/UIPackage）之上、业务模块（Modules/*）之下，提供七块能力：
+Core/Framework 是 Digital.Workstation 桌面应用的**应用框架层**，位于抽象层（Abstractions/Common/Models/UIPackage）之上、内置模块（Modules/*）与插件（Plugins/*）之下，提供七块能力：
 
 1. **应用引导与启动序列**：抽象基类 `FrameworkApplication<TWindow>`（`FrameworkApplication.cs:20`）继承 Prism.DryIoc 的 `PrismApplication`，装载主题、注册框架服务、执行"启动台 → 逐模块异步加载 → 显示主窗口"的三阶段启动序列（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）。
 2. **窗口管理实现**：`FrameworkWindowManager`（`WindowManager/FrameworkWindowManager.cs:12`）实现 Abstractions 定义的 `IWindowManager` 与 `IMainWindowManager`，维护"窗口类型 → 窗口实例"映射，负责窗口的显示/对话/隐藏/关闭与主窗口登记。
@@ -13,7 +13,7 @@ Core/Framework 是 Digital.Workstation 桌面应用的**应用框架层**，位�
 7. **设置注册与持久化**：`SettingRegistration.RegisterSettings` 扫调用方程序集一次，保存设置分组稳定 Id、显式资源来源与名称键，收集侧按 Id 合并（首个来源/名称生效、Order 取最小）。`SettingsService` 启动时 Load，读内存、未修改取声明默认值，写内存后防抖落盘并广播事件；它跟踪与启动值的偏离支撑重启标记。Framework 预置 `framework.general` 常规分组与语言项（zh-CN/en-US、需重启，LanguageSettingId 不变）；`ApplicationRestarter` 强制落盘后启动新进程并退出。
 
 ## 核心设计逻辑
-- **[ADR-0004](../../../adr/0004-startup-sequence.md) 启动序列**：保留三个覆盖以阻止 Prism 默认提前显示。模块按 CompleteListWithDependencies 的依赖顺序串行加载；每次 LoadModule 在后台执行，返回 UI 线程后准备本批贡献，全部成功才把模块加入可用集合。依赖不可用的模块进入相同失败决策，且不调用 LoadModule。宿主无批次贡献最后准备，PrepareShell 完成呈现后才发布 Ready 并显示主窗口。
+- **[ADR-0004](../../../adr/0004-startup-sequence.md) 启动序列**：保留三个覆盖以阻止 Prism 默认提前显示。内置模块按 CompleteListWithDependencies 的依赖顺序串行加载，之后加载自动发现的插件；每次 LoadModule 在后台执行，返回 UI 线程后准备本批贡献，全部成功才把模块加入可用集合。依赖不可用的模块进入相同失败决策，且不调用 LoadModule。宿主无批次贡献最后准备，PrepareShell 完成呈现后才发布 Ready 并显示主窗口。
 - **事件驱动的进度/失败协议**：启动与启动台仍只经 IEventAggregator 交流。失败时先拒绝贡献批次，再订阅一次性决策，然后发布 ModuleLoadFailedEvent，避免同步回复丢失。Continue 只继续加载其余独立模块；Exit 正常退出。隔离覆盖 Shell 贡献，不撤销普通 DI 注册、事件订阅或模块自行产生的其他副作用。
 - **不可变布局状态（reducer 模式）**：`ShellLayoutState` 是 `sealed record`，所有转换方法（`SelectActivity`、`ToggleSideBar`、`Resize` 等）返回新实例，非法操作（面板收起时激活 tab）返回等值状态（`return this`，见 `ShellLayoutState.cs:80、93`）。理由：布局状态单一来源、可单测（这正是 UnitTest/Framework 唯一测试对象的由来）、UI 只绑定状态不做决策；代价是每次转换产生新对象，但状态极小（五个嵌套 record），开销可忽略。
 - **一个窗口管理器实例注册两个接口**：`RegisterFrameworkServices`（`FrameworkApplication.cs:146`）中 `new FrameworkWindowManager()` 一次，`RegisterSingleton<IMainWindowManager>(() => windowManager)` 与 `RegisterSingleton<IWindowManager>(() => windowManager)` 共享同一实例（第 151-153 行）。理由：主窗口操作与普通窗口操作共享 `_windowMap` 与 `_mainWindow` 状态，拆成两个实例会出现状态分裂。
@@ -37,8 +37,9 @@ Core/Framework 是 Digital.Workstation 桌面应用的**应用框架层**，位�
 Framework 注册 ShellContributionCatalog、SettingCatalog、收集器和配置持久化 owner
   → 框架设置登记 → SettingsService.Load → 应用语言
   → 宿主登记贡献 → 创建 Shell（不收集）
-  → 显示启动台 → 校验模块目录与依赖排序
-  → 每模块 BeginBatch → 后台 LoadModule → UI 线程 Prepare
+  → 显示启动台 → 校验内置模块目录与依赖排序 → 后台发现插件
+  → 内置模块 BeginBatch → 后台 LoadModule → UI 线程 Prepare
+  → 插件 BeginBatch → 后台 RegisterTypes/OnInitialized → UI 线程 Prepare
       成功：关闭登记 → 构造本批所有贡献 → Commit → 记为可用
       失败：Reject → 先订阅决策再发布失败 → Continue / Exit
   → PrepareUnowned（宿主基础贡献）→ PrepareShell（布局/菜单/手势呈现）
@@ -61,3 +62,11 @@ ContributionBatch 经 AsyncLocal 传播到模块加载任务。构造器可以�
 8. **改 layout.json 格式**：同步 ShellLayoutDto、版本号、ShellLayoutConfiguration.Restore/Capture；Workstation 只提交状态和接线。当前仍为版本 1，旧数据兼容，不把 UI 集合当持久化事实来源。
 9. **要改命令面板行为**：交互在 `Windows/CommandPalette.cs`，样式在 `FrameworkWindowTheme.axaml`，水印与空态在 `Resources/FrameworkResources.*`；排序/去重改 `ShellContributionCollector.GetCommands`。模块命令用 `[Command(typeof(ModuleResources), titleKey, Gesture = "...")]` 声明快捷键，shell 收集后调用 `RegisterCommandGestures` 完成接线。
 10. **要改拖拽语义**（迁移/重排/显隐联动/回退规则）：只改 `ShellLayoutState.MoveTab`（`Layout/ShellLayoutState.cs:109`）——语义全在这个纯函数里；控件侧（`ToolViewButton`/`ToolViewBar`）只管手势与落点视觉，不要往里加逻辑。要改落点视觉（占位线样式/插入序号计算）才去 `ToolViewBar` 与其 ControlTheme（`FrameworkWindowTheme.axaml:492`）。
+
+## 自动发现插件（ADR-0007）
+
+Plugins/ 下实现发现、私有依赖解析与共享程序集规则。Debug 仅检查程序根顶层 DLL，Release 逐一检查 plugins/ 一级子目录；以 PluginAttribute 标记的唯一公开 IModule 为入口。扫描先读 PE 元数据，普通依赖不实例化；全部候选的入口类型全名或主程序集简单名冲突时，冲突候选全部失败。仅加载被标记的入口 Type，拒绝非公开、抽象、开放泛型或未实现 IModule 的类型。发现出的错误保留为启动项，由现有 Continue/Exit 流程处理。
+
+全部内置模块加载后才运行插件；DependsOn 仅接受内置模块名称，并检查其贡献是否准备成功。插件直接以发现的 Type 在宿主容器初始化，避免 Prism 字符串查找丢失独立上下文；成功准备贡献后才将插件 ModuleInfo 标记为 Initialized。ViewModel 约定使用 viewType.Assembly.GetType 查找，保持 View 与 ViewModel 的程序集身份一致。
+
+Release 私有依赖由每插件的加载上下文与依赖描述解析；共享名单来自嵌入的 Build/PluginSharedAssemblies.txt，与构建过滤同源。插件加载上下文随进程存活，不提供热卸载。详见 [ADR-0007](../../../adr/0007-startup-plugin-loading.md)。

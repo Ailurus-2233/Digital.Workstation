@@ -3,4 +3,5 @@
             Condition=" '$(MSBuildProjectDirectory)' != '' "/>
     <Import Project="$(SolutionDir)Build\ManageDlls.targets"
             Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\')) " />
+    <Import Project="$(SolutionDir)Build\Plugins.targets" Condition="'$(_InPlugins)' == 'true'" />
 </Project>

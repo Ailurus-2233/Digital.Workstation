@@ -27,3 +27,9 @@
 - **AssemblyLoader.cs:327-328 注释**：`AvaloniaNativePlatform` 是 internal 无法 `typeof`，只能按程序集名 `"Avalonia.Native"` 从 `AppDomain.GetAssemblies()` 找——且找到与否不保证（`FirstOrDefault` + null 检查 :329-332，macOS 之外该程序集可能尚未加载，静默跳过）。
 - **AssemblyLoader.cs:154 注释**：`LoadFile` vs `LoadFrom` 的递归陷阱。
 - **Launcher.cs:34**：`InitializeCore()` 是 `TODO` 空方法——核心框架初始化扩展点尚未使用，往这里加逻辑时注意它执行于 native 预加载之后、Avalonia 启动之前。
+
+## 插件隔离不变量
+
+- 不向 BaseFolderPath 或进程 PATH 添加 plugins/ 子目录，不在宿主预加载器登记插件 native 句柄。
+- 全 AppDomain 查询必须过滤插件私有程序集，否则宿主简单名缓存会吸收某插件版本并污染其他请求。
+- 插件自带的 Core/Prism/Avalonia 等副本不能替换宿主契约，构建输出过滤与运行时共享名单使用同一份 Build/PluginSharedAssemblies.txt。

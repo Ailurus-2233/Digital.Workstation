@@ -12,6 +12,9 @@
     <Project Path="Modules/Settings/Settings.csproj" />
     <Project Path="Modules/Workstation/Workstation.csproj" />
   </Folder>
+  <Folder Name="/Plugins/">
+    <Project Path="Plugins/Sample/Sample.csproj" />
+  </Folder>
   <Folder Name="/UnitTest/">
     <Project Path="UnitTest/Framework/Framework.csproj" />
   </Folder>
@@ -20,6 +23,8 @@
     <File Path="Build/Base.targets" />
     <File Path="Build/ManageDlls.props" />
     <File Path="Build/ManageDlls.targets" />
+    <File Path="Build/Plugins.targets" />
+    <File Path="Build/PluginSharedAssemblies.txt" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
   </Folder>
@@ -124,12 +129,16 @@
     <File Path="docs/analysis/Modules/Workstation/reference.md" />
     <File Path="docs/analysis/Modules/Workstation/testing.md" />
   </Folder>
+  <Folder Name="/_docs/analysis/Plugins/Sample/">
+    <File Path="docs/analysis/Plugins/Sample/common.md" />
+  </Folder>
   <Folder Name="/_docs/adr/">
     <File Path="docs/adr/0001-attribute-menu-registration.md" />
     <File Path="docs/adr/0002-toolview-drag-persistence.md" />
     <File Path="docs/adr/0004-startup-sequence.md" />
     <File Path="docs/adr/0005-command-registration-palette.md" />
     <File Path="docs/adr/0006-attribute-settings-registration.md" />
+    <File Path="docs/adr/0007-startup-plugin-loading.md" />
   </Folder>
   <Folder Name="/_docs/agents/">
     <File Path="docs/agents/domain.md" />

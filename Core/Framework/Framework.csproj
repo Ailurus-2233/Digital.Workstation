@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="..\..\Build\PluginSharedAssemblies.txt" LogicalName="DigitalWorkstation.Core.Framework.Plugins.SharedAssemblies" />
         <ProjectReference Include="..\Abstractions\Abstractions.csproj"/>
         <ProjectReference Include="..\Common\Common.csproj"/>
         <ProjectReference Include="..\Models\Models.csproj" />

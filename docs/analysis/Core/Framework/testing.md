@@ -32,4 +32,13 @@ dotnet run --project Launcher/Launcher.csproj -c Debug
 
 配置并发诊断位于 workstation-persistence-diagnostic-20260919-080111：序列化暂停时 Delete 等待在途写入，旧回调不能重建文件；Dispose 保存末次值；序列化失败保留旧文件与待写快照，恢复后可重试。
 
-改窗口管理、菜单跨屏、命令面板或本地化时，还须针对改动手动验证对应平台行为；本轮不修改 Release 打包与加载规则。
+改窗口管理、菜单跨屏、命令面板或本地化时，还须针对改动手动验证对应平台行为。Release 插件打包与加载的回归见下节。
+
+## 插件加载手动回归
+
+1. 运行 dotnet run --project Launcher/Launcher.csproj -c Debug；主窗口状态栏只出现一项“示例插件已加载”，设置页仍可正常打开。启动日志包含 Loading plugin 及根目录插件 DLL 路径。
+2. 关闭应用后执行 dotnet build Launcher/Launcher.csproj -c Release，再直接启动 Output/Release/Launcher.exe；状态栏出现同一项，日志路径改为 plugins/Sample/DigitalWorkstation.Sample.dll。目录内保留 .deps.json 与 en-US 卫星资源。
+3. 关闭应用，将 Output/Release/plugins/Sample 整个目录暂移到 plugins 之外，再直接启动既有 Launcher.exe（不要重新构建）；样例状态栏消失，内置模块正常。放回并重启后恢复。
+4. 在设置页切换英文并重启，状态栏显示“Sample plugin loaded”，验证资源随插件查找。
+5. 关闭应用，将 Sample 目录复制为同级 SampleCopy；直接启动后重复插件进入启动台失败决策，选择继续应正常进入主窗口且不显示重复贡献。退出后删除这份临时副本，恢复唯一插件再重启。
+编译检查不等同于以上手动验收。私有依赖多版本/native 资产应使用真实携带这些依赖的插件在 Release 验证，当前 Sample 只演示入口、贡献与卫星资源。

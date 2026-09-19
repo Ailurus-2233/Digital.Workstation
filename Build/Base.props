@@ -15,6 +15,8 @@
         <_InCore Condition="'$(_InCore)' != 'true'">$(MSBuildProjectDirectory.Contains('/Core/'))</_InCore>
         <_InModules>$(MSBuildProjectDirectory.Contains('\Modules\'))</_InModules>
         <_InModules Condition="'$(_InModules)' != 'true'">$(MSBuildProjectDirectory.Contains('/Modules/'))</_InModules>
+        <_InPlugins>$(MSBuildProjectDirectory.Contains('\Plugins\'))</_InPlugins>
+        <_InPlugins Condition="'$(_InPlugins)' != 'true'">$(MSBuildProjectDirectory.Contains('/Plugins/'))</_InPlugins>
         <_InUnitTest>$(MSBuildProjectDirectory.Contains('\UnitTest\'))</_InUnitTest>
         <_InUnitTest Condition="'$(_InUnitTest)' != 'true'">$(MSBuildProjectDirectory.Contains('/UnitTest/'))</_InUnitTest>
     </PropertyGroup>
@@ -25,10 +27,17 @@
 
     <PropertyGroup Condition="'$(Configuration)'=='Release'">
 
-        <!-- 在 Release 的情况下，不输出 PDB 文件、XML 文档和依赖项文件 -->
+        <!-- 宿主 Release 不输出 PDB、XML 和依赖项文件；插件在下方保留依赖清单 -->
         <DebugType>none</DebugType>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
         <GenerateDependencyFile>false</GenerateDependencyFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(_InPlugins)' == 'true'">
+        <!-- 插件自行携带私有依赖；依赖清单供 AssemblyDependencyResolver 解析 managed/native 资产 -->
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <GenerateDependencyFile>true</GenerateDependencyFile>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(MSBuildProjectDirectory)' != '' and '$(_InUnitTest)' != 'true' and '$(_InCore)' != 'true' ">
@@ -52,6 +61,10 @@
 
     <PropertyGroup Condition="'$(Configuration)'=='Release' and '$(OutputPath)' == '' and '$(_InModules)' == 'true'">
         <OutputPath>$(BaseOutputPath)modules\</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)'=='Release' and '$(OutputPath)' == '' and '$(_InPlugins)' == 'true'">
+        <OutputPath>$(BaseOutputPath)plugins\$(MSBuildProjectName)\</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OutputPath)' == '' and '$(_InUnitTest)' == 'true'">

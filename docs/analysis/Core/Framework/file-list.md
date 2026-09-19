@@ -7,6 +7,10 @@ Core/Framework/
 ├── Framework.csproj                       项目文件：net10.0；引用 Abstractions/Common/Models/UIPackage/Resource 五项目与 Avalonia/Prism/Ursa 相关包
 ├── FrameworkApplication.cs                应用入口基类与启动序列（含设置服务注册、启动时语言应用及本地化 Application.Name，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）
 ├── ApplicationRestarter.cs                统一保存配置，成功后启动新进程并退出；保存失败取消重启
+├── Plugins/
+│   ├── PluginDescriptor.cs                 插件发现结果，包含入口 Type、依赖与错误归属
+│   ├── PluginDiscovery.cs                  PE 元数据识别入口、校验重复身份并加载候选
+│   └── PluginLoadContext.cs                Release 私有依赖与宿主共享程序集解析
 ├── Persistence/
 │   ├── ConfigurationPersistence.cs         配置文件 owner：统一刷新、退出收尾；内部 IConfigurationFile 契约
 │   └── DebouncedJsonFile.cs                单文件防抖、写盘/删除互斥、完整临时文件替换与失败重试
@@ -209,3 +213,5 @@ Restore 从贡献和可选 DTO 构造规范状态；Capture 从状态生成版�
 ### Settings/SettingCatalog.cs
 
 设置项 Id 冲突首个生效；分组首个资源/名称、最小 Order；隐式分组只来自有效项。查询不保留未提交批次的声明缓存，重复声明日志按实例去重。
+
+Framework.csproj 将 Build/PluginSharedAssemblies.txt 作为固定名称资源嵌入，供 PluginLoadContext 与构建过滤共用共享清单。FrameworkApplication.cs 包含内置模块与插件的统一贡献准备/失败流程，插件以实际 Type 在容器初始化。

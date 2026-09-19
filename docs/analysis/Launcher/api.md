@@ -58,3 +58,7 @@ Launcher.Run(args);      // 记录日志 → Avalonia 主循环（不返回，�
 - `BaseFolderPath`（:36-43）：搜索根目录 → 子目录递归深度的映射：`{根:0, core/:0, libraries/:1, modules/:0, runtimes/:2}`。
 - `SourceArray`（:125）：`[".dll", ".exe"]`，`LoadAssembly` 尝试的扩展名。
 - `NativeLibraryDir`（:338-342）：`runtimes/{win-x64|osx|linux-x64}/native/`，rid 由 `RuntimeInformation.IsOSPlatform` 三段判定（Windows→win-x64、OSX→osx、其余→linux-x64）。
+
+## 插件解析边界
+
+AssemblyLoader 公共 API 未改变。ResolveAssembly 对插件请求不提供宿主全局兜底；ResolveAssemblyFromLoaded 排除插件私有程序集。IsPluginAssembly 按加载上下文名称前缀 DigitalWorkstation.Plugin: 或 plugins/ 文件归属识别，不依赖 Framework 类型，维持引导阶段仅依赖 BCL 的约束。

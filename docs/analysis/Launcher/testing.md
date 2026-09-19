@@ -50,3 +50,7 @@ Output\Release\Launcher.exe          # 双击或命令行启动
 ## 如何"新增一个测试"
 
 按仓库约定，若未来要为 Launcher 补数据逻辑测试（如 `NativeFilePatterns` 的平台映射），应在 `UnitTest/` 下新建目录与 `xUnit` 项目，命名空间/程序集名由 `Build/Base.props:44-47` 的 `_InUnitTest` 规则自动生成为 `DigitalWorkstation.UnitTest.<目录名>`；但当前仓库无此先例，本模块亦无可测的纯数据逻辑被拆出——**现状即约定：入口项目靠 `dotnet run` 手动验证**。
+
+## 插件构建与目录回归
+
+启动命令会自动构建 Plugins 下项目。Debug 检查 Sample DLL 位于 Output/Debug 根；Release 检查 Output/Release/plugins/Sample 内有入口 DLL、.deps.json、en-US 卫星资源以及私有依赖/保留的 runtimes 子树。状态栏、复制重复插件后的失败提示、移走/恢复目录和语言切换步骤统一见 [Framework 插件手动回归](../Core/Framework/testing.md#插件加载手动回归)。宿主原有 Release 启动与跨工作目录回归仍需执行。

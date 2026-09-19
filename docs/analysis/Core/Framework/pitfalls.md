@@ -24,7 +24,7 @@
 - **给 `CloseWindow(Type)` 加"未命中抛异常"**：它当前是刻意的静默 no-op（`FrameworkWindowManager.cs:144-148`），与 `HideWindow` 的抛异常语义不对称——`CloseWindowsExceptMain` 等路径依赖静默语义，对齐两者前先查调用点。
 - **`ShowWindow(Window, object)`/`ShowDialog(Window, object)` 抛异常后窗口仍处注册态**：这两个重载的顺序是 `InitializeWindow` 注册 → 赋 `DataContext` → 检查主窗口（`FrameworkWindowManager.cs:98-111、133-141`）；主窗口缺失/不活跃抛 `InvalidOperationException` 时，窗口已留在 `_windowMap` 且 DataContext 已赋值，**无回滚**。调用方 catch 后若换个类型重试无妨，但若之后 `CloseWindow(type)` 会关掉这个从未显示的窗口；同类型再次 Show 前必须等其 `Closing` 触发移除。
 - **在 `RegisterTypes` 之外注册框架服务或在子类重写 `RegisterTypes`**：注释明确"子类不需要重写此方法"（`FrameworkApplication.cs:183-185`），子类入口是 `RegisterCustomService`；重写 `RegisterTypes` 且不调 base 会丢掉 `IoC.Initialize` 与窗口管理器注册，整个应用起不来。
-- **View/ViewModel 命名或目录偏离约定**：`ConfigureViewModelLocator`（第 237-269 行）只做字符串替换与后缀补全，解析不到返回 null（不抛异常）——ViewModel 静默不绑定，界面空白无报错。`Replace("Views", "ViewModels")` 会替换 FullName 中**所有**出现的 "Views"，命名空间里多处含 "Views" 时结果可能意外。
+- **View/ViewModel 命名或目录偏离约定**：`ConfigureViewModelLocator`（第 237-269 行）只做字符串替换与后缀补全，通过 View 实际程序集查询，解析不到返回 null（不抛异常）——ViewModel 静默不绑定，界面空白无报错。`Replace("Views", "ViewModels")` 会替换 FullName 中**所有**出现的 "Views"，命名空间里多处含 "Views" 时结果可能意外。
 - **改 `WaitForFailureActionAsync` 去掉 `RunContinuationsAsynchronously`**（第 124 行）：续体会在发布者（启动台 UI 线程）上下文内联执行，可能死锁；去掉 `Unsubscribe`（第 127 行）则每次失败累积一个订阅，第二次失败时旧订阅先 `TrySetResult` 已被释放的 completion（虽无害但泄漏订阅）。
 - **新模块忘记在 `RegisterTypes` 调 `RegisterMenus`**：`MenuRegistration.RegisterMenus`（`Menus/MenuRegistration.cs:20`）只扫**调用方传入的那一个程序集**，刻意不做全局扫描（:16-19 注释）；新模块写了 `[MenuGroup]`/`[MenuItem]` 菜单类但没加 `containerRegistry.RegisterMenus(typeof(XxxModule).Assembly)`（真实调用点 `Modules/Workstation/WorkstationApplication.cs:31`），菜单**静默缺失**——无任何日志、无异常，建树时容器里根本没有对应的 `IMenuItemContribution`。
 - **新模块忘记在 `RegisterTypes` 调 `RegisterToolViews`**：同构的陷阱（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）——`ToolViewRegistration.RegisterToolViews`（`Contributions/ToolViewRegistration.cs:20`）同样只扫调用方传入的程序集、不做全局扫描（:12 注释）；View 类标了 `[ToolView]` 但模块没调它，工具视图**静默缺失**（真实调用点 `Modules/Workstation/WorkstationApplication.cs:27`、`Modules/DashBoard/DashBoardModule.cs:12`）。被扫到但不合法也只是记一条 `Logger.Warning` 跳过：类非可实例化 `Control`（:31-36）、`Id` 在程序集内重复（:38-44）。排查"工具视图没出现"先翻日志的 Warning。
@@ -75,3 +75,13 @@
 - 菜单/命令宿主在 UI 线程准备一次，Ready 前完成 Shell 集合和手势接线。工具视图/主视图内容仍按需创建，其打开阶段异常不是模块工厂预构造的保证范围。
 - 设置默认值、ValueType、RequiresRestart 和页面分组必须来自 SettingCatalog。不能另建 _declared 缓存，尤其不能把候选批次声明缓存到拒绝之后。
 - 卡片外边距或容器内边距改 ShellLayoutMetrics；四模板使用 x:Static 同源值，列宽不能在 Workstation 再写 +4。
+
+## 插件上下文边界
+
+- 不要把插件入口重新交给按程序集名称解析 Type 的路径；直接使用发现的 Type。ViewModel 同样从 View.Assembly 查询。
+- 插件依赖只接受显式内置模块的 ModuleName；内置模块完成 Prism 初始化后若贡献准备失败，依赖它的插件仍须失败。
+- 私有程序集不因宿主碰巧已加载同名库就共享；共享范围由 Build/PluginSharedAssemblies.txt 与显式内置模块实例确定。
+- Debug 平铺输出只能留一种同名依赖版本；Release 隔离须在 plugins/<项目名>/ 布局验证。
+
+- Release 的 runtimes 资产通过插件 .deps.json 与 AssemblyDependencyResolver 定位；未列入依赖描述的托管 DLL 仅回退插件顶层/对应文化目录，native 仅回退插件顶层及系统库目录，不递归猜测多个 RID。
+- 插件 private 托管依赖缺失抛 FileLoadException 以结束当前解析；ResourceManager 对卫星资源仍执行文化回退。系统 native 用绝对系统路径 TryLoad，兼容 macOS dyld cache 中没有实体文件的系统库。

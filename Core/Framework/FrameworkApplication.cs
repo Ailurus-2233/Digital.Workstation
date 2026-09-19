@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
@@ -10,6 +10,7 @@ using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.Layout;
 using DigitalWorkstation.Core.Framework.Persistence;
+using DigitalWorkstation.Core.Framework.Plugins;
 using DigitalWorkstation.Core.Framework.Settings;
 using DigitalWorkstation.Core.Framework.WindowManager;
 using DigitalWorkstation.Core.Models.Events;
@@ -81,42 +82,101 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
             var moduleCatalog = Container.Resolve<IModuleCatalog>();
             moduleCatalog.Initialize();
 
-            // 阶段 2：逐模块异步加载；加载移出 UI 线程，启动台进度不被阻塞
+            // 内置模块仍由 Prism 排序；插件发现不执行入口构造或注册。
             var moduleManager = Container.Resolve<IModuleManager>();
             var modules = moduleCatalog.CompleteListWithDependencies(moduleCatalog.Modules).ToList();
+            var builtInNames = modules.Select(module => module.ModuleName).ToHashSet(StringComparer.Ordinal);
+            var sharedModules = modules.Select(module => Type.GetType(module.ModuleType, throwOnError: true)!.Assembly)
+                .Append(typeof(TWindow).Assembly).Distinct().ToArray();
+            var discoveredPlugins = await Task.Run(() => PluginDiscovery.Discover(sharedModules));
+            var plugins = new List<(PluginDescriptor Descriptor, ModuleInfo? Info)>();
+            var names = new HashSet<string>(builtInNames, StringComparer.Ordinal);
+            foreach (var discovered in discoveredPlugins)
+            {
+                var plugin = discovered;
+                if (plugin.Error is null && !names.Add(plugin.Name))
+                    plugin = plugin with { Error = new InvalidOperationException($"Duplicate module or plugin name: {plugin.Name}.") };
+                if (plugin.Error is null && plugin.Dependencies.Any(name => !builtInNames.Contains(name)))
+                    plugin = plugin with { Error = new InvalidOperationException("Plugins may only declare dependencies on built-in modules.") };
+
+                ModuleInfo? info = null;
+                if (plugin.Error is null && plugin.ModuleType is not null)
+                {
+                    info = new ModuleInfo
+                    {
+                        ModuleName = plugin.Name,
+                        ModuleType = plugin.ModuleType.AssemblyQualifiedName!,
+                        InitializationMode = InitializationMode.OnDemand
+                    };
+                    foreach (var dependency in plugin.Dependencies)
+                        info.DependsOn.Add(dependency);
+                    moduleCatalog.AddModule(info);
+                }
+                plugins.Add((plugin, info));
+            }
+
             var contributions = Container.Resolve<ShellContributionCatalog>();
             var availableModules = new HashSet<string>(StringComparer.Ordinal);
-            var total = modules.Count;
-            for (var i = 0; i < total; i++)
+            var total = modules.Count + plugins.Count;
+            var current = 0;
+
+            // 两种入口共用进度、贡献批次和失败决策，始终先完成全部内置模块。
+            async Task<bool> PrepareItemAsync(string name, IEnumerable<string> dependencies, Func<Task> initialize)
             {
-                var module = modules[i];
-                progressEvent.Publish(new StartupProgress(StartupPhase.LoadingModules, module.ModuleName, i + 1, total));
-                using var batch = ShellContributionCatalog.BeginBatch(module.ModuleName);
+                progressEvent.Publish(new StartupProgress(StartupPhase.LoadingModules, name, ++current, total));
+                using var batch = ShellContributionCatalog.BeginBatch(name);
                 try
                 {
-                    var unavailable = module.DependsOn.FirstOrDefault(name => !availableModules.Contains(name));
+                    var unavailable = dependencies.FirstOrDefault(dependency => !availableModules.Contains(dependency));
                     if (unavailable is not null)
                         throw new InvalidOperationException($"Required module {unavailable} is unavailable.");
-                    await Task.Run(() => moduleManager.LoadModule(module.ModuleName));
-                    if (module.State != ModuleState.Initialized)
-                        throw new InvalidOperationException($"Module {module.ModuleName} did not finish initialization.");
-                    // 回到 UI 线程后构造菜单/命令宿主；此时异常仍归属于当前模块。
+                    await initialize();
                     contributions.Prepare(batch);
-                    availableModules.Add(module.ModuleName);
+                    availableModules.Add(name);
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     batch.Reject();
-                    Logger.Error(ex, $"Failed to prepare module {module.ModuleName}");
+                    Logger.Error(ex, $"Failed to prepare module or plugin {name}");
                     var failureAction = WaitForFailureActionAsync(eventAggregator);
                     eventAggregator.GetEvent<ModuleLoadFailedEvent>().Publish(
-                        new ModuleLoadFailure(module.ModuleName, i + 1, total, ex.Message));
-                    if (!await failureAction)
-                    {
-                        (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
-                        return;
-                    }
+                        new ModuleLoadFailure(name, current, total, ex.Message));
+                    if (await failureAction) return true;
+                    (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
+                    return false;
                 }
+            }
+
+            foreach (var module in modules)
+            {
+                if (!await PrepareItemAsync(module.ModuleName, module.DependsOn, async () =>
+                    {
+                        await Task.Run(() => moduleManager.LoadModule(module.ModuleName));
+                        if (module.State != ModuleState.Initialized)
+                            throw new InvalidOperationException($"Module {module.ModuleName} did not finish initialization.");
+                    })) return;
+            }
+
+            foreach (var (plugin, info) in plugins)
+            {
+                if (!await PrepareItemAsync(plugin.Name, plugin.Error is null ? plugin.Dependencies : [], async () =>
+                    {
+                        if (plugin.Error is not null) throw plugin.Error;
+                        var type = plugin.ModuleType ?? throw new InvalidOperationException("Plugin entry type is missing.");
+                        Logger.Information($"Loading plugin {plugin.Name} from {plugin.AssemblyPath}");
+                        if (info is not null) info.State = ModuleState.Initializing;
+                        await Task.Run(() =>
+                        {
+                            // 使用发现的 Type 保留插件上下文，避免 Prism 按程序集名重新查找。
+                            IoC.Registry.RegisterSingleton(type, type);
+                            var instance = (IModule)Container.Resolve(type);
+                            instance.RegisterTypes(IoC.Registry);
+                            instance.OnInitialized(Container);
+                        });
+                    })) return;
+                if (info is not null)
+                    info.State = availableModules.Contains(plugin.Name) ? ModuleState.Initialized : ModuleState.NotStarted;
             }
 
             // 阶段 3：就绪——启动台关闭、工作区显示
@@ -274,9 +334,9 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
         ViewModelLocationProvider.SetDefaultViewTypeToViewModelTypeResolver(viewType =>
         {
             var viewName = viewType.FullName;
-            var viewAssemblyName = viewType.GetTypeInfo().Assembly.FullName;
+            var viewAssembly = viewType.Assembly;
 
-            if (string.IsNullOrEmpty(viewName) || string.IsNullOrEmpty(viewAssemblyName))
+            if (string.IsNullOrEmpty(viewName))
             {
                 return null;
             }
@@ -292,9 +352,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
                 viewModelName += "Model";
             }
 
-            var fullViewModelName = $"{viewModelName}, {viewAssemblyName}";
-
-            return Type.GetType(fullViewModelName);
+            return viewAssembly.GetType(viewModelName);
         });
 
         // 也可以为特定 View 设置特定 ViewModel

@@ -149,7 +149,17 @@ ContentFor(id) 维持全局工具视图实例缓存；SyncBarCollection 保持�
 
 ## 6. 内置视图（Views/）
 
-`EmptyStateView()` 为公开无参构造，支持 Avalonia URI 加载；Prism AutoWireViewModel 按既有命名约定关联 `EmptyStateViewModel(IModuleCatalog)`。ViewModel 的 `Refresh()` 更新只读 `CoreModules`、`CustomModules` 快照并清空 `SelectedModuleName`，`IsCoreEmpty`/`IsCustomEmpty` 为派生空状态。View 在可视树挂载时清空树选择并调用 Refresh，SelectionChanged 将字符串叶子映射到 SelectedModuleName，分组映射为 null；列表、空提示、右侧名称均由 XAML 绑定呈现。构造期不捕获加载状态，不订阅后台加载事件。左右区域标题、过滤规则见 common.md。
+`EmptyStateView()` 为公开无参构造；Prism AutoWireViewModel 关联 EmptyStateViewModel(IModuleCatalog)。View 挂载时清空树选择并 Refresh，不再维护 SelectedModuleName 或处理 SelectionChanged。插件识别只解析已加载的实际 Type 并检查 PluginAttribute。
+
+`EmptyStateViewModel` 暴露三个 `IReadOnlyList<LoadedComponentItem>` 快照：
+
+| 属性 | 数据来源 | 派生空状态 |
+|---|---|---|
+| `CoreModules` | 已加载的非动态 Core 程序集，排除卫星资源 | `IsCoreEmpty` |
+| `CustomModules` | `Initialized` 的非插件 Prism 模块 | `IsCustomEmpty` |
+| `LoadedPlugins` | `Initialized` 且实际入口类型标记 `[Plugin]` 的 Prism 目录项 | `IsPluginsEmpty` |
+
+`Refresh()` 从已加载程序集快照显式解析模块类型，更新三个列表并按 `Name` 排序。`LoadedComponentItem(string Name, string Description)` 是同文件定义的公开 record：`Name` 用于条目文本，`Description` 用于统一模板的 `ToolTip.Tip`；说明来源和回退规则见 common.md。右侧绑定插件列表与空提示，不依赖树选择。标题和空提示资源为 `HomeLoadedPluginsTitle`、`HomeNoPlugins`。
 
 `AboutWindow` 保持原行为。`Views/` 无工具视图声明。
 

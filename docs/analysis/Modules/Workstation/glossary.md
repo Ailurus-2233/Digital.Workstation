@@ -16,7 +16,9 @@
 | **ResetLayoutEvent** | 无负载事件（Core/Models/Events/）：视图菜单 Layout 组"重置布局"项发布，`MainWindowViewModel` 订阅后删除持久化配置并按 attribute 默认重建布局（视图实例缓存保留） | `Core/Models/Events/ResetLayoutEvent.cs`；`Menus/ViewLayoutMenus.cs:16` 发布；`MainWindowViewModel.ResetLayout`（:503-521） |
 | **TogglePanelTarget** | 面板显隐目标枚举（Models/Events/：`SideBar`/`AuxiliaryPanel`/`BottomPanel`），`TogglePanelVisibilityEvent` 的负载 | `MainWindowViewModel.TogglePanel`（:488）；`Menus/ViewPanelMenus.cs`（三个 `[MenuItem]` 方法各发布一值） |
 | **PanelResizeTarget** | 拖拽调尺寸目标枚举（Framework/Layout/，同名三成员），`ShellLayoutState.Resize` 的参数 | `MainWindowViewModel.ResizePanel`（:429）；`Core/Framework/Layout/PanelResizer.cs`（Target 属性） |
-| **EmptyStateView（主页）** | shell 内置的 MainContent 初始内容：产品图文、已加载模块分组树与右侧模块说明区域；当前说明区仅呈现所选模块名称，不依赖模块贡献视图 | `Views/EmptyStateView.axaml(.cs)` |
+| **EmptyStateView（主页）** | shell 内置的 MainContent 初始内容：产品图文、左侧 Core/内置模块分组树与右侧已加载插件列表；各条目通过 ToolTip 提供说明，不依赖模块贡献视图 | `Views/EmptyStateView.axaml(.cs)` |
+| **LoadedComponentItem（加载条目）** | 主页列表的 `Name`/`Description` 快照 record；描述来自程序集声明或身份回退，不参与 Shell 导航和布局状态 | `ViewModels/EmptyStateViewModel.cs` |
+| **已加载插件列表（LoadedPlugins）** | 主页右侧只展示 `Initialized` 且实际入口类型标记 `[Plugin]` 的目录项；与左侧非插件模块列表分开，按入口短名称排序 | `EmptyStateViewModel.Refresh` |
 | **启动台 / Splash** | DashBoard 模块的进度窗（[ADR-0004](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）：模块逐模块加载前由 shell 直接解析显示 | `WorkstationApplication.CreateSplashWindow`（:43-46） |
 | **chrome-menu** | 标题栏内嵌的 VS Code 式紧凑菜单样式类：菜单栏是 `FrameworkWindow` 的内置行为（`Core/Framework/Windows/FrameworkWindow.cs:47-52` 代码创建 `Menu` 并宽松绑定 `MenuBarItems`），样式在 Framework 主题 | `Core/Framework/Windows/FrameworkWindowTheme.axaml:611-628` |
 | **nav-item / panel-tab / panel-collapse / status-item / region-title / placeholder** | 各 UI 元素的样式类约定（拖拽相关的 `drag-over` 整 Bar 高亮与 `PART_InsertionLine` 占位线见 Framework 文档术语表） | `Core/Framework/Windows/FrameworkWindowTheme.axaml:512` 起 |

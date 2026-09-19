@@ -4,7 +4,7 @@
 
 ```
 Launcher/
-├── Launcher.csproj      WinExe 项目定义、程序集名与 `ApplicationIcon` 配置
+├── Launcher.csproj      WinExe、ApplicationIcon 与 Plugins 的自动构建引用（无编译引用）
 ├── Program.cs           进程入口 + Avalonia 设计器入口
 ├── Launcher.cs          启动流程编排（引导顺序控制 + AppBuilder 构建）
 ├── AssemblyLoader.cs    自定义程序集/native 库加载器（438 行）
@@ -16,7 +16,7 @@ Launcher/
 
 ## Launcher.csproj
 
-- **功能**：WinExe 入口项目定义。`<OutputType>WinExe</OutputType>`（:4）、`net10.0`（:7）、`ImplicitUsings`/`Nullable` enable（:5-6）、显式 `<AssemblyName>Launcher</AssemblyName>`（:8，覆盖 `Build/Base.props` 的命名规则），唯一 ProjectReference 指向 `..\Modules\Workstation\Workstation.csproj`（:12）。
+- **功能**：WinExe 入口项目定义。`<OutputType>WinExe</OutputType>`（:4）、`net10.0`（:7）、`ImplicitUsings`/`Nullable` enable（:5-6）、显式 `<AssemblyName>Launcher</AssemblyName>`（:8，覆盖 `Build/Base.props` 的命名规则），编译引用指向 `..\Modules\Workstation\Workstation.csproj`（:12）。
 - 不 import 任何 Build 脚本；`Build/Base.*`、`Build/ManageDlls.*` 经仓库根 `Directory.Build.props`/`Directory.Build.targets` 统一进入。
 
 ## Program.cs（24 行）
@@ -52,3 +52,7 @@ Launcher/
 - `Directory.Build.props` / `Directory.Build.targets`（仓库根）：统一 import Build 脚本。
 - `Build/Base.props`：`BaseOutputPath=Output\<Configuration>\`，Release 下 Core→`core\`、Modules→`modules\`、其余（含 Launcher）→根。
 - `Build/ManageDlls.props` / `Build/ManageDlls.targets`：Release 下项目引用不复制、NuGet 资产按包名首段分类进 `libraries\<分类>\`、输出根清理 DLL、`runtimes/` 只保留 `linux-x64`/`osx`/`win-x64`。
+
+## 插件接线补充
+
+Launcher.csproj 通过 Plugins/**/*.csproj 建立 ReferenceOutputAssembly=false 的构建依赖，独立 dotnet run 会构建示例插件。AssemblyLoader.cs 的 IsPluginAssembly 同时识别插件上下文前缀与 plugins/ 内的实际路径，隔离请求与全局已加载程序集缓存。构建规则新增 Build/Plugins.targets 与共享清单，详细编排见 reference.md。

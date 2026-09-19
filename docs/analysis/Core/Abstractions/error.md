@@ -1,4 +1,4 @@
-# Abstractions — 异常与排查
+﻿# Abstractions — 异常与排查
 
 ## 本模块自身抛出的异常
 
@@ -29,3 +29,7 @@
 | `GetWindow<TWindow>` 返回 null | 实现侧窗口注册 | 窗口类型未注册；注意接口非空标注与扩展可空标注不一致 |
 | 主视图打不开 | `OpenMainViewEvent` 负载 Id 与 `IMainViewContribution.Id` 是否匹配 | Id 不匹配或前缀约定未遵守 |
 | 菜单/设置出现原始键或 Id | 文本 attribute 的 `ResourceType` 与键、菜单末端声明、设置分组 Id | 缺键返回键名；未声明菜单祖先显示稳定 Id 段、未声明设置分组显示 Id；这些回退不会搜索全局资源 |
+
+## 插件入口发现失败
+
+PluginAttribute 自身只保存 DependsOn 元数据。入口未实现宿主 IModule、不是公共具体类、含开放泛型、入口身份冲突、单 DLL/Release 文件夹有多个入口，或依赖名为空时，由 Framework 生成失败描述并交启动台处理。缺标记的普通 DLL 不视为插件。内置模块依赖不存在、不可用或指向另一个插件时，启动序列拒绝该插件；见 Framework/error.md。

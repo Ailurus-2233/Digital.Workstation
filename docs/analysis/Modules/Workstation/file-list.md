@@ -23,9 +23,9 @@ Menus/
 Commands/
   ViewCommands.cs                   shell 预置命令类（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：四个 [Command] 方法（三面板显隐切换 + 重置布局，复用视图菜单标题键与事件通路；三面板命令带 Icons.PanelLeft/PanelBottom/PanelRight 图标（与对应菜单项一致）与 Gesture（Ctrl+B/Ctrl+J/Ctrl+Alt+B，即面板显隐快捷键））
 ViewModels/
-  EmptyStateViewModel.cs            主页加载快照与所选模块名称；注入 IModuleCatalog，Refresh 在挂载时读取实际加载状态
+  EmptyStateViewModel.cs            主页 Core/内置模块/插件三个加载快照；同文件定义 LoadedComponentItem，Refresh 解析实际入口标记和悬浮说明
 Views/
-  EmptyStateView.axaml(.cs)         产品主页：无参构造、Prism 自动关联 ViewModel；模块树与说明区域绑定呈现，挂载和选择事件为视图接线
+  EmptyStateView.axaml(.cs)         产品主页：左侧模块树、右侧插件列表及空提示，统一条目模板绑定 ToolTip；挂载只清空树选择并刷新快照
   AboutWindow.axaml(.cs)            "关于"对话框：360×160 不可调大小、CenterOwner，硬编码中文文案
 ```
 
@@ -46,6 +46,6 @@ Views/
 - `Resources/WorkstationResources.resx`：中文中性资源。
 - `Resources/WorkstationResources.en-US.resx`：英文卫星资源。
 
-三者同位、同基名；SDK 默认嵌入资源，基名等于 `DigitalWorkstation.Workstation.Resources.WorkstationResources`。
+三者同位、同基名；SDK 默认嵌入资源，基名等于 `DigitalWorkstation.Workstation.Resources.WorkstationResources`。主页插件区域使用 `HomeLoadedPluginsTitle` 与 `HomeNoPlugins`，两种语言均有定义；条目悬浮说明来自实际程序集元数据或身份，由 ViewModel 生成。
 
 WorkstationApplication.PrepareShell 是启动序列调用 MainWindow.PrepareContributions 的接线点；状态栏手写贡献改用 RegisterShellContribution，以接受启动准备和失败隔离。

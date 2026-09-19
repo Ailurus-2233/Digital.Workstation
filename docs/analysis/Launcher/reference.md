@@ -4,11 +4,13 @@
 
 ### 项目引用（Launcher.csproj:11-13）
 
-唯一直接项目引用：
+唯一参与编译和运行时依赖的直接项目引用：
 
 | 依赖 | 用到的能力 | 本模块使用点 |
 |---|---|---|
 | `Modules/Workstation`（Workstation.csproj） | `WorkstationApplication`——Avalonia Application 类（Workstation/WorkstationApplication.cs，继承 `FrameworkApplication<MainWindow>`） | `Launcher.BuildAvaloniaApp()`（Launcher.cs:68）`AppBuilder.Configure<WorkstationApplication>()` |
+
+此外，Launcher.csproj 自动包含 Plugins/**/*.csproj 的构建引用，设置 ReferenceOutputAssembly=false、Private=false、PrivateAssets=all、ExcludeAssets=all。dotnet run/F5 会先构建插件，但宿主不静态引用其类型，也不把插件私有包资产并入自身依赖；插件加载仍依靠目录扫描。
 
 ### 传递依赖（未在 csproj 直接引用，源码 using 其命名空间）
 
@@ -19,23 +21,25 @@
 | SkiaSharp / HarfBuzzSharp / Avalonia.Native（NuGet，经传递） | 仅以 `typeof(...)` 取程序集对象注册 native resolver：`SkiaSharp.SKImageInfo`、`HarfBuzzSharp.Blob`；`Avalonia.Native` 因目标类 internal 改按程序集名从 `AppDomain.GetAssemblies()` 查找 | `AssemblyLoader.RegisterNativeResolversForAvalonia`（AssemblyLoader.cs:323-333） |
 | .NET BCL | `System.Reflection`（`Assembly`/`AssemblyName`）、`System.Runtime.InteropServices`（`NativeLibrary`/`DllImportResolver`/`RuntimeInformation`/`OSPlatform`）、`System.Collections.Concurrent`（`ConcurrentDictionary`）、`AppDomain.AssemblyResolve`、`AppContext.BaseDirectory` | AssemblyLoader.cs:1-3 using 及全文件 |
 
-### 编译设置（Launcher.csproj:3-16）
+### 编译设置与构建入口
 
-`Microsoft.NET.Sdk`、`OutputType=WinExe`（:4）、`ImplicitUsings`+`Nullable` enable（:5-6）、`TargetFramework=net10.0`（:7）、**显式 `AssemblyName=Launcher`**（:8，覆盖 `Build/Base.props:35` 默认会拼出的 `DigitalWorkstation.Launcher`）以及 `ApplicationIcon=Assets\AppIcon.ico`（:9）——后者经 Avalonia build targets 注册为默认 `Window.Icon`，并作为 Windows 桌面应用图标输入。csproj 不 import 任何 Build 脚本；仓库根的 `Directory.Build.props`/`Directory.Build.targets` 统一 import `Build/Base.props`、`Build/Base.targets`、`Build/ManageDlls.props`、`Build/ManageDlls.targets`。
+Launcher 使用 Microsoft.NET.Sdk、WinExe、net10.0，显式 AssemblyName=Launcher；ApplicationIcon=Assets\AppIcon.ico 经 Avalonia targets 注册默认 Window.Icon。仓库根的 Directory.Build.props/targets 统一加载 Build/Base.*、Build/ManageDlls.*，仅 Plugins 项目额外导入 Build/Plugins.targets。
 
-### 发布布局（Release）——与运行时解析的对偶关系
+支持的分发入口是 dotnet build Digital.Workstation.slnx -c Release 或 dotnet build Launcher/Launcher.csproj -c Release，产物位于 Output/Release/。插件不会要求用户先手动构建整个解决方案：Launcher 中的构建引用负责构建 Plugins 下的项目。当前没有独立的 dotnet publish 目录编排流程。
 
-Launcher 是 `Build/ManageDlls.*` 布局约定的**消费方**，其搜索路径必须与之一一对应：
+### Release 布局与依赖归属
 
-| 构建侧行为（Build/） | 运行时侧对应（Launcher/） |
+| 构建行为 | 运行时消费方 |
 |---|---|
-| `Base.props:8` `BaseOutputPath = $(SolutionDir)Output\$(Configuration)\`；Launcher 不命中 core/modules/unittest 任何条件，走 `:62` 默认 → 输出到根 | `AssemblyLoader.BaseDirectory = AppContext.BaseDirectory`（:18）即输出根 |
-| `ManageDlls.props:3-5` Release 下 `ProjectReference.Private=false`：项目引用 DLL **不复制**到输出根；`Base.props:50/54` 把 Core 项目输出到 `core\`、Modules 项目输出到 `modules\` | `BaseFolderPath`（:39、41）含 `core/`、`modules/`；`BootRequiredAssemblyFiles` 里的 `Core/DigitalWorkstation.Core.Common.dll`（:27）按此布局书写 |
-| `ManageDlls.targets` `CopyDependenciesByPackageCategory`（:2-37）：NuGet 运行期资产按 `NuGetPackageId.Split('.')[0]` 分类复制到 `libraries\<分类>\`，无包信息的进 `libraries\Others\` | `BaseFolderPath` 含 `libraries/`（递归深度 1，:40）；`ResolveAssemblyFromSearchPaths`（:253-254）按 `assemblyName.Split('.')[0]` 优先定位同名分类目录（如 `Serilog.Sinks.Console` → `libraries/Serilog`） |
-| `ManageDlls.targets` `ClearDllFiles`（:39-63）：删除输出根的项目 DLL，`runtimes/` 下只保留 `linux-x64`/`osx`/`win-x64` 三个 rid 目录 | `NativeLibraryDir`（:338-342）只取 `win-x64`/`osx`/`linux-x64` 三者之一；`ResolveNativeLibrary` 兜底搜索（:403-404）同样限定这三个 rid |
-| Debug 构建不做上述分类，全部 DLL 平铺输出根 | `IsDesignEnvironment()`（:138-146）DEBUG 恒 `true`，整个引导器禁用，靠默认 probing |
+| Build/Base.props 将 Launcher 输出到根，Core 输出到 core/，Modules 输出到 modules/ | Launcher/AssemblyLoader 按原有宿主目录准备运行时依赖 |
+| 宿主的 Build/ManageDlls.props 禁止复制项目引用；ManageDlls.targets 将 NuGet 资产归档到 libraries/<包首段>/ 并清理宿主项目输出目录中的重复 DLL | AssemblyLoader 的全局缓存和宿主搜索路径只服务宿主依赖 |
+| Plugins 路径识别兼容 Windows 和 Unix 分隔符，Release 输出到 plugins/$(MSBuildProjectName)/ | Framework 的插件发现仅扫描 plugins 的直接子目录，各目录对应一个插件包 |
+| Plugins 项目启用 EnableDynamicLoading、GenerateDependencyFile、CopyLocalLockFileAssemblies；跳过宿主的归档与清理规则 | 插件入口旁的 .deps.json 和 SDK 原有目录结构供 AssemblyDependencyResolver 解析私有 managed/native 资产及卫星资源 |
+| Build/Plugins.targets 在 ResolveReferences 后过滤 ReferenceCopyLocalPaths；程序集文件名及 NuGetPackageId 匹配共享清单的资产不重复复制，Modules 项目引用也由宿主提供 | 共享 Core、Prism、Avalonia、Serilog 等实际程序集对象保持类型身份一致；每个插件的其他依赖由其加载上下文拥有 |
+| Build/PluginSharedAssemblies.txt 逐行列出宿主实际携带的共享程序集精确简单名及其 native package ID，仅 DigitalWorkstation.Core.* 使用前缀；大小写不敏感，构建读取、Framework 嵌入同一文件 | 构建过滤和运行时共享边界只维护一份清单；不能把全部宿主 NuGet 库无条件视为共享契约 |
+| Debug 所有 DLL 平铺 Output/Debug/，不执行 Release 插件共享过滤 | 插件发现扫描程序根目录；同名多版本依赖的物理隔离只在 Release 布局验证 |
 
-结论：Release 布局 = `Launcher.exe` 在根 + `core/` + `modules/` + `libraries/<分类>/` + `runtimes/<rid>/native/`。**改 ManageDlls 分类规则必须同步 `BaseFolderPath`/`BootRequiredAssemblyFiles`，反之亦然。**
+插件私有依赖不加入 AssemblyLoader.BaseFolderPath、进程 PATH 或宿主 native 句柄缓存。修改宿主分类目录时继续同步 Build/ManageDlls 与 AssemblyLoader；修改插件目录和打包规则时同步 Build/Plugins 与 Framework 插件加载逻辑。新增共享 UI/契约依赖时检查共享清单；第三方条目只使用宿主实际携带的精确名称，避免 Serilog.* 一类通配误删 Serilog.Sinks.File 等插件私有扩展。不通过扩大全局搜索范围补救缺文件。
 
 ## 被依赖关系
 

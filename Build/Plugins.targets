@@ -1,0 +1,28 @@
+<Project>
+    <!-- 与 Framework 共用清单：第三方程序集及其 native 包使用宿主实际携带的精确名称，仅 Core 契约允许前缀匹配。 -->
+    <Target Name="ReadPluginSharedAssemblies"
+            Condition="'$(Configuration)' == 'Release'">
+        <ReadLinesFromFile File="$(SolutionDir)Build\PluginSharedAssemblies.txt">
+            <Output TaskParameter="Lines" ItemName="_PluginSharedAssembly" />
+        </ReadLinesFromFile>
+        <ItemGroup>
+            <_PluginSharedAssembly>
+                <Pattern>$([System.Text.RegularExpressions.Regex]::Escape('%(Identity)').Replace('\*', '.*'))</Pattern>
+            </_PluginSharedAssembly>
+        </ItemGroup>
+        <PropertyGroup>
+            <_PluginSharedAssemblyRegex>(?i)^(@(_PluginSharedAssembly->'%(Pattern)', '|'))$</_PluginSharedAssemblyRegex>
+        </PropertyGroup>
+    </Target>
+
+    <Target Name="ExcludePluginSharedDependencies"
+            AfterTargets="ResolveReferences"
+            DependsOnTargets="ReadPluginSharedAssemblies"
+            Condition="'$(Configuration)' == 'Release'">
+        <ItemGroup>
+            <!-- 清单中的精确 native package ID 覆盖共享 UI 的 native 资产；文件名覆盖共享托管程序集。 -->
+            <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)"
+                                     Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(ReferenceCopyLocalPaths.Filename)', '$(_PluginSharedAssemblyRegex)')) or $([System.Text.RegularExpressions.Regex]::IsMatch('%(ReferenceCopyLocalPaths.NuGetPackageId)', '$(_PluginSharedAssemblyRegex)')) or $([System.String]::Copy('%(ReferenceCopyLocalPaths.MSBuildSourceProjectFile)').Replace('\', '/').Contains('/Modules/'))" />
+        </ItemGroup>
+    </Target>
+</Project>

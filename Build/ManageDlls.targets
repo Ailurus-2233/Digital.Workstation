@@ -2,7 +2,7 @@
     <Target Name="CopyDependenciesByPackageCategory"
             AfterTargets="ResolvePackageAssets"
             BeforeTargets="CopyFilesToOutputDirectory"
-            Condition="'$(Configuration)'=='Release'">
+            Condition="'$(Configuration)'=='Release' and '$(_InPlugins)' != 'true'">
 
         <MakeDir Directories="$(LibrariesBaseDir)"/>
 
@@ -36,7 +36,7 @@
               SkipUnchangedFiles="true"/>
     </Target>
 
-    <Target Name="ClearDllFiles" AfterTargets="Build" Condition="'$(Configuration)'=='Release'">
+    <Target Name="ClearDllFiles" AfterTargets="Build" Condition="'$(Configuration)'=='Release' and '$(_InPlugins)' != 'true'">
         <ItemGroup>
             <OutputNugetDllFiles Include="@(ReferenceCopyLocalPaths->'$(OutputPath)%(Filename)%(Extension)')"/>
         </ItemGroup>

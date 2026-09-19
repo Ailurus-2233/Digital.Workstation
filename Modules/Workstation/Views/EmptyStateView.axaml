@@ -4,8 +4,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:prism="http://prismlibrary.com/"
     prism:ViewModelLocator.AutoWireViewModel="True"
+    xmlns:vm="clr-namespace:DigitalWorkstation.Workstation.ViewModels"
     xmlns:localResource="clr-namespace:DigitalWorkstation.Workstation.Resources"
     xmlns:resource="clr-namespace:DigitalWorkstation.Core.Resource;assembly=DigitalWorkstation.Core.Resource">
+    <UserControl.Resources>
+        <DataTemplate x:Key="LoadedComponentTemplate" x:DataType="vm:LoadedComponentItem">
+            <Border Background="Transparent" Padding="0,3" ToolTip.Tip="{Binding Description}">
+                <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
     <UserControl.Styles>
         <Style Selector="Border.module-card">
             <Setter Property="Background" Value="{DynamicResource SemiColorFill0}" />
@@ -31,20 +39,15 @@
                                Foreground="{DynamicResource SemiColorText2}" TextAlignment="Left" TextWrapping="Wrap" />
                 </StackPanel>
             </Grid>
-            <Grid Grid.Row="1" ColumnDefinitions="2*,16,3*" RowDefinitions="Auto,Auto">
+            <Grid Grid.Row="1" ColumnDefinitions="*,16,*" RowDefinitions="Auto,Auto">
                 <TextBlock Classes="section-title" Text="{x:Static localResource:WorkstationResources.HomeLoadedModulesTitle}" TextWrapping="Wrap" />
-                <TextBlock Grid.Column="2" Classes="section-title" Text="{x:Static localResource:WorkstationResources.HomeModuleDescriptionTitle}" TextWrapping="Wrap" />
+                <TextBlock Grid.Column="2" Classes="section-title" Text="{x:Static localResource:WorkstationResources.HomeLoadedPluginsTitle}" TextWrapping="Wrap" />
                 <Border Grid.Row="1" Classes="module-card">
-                    <TreeView x:Name="ModuleTree" SelectionChanged="OnModuleSelectionChanged"
+                    <TreeView x:Name="ModuleTree" ItemTemplate="{StaticResource LoadedComponentTemplate}"
                               ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <TreeView.Resources>
                             <x:Double x:Key="TreeViewItemIndent">12</x:Double>
                         </TreeView.Resources>
-                        <TreeView.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}" TextWrapping="Wrap" />
-                            </DataTemplate>
-                        </TreeView.ItemTemplate>
                             <TreeViewItem x:Name="CoreModules" ItemsSource="{Binding CoreModules}" IsExpanded="True">
                                 <TreeViewItem.Header>
                                     <StackPanel>
@@ -66,7 +69,13 @@
                     </TreeView>
                 </Border>
                 <Border Grid.Row="1" Grid.Column="2" Classes="module-card">
-                    <TextBlock x:Name="SelectedModuleTitle" Text="{Binding SelectedModuleName}" TextWrapping="Wrap" />
+                    <StackPanel>
+                        <TextBlock IsVisible="{Binding IsPluginsEmpty}"
+                                   Text="{x:Static localResource:WorkstationResources.HomeNoPlugins}"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource SemiColorText2}" />
+                        <ItemsControl ItemsSource="{Binding LoadedPlugins}"
+                                      ItemTemplate="{StaticResource LoadedComponentTemplate}" />
+                    </StackPanel>
                 </Border>
             </Grid>
         </Grid>

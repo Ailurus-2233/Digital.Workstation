@@ -1,6 +1,6 @@
-# Abstractions — 文件结构与功能
+﻿# Abstractions — 文件结构与功能
 
-相对 `Core/Abstractions/` 的目录树（共 20 个文件，含 csproj；无子目录嵌套超过一层，无测试、无资源文件）：
+相对 `Core/Abstractions/` 的目录树（含 csproj；无子目录嵌套超过一层，无测试、无资源文件）：
 
 ```
 Abstractions.csproj
@@ -16,6 +16,8 @@ Menus/
 ├── IMenuItemContribution.cs
 ├── MenuGroupAttribute.cs
 └── MenuItemAttribute.cs
+Plugins/
+└── PluginAttribute.cs
 Regions/
 ├── ShellRegions.cs
 └── WellKnownViews.cs
@@ -112,3 +114,7 @@ shell 与模块共知的主视图 Id 常量（[ADR-0006](https://github.com/Ailu
 ### WindowManager/IWindowManagerExtenstion.cs
 
 `using Avalonia.Controls;`。定义 `public static class WindowManagerExtenstion`（"Extenstion" 为源码原始拼写），7 个泛型扩展方法：`GetWindow<TWindow>`、`ShowWindow<TWindow>`（两个重载）、`ShowDialog<TWindow>`（两个重载）、`HideWindow<TWindow>`、`CloseWindow<TWindow>`，全部转发 `IWindowManager` 的 `Type` 版方法。带 dataContext 的两个重载无 `where TWindow : Window` 约束。
+
+### Plugins/PluginAttribute.cs
+
+无参插件入口标记（AttributeTargets.Class、AllowMultiple=false、Inherited=false）；DependsOn 字符串数组声明依赖的内置模块名。纯元数据，不引用 Prism，不负责发现或实例化。

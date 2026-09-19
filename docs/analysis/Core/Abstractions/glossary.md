@@ -1,9 +1,10 @@
-# Abstractions — 术语表
+﻿# Abstractions — 术语表
 
 ## 领域术语与缩写
 
 | 术语 | 定义 | 首次出现位置 |
 |---|---|---|
+| **插件（Plugin）** | 通过扫描输出目录自动发现并在启动时初始化的模块；入口标记 PluginAttribute 并实现 IModule，能力沿用既有贡献契约 | Plugins/PluginAttribute.cs |
 | **Shell** | 应用主窗口的整体界面框架（导航栏 + 侧边栏 + 主内容 + 面板 + 菜单 + 状态栏的组合容器），非操作系统 shell | Regions/ShellRegions.cs 注释「Shell 布局的 Prism Region 名称常量」 |
 | **Region（Prism Region）** | Prism 框架的 UI 区域占位机制：XAML 中命名一个区域，运行期由模块把视图注入该区域。本模块以 `ShellRegions` 常量声明五个 Region 名 | Regions/ShellRegions.cs |
 | **ActivityBar** | 工作区最左侧的竖向导航栏（VS Code 风格） | Regions/ShellRegions.cs `ActivityBar` 常量 |
@@ -37,6 +38,7 @@
 
 | 代码元素 | 业务概念 |
 |---|---|
+| `PluginAttribute` | 自动发现的插件入口与内置模块依赖声明 |
 | `ToolViewAttribute` / `ToolViewContribution` | 工具视图：ActivityBar 导航项或右/底面板 tab 页的统一声明（attribute）与元数据（扫描产物） |
 | `IMainViewContribution` | 可在 MainContent 打开的一个主视图（如 dashboard.overview） |
 | `IMenuItemContribution` | 菜单栏中经菜单路径/菜单组定位的一个菜单项 |

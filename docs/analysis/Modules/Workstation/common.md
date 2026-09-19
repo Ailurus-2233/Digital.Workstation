@@ -9,9 +9,11 @@
 ### 主页与文件菜单导航
 
 - 主页是启动时的 `EmptyStateView`，不是 DashBoard 主视图贡献。VM 将启动时解析的实例保存在 `_homeContent`，回到主页不重新解析。
-- 下方左侧固定标题“已加载模块”位于 TreeView 外，不可选中或折叠。树内仅“系统核心”“自定义模块”两个顶层分组，初始展开，可折叠并使用主题自带的单选高亮。`EmptyStateView` 使用无参构造，Prism 按 `Views.EmptyStateView → ViewModels.EmptyStateViewModel` 自动关联；`IModuleCatalog` 注入 ViewModel。每次挂载由 View 调用 `Refresh()` 并清空树选择；ViewModel 更新快照并清空所选模块名称。“系统核心”枚举已加载的 `DigitalWorkstation.Core.*` 程序集，排除动态程序集和 `.resources`；“自定义模块”仅取 `ModuleState.Initialized` 的 Prism 模块，包括内置 DashBoard、Settings。两组分别按名称排序，空组提示通过绑定显示，不生成可选的虚假模块。
-- 下方右侧固定标题为“模块说明”，选中叶子后在标题下方显示模块名称，说明正文按需求暂不提供；选择分组或清空选择时仅清空模块名称，固定标题始终保留。此选择仅属于主页展示，不打开模块视图、不改变 ShellLayoutState、不写配置。
-- 两个固定标题位于灰色内容卡片上方，共用 Grid 的标题行，卡片位于下一行；标题不属于卡片内容。主页树局部覆盖 Semi 的 `TreeViewItemIndent` 为 12px，缩小每级缩进，不改变全局 TreeView 主题。
+- 下方左侧固定标题“已加载模块”位于 TreeView 外。树内保留“系统核心”“自定义模块”两个可折叠分组，初始展开；前者枚举已加载的 DigitalWorkstation.Core.* 程序集（排除动态和卫星程序集），后者仅保留 Initialized 且入口没有 PluginAttribute 的内置模块。各组按名称排序，空提示不生成可选的虚假模块。
+- 下方右侧固定标题为“已加载插件”，列表只显示 Initialized 且入口具有 PluginAttribute 的插件，无插件时显示本地化空提示。ModuleType 通过已加载程序集快照和显式 assemblyResolver 解析，保留 Release 插件上下文，不为主页重新加载 DLL；插件不会重复出现在左栏。
+- 左侧叶子与右侧插件共用 `LoadedComponentTemplate`，名称绑定 `LoadedComponentItem.Name`，条目悬浮提示绑定 `Description`。说明优先使用非空 `AssemblyDescriptionAttribute.Description`；缺省显示 Core 程序集完整身份或模块入口类型全名，类型解析不到时保留模块名称。此列表不打开模块视图、不改变 ShellLayoutState、不写配置。
+- `EmptyStateView` 使用无参构造，Prism 按 `Views.EmptyStateView → ViewModels.EmptyStateViewModel` 自动关联；`IModuleCatalog` 注入 ViewModel。每次挂载只清空树选择并调用 `Refresh()` 更新三个列表快照，不订阅选择变化或后台加载事件。
+- 模块与插件两栏按 1:1 等宽分配，中间固定间距为 16px。两个固定标题位于灰色内容卡片上方，共用 Grid 的标题行，卡片位于下一行；标题不属于卡片内容。主页树局部覆盖 Semi 的 `TreeViewItemIndent` 为 12px，缩小每级缩进，不改变全局 TreeView 主题。
 - 主页品牌区保持左右布局：左列 112px 图标靠右，右列产品名与副标题全部左对齐，二者间隔 24px；图文整体垂直居中，文字随可用宽度换行。高度不足时整页滚动。
 - 主页图标为 `Launcher/Assets/AppIcon.svg` 导出的 256px `AppIcon.png`，由 Workstation 项目以链接资源嵌入 `Assets/AppIcon.png`，不依赖运行时当前目录。
 - `Menus/FileNavigationMenus.cs` 声明文件菜单 Navigation 组（GroupOrder 100）：“回到主页”（Order 100）、“首选项”（Order 200）；原 `FileMenus` 的 Application 组（GroupOrder 1000）保持“退出”，组间自动插分隔线。

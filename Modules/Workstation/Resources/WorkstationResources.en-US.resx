@@ -8,9 +8,9 @@
     <value>Loaded modules</value>
     <comment>主页已加载模块区域标题</comment>
   </data>
-  <data name="HomeModuleDescriptionTitle" xml:space="preserve">
-    <value>Module description</value>
-    <comment>主页模块说明区域标题</comment>
+  <data name="HomeLoadedPluginsTitle" xml:space="preserve">
+    <value>Loaded plugins</value>
+    <comment>主页已加载插件区域标题</comment>
   </data>
   <data name="HomeCoreTitle" xml:space="preserve">
     <value>System core</value>
@@ -23,6 +23,10 @@
   <data name="HomeNoModules" xml:space="preserve">
     <value>No modules loaded</value>
     <comment>主页未加载模块时的提示</comment>
+  </data>
+  <data name="HomeNoPlugins" xml:space="preserve">
+    <value>No plugins loaded</value>
+    <comment>主页未加载插件时的提示</comment>
   </data>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />

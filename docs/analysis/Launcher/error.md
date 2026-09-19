@@ -55,3 +55,7 @@ TypeLoadException / EntryPointNotFoundException），抛出点在"首次使用�
 ```
 
 日志线索：启动成功的第一条日志是 `Launcher.Run` 的 `"Application startup."`（Launcher.cs:47，经 `DigitalWorkstation.Core.Common.Logger`）。**看不到这条日志 = 崩在引导阶段**（AssemblyLoader 三个静态方法内）；**看得到但随后 DllNotFound = Avalonia 启动后 native 解析未命中**，按第 2 节排查。
+
+## 插件私有依赖缺失
+
+plugins/ 不属于宿主的全局程序集/native 探测目录。插件私有依赖解析失败由 Framework.PluginLoadContext 抛出，并在插件启动项内显示 Continue/Exit；往根 libraries/ 放置同名文件不会修复插件缺失。应将插件自身依赖及适用 RID 资产放回该插件目录，检查 .deps.json 与平台架构。

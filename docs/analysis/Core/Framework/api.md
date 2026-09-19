@@ -40,7 +40,7 @@ viewName.Replace("Views", "ViewModels")
 后缀 View          → 追加 "Model"（即 *View → *ViewModel）
 ```
 
-即 `**/Views/*View.axaml → **/ViewModels/*ViewModel.cs`；`**/Views/Windows/*Window.axaml → **/ViewModels/Windows/*WindowViewModel.cs`；`**/Views/Pages/*Page.axaml → **/ViewModels/Pages/*PageViewModel.cs`。映射后的全名再拼上程序集全名组成程序集限定名 `$"{viewModelName}, {viewAssemblyName}"`（第 262 行），其中 `viewAssemblyName` 来自 `viewType.GetTypeInfo().Assembly.FullName`（第 244 行，即 **View 所在程序集**的全名——ViewModel 必须与 View 同程序集才能解析到）；最后调 `Type.GetType(fullViewModelName)`（第 264 行）解析出 ViewModel 的 `Type` 并返回。解析不到（`viewName`/`viewAssemblyName` 为空或类型不存在）时返回 null（不抛异常）。View 中需 `mvvm:ViewModelLocator.AutoWireViewModel="True"` 启用。
+即 `**/Views/*View.axaml → **/ViewModels/*ViewModel.cs`；`**/Views/Windows/*Window.axaml → **/ViewModels/Windows/*WindowViewModel.cs`；`**/Views/Pages/*Page.axaml → **/ViewModels/Pages/*PageViewModel.cs`。映射后的全名通过 viewType.Assembly.GetType(viewModelName) 在 View 实际所属程序集查询；ViewModel 必须与 View 同程序集。此路径保留插件独立加载上下文，避免 Type.GetType 的默认上下文查找。View 名为空或类型不存在时返回 null。View 中需 `mvvm:ViewModelLocator.AutoWireViewModel="True"` 启用。
 
 ## 2. `FrameworkWindowManager`（WindowManager/FrameworkWindowManager.cs:12）
 
@@ -466,3 +466,7 @@ public static class ApplicationRestarter { public static void Restart(); } // :1
 | `LayoutPersistence` | Singleton | 自身（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)；机制在 Framework、接线在 shell 模块） |
 | `ISettingsService` | Singleton（工厂） | 显式构造的 `SettingsService` 实例，注册前已 `Load()`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4） |
 | `IoC.Registry` / `IoC.Provider` | 静态初始化 | `IoC.Initialize(containerRegistry, Container)`（Common 模块） |
+
+## 插件启动 API（内部）
+
+PluginDiscovery.Discover(IReadOnlyCollection<Assembly> sharedModules) 返回 PluginDescriptor 列表（Name、AssemblyPath、ModuleType、Dependencies、Error）。sharedModules 是显式内置模块与宿主 Shell 的实际程序集实例。调用发生在启动台显示后、执行入口之前；错误描述符也占一个启动进度位置。插件入口契约见 Abstractions/Plugins/PluginAttribute.cs。
