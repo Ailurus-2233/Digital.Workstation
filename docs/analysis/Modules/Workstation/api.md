@@ -35,7 +35,7 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
 public partial class MainWindowViewModel : ObservableObject
 ```
 
-构造注入：`MainWindowViewModel(ShellContributionCollector collector, IContainerProvider containerProvider, IEventAggregator eventAggregator, LayoutPersistence persistence)`（:41-55；`LayoutPersistence` 类型在 Framework：`Core/Framework/Layout/LayoutPersistence.cs`，经 `using DigitalWorkstation.Core.Framework.Layout` 解析）。由 Prism ViewModelLocator 自动装配（`MainWindow.axaml:12` `prism:ViewModelLocator.AutoWireViewModel="True"`）。构造函数把四个参数存入字段（`_collector`/`_containerProvider`/`_eventAggregator`/`_persistence`，:44-47），订阅 `OpenMainViewEvent`→`OpenMainView`、`TogglePanelVisibilityEvent`→`TogglePanel`、`SetPanelAlignmentEvent`→`SetPanelAlignment`、`ResetLayoutEvent`→`ResetLayout`（:48-51），订阅 Framework `ToolViewDragSession.ActiveChanged` 写 `IsToolViewDragActive`（:53，拖拽会话期间临时显露隐藏面板，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)），并把容器解析的 EmptyStateView 缓存为 `_homeContent`，以该实例初始化 `_mainContent`；订阅 ReturnHomeEvent 时恢复同一实例。
+构造注入：`MainWindowViewModel(ShellContributionCollector collector, IContainerProvider containerProvider, IEventAggregator eventAggregator, LayoutPersistence persistence)`（:41-55；`LayoutPersistence` 类型在 Services：`Core/Services/Layout/LayoutPersistence.cs`，经 `using DigitalWorkstation.Core.Framework.Layout` 解析）。由 Prism ViewModelLocator 自动装配（`MainWindow.axaml:12` `prism:ViewModelLocator.AutoWireViewModel="True"`）。构造函数把四个参数存入字段（`_collector`/`_containerProvider`/`_eventAggregator`/`_persistence`，:44-47），订阅 `OpenMainViewEvent`→`OpenMainView`、`TogglePanelVisibilityEvent`→`TogglePanel`、`SetPanelAlignmentEvent`→`SetPanelAlignment`、`ResetLayoutEvent`→`ResetLayout`（:48-51），订阅 Framework `ToolViewDragSession.ActiveChanged` 写 `IsToolViewDragActive`（:53，拖拽会话期间临时显露隐藏面板，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)），并把容器解析的 EmptyStateView 缓存为 `_homeContent`，以该实例初始化 `_mainContent`；订阅 ReturnHomeEvent 时恢复同一实例。
 
 ### 可绑定属性（XAML 消费面，绑定点见 MainWindow.axaml 与 Framework 的 `FrameworkWindowTheme.axaml`——后者是宽松反射绑定，Framework 不引用本类型）
 
@@ -174,3 +174,11 @@ ContentFor(id) 维持全局工具视图实例缓存；SyncBarCollection 保持�
 `DigitalWorkstation.Workstation.Resources.WorkstationResources` 是公开静态 facade，属性与本模块 resx 键同名，每次调用按 CurrentUICulture 查找。菜单声明使用 `[MenuGroup("shell.file", typeof(WorkstationResources), nameof(WorkstationResources.MenuFileTitle), ...)]`；MenuItem/Command 的首参是 typeof(WorkstationResources)，第二参是 nameof 标题键。Path 是结构 Id，TitleKey 是显示资源键。
 
 菜单根标题仅由 FileMenus（shell.file）、ViewPanelMenus（shell.view）、HelpMenus（shell.help）声明。FileNavigationMenus、ViewAlignmentMenus、ViewLayoutMenus 使用 reference-only MenuGroup，只挂接稳定路径；外部模块同样可用 `[MenuGroup("shell.file")]` 加入文件菜单，不导入 WorkstationResources、不复制根标题。reference-only 的 ResourceType/TitleKey/PathTitle 为 null，不参与首个标题决议；先挂接后声明时补齐真实标题，未声明节点显示稳定 Id。
+
+## 插件管理入口迁移
+
+插件配置页面、ViewModel 和中英文资源已迁移到 Modules/Settings。Workstation 通过既有首选项菜单、命令和设置按钮打开 WellKnownViews.Settings；进入后选择插件管理标签。独立插件主视图贡献及 OpenPlugins 菜单/命令已删除。接口、状态与文件说明见 [Settings/common.md](../Settings/common.md)。
+
+## Services 拆分接线
+
+基础服务实现现位于 Core/Services，经 Framework 的项目引用传递。贡献登记扩展使用 DigitalWorkstation.Core.Services.Contributions；UI 扫描、收集与布局状态机仍在 Framework。布局存储在 Services.Layout，PanelAlignment 在 Abstractions.Layout，SetPanelAlignmentEvent 在 Common.Events；重启入口为 Services.ApplicationRestarter。配置路径、语言设置 Id、插件上下文前缀和 Release 分类目录保持原规则。新项目入口见 Services 的模块认知文档。

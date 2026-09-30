@@ -30,3 +30,7 @@ dotnet test UnitTest/Framework/Framework.csproj
 - `IoC.Initialize` 一次性守卫：第二次调用抛 `InvalidOperationException` 且消息为 `"IoC is already initialized"`；
 - 未初始化时 `IoC.Registry`/`IoC.Provider` 返回 `null`（`_registry`/`_provider` 为 `null!`，IoC.cs 第 32-33 行）——当前是隐式行为，测试会把它固化；
 - `Logger` 属静态全局状态，单测难以隔离（Serilog logger 在私有构造函数内硬编码构建，无注入点），如需可测性应先重构（引入内部可替换的 `ILogger` 工厂），这本身是个改造决策，见 pitfalls.md。
+
+## 共享事件归属
+
+Events/ 已合并入 Common 项目。相关记录见 [Events/testing.md](Events/testing.md)，修改事件前先读 [Events/common.md](Events/common.md)。

@@ -1,3 +1,5 @@
+using DigitalWorkstation.Core.Abstractions.Layout;
+using DigitalWorkstation.Core.Services.Layout;
 using DigitalWorkstation.Core.Abstractions.Contributions;
 
 namespace DigitalWorkstation.Core.Framework.Layout;

@@ -8,4 +8,5 @@ namespace DigitalWorkstation.Sample.Resources;
 public static class SampleResources
 {
     public static string PluginLoaded => ResourceText.Get(typeof(SampleResources), nameof(PluginLoaded));
+    public static string PluginName => ResourceText.Get(typeof(SampleResources), nameof(PluginName));
 }

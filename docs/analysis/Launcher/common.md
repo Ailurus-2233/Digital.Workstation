@@ -62,3 +62,7 @@ Program.Main(args)                                     [Program.cs:13]
 ## 插件与宿主解析边界
 
 Launcher 的构建引用自动纳入 Plugins 下项目，但 ReferenceOutputAssembly=false，不建立运行时插件声明。Release 的插件目录不进入宿主 AssemblyLoader 搜索范围、PATH 或 native 预加载。宿主解析器忽略插件上下文发起的请求，并在全局已加载程序集查询中排除插件私有程序集；插件私有依赖由 Framework 独立解析。宿主 LoadFile 引导不变，公共程序集共享必须复用其实际 Assembly 实例，不能假定都在 Default 上下文。
+
+## Services 拆分接线
+
+基础服务实现现位于 Core/Services，经 Framework 的项目引用传递。贡献登记扩展使用 DigitalWorkstation.Core.Services.Contributions；UI 扫描、收集与布局状态机仍在 Framework。布局存储在 Services.Layout，PanelAlignment 在 Abstractions.Layout，SetPanelAlignmentEvent 在 Common.Events；重启入口为 Services.ApplicationRestarter。配置路径、语言设置 Id、插件上下文前缀和 Release 分类目录保持原规则。新项目入口见 Services 的模块认知文档。

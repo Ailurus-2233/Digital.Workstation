@@ -10,6 +10,9 @@
       <Compile Update="Views\SettingsPageView.axaml.cs">
         <DependentUpon>SettingsPageView.axaml</DependentUpon>
       </Compile>
+      <Compile Update="Views\PluginsPageView.axaml.cs">
+        <DependentUpon>PluginsPageView.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

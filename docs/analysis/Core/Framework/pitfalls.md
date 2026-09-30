@@ -13,7 +13,7 @@
 5. **`HandleMainWindow` 只能调一次**：其实现（第 158-167 行）在 `_mainWindow != null && !_windowMap.ContainsKey(type)` 时登记，**否则抛 `InvalidOperationException`**——第二次调用时主窗口已在映射中，走 else 分支抛错。不要把它当幂等的"刷新主窗口引用"用。
 6. **`ShowDialog` 要求主窗口活跃**：`_mainWindow is { IsActive: true }`（第 127、137 行）才允许弹模态；主窗口被 Hide 期间弹对话框会抛异常，而 `ShowWindow` 只要求主窗口非 null。
 7. **布局状态必须整体替换**：`ShellLayoutState` 所有转换返回新实例（非法操作返回 `this`）；消费方若丢弃返回值（`state.Resize(...)` 不赋值回 `_state`）改动静默丢失。`Modules/Workstation/MainWindowViewModel.cs:60` 的 `[ObservableProperty] _state` 是唯一的当前实例持有者。
-8. **UI 线程亲和性**：`FrameworkWindowManager` 的 Show/Hide/Close 与 `ShellContributionCollector` 的容器解析都假定在 UI 线程调用；模块加载被刻意 `Task.Run` 移出 UI 线程（`FrameworkApplication.cs:92`），模块 `Initialize` 里直接操作窗口需自行切回 UI 线程。`SettingsService` 的声明默认值容器解析同样假定 UI 线程（`Settings/SettingsService.cs:15` 注释）。
+8. **UI 线程亲和性**：`FrameworkWindowManager` 的 Show/Hide/Close 与 `ShellContributionCollector` 的容器解析都假定在 UI 线程调用；模块加载被刻意 `Task.Run` 移出 UI 线程（`FrameworkApplication.cs:92`），模块 `Initialize` 里直接操作窗口需自行切回 UI 线程。`SettingsService` 的声明默认值容器解析同样假定 UI 线程（`Core/Services/Settings/SettingsService.cs:15` 注释）。
 9. **`SideBarState.Visible` 默认 false，两个面板默认 true**：初始布局里 SideBar 收起、AuxiliaryPanel/BottomPanel 展开（`SideBarState.cs:11`、`AuxiliaryPanelState.cs:11`、`BottomPanelState.cs:11`）；改默认值会改变首屏布局且现有测试以 `Initial` 为基准。
 
 ## 易错改法
@@ -85,3 +85,20 @@
 
 - Release 的 runtimes 资产通过插件 .deps.json 与 AssemblyDependencyResolver 定位；未列入依赖描述的托管 DLL 仅回退插件顶层/对应文化目录，native 仅回退插件顶层及系统库目录，不递归猜测多个 RID。
 - 插件 private 托管依赖缺失抛 FileLoadException 以结束当前解析；ResourceManager 对卫星资源仍执行文化回退。系统 native 用绝对系统路径 TryLoad，兼容 macOS dyld cache 中没有实体文件的系统库。
+
+## 插件启动选择不变量
+
+- 禁用判断必须在 LoadFromAssemblyPath 之前，不能仅跳过 RegisterTypes。管理页展示服务的发现快照，不能从已加载模块目录推导可编辑插件列表。
+- 启动过滤只读 IsEnabledAtStartup，页面只改 IsEnabled 对应的当前值。进程内切换不加载、卸载或撤销贡献；改回启动值取消重启提示。
+- 身份为入口类型全名且区分大小写。重命名入口是新身份，会默认启用；移除 DLL 不删除旧选择。Debug 与 Release 共用用户配置文件。
+- 有效入口候选仅对启用项检查重复身份；非法多入口目录仍由原扫描规则拒绝，无法通过禁用其中一个入口使安装结构合法。
+
+## 基础服务项目拆分
+
+窗口管理、配置写入、布局存储、贡献目录、设置目录与存储、插件发现及启动选择、ApplicationRestarter 已归 Services；本页相关行为是 Framework 使用这些服务的协议，源码归属与接口见 [Services/pitfalls.md](../Services/pitfalls.md)。Framework 显式 Register/Start 基础服务并在真实 Exit 停止，语言声明及设置 Id 不变。模块附加服务已接入加载后启动、失败清理与退出逆序停止。
+
+## 模块附加服务接线
+
+Framework 在模块/插件入口初始化后、贡献准备前调用 Services.ModuleServiceCatalog.Start；失败拒绝贡献批次并 Stop 同批服务。内置模块失败状态回到 NotStarted；依赖检查仍按 availableModules。
+
+真实 Exit 先设置退出守卫、逆序 Dispose 模块服务目录，再 Dispose 基础服务，保证停止回调仍可使用基础配置。服务契约与登记方式见 [Services/api.md](../Services/api.md)，故障和运行验收见 [Services/testing.md](../Services/testing.md)。不回滚普通容器登记或模块入口自行产生的副作用。

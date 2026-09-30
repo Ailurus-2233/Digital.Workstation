@@ -9,3 +9,9 @@
 3. 最后启动应用，检查语言重启后菜单、工具视图与设置页的显示；不能仅用编译通过代替可观察行为。
 
 解决方案现有 `UnitTest/Framework/ShellLayoutStateResizeTests.cs` 只覆盖布局尺寸，不覆盖本地化契约。并行改动时由集成方待所有改动完成后统一验收，避免半成品引起伪失败。
+
+## 共享布局档位契约
+
+PanelAlignment 已从 Framework/Layout 迁入 Core/Abstractions/Layout/PanelAlignment.cs，命名空间 DigitalWorkstation.Core.Abstractions.Layout。Left/Right/Center/Justify 的枚举值和语义保持不变。Framework 模板与 Services 的布局 DTO 共用它，避免 Services 反向引用 Framework。SetPanelAlignmentEvent 已归 Common/Events；窗口管理与 ISettingsService 的实现已归 Services。
+
+IModuleService 的运行验收沿 Services/testing.md 的 Sample 启动、禁用与停止日志验证；不新增契约单元测试。失败清理须通过部分启动与贡献准备失败的手动故障演练确认。

@@ -1,4 +1,6 @@
-﻿using System.Collections.ObjectModel;
+using DigitalWorkstation.Core.Abstractions.Layout;
+using DigitalWorkstation.Core.Services.Layout;
+using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -9,7 +11,7 @@ using DigitalWorkstation.Core.Abstractions.Regions;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.Layout;
 using DigitalWorkstation.Core.Framework.Menus;
-using DigitalWorkstation.Core.Models.Events;
+using DigitalWorkstation.Core.Common.Events;
 using DigitalWorkstation.Workstation.Resources;
 using DigitalWorkstation.Core.UIPackage;
 using DigitalWorkstation.Workstation.Views;

@@ -1,6 +1,7 @@
+using DigitalWorkstation.Core.Abstractions.Layout;
 using DigitalWorkstation.Core.Abstractions.Menus;
 using DigitalWorkstation.Core.Framework.Layout;
-using DigitalWorkstation.Core.Models.Events;
+using DigitalWorkstation.Core.Common.Events;
 using DigitalWorkstation.Core.UIPackage;
 using DigitalWorkstation.Workstation.Resources;
 

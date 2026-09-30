@@ -32,3 +32,7 @@
 | `IoC.Registry` / `IoC.Provider` | Prism 容器的写/读两侧：Registry= composition time（注册期），Provider= resolution time（运行期解析） |
 | `IsInitialized` | 引导流程状态机的一比特：false=容器未登记（访问即 NRE），true=已登记（再登记即抛异常） |
 | `"Microsoft"` Override | 过滤第三方（.NET/ASP.NET 风格命名空间）噪音日志的约定，压到 Warning 级 |
+
+## 共享事件归属
+
+Events/ 已合并入 Common 项目。相关记录见 [Events/glossary.md](Events/glossary.md)，修改事件前先读 [Events/common.md](Events/common.md)。

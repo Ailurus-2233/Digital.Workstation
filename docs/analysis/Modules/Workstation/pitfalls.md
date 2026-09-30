@@ -43,3 +43,7 @@
 ## 本地化边界
 
 稳定菜单路径/工具视图 Id 与显示资源键分别维护，带文案的 attribute 必须显式指定 owner；仅挂接已有菜单的 MenuGroup 则只指定稳定路径；新私有文案放本模块 Resources，不向共享产品资源添加别名。资源重命名同时修改 facade、两份 resx 和 XAML/nameof 引用；资源清单缺失不等于普通缺键。
+
+## 插件管理入口迁移
+
+插件配置页面、ViewModel 和中英文资源已迁移到 Modules/Settings。Workstation 通过既有首选项菜单、命令和设置按钮打开 WellKnownViews.Settings；进入后选择插件管理标签。独立插件主视图贡献及 OpenPlugins 菜单/命令已删除。接口、状态与文件说明见 [Settings/common.md](../Settings/common.md)。

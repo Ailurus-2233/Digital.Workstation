@@ -1,5 +1,5 @@
 using DigitalWorkstation.Core.Abstractions.Commands;
-using DigitalWorkstation.Core.Models.Events;
+using DigitalWorkstation.Core.Common.Events;
 using DigitalWorkstation.Core.UIPackage;
 using DigitalWorkstation.Workstation.Resources;
 

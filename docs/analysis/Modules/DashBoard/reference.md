@@ -15,7 +15,7 @@
 
 | 传递来源 | 用到的能力 | 使用点 |
 |---|---|---|
-| `Core/Models`（经 Framework 传递） | 启动事件三件套：`StartupProgressEvent`/`StartupProgress`/`StartupPhase`、`ModuleLoadFailedEvent`/`ModuleLoadFailure`、`StartupFailureActionEvent`/`StartupFailureAction`（均 Models/Events/） | `DashBoardWindowViewModel.cs:3、19-20、38、53、72、81` |
+| `Core/Common/Events`（经 Framework 传递） | 启动事件三件套：`StartupProgressEvent`/`StartupProgress`/`StartupPhase`、`ModuleLoadFailedEvent`/`ModuleLoadFailure`、`StartupFailureActionEvent`/`StartupFailureAction`（均 Common/Events/） | `DashBoardWindowViewModel.cs:3、19-20、38、53、72、81` |
 
 ### NuGet / 框架
 
@@ -51,5 +51,5 @@ DashBoardStatusBarItem.Id   "dashboard.status"
 |---|---|
 | `DashBoardModule` | `Prism.Modularity.IModule`（Prism.DryIoc 传递） |
 | 接口贡献类（`DashBoardStatusBarItem`） | `Core/Abstractions/Contributions/` 下 `IStatusBarItemContribution` 接口（详见 docs/analysis/Core/Abstractions/api.md） |
-| `DashBoardWindowViewModel` 的事件订阅/发布 | `StartupProgressEvent`/`ModuleLoadFailedEvent`/`StartupFailureActionEvent`（Core/Models/Events/，详见 docs/analysis/Core/Models/） |
+| `DashBoardWindowViewModel` 的事件订阅/发布 | `StartupProgressEvent`/`ModuleLoadFailedEvent`/`StartupFailureActionEvent`（Core/Common/Events/，详见 docs/analysis/Core/Common/Events/） |
 | `DashBoardWindow` 的显示方 | shell 启动序列直接 `Container.Resolve<DashBoardWindow>()` 显示（`WorkstationApplication.CreateSplashWindow`）；模块内不再有重开通路（原菜单/命令贡献已删除） |

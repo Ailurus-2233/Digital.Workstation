@@ -15,9 +15,9 @@
 - Launcher：应用入口与启动引导（启动 Avalonia App、动态程序集解析）
 - Core/
 	- Abstractions：抽象层（如窗口管理 IWindowManager）
-	- Common：通用基础设施（IoC 容器桥接、Logger 等）
-	- Framework：核心框架层（FrameworkApplication、窗口管理实现、MVVM 自动定位等）
-	- Models：跨模块共享的模型/事件（如启动进度 StartupProgressEvent）
+	- Common：通用基础设施（IoC 容器桥接、Logger、Events 共享事件契约与负载）
+	- Services：基础服务实现（窗口管理、配置持久化、设置、插件发现与启动选择）
+	- Framework：基础框架与启动编排（FrameworkApplication、Shell 布局、贡献扫描、MVVM 自动定位）
 	- UIPackage：UI 资源包（聚合 Semi、Ursa 等第三方主题为统一的应用主题 WorkstationTheme）
 - Modules/
 	- Workstation：主应用（Avalonia Application + MainWindow），负责注册/加载模块

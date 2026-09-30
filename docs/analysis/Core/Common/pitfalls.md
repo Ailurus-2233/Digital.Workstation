@@ -22,3 +22,7 @@
 1. **DEBUG 下双份 logger 构建**（Logger.cs 第 34-46 行）：第一个 `LoggerConfiguration()...CreateLogger()` 在 DEBUG 构建中创建后立即被第二个覆盖，是无害但浪费的分配。注释「调试模式下使用更详细的日志级别」（第 40 行）表明作者意图是级别切换，但实现选择了整体重建而非参数化 `MinimumLevel`——说明这段代码经历过「Release 也要能编译运行」与「Debug 要 Verbose」的折中，重构时应合并为单一配置链 + 条件级别。
 2. **`null!` 抑制符**（IoC.cs 第 32-33 行）：作者明确知道字段初始化前为 null，用 `!` 压住可空警告而不是引入「未初始化」显式状态。这是防御性提示：读这两个属性的代码必须自己保证时序，编译器帮不了你。
 3. **`Output/Debug/` 空目录遗留**（Core/Common/Output/）：构建输出曾落在模块目录内，后由 `Build/Base.props` 统一到仓库根 `Output/`。目录残留说明迁移发生过——不要在模块内新建输出目录假设。
+
+## 共享事件归属
+
+Events/ 已合并入 Common 项目。相关记录见 [Events/pitfalls.md](Events/pitfalls.md)，修改事件前先读 [Events/common.md](Events/common.md)。

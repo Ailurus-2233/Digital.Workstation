@@ -1,4 +1,5 @@
-﻿using DigitalWorkstation.Core.Abstractions.Contributions;
+using DigitalWorkstation.Core.Services.Contributions;
+using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Framework.Contributions;
 
 namespace DigitalWorkstation.DashBoard;

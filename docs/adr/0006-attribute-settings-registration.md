@@ -15,7 +15,7 @@
 
 1. 设置项经 attribute 声明，拆两个 attribute 仿菜单模型（[ADR-0001](0001-attribute-menu-registration.md)）：`SettingGroupAttribute(id, resourceType, name)` 标类，声明稳定分组 ID、名称资源来源与 Order；`SettingItemAttribute(group, resourceType, name)` 标公共静态可读属性，携带所属分组 ID、名称资源来源、默认值、Order、RequiresRestart。设置项 Id 仍默认「声明类全名.属性名」。模块 `RegisterTypes` 显式调用 `RegisterSettings(Assembly)` 扫描本模块程序集，不做全局程序集扫描。
 2. 资源键只在声明的 `ResourceType` 中查找，缺键返回键名，不跨模块查找。同分组 ID 全局合并，保留首份声明的名称键/资源类型，Order 取最小；不同 ID 即使显示名或键相同也不合并。仅被设置项引用的未声明分组仍补出，显示稳定 ID、Order 为 0。分组 ID 不是 settings.json 的 key。
-3. 值经 `ISettingsService`（Core/Abstractions 契约，Framework 实现）读写：启动时一次性加载入内存，`Get<T>(id)` 纯内存读，`Set<T>(id, value)` 更新内存、防抖落盘并广播变更事件（EventAggregator，事件契约在 Core/Models）。默认值只是未修改时的取值，不是单独存储层。
+3. 值经 `ISettingsService`（Core/Abstractions 契约，Framework 实现）读写：启动时一次性加载入内存，`Get<T>(id)` 纯内存读，`Set<T>(id, value)` 更新内存、防抖落盘并广播变更事件（EventAggregator，事件契约在 Core/Common/Events）。默认值只是未修改时的取值，不是单独存储层。
 4. 持久化为 `%AppData%/Digital.Workstation/settings.json` 单文件，key 为设置项 Id，改即存，读写模式仿 `LayoutPersistence`（System.Text.Json、防抖）。
 5. 设置页是新模块 Modules/Settings 贡献的普通 `IMainViewContribution`（左侧分组树 + 右侧编辑器），走既有「收集 → OpenMainViewEvent → MainContent 切换」管线，无特权机制。主视图 Id 常量 `WellKnownViews.Settings` 放 Core/Abstractions，与 `ShellRegions` 常量同处——shell 按钮与 Settings 模块都依赖它，而 Workstation 不引用 Settings 模块。
 6. 左下角按钮改为纯导航：点击发布 `OpenMainViewEvent` 打开设置页；`shell.settings` 钉住工具视图（空壳）删除。

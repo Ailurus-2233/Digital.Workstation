@@ -5,6 +5,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:prism="http://prismlibrary.com/"
+    xmlns:views="using:DigitalWorkstation.Settings.Views"
+    xmlns:resource="using:DigitalWorkstation.Settings.Resources"
     xmlns:viewmodels="using:DigitalWorkstation.Settings.ViewModels"
     d:DesignHeight="450"
     d:DesignWidth="800"
@@ -45,45 +47,52 @@
         </DataTemplate>
     </UserControl.DataTemplates>
 
-    <Grid RowDefinitions="Auto,*" Margin="12">
-        <!--  需重启修改横幅：存在未生效的需重启修改时显示，「立即重启」启动新进程并退出当前进程（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）  -->
-        <Border
-            Margin="0,0,0,12"
-            Padding="12,8"
-            Background="{DynamicResource SemiColorBackground1}"
-            BorderBrush="{DynamicResource SemiColorBorder}"
-            BorderThickness="1"
-            CornerRadius="8"
-            IsVisible="{Binding HasPendingRestartChanges}">
-            <Grid ColumnDefinitions="*,Auto">
-                <TextBlock VerticalAlignment="Center" Text="{Binding RestartBannerText}" />
-                <Button
-                    Grid.Column="1"
-                    Command="{Binding RestartNowCommand}"
-                    Content="{Binding RestartNowButtonTitle}" />
+    <TabControl Margin="12">
+        <TabItem Header="{x:Static resource:SettingsResources.GeneralSettingsTabTitle}">
+            <Grid RowDefinitions="Auto,*" Margin="0,12,0,0">
+                <!--  需重启修改横幅：存在未生效的需重启修改时显示，「立即重启」启动新进程并退出当前进程（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）  -->
+                <Border
+                    Margin="0,0,0,12"
+                    Padding="12,8"
+                    Background="{DynamicResource SemiColorBackground1}"
+                    BorderBrush="{DynamicResource SemiColorBorder}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    IsVisible="{Binding HasPendingRestartChanges}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock VerticalAlignment="Center" Text="{Binding RestartBannerText}" />
+                        <Button
+                            Grid.Column="1"
+                            Command="{Binding RestartNowCommand}"
+                            Content="{Binding RestartNowButtonTitle}" />
+                    </Grid>
+                </Border>
+                <Grid Grid.Row="1" ColumnDefinitions="240,*">
+                    <Border
+                        Background="{DynamicResource SemiColorBackground1}"
+                        BorderBrush="{DynamicResource SemiColorBorder}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <ListBox
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ItemsSource="{Binding Groups}"
+                            SelectedItem="{Binding SelectedGroup}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                    <ScrollViewer Grid.Column="1" Margin="12,0,0,0">
+                        <ItemsControl ItemsSource="{Binding Items}" />
+                    </ScrollViewer>
+                </Grid>
             </Grid>
-        </Border>
-        <Grid Grid.Row="1" ColumnDefinitions="240,*">
-            <Border
-                Background="{DynamicResource SemiColorBackground1}"
-                BorderBrush="{DynamicResource SemiColorBorder}"
-                BorderThickness="1"
-                CornerRadius="8">
-                <ListBox
-                    Background="Transparent"
-                    BorderThickness="0"
-                    ItemsSource="{Binding Groups}"
-                    SelectedItem="{Binding SelectedGroup}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Border>
-            <ScrollViewer Grid.Column="1" Margin="12,0,0,0">
-                <ItemsControl ItemsSource="{Binding Items}" />
-            </ScrollViewer>
-        </Grid>
-    </Grid>
+                </TabItem>
+        <TabItem Header="{x:Static resource:SettingsResources.PluginsTitle}">
+            <views:PluginsPageView />
+        </TabItem>
+    </TabControl>
 </UserControl>

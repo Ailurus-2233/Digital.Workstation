@@ -71,3 +71,9 @@ Id (string) + Title (string) + IconPath (string) + Order (int)
 ### 窗口管理类型的关系
 
 `WindowManagerExtenstion` →（转发）→ `IWindowManager`（Type 版方法）→（实现侧）→ DI 容器解析 `Window`。`IMainWindowManager` 与 `IWindowManager` 无继承关系，是独立接口，专管主窗口。
+
+## 共享布局档位契约
+
+PanelAlignment 已从 Framework/Layout 迁入 Core/Abstractions/Layout/PanelAlignment.cs，命名空间 DigitalWorkstation.Core.Abstractions.Layout。Left/Right/Center/Justify 的枚举值和语义保持不变。Framework 模板与 Services 的布局 DTO 共用它，避免 Services 反向引用 Framework。SetPanelAlignmentEvent 已归 Common/Events；窗口管理与 ISettingsService 的实现已归 Services。
+
+IModuleService 被 Services/Lifecycle 使用并由模块实现；Framework 经 Services 编排其启动和停止。契约只有同步方法，不为 Abstractions 增加 Prism 或 Framework 项目依赖。

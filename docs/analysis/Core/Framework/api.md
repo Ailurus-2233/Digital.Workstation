@@ -30,7 +30,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
 - `RunStartupSequenceAsync()`：按依赖顺序逐模块建立贡献批次，后台 LoadModule 后回 UI 线程准备工厂并提交。依赖不可用、模块未完成初始化、注册或贡献构造失败都进入 Continue/Exit；失败批次不可见。全部完成后准备宿主贡献与 Shell 呈现，再发布 Ready。
 - `WaitForFailureActionAsync(IEventAggregator)`（第 121 行）：一次性订阅 `StartupFailureActionEvent`，返回 `true` = Continue。
 - `ShowMainWindow()`（第 131 行）：先做两个模式匹配守卫——`MainWindow is not Window window` 或 `ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime lifetime` 时**静默 return**（不抛异常、不动作）；通过后依次 `lifetime.MainWindow = window` → `_windowManager?.ShowMainWindow()` → `_windowManager?.CloseWindowsExceptMain()`。
-- `RegisterFrameworkServices` / `ResolveFrameworkServices`：前者初始化 IoC、注册窗口管理器双接口单例、贡献收集器与布局持久化服务，显式构造 `SettingsService` 并立即 `Load()`，注册 `ISettingsService` 与 Framework 的常规/语言设置；再 `ApplyLanguageSetting` 按持久化语言设置当前及默认线程区域性，并用 `SharedResources.ProductName` 设置 Application.Name。必须先于模块 `RegisterTypes`：工具视图扫描时解析文本，菜单/命令启动准备时解析。设置元数据保留来源与键，设置页构造时才解析。末尾 `ResolveFrameworkServices` 解析并保存事件聚合器与主窗口管理器。
+- RegisterFrameworkServices 初始化 IoC，调用 BasicServices.Register；登记 Framework 设置声明后调用 BasicServices.Start，应用已存语言。真实 Exit 调 BasicServices.Dispose。末尾解析框架所需的事件聚合器和主窗口管理接口。
 
 ### ViewModel 定位约定（ConfigureViewModelLocator，第 237-269 行）
 
@@ -42,28 +42,9 @@ viewName.Replace("Views", "ViewModels")
 
 即 `**/Views/*View.axaml → **/ViewModels/*ViewModel.cs`；`**/Views/Windows/*Window.axaml → **/ViewModels/Windows/*WindowViewModel.cs`；`**/Views/Pages/*Page.axaml → **/ViewModels/Pages/*PageViewModel.cs`。映射后的全名通过 viewType.Assembly.GetType(viewModelName) 在 View 实际所属程序集查询；ViewModel 必须与 View 同程序集。此路径保留插件独立加载上下文，避免 Type.GetType 的默认上下文查找。View 名为空或类型不存在时返回 null。View 中需 `mvvm:ViewModelLocator.AutoWireViewModel="True"` 启用。
 
-## 2. `FrameworkWindowManager`（WindowManager/FrameworkWindowManager.cs:12）
+## 2. 已迁移至 Services
 
-```csharp
-public class FrameworkWindowManager : IWindowManager, IMainWindowManager
-```
-
-实现 Abstractions 的两个接口（方法契约见 `docs/analysis/Core/Abstractions/api.md`），本模块提供行为语义：
-
-| 方法 | 行为要点 |
-|---|---|
-| `GetWindow(Type)` | `IoC.Provider.Resolve(type) as Window`，解析结果非 Window 抛 `ArgumentException("TargetWindow type is illegal")`（第 37 行） |
-| `ShowWindow(Type)` / `ShowWindow(Type, object)` | `GetWindow` 后转实例版 |
-| `ShowWindow(Window)` / `ShowWindow(Window, object)` | 顺序：`InitializeWindow` 注册 →（dataContext 版）`window.DataContext = dataContext` 赋值 → 检查主窗口：已设且 `IsActive` 时 `window.Show(_mainWindow)`（以主窗口为 owner），否则 `window.Show()`；主窗口未设抛 `InvalidOperationException`（第 78-111 行）。注意抛异常时窗口已注册进 `_windowMap` 且 DataContext 已赋值，无回滚 |
-| `ShowDialog(...)` 四个重载 | 与 ShowWindow 类似，但**要求主窗口已设且 IsActive**，否则抛 `InvalidOperationException`（第 124-141 行） |
-| `CloseWindow(Type)` | `_windowMap` 命中则 `Close()`；未命中静默不操作（第 144-148 行） |
-| `HandleMainWindow()` | 从 `Application.Current as PrismApplication` 取 `MainWindow` 登记为 `_mainWindow` 并加入 `_windowMap`；取不到或已在映射中抛 `InvalidOperationException`（第 158-167 行）。**唯一调用点**：启动序列阶段 1（`FrameworkApplication.cs:76`），先于启动台显示 |
-| `HideMainWindow()` / `ShowMainWindow()` | `_mainWindow?.Hide()/Show()`，空调用安全（第 169-170 行） |
-| `CloseWindowsExceptMain()` | 先 `_windowMap.Values.Where(w => w != _mainWindow).ToList()` 物化快照（排除主窗口），再逐个 `Close()`（第 172-177 行）。必须 ToList：每个窗口 `Close()` 触发 `InitializeWindow` 挂的 `Closing` 处理器把类型从 `_windowMap` 移除，直接枚举 `Values` 会在迭代中修改集合 |
-
-内部状态：`private readonly Dictionary<Type, Window> _windowMap`（第 17 行）、`private Window? _mainWindow`（第 22 行）。`InitializeWindow`（第 45 行）注册时挂 `Closing` 事件把类型从映射移除——窗口关闭后同类型可再次 ShowWindow。
-
-**调用方式**：消费方构造注入 `IWindowManager` 或 `IMainWindowManager`（同一单例）。真实调用点：`Modules/Workstation/Menus/HelpMenus.cs:20` `windowManager.ShowDialog<AboutWindow>`；框架内部 `FrameworkApplication.cs:77` `Container.Resolve<IWindowManager>().ShowWindow(CreateSplashWindow())`。
+服务接口见 [Services/api.md](../Services/api.md)。
 
 ## 3. `ShellLayoutState` 及区域 record（Layout/）
 
@@ -156,7 +137,7 @@ FrameworkWindow 的基础布局主题。加载机制：构造函数创建 `Style
 
 命令面板样式（:630-667，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) 配套）：`windows|CommandPalette` 浮层外观（SemiColorBackground1 底 + 边框 + 圆角 6 + 阴影，宽 600、顶部居中、上缘距 48）、`TextBox.command-input` 透明无边框、`ListBox.command-list` 透明底与条目圆角、`TextBlock.gesture` 右侧快捷键文本（SemiColorText2）、`PathIcon.command-icon` 条目左侧图标槽位（12×12、SemiColorText2、右间距 8、垂直居中；始终渲染，`IconPath` 为 null 时为空占位，文本对齐）。
 
-## 6. `PanelAlignment` / `PanelResize` / `SetPanelAlignmentEvent` / `PanelResizer`（均位于 Layout/）
+## 6. `PanelAlignment` / `PanelResize` / `SetPanelAlignmentEvent` / `PanelResizer`（PanelAlignment 位于 Abstractions/Layout；SetPanelAlignmentEvent 位于 Common/Events；其他类型位于 Framework/Layout）
 
 ```csharp
 public enum PanelAlignment { Left, Right, Center, Justify }                       // PanelAlignment.cs:7
@@ -166,7 +147,7 @@ public class SetPanelAlignmentEvent : PubSubEvent<PanelAlignment>               
 ```
 
 - `PanelAlignment`：FrameworkWindow 基础布局的档位，决定 BottomPanel 在窗口底部的水平跨度（领域定义见根目录 CONTEXT.md「面板对齐」）。
-- `SetPanelAlignmentEvent`：请求切换布局档位的事件契约（负载 `PanelAlignment`）。发布方：视图菜单对齐项（Workstation 的 `Menus/ViewAlignmentMenus.cs`）；订阅方：主窗口 ViewModel，写入 `PanelAlignment` 依赖属性。契约放本模块而非 Core/Models——负载类型定义于此，Models 引用 Framework 会成环（文件注释自述）。
+- `SetPanelAlignmentEvent`：请求切换布局档位的事件契约（负载 `PanelAlignment`）。发布方：视图菜单对齐项（Workstation 的 `Menus/ViewAlignmentMenus.cs`）；订阅方：主窗口 ViewModel，写入 `PanelAlignment` 依赖属性。契约放本模块而非 Core/Common/Events——负载类型定义于此，Models 引用 Framework 会成环（文件注释自述）。
 - `PanelResize`：分隔条命令参数，`Delta` 为**已换算方向**的尺寸增量；消费方直接转交 `ShellLayoutState.Resize(Target, Delta)`。
 - `PanelResizer`（自 Modules/Workstation 迁入并改造）：复用 GridSplitter 的拖拽手势与方向光标，但禁用其原生列重排。成员契约：
 
@@ -195,41 +176,9 @@ public static class ToolViewDragSession                                 // ToolV
 **调用方式**：主题模板内声明式使用——导航项/tab 头用 `<layout:ToolViewButton DragTabId="{Binding Id}" CanDrag="{Binding Contribution.AllowMove}" .../>`，三处可投放 Bar 用 `<layout:ToolViewBar TargetBar="..." Orientation="..." MoveCommand="{Binding MoveTabCommand}">`（真实用例 `Windows/FrameworkWindowTheme.axaml:35-40、106-133、162-189`）。ViewModel 侧契约：提供接受 `ToolViewMove` 参数的 `MoveTabCommand`（真实实现 `Modules/Workstation/MainWindowViewModel.cs:440`）与 `AuxiliaryPanelRevealed`/`BottomPanelRevealed` 布尔属性。
 
 
-## 7. `ShellLayoutDto` 族与 `LayoutPersistence`（均位于 Layout/，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）
+## 7. 已迁移至 Services
 
-```csharp
-public sealed record ShellLayoutDto          // ShellLayoutDto.cs:10，const CurrentVersion = 1（:15）
-public sealed record ToolViewPlacementEntry  // ShellLayoutDto.cs:41
-public sealed record SideBarLayoutDto        // ShellLayoutDto.cs:54
-public sealed record PanelLayoutDto          // ShellLayoutDto.cs:69
-public sealed record BottomPanelLayoutDto    // ShellLayoutDto.cs:81
-public sealed class LayoutPersistence(ConfigurationPersistence persistence)
-```
-
-落盘格式（`ShellLayoutDto` 族）独立于 `ShellLayoutState`——状态机只管流转语义，不管序列化兼容（文件注释自述）。`ShellLayoutDto` 成员：`Version`（:17，`Load` 对不识别版本整份丢弃）、`PanelAlignment`（:22，对齐档位由 `FrameworkWindow` 依赖属性持有、不在状态机内，一并持久化）、`Placements: Dictionary<string, ToolViewPlacementEntry>`（:29，可移动工具视图 Id → `{ Bar, Index }`，恢复时优先于 attribute 的 `Default`；**钉住项恒在 ActivityBar 底部段、不入此表**；无对应贡献的孤儿条目丢弃，无条目的新工具视图落回 `Default`）、三个可空子 DTO `SideBar`/`AuxiliaryPanel`/`BottomPanel`（:31-35，各记显隐/尺寸/选中项或活动 tab；为 null 表示该区域无持久化数据，恢复时保持默认）。序列化选项（`LayoutPersistence.cs:23-28`）：`WriteIndented` + camelCase 属性名 + `JsonStringEnumConverter`——枚举落成 `"Center"`/`"BottomPanel"` 形态字符串。
-
-LayoutPersistence 以 singleton 注册，构造时接收统一的 ConfigurationPersistence；路径与 JSON 格式保持不变。
-
-| 成员 | 接口 | 语义 |
-|---|---|---|
-| FilePath | public static readonly string | %AppData%/Digital.Workstation/layout.json |
-| Load | public ShellLayoutDto? Load() | 缺失静默返回 null；空内容、未知 Version、读取/反序列化失败记 LayoutPersistence Warning 并返回 null |
-| ScheduleSave | public void ScheduleSave(ShellLayoutDto layout) | 提交独立 DTO 快照，由 DebouncedJsonFile 合并 500ms 内变更 |
-| Delete | public void Delete() | 等待同文件在途写入，在同一锁内作废 pending 并删文件；删除失败记 ConfigurationPersistence Warning |
-
-### 配置写入生命周期（Persistence/）
-
-```csharp
-public sealed class ConfigurationPersistence : IDisposable
-{
-    public bool FlushPending();
-    public void Dispose();
-}
-```
-
-FrameworkApplication 注册唯一 owner；SettingsService 与 LayoutPersistence 通过内部 `CreateFile<T>` 各注册一个文件。FlushPending 等待各文件在途写入并保存 pending，任一失败返回 false，但仍尝试其余文件；失败快照留待下一次修改或显式刷新时重试。Dispose 在真正 Exit 时进行最后一次保存并释放计时器，幂等；此后 ScheduleSave/Delete 属生命周期误用，会抛 ObjectDisposedException。
-
-内部 `DebouncedJsonFile<T>` 不向业务模块公开。文件锁覆盖 ScheduleSave、Timer 回调、FlushPending、Delete、Dispose；JSON 先写同目录唯一临时文件并 Flush(true)，成功后 File.Move(overwrite:true) 替换。异常就地记录英文 Warning，旧目标文件与 pending 保留，临时文件尽力清理。回调不获取 SettingsService 的内存锁，设置提交快照的锁顺序固定为“设置内存 → 文件”。
+服务接口见 [Services/api.md](../Services/api.md)。
 
 ## 8. 贡献目录与收集器（Contributions/）
 
@@ -396,30 +345,9 @@ attribute 设置注册扩展（[ADR-0006](https://github.com/Ailurus-2233/Digita
 
 真实调用点：`FrameworkApplication.cs:168`（Framework 自身「常规/语言」设置项）。
 
-### SettingCatalog（Settings/SettingCatalog.cs）
+### 设置目录与存储
 
-构造注入 ShellContributionCatalog。GetItems() 对当前可见声明按 Id 首个生效，再排序；Find(id) 使用同一有效集合，不按无关查询覆盖缓存。重复实例只记一次英文 Warning。GetGroups() 对显式分组按 Id 合并，保留首个名称/来源、Order 取最小；隐式分组仅由有效设置项补齐，被丢弃的重复项不会产生空分组。每次读取当前目录，接受后加载模块，并撤销失败批次的候选声明。
-
-### SettingsService（Settings/SettingsService.cs）
-
-```csharp
-public sealed class SettingsService(
-    IEventAggregator eventAggregator,
-    SettingCatalog catalog,
-    ConfigurationPersistence persistence) : ISettingsService
-```
-
-FrameworkApplication 显式构造并 Load，再以 ISettingsService 工厂单例注册。FilePath 仍指向 %AppData%/Digital.Workstation/settings.json，枚举使用原有字符串格式。
-
-| 成员 | 接口/语义 |
-|---|---|
-| Load() | 一次性加载内存值和启动值快照；缺失静默返回，损坏记 Warning 按默认值处理 |
-| `Get<T>(string settingId)` | 纯内存读取，单项反序列化失败回落贡献默认值；未声明返回 default 并记 Warning |
-| `Set<T>(string settingId, T value)` | 内存锁内更新值、向文件写入模块提交独立字典快照、维护重启标记；锁外广播 SettingChangedEvent |
-| IsPendingRestart(string settingId) | 回答值是否偏离启动值；RequiresRestart 过滤仍由消费方负责 |
-| FindContribution(string settingId) | 委托 SettingCatalog.Find；无服务私有声明缓存，拒绝批次不会污染后续查询 |
-
-SettingsService 不再拥有 Timer、FlushPending、TakeSnapshot 或 Save。生命周期刷新统一通过 ConfigurationPersistence；调用方不应将 ISettingsService 转为具体类做保存。SettingsService 内存锁内提交快照以保持 Set 顺序，文件回调只处理收到的快照。
+SettingCatalog 与 SettingsService 已迁至 Services.Settings，接口见 [Services/api.md](../Services/api.md)。框架扫描与声明仍在本项目。
 
 ### `UiLanguage` 与 `UiLanguageExtensions`（Settings/UiLanguage.cs:12）
 
@@ -443,13 +371,9 @@ Framework 预置常规/语言设置声明类。`public const string GroupId = "f
 
 `DigitalWorkstation.Core.Framework.Resources.FrameworkResources` 为 public static 资源所属类型，`.cs`、中性中文 `.resx`、`.en-US.resx` 同目录同基名。包含命令面板水印/空态与常规/语言设置名称、两种枚举选项名称；强类型属性经 `ResourceText.Get(typeof(FrameworkResources), nameof(Key))` 查找。不承载模块私有文字，产品名使用 Core/Resource 的 `SharedResources`。
 
-## 17. `ApplicationRestarter`（ApplicationRestarter.cs:14，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
+## 17. 已迁移至 Services
 
-```csharp
-public static class ApplicationRestarter { public static void Restart(); } // :19
-```
-
-“立即重启”仍由设置页横幅触发。ApplicationRestarter.Restart 先解析 ConfigurationPersistence，统一 FlushPending 设置和布局；返回 false 时记录 "Failed to save pending configuration; restart aborted" 并保留当前进程。成功后检查 Environment.ProcessPath，沿用原始参数启动新进程，再 Shutdown 当前进程；Exit 会进行最后收尾且不会重复写入已清空的 pending。路径缺失时记录 Error 中止。它不再解析或强转 ISettingsService。
+服务接口见 [Services/api.md](../Services/api.md)。
 
 ## 容器注册清单（对外可解析的服务）
 
@@ -463,10 +387,30 @@ public static class ApplicationRestarter { public static void Restart(); } // :1
 | `SettingCatalog` | Singleton | 设置声明唯一解释入口 |
 | `ShellContributionCollector` | Singleton | 从目录读取并排序 |
 | `ConfigurationPersistence` | 显式实例 | 统一持久化 owner；Exit 时 Dispose，重启前 FlushPending |
-| `LayoutPersistence` | Singleton | 自身（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)；机制在 Framework、接线在 shell 模块） |
-| `ISettingsService` | Singleton（工厂） | 显式构造的 `SettingsService` 实例，注册前已 `Load()`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4） |
+| `LayoutPersistence` | Singleton | 自身（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)；机制在 Services、接线在 shell 模块） |
+| `ISettingsService` | Singleton（工厂） | 容器单例的 `SettingsService` 实例，BasicServices.Start 时 `Load()`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4） |
 | `IoC.Registry` / `IoC.Provider` | 静态初始化 | `IoC.Initialize(containerRegistry, Container)`（Common 模块） |
 
 ## 插件启动 API（内部）
 
-PluginDiscovery.Discover(IReadOnlyCollection<Assembly> sharedModules) 返回 PluginDescriptor 列表（Name、AssemblyPath、ModuleType、Dependencies、Error）。sharedModules 是显式内置模块与宿主 Shell 的实际程序集实例。调用发生在启动台显示后、执行入口之前；错误描述符也占一个启动进度位置。插件入口契约见 Abstractions/Plugins/PluginAttribute.cs。
+PluginDiscovery.Discover(IReadOnlyCollection<Assembly> sharedModules, PluginStartupService startup) 返回 PluginDescriptor 列表（Name、AssemblyPath、ModuleType、Dependencies、Error）。sharedModules 是显式内置模块与宿主 Shell 的实际程序集实例。调用发生在启动台显示后、执行入口之前；启用项的错误描述符也占一个启动进度位置；禁用项保留元数据快照但不占进度。插件入口契约见 Abstractions/Plugins/PluginAttribute.cs。
+
+## 插件启动管理 API
+
+`PluginStartupService(ConfigurationPersistence)` 由 Framework 注册为单例，构造时读取 `FilePath` 指向的 plugins.json。`Plugins` 返回按 Id 排序的发现快照；`IsEnabled(id)` 读取下次启动选择；`SetEnabled(id, bool)` 修改已发现项并安排保存；`IsPendingRestart(id)` 比较当前选择与启动值。未知 Id 写入抛 ArgumentException。
+
+`PluginStartupInfo(Id, AssemblyPath, EnabledAtStartup, IsLoaded, Error)` 不包含插件实例或 Type。内部 `IsEnabledAtStartup` 只读启动选择；`Record(PluginDescriptor, loaded)` 由启动编排记录发现、校验失败、准备失败或加载成功。管理页在 Ready 后解析快照，禁用项仍可编辑。
+
+plugins.json 示例：`{ "DigitalWorkstation.Sample.SamplePlugin": false }`。Id 为入口类型全名，区分大小写，与安装路径及 UI 语言无关；历史条目与未发现条目保留，未配置项默认启用。
+
+## 服务归属与内部协作
+
+本页出现的 ShellContributionCatalog、ContributionBatch、插件发现及插件选择 API 定义在 Services；Framework 通过内部可见性进行启动编排。对外服务命名空间与签名以 [Services/api.md](../Services/api.md) 为准。
+
+## 模块附加服务接线
+
+Framework 在模块/插件入口初始化后、贡献准备前调用 Services.ModuleServiceCatalog.Start；失败拒绝贡献批次并 Stop 同批服务。内置模块失败状态回到 NotStarted；依赖检查仍按 availableModules。
+
+真实 Exit 先设置退出守卫、逆序 Dispose 模块服务目录，再 Dispose 基础服务，保证停止回调仍可使用基础配置。服务契约与登记方式见 [Services/api.md](../Services/api.md)，故障和运行验收见 [Services/testing.md](../Services/testing.md)。不回滚普通容器登记或模块入口自行产生的副作用。
+插件启动过滤现使用 PluginDescriptor.Key；模块目录、批次名称和依赖仍使用入口全名 Name。插件启动选择 Load 在发现前处理已安排的文件卸载。
+插件日志：来源 FrameworkApplication，消息 Loading plugin <Key>，不显示入口全名或路径。PrepareItemAsync 另传 serviceOwnerKey 给 ModuleServiceCatalog.Start(batch, ownerKey, isPlugin)；启动、正常停止及停止失败消息不显示服务类型全名，插件使用 Plugin service 和 Key，内置模块使用 Module service 和 ModuleName。StartedService 保存 OwnerKey 与 IsPlugin，确保失败回滚和退出停止使用同一标识。内置模块沿用 ModuleName；贡献批次名称、模块目录与依赖身份不变。示例输出 Plugin service started: sample，关闭为 Plugin service stopped: sample。

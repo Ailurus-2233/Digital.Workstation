@@ -80,17 +80,21 @@ Prism 模块入口，被模块目录反射调用，**不被业务代码直接调
 
 模块注册或贡献工厂准备失败均可进入启动台失败决策；`Continue` 隐藏失败批次贡献，依赖失败模块的后续模块仍会进入自己的失败决策。此机制不回滚普通 DI 注册和任意副作用。
 
-**消费事件的发布方**（反向依赖）：`StartupProgressEvent`/`ModuleLoadFailedEvent` 由 Core/Framework 的 `FrameworkApplication.RunStartupSequenceAsync` 发布；`StartupFailureActionEvent` 由同一处订阅等待（`WaitForFailureActionAsync`）。`OpenMainViewEvent` 由 shell（MainWindowViewModel）订阅。详见 docs/analysis/Core/Framework/ 与 docs/analysis/Core/Models/ 文档。
+**消费事件的发布方**（反向依赖）：`StartupProgressEvent`/`ModuleLoadFailedEvent` 由 Core/Framework 的 `FrameworkApplication.RunStartupSequenceAsync` 发布；`StartupFailureActionEvent` 由同一处订阅等待（`WaitForFailureActionAsync`）。`OpenMainViewEvent` 由 shell（MainWindowViewModel）订阅。详见 docs/analysis/Core/Framework/ 与 docs/analysis/Core/Common/Events/ 文档。
 
 ## 对外公开的数据结构
 
 本模块**不定义**任何 DTO/record/枚举；对外数据完全由以下两类承载：
 
 - 接口贡献类的属性（上表），字符串 Id；
-- 事件负载（定义在 Core/Models/Events，本模块只消费/回传）：`StartupProgress{Phase, ModuleName, ModuleIndex, ModuleCount}`、`ModuleLoadFailure{ModuleName, ModuleIndex, ModuleCount, ErrorMessage}`、`StartupFailureAction{Continue, Exit}`。
+- 事件负载（定义在 Core/Common/Events/Events，本模块只消费/回传）：`StartupProgress{Phase, ModuleName, ModuleIndex, ModuleCount}`、`ModuleLoadFailure{ModuleName, ModuleIndex, ModuleCount, ErrorMessage}`、`StartupFailureAction{Continue, Exit}`。
 
 ## 资源接口
 
 `DigitalWorkstation.DashBoard.Resources.DashBoardResources` 是公开静态 facade，属性与本模块 resx 键同名，每次调用按 CurrentUICulture 查找。接口贡献的 Title 直接取 DashBoardResources 属性；工具视图声明首参为稳定 id，第二参 typeof(DashBoardResources)，第三参 nameof 标题键。
 
 向已有 shell 菜单加项时，类标 `[MenuGroup("shell.file")]` 并注册 RegisterMenus，菜单项以 typeof(DashBoardResources) + nameof 声明自己的标题。无需引用 WorkstationResources 或复制文件菜单标题；reference-only 路径的标题由 shell 声明补齐。
+
+## Services 拆分接线
+
+基础服务实现现位于 Core/Services，经 Framework 的项目引用传递。贡献登记扩展使用 DigitalWorkstation.Core.Services.Contributions；UI 扫描、收集与布局状态机仍在 Framework。布局存储在 Services.Layout，PanelAlignment 在 Abstractions.Layout，SetPanelAlignmentEvent 在 Common.Events；重启入口为 Services.ApplicationRestarter。配置路径、语言设置 Id、插件上下文前缀和 Release 分类目录保持原规则。新项目入口见 Services 的模块认知文档。

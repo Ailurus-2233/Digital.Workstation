@@ -1,4 +1,4 @@
-﻿# Abstractions — 异常与排查
+# Abstractions — 异常与排查
 
 ## 本模块自身抛出的异常
 
@@ -33,3 +33,9 @@
 ## 插件入口发现失败
 
 PluginAttribute 自身只保存 DependsOn 元数据。入口未实现宿主 IModule、不是公共具体类、含开放泛型、入口身份冲突、单 DLL/Release 文件夹有多个入口，或依赖名为空时，由 Framework 生成失败描述并交启动台处理。缺标记的普通 DLL 不视为插件。内置模块依赖不存在、不可用或指向另一个插件时，启动序列拒绝该插件；见 Framework/error.md。
+
+## 共享布局档位契约
+
+PanelAlignment 已从 Framework/Layout 迁入 Core/Abstractions/Layout/PanelAlignment.cs，命名空间 DigitalWorkstation.Core.Abstractions.Layout。Left/Right/Center/Justify 的枚举值和语义保持不变。Framework 模板与 Services 的布局 DTO 共用它，避免 Services 反向引用 Framework。SetPanelAlignmentEvent 已归 Common/Events；窗口管理与 ISettingsService 的实现已归 Services。
+
+IModuleService 声明不抛异常；实现的构造/Start 异常归当前模块失败，Stop 异常由 Services 目录记录并继续清理。错误归属与手动验证见 Services/error.md、testing.md。

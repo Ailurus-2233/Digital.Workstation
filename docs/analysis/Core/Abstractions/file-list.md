@@ -1,4 +1,4 @@
-﻿# Abstractions — 文件结构与功能
+# Abstractions — 文件结构与功能
 
 相对 `Core/Abstractions/` 的目录树（含 csproj；无子目录嵌套超过一层，无测试、无资源文件）：
 
@@ -101,7 +101,7 @@ shell 与模块共知的主视图 Id 常量（[ADR-0006](https://github.com/Ailu
 
 ### Settings/ISettingsService.cs
 
-定义接口 `ISettingsService`（3 个方法：`T? Get<T>(string settingId)`、`void Set<T>(string settingId, T value)`、`bool IsPendingRestart(string settingId)`）——设置值读写服务契约（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）：Framework 实现，启动一次加载入内存；读纯走内存（未修改取声明默认值），写 = 更新内存 + 防抖落盘 settings.json + 广播 `SettingChangedEvent`（事件契约在 Core/Models）；`IsPendingRestart` 报告本次进程内值是否偏离启动时生效值（决策 7「重启后生效」判定依据）。
+定义接口 `ISettingsService`（3 个方法：`T? Get<T>(string settingId)`、`void Set<T>(string settingId, T value)`、`bool IsPendingRestart(string settingId)`）——设置值读写服务契约（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）：Services 实现，启动一次加载入内存；读纯走内存（未修改取声明默认值），写 = 更新内存 + 防抖落盘 settings.json + 广播 `SettingChangedEvent`（事件契约在 Core/Common/Events）；`IsPendingRestart` 报告本次进程内值是否偏离启动时生效值（决策 7「重启后生效」判定依据）。
 
 ### WindowManager/IWindowManager.cs
 
@@ -118,3 +118,11 @@ shell 与模块共知的主视图 Id 常量（[ADR-0006](https://github.com/Ailu
 ### Plugins/PluginAttribute.cs
 
 无参插件入口标记（AttributeTargets.Class、AllowMultiple=false、Inherited=false）；DependsOn 字符串数组声明依赖的内置模块名。纯元数据，不引用 Prism，不负责发现或实例化。
+
+## 共享布局档位契约
+
+PanelAlignment 已从 Framework/Layout 迁入 Core/Abstractions/Layout/PanelAlignment.cs，命名空间 DigitalWorkstation.Core.Abstractions.Layout。Left/Right/Center/Justify 的枚举值和语义保持不变。Framework 模板与 Services 的布局 DTO 共用它，避免 Services 反向引用 Framework。SetPanelAlignmentEvent 已归 Common/Events；窗口管理与 ISettingsService 的实现已归 Services。
+
+### Services/IModuleService.cs
+
+模块附加服务的同步 Start/Stop 契约，Start 在贡献准备前完成，Stop 兼容部分启动并逆序清理；无 Prism 依赖。

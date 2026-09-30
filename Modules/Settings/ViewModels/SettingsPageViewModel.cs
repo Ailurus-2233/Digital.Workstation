@@ -1,10 +1,11 @@
+using DigitalWorkstation.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DigitalWorkstation.Core.Abstractions.Settings;
 using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework;
-using DigitalWorkstation.Core.Models.Events;
+using DigitalWorkstation.Core.Common.Events;
 using DigitalWorkstation.Settings.Resources;
 
 namespace DigitalWorkstation.Settings.ViewModels;

@@ -1,4 +1,6 @@
-﻿using Avalonia;
+using DigitalWorkstation.Core.Abstractions.Layout;
+using DigitalWorkstation.Core.Services.Layout;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;

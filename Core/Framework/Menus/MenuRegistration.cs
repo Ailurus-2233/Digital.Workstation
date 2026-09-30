@@ -1,3 +1,4 @@
+using DigitalWorkstation.Core.Services.Contributions;
 using System.Reflection;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Abstractions.Menus;

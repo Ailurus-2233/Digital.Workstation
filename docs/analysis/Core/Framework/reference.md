@@ -7,8 +7,7 @@
 | 依赖 | 用到的能力 | 本模块使用点 |
 |---|---|---|
 | `Core/Abstractions` | 窗口管理契约 `IWindowManager`、`IMainWindowManager`（`Abstractions/WindowManager/`）；Shell 贡献契约 `ToolViewAttribute`/`ToolViewContribution`/`ToolViewPlacement`（工具视图，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）、`IMainViewContribution`、`IStatusBarItemContribution`（`Abstractions/Contributions/`）；菜单贡献契约 `IMenuItemContribution` 与菜单 attribute `MenuGroupAttribute`/`MenuItemAttribute`（`Abstractions/Menus/`，[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）；设置契约 `SettingGroupAttribute`/`SettingItemAttribute`/`SettingGroupContribution`/`SettingItemContribution`/`ISettingsService`（`Abstractions/Settings/`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)） | `FrameworkWindowManager.cs:12` 实现两个窗口接口；`Contributions/ShellContributionCollector.cs` 七个 `Get*` 方法解析并排序贡献；`Contributions/ToolViewRegistration.cs:25` 读取 `ToolViewAttribute` 扫描注册工具视图；`Menus/MenuRegistration.cs:24、38` 读取两个 attribute 扫描注册菜单 |
-| `Core/Common` | `IoC`（一次性容器引用持有者）、`Logger`（Serilog 静态封装） | `FrameworkApplication.cs:148` `IoC.Initialize(...)`；`FrameworkWindowManager.cs:37` `IoC.Provider.Resolve(type)`；`FrameworkApplication.cs:96、113` `Logger.Error/Fatal`；`Layout/LayoutPersistence.cs` 全部失败路径 `Logger.Warning` |
-| `Core/Models` | 启动事件三件套：`StartupProgressEvent`/`StartupProgress`/`StartupPhase`、`ModuleLoadFailedEvent`/`ModuleLoadFailure`、`StartupFailureActionEvent`/`StartupFailureAction`（均位于 `Models/Events/`） | `FrameworkApplication.cs:73-108` 发布进度与失败事件；`:121-129` 订阅失败决策事件 |
+| `Core/Common` | `IoC`（一次性容器引用持有者）、`Logger`（Serilog 静态封装） | `FrameworkApplication.cs:148` `IoC.Initialize(...)`；`FrameworkWindowManager.cs:37` `IoC.Provider.Resolve(type)`；`FrameworkApplication.cs:96、113` `Logger.Error/Fatal`；`Core/Services/Layout/LayoutPersistence.cs` 全部失败路径 `Logger.Warning` |
 | `Core/UIPackage` | `WorkstationTheme`（Semi/Ursa 等四个主题包的 Styles 集合）、`VSCodePalette.ApplyTo`（VS Code Dark+ 色键写入） | `FrameworkApplication.cs:29、31`，全应用唯一主题装载点 |
 | `Core/Resource` | `ResourceText.Get(Type, string)`（显式所属类型，按 CurrentUICulture 查找，回退中性中文，缺键返回键名）与共享产品名 SharedResources | MenuRegistration/CommandRegistration 启动准备时解析文本，ToolViewRegistration 扫描时解析；FrameworkResources 强类型属性使用查询机制，FrameworkApplication 在应用语言后读取 SharedResources.ProductName。MenuTreeBuilder 不查资源 |
 
@@ -21,7 +20,7 @@
 | 依赖方 | 引用方式 | 用在什么场景 |
 |---|---|---|
 | `Modules/Workstation`（Workstation.csproj:10） | ProjectReference | 应用宿主：`WorkstationApplication.cs:15` `WorkstationApplication : FrameworkApplication<MainWindow>`（实现 `CreateSplashWindow`、配置模块目录——`:19-20` 两行 `AddModule`（DashBoard + Settings，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）；`:27` 调 `RegisterToolViews` 扫描注册 shell 预置工具视图，`:31` 调 `RegisterMenus` 扫描注册 shell 预置菜单）；`MainWindowViewModel.cs:41-42,60` 注入 `ShellContributionCollector`/`LayoutPersistence` 并持有 `ShellLayoutState _state` 驱动整个工作区布局（`GetToolViews()` 一次后交 `LoadToolViews(_persistence.Load())` 分派并恢复持久化布局，`:178-179`；菜单经 `MenuTreeBuilder.Build` 建树，`:184`）；`PanelResizer.cs` 把拖拽增量交给 `ShellLayoutState.Resize`；`Menus/HelpMenus.cs:20` 用 `IWindowManager.ShowDialog<AboutWindow>` |
-| `Modules/DashBoard`（DashBoard.csproj:21） | ProjectReference | 启动台模块：`DashBoardWindowViewModel` 订阅 `StartupProgressEvent`/`ModuleLoadFailedEvent` 并发布 `StartupFailureActionEvent`（即启动台 UI 方，事件负载见 Models 文档）；`DashBoardModule.cs:12` 调 `RegisterToolViews`（当前程序集无 `[ToolView]` 类，扫描为空） |
+| `Modules/DashBoard`（DashBoard.csproj:21） | ProjectReference | 启动台模块：`DashBoardWindowViewModel` 订阅 `StartupProgressEvent`/`ModuleLoadFailedEvent` 并发布 `StartupFailureActionEvent`（即启动台 UI 方，事件负载见 Common/Events 文档）；`DashBoardModule.cs:12` 调 `RegisterToolViews`（当前程序集无 `[ToolView]` 类，扫描为空） |
 | `UnitTest/Framework`（UnitTest/Framework/Framework.csproj:17） | ProjectReference | 唯一的测试项目，仅测 `ShellLayoutState`（见 testing.md） |
 
 即：Framework 是应用骨架，**唯一直接的消费场景是 Workstation 宿主 + DashBoard 启动台**；其余业务模块不引用 Framework，只引用 Abstractions 的贡献契约。
@@ -50,10 +49,10 @@ ShellLayoutState (Layout/ShellLayoutState.cs:7)
 
 关系要点：`ShellLayoutState` 只持有数据与转换方法，不感知贡献收集与视图解析；`Tabs` 列表由消费方（MainWindowViewModel）将 `ShellContributionCollector.GetToolViews` 的结果交给 ShellLayoutConfiguration.Restore 分派填入；`ContentFor`/`ActiveTab`/`ActiveView` 的字符串 Id 与 Abstractions 贡献类型的 `Id` 对应（`SelectedActivity` ↔ ActivityBar 工具视图的 `ToolViewContribution.Id`，`ActiveView` ↔ `IMainViewContribution.Id`，`ActiveTab` ↔ 面板工具视图的 `ToolViewContribution.Id`）。
 
-### 布局持久化 DTO 族（Layout/ShellLayoutDto.cs，均为 `sealed record`，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）
+### 布局持久化 DTO 族（Core/Services/Layout/ShellLayoutDto.cs，均为 `sealed record`，[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）
 
 ```
-ShellLayoutDto (Layout/ShellLayoutDto.cs:10)        const CurrentVersion=1（:15）
+ShellLayoutDto (Core/Services/Layout/ShellLayoutDto.cs:10)        const CurrentVersion=1（:15）
 ├── Version(:17) / PanelAlignment(:22)              版本门 + 对齐档位（后者不在状态机内，一并持久化）
 ├── Placements: Dictionary<string, ToolViewPlacementEntry> (:29)
 │     可移动工具视图 Id → { Bar, Index }（:41-49）；钉住项不入表；孤儿条目丢弃、新视图落回 Default
@@ -64,7 +63,7 @@ ShellLayoutDto (Layout/ShellLayoutDto.cs:10)        const CurrentVersion=1（:15
 
 关系要点：状态机和 DTO 是独立 record，由 ShellLayoutConfiguration.Capture/Restore 转换。LayoutPersistence 容错读取 DTO，并将写入/删除交给 ConfigurationPersistence 创建的 `DebouncedJsonFile<ShellLayoutDto>`；格式仍为 WriteIndented、camelCase 和字符串枚举。
 
-### 窗口注册表（WindowManager/FrameworkWindowManager.cs）
+### 窗口注册表（Core/Services/WindowManager/FrameworkWindowManager.cs）
 
 - `private readonly Dictionary<Type, Window> _windowMap`（第 17 行）：窗口运行时类型 → 当前打开实例，单实例语义（同类型同时只能有一个注册窗口）。
 - `private Window? _mainWindow`（第 22 行）：主窗口，由 `HandleMainWindow()` 从 `PrismApplication.MainWindow` 捕获。
@@ -100,7 +99,7 @@ MenuTreeEntry (abstract record, MenuTreeEntry.cs:10)
 | `FrameworkWindowManager` | `IWindowManager`（Core/Abstractions/WindowManager/IWindowManager.cs）、`IMainWindowManager`（同目录 IMainWindowManager.cs） |
 | `ShellContributionCollector` 的四个返回类型 | `ToolViewContribution`/`IMainViewContribution`/`IStatusBarItemContribution`（Core/Abstractions/Contributions/）、`IMenuItemContribution`（Core/Abstractions/Menus/） |
 | `FrameworkApplication<TWindow>` | `Prism.DryIoc.PrismApplication`（Prism.DryIoc.Avalonia 包） |
-| 启动事件负载 | `StartupProgress`/`ModuleLoadFailure`/`StartupPhase`/`StartupFailureAction`（Core/Models/Events/） |
+| 启动事件负载 | `StartupProgress`/`ModuleLoadFailure`/`StartupPhase`/`StartupFailureAction`（Core/Common/Events/） |
 
 ## 配置文件生命周期关系
 
@@ -117,3 +116,17 @@ SettingsService.Set 在其内存锁内复制字典并提交快照 → 文件锁�
 SettingsService 与 ShellContributionCollector 的设置接口都依赖 SettingCatalog，后者从 ShellContributionCatalog 取可见元数据。没有第二份按 Id 覆盖的声明缓存。模块构造读取本批默认值属于候选视图，失败后不再对其余上下文可见。
 
 Workstation.ApplyLayout 只协调视觉宿主和呈现集合；ShellLayoutState 管转换语义，ShellLayoutConfiguration 管 DTO 解释，ShellLayoutMetrics 管主题尺寸，LayoutPersistence/ConfigurationPersistence 管文件生命周期。
+
+共享启动事件与负载现在位于 Core/Common/Events，随 Common 的现有项目引用传入；不再引用 Models 项目。
+
+## 基础服务项目拆分
+
+窗口管理、配置写入、布局存储、贡献目录、设置目录与存储、插件发现及启动选择、ApplicationRestarter 已归 Services；本页相关行为是 Framework 使用这些服务的协议，源码归属与接口见 [Services/reference.md](../Services/reference.md)。Framework 显式 Register/Start 基础服务并在真实 Exit 停止，语言声明及设置 Id 不变。模块附加服务已接入加载后启动、失败清理与退出逆序停止。
+
+直接项目引用：Abstractions、Common、Services、UIPackage、Resource。服务对象从 Services 传入，不从 Framework 中重新定义。
+
+## 模块附加服务接线
+
+Framework 在模块/插件入口初始化后、贡献准备前调用 Services.ModuleServiceCatalog.Start；失败拒绝贡献批次并 Stop 同批服务。内置模块失败状态回到 NotStarted；依赖检查仍按 availableModules。
+
+真实 Exit 先设置退出守卫、逆序 Dispose 模块服务目录，再 Dispose 基础服务，保证停止回调仍可使用基础配置。服务契约与登记方式见 [Services/api.md](../Services/api.md)，故障和运行验收见 [Services/testing.md](../Services/testing.md)。不回滚普通容器登记或模块入口自行产生的副作用。

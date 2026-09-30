@@ -1,5 +1,5 @@
 using DigitalWorkstation.Core.Abstractions.Menus;
-using DigitalWorkstation.Core.Models.Events;
+using DigitalWorkstation.Core.Common.Events;
 using DigitalWorkstation.Workstation.Resources;
 
 namespace DigitalWorkstation.Workstation.Menus;

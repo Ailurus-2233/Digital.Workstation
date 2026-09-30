@@ -1,4 +1,4 @@
-﻿# Abstractions — 不变量与陷阱
+# Abstractions — 不变量与陷阱
 
 ## 隐含不变量（全部仅由 XML 注释约定，代码无法强制）
 
@@ -42,3 +42,11 @@
 - 实现 IModule 本身不会被扫描认作插件；入口类必须直接标记 PluginAttribute。标记不继承，也不代替入口类公共、可实例化、非开放泛型的要求。
 - DependsOn 使用内置模块目录中的 ModuleName，不是程序集名、插件类型全名或显示标题。插件间依赖当前被拒绝。
 - Release 插件应引用宿主共享的 Abstractions/Prism 实例；复制契约并在独立上下文加载会产生不同的接口身份，发现检查将拒绝入口。共享清单和私有依赖规则见 Framework 文档。
+
+## 共享布局档位契约
+
+PanelAlignment 已从 Framework/Layout 迁入 Core/Abstractions/Layout/PanelAlignment.cs，命名空间 DigitalWorkstation.Core.Abstractions.Layout。Left/Right/Center/Justify 的枚举值和语义保持不变。Framework 模板与 Services 的布局 DTO 共用它，避免 Services 反向引用 Framework。SetPanelAlignmentEvent 已归 Common/Events；窗口管理与 ISettingsService 的实现已归 Services。
+
+## 模块服务契约限制
+
+IModuleService.Start/Stop 都在 UI 线程同步调用。构造失败无法停止实例，资源获取必须在 Start；Stop 需要容忍 Start 抛异常后的部分状态。不要在 Stop 阻塞等待一个需要 UI 调度器完成的任务。生命周期实现与登记在 Services，所属模块只实现契约和登记具体类型。

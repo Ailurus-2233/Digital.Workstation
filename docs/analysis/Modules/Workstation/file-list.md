@@ -49,3 +49,7 @@ Views/
 三者同位、同基名；SDK 默认嵌入资源，基名等于 `DigitalWorkstation.Workstation.Resources.WorkstationResources`。主页插件区域使用 `HomeLoadedPluginsTitle` 与 `HomeNoPlugins`，两种语言均有定义；条目悬浮说明来自实际程序集元数据或身份，由 ViewModel 生成。
 
 WorkstationApplication.PrepareShell 是启动序列调用 MainWindow.PrepareContributions 的接线点；状态栏手写贡献改用 RegisterShellContribution，以接受启动准备和失败隔离。
+
+## 插件管理入口迁移
+
+插件配置页面、ViewModel 和中英文资源已迁移到 Modules/Settings。Workstation 通过既有首选项菜单、命令和设置按钮打开 WellKnownViews.Settings；进入后选择插件管理标签。独立插件主视图贡献及 OpenPlugins 菜单/命令已删除。接口、状态与文件说明见 [Settings/common.md](../Settings/common.md)。

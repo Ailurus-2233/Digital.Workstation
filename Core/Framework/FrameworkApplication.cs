@@ -1,5 +1,7 @@
+using DigitalWorkstation.Core.Services.Lifecycle;
+using DigitalWorkstation.Core.Services;
+using DigitalWorkstation.Core.Services.Contributions;
 using System.Globalization;
-using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -8,12 +10,9 @@ using Avalonia.Styling;
 using DigitalWorkstation.Core.Abstractions.WindowManager;
 using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Framework.Contributions;
-using DigitalWorkstation.Core.Framework.Layout;
-using DigitalWorkstation.Core.Framework.Persistence;
-using DigitalWorkstation.Core.Framework.Plugins;
+using DigitalWorkstation.Core.Services.Plugins;
 using DigitalWorkstation.Core.Framework.Settings;
-using DigitalWorkstation.Core.Framework.WindowManager;
-using DigitalWorkstation.Core.Models.Events;
+using DigitalWorkstation.Core.Common.Events;
 using DigitalWorkstation.Core.UIPackage;
 using DigitalWorkstation.Core.Resource;
 using Prism.DryIoc;
@@ -24,6 +23,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
 {
     private IEventAggregator? _eventAggregator;
     private IMainWindowManager? _windowManager;
+    private bool _isShuttingDown;
 
     public override void Initialize()
     {
@@ -88,11 +88,18 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
             var builtInNames = modules.Select(module => module.ModuleName).ToHashSet(StringComparer.Ordinal);
             var sharedModules = modules.Select(module => Type.GetType(module.ModuleType, throwOnError: true)!.Assembly)
                 .Append(typeof(TWindow).Assembly).Distinct().ToArray();
-            var discoveredPlugins = await Task.Run(() => PluginDiscovery.Discover(sharedModules));
+            var pluginStartup = Container.Resolve<PluginStartupService>();
+            var discoveredPlugins = await Task.Run(() => PluginDiscovery.Discover(sharedModules, pluginStartup));
             var plugins = new List<(PluginDescriptor Descriptor, ModuleInfo? Info)>();
             var names = new HashSet<string>(builtInNames, StringComparer.Ordinal);
             foreach (var discovered in discoveredPlugins)
             {
+                pluginStartup.Record(discovered);
+                if (!pluginStartup.IsEnabledAtStartup(discovered.Key))
+                {
+                    Logger.Information($"Skipping disabled plugin {discovered.Name}");
+                    continue;
+                }
                 var plugin = discovered;
                 if (plugin.Error is null && !names.Add(plugin.Name))
                     plugin = plugin with { Error = new InvalidOperationException($"Duplicate module or plugin name: {plugin.Name}.") };
@@ -113,16 +120,20 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
                     moduleCatalog.AddModule(info);
                 }
                 plugins.Add((plugin, info));
+                pluginStartup.Record(plugin);
             }
 
             var contributions = Container.Resolve<ShellContributionCatalog>();
+            var moduleServices = Container.Resolve<ModuleServiceCatalog>();
             var availableModules = new HashSet<string>(StringComparer.Ordinal);
             var total = modules.Count + plugins.Count;
             var current = 0;
 
             // 两种入口共用进度、贡献批次和失败决策，始终先完成全部内置模块。
-            async Task<bool> PrepareItemAsync(string name, IEnumerable<string> dependencies, Func<Task> initialize)
+            async Task<bool> PrepareItemAsync(string name, IEnumerable<string> dependencies, Func<Task> initialize,
+                Action<Exception>? onFailure = null, string? serviceOwnerKey = null)
             {
+                if (_isShuttingDown) return false;
                 progressEvent.Publish(new StartupProgress(StartupPhase.LoadingModules, name, ++current, total));
                 using var batch = ShellContributionCatalog.BeginBatch(name);
                 try
@@ -131,6 +142,8 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
                     if (unavailable is not null)
                         throw new InvalidOperationException($"Required module {unavailable} is unavailable.");
                     await initialize();
+                    if (_isShuttingDown) return false;
+                    moduleServices.Start(batch, serviceOwnerKey ?? name, isPlugin: serviceOwnerKey is not null);
                     contributions.Prepare(batch);
                     availableModules.Add(name);
                     return true;
@@ -138,6 +151,9 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
                 catch (Exception ex)
                 {
                     batch.Reject();
+                    moduleServices.Stop(batch);
+                    if (_isShuttingDown) return false;
+                    onFailure?.Invoke(ex);
                     Logger.Error(ex, $"Failed to prepare module or plugin {name}");
                     var failureAction = WaitForFailureActionAsync(eventAggregator);
                     eventAggregator.GetEvent<ModuleLoadFailedEvent>().Publish(
@@ -155,7 +171,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
                         await Task.Run(() => moduleManager.LoadModule(module.ModuleName));
                         if (module.State != ModuleState.Initialized)
                             throw new InvalidOperationException($"Module {module.ModuleName} did not finish initialization.");
-                    })) return;
+                    }, _ => module.State = ModuleState.NotStarted)) return;
             }
 
             foreach (var (plugin, info) in plugins)
@@ -164,7 +180,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
                     {
                         if (plugin.Error is not null) throw plugin.Error;
                         var type = plugin.ModuleType ?? throw new InvalidOperationException("Plugin entry type is missing.");
-                        Logger.Information($"Loading plugin {plugin.Name} from {plugin.AssemblyPath}");
+                        Logger.Information($"Loading plugin {plugin.Key}", nameof(FrameworkApplication<TWindow>));
                         if (info is not null) info.State = ModuleState.Initializing;
                         await Task.Run(() =>
                         {
@@ -174,10 +190,13 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
                             instance.RegisterTypes(IoC.Registry);
                             instance.OnInitialized(Container);
                         });
-                    })) return;
+                    }, ex => pluginStartup.Record(plugin with { Error = ex }), serviceOwnerKey: plugin.Key)) return;
                 if (info is not null)
                     info.State = availableModules.Contains(plugin.Name) ? ModuleState.Initialized : ModuleState.NotStarted;
+                if (availableModules.Contains(plugin.Name)) pluginStartup.Record(plugin, loaded: true);
             }
+
+            if (_isShuttingDown) return;
 
             // 阶段 3：就绪——启动台关闭、工作区显示
             contributions.PrepareUnowned();
@@ -229,37 +248,34 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
     {
         IoC.Initialize(containerRegistry, Container);
         
-        // 注册窗口管理
-        var windowManager = new FrameworkWindowManager();
-        containerRegistry.RegisterSingleton<IMainWindowManager>(() => windowManager);
-        containerRegistry.RegisterSingleton<IWindowManager>(() => windowManager);
-        
-        // 注册 shell 贡献收集器
-        containerRegistry.RegisterSingleton<ShellContributionCatalog>();
-        containerRegistry.RegisterSingleton<SettingCatalog>();
+        BasicServices.Register(containerRegistry);
         containerRegistry.RegisterSingleton<ShellContributionCollector>();
 
-        // 在真正退出时统一保存并释放计时器；关闭被取消时继续保留防抖保存能力。
-        var persistence = new ConfigurationPersistence();
-        containerRegistry.RegisterInstance(persistence);
+        // 框架声明仍归 Framework，稳定设置 Id 与资源来源保持不变。
+        containerRegistry.RegisterSettings(typeof(FrameworkApplication<TWindow>).Assembly);
+        var basicServices = Container.Resolve<BasicServices>();
+        var moduleServices = Container.Resolve<ModuleServiceCatalog>();
         if (ApplicationLifetime is IControlledApplicationLifetime lifetime)
         {
-            lifetime.Exit += (_, _) => persistence.Dispose();
+            lifetime.Exit += (_, _) =>
+            {
+                _isShuttingDown = true;
+                // 先逆序停止依赖基础服务的模块服务，再统一保存配置和释放计时器。
+                try { moduleServices.Dispose(); }
+                finally { basicServices.Dispose(); }
+            };
         }
 
-        // 注册布局持久化服务（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：layout.json 读/防抖写/删，机制在 Framework、接线在 shell 模块
-        containerRegistry.RegisterSingleton<LayoutPersistence>();
-
-        // 注册设置服务（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3/4）：与窗口管理器同型——显式构造实例并以工厂注册，
-        // 以便启动时一次性 Load 入内存的时机明确
-        var settingsService = new SettingsService(Container.Resolve<IEventAggregator>(), Container.Resolve<SettingCatalog>(), persistence);
-        settingsService.Load();
-        containerRegistry.RegisterSingleton<ISettingsService>(() => settingsService);
-
-        // 注册 Framework 自身设置项（常规/语言，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 9），模块设置项由各自 RegisterTypes 注册
-        containerRegistry.RegisterSettings(typeof(SettingsService).Assembly);
-
-        ApplyLanguageSetting(settingsService);
+        try
+        {
+            basicServices.Start();
+            ApplyLanguageSetting(Container.Resolve<ISettingsService>());
+        }
+        catch
+        {
+            basicServices.Dispose();
+            throw;
+        }
 
         ResolveFrameworkServices();
     }

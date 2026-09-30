@@ -1,6 +1,6 @@
 # Common — 对外接口与调用方式
 
-模块只暴露两个公开类，均在命名空间 `DigitalWorkstation.Core.Common` 下。两个类都是「私有构造 + Lazy 单例 + 静态成员」模式，外部永远拿不到实例，只能调静态成员。
+静态门面部分暴露两个公开类，均在命名空间 `DigitalWorkstation.Core.Common` 下。两个类都是「私有构造 + Lazy 单例 + 静态成员」模式，外部永远拿不到实例，只能调静态成员。
 
 ## Logger（Core/Common/Logger.cs）
 
@@ -89,7 +89,7 @@ IoC.Registry.RegisterSingleton<IMyService, MyService>();
 
 ## 对外数据结构
 
-本模块不定义任何 DTO/结构体/枚举。对外数据只有：
+静态门面的对外数据如下；Events 子命名空间另定义共享事件、record 与枚举，见 [Events/api.md](Events/api.md)。
 
 - `Logger`/`IoC` 两个类的静态成员签名（见上表）；
 - 透传的 Prism 类型 `IContainerRegistry`/`IContainerProvider`（Prism 程序集定义，本模块不包装）。

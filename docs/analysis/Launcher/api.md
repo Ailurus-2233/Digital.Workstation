@@ -62,3 +62,7 @@ Launcher.Run(args);      // 记录日志 → Avalonia 主循环（不返回，�
 ## 插件解析边界
 
 AssemblyLoader 公共 API 未改变。ResolveAssembly 对插件请求不提供宿主全局兜底；ResolveAssemblyFromLoaded 排除插件私有程序集。IsPluginAssembly 按加载上下文名称前缀 DigitalWorkstation.Plugin: 或 plugins/ 文件归属识别，不依赖 Framework 类型，维持引导阶段仅依赖 BCL 的约束。
+
+## Services 拆分接线
+
+基础服务实现现位于 Core/Services，经 Framework 的项目引用传递。贡献登记扩展使用 DigitalWorkstation.Core.Services.Contributions；UI 扫描、收集与布局状态机仍在 Framework。布局存储在 Services.Layout，PanelAlignment 在 Abstractions.Layout，SetPanelAlignmentEvent 在 Common.Events；重启入口为 Services.ApplicationRestarter。配置路径、语言设置 Id、插件上下文前缀和 Release 分类目录保持原规则。新项目入口见 Services 的模块认知文档。

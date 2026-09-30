@@ -70,4 +70,19 @@
     <value>Restart Now</value>
     <comment>Title of the Restart Now button on the settings page restart banner (ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) decision 7)</comment>
   </data>
+
+  <data name="PluginsTitle" xml:space="preserve"><value>Plugin management</value></data>
+  <data name="PluginsDescription" xml:space="preserve"><value>Choose which plugins to load on the next startup. New plugins are enabled by default. Changes require a restart.</value></data>
+  <data name="PluginsRestartMessage" xml:space="preserve"><value>Plugin startup configuration has changed. Restart to apply.</value></data>
+  <data name="PluginsRestartNow" xml:space="preserve"><value>Restart now</value></data>
+  <data name="PluginsEmpty" xml:space="preserve"><value>No plugins discovered.</value></data>
+  <data name="PluginLoadedStatus" xml:space="preserve"><value>This session: loaded</value></data>
+  <data name="PluginDisabledStatus" xml:space="preserve"><value>This session: disabled</value></data>
+  <data name="PluginFailedStatus" xml:space="preserve"><value>This session: failed to load</value></data>
+  <data name="PluginPendingRestart" xml:space="preserve"><value>Pending restart</value></data>
+  <data name="PluginLoadAtStartup" xml:space="preserve"><value>Load at startup</value></data>
+  <data name="GeneralSettingsTabTitle" xml:space="preserve"><value>General settings</value><comment>Settings tab title.</comment></data>
+  <data name="PluginEnabled" xml:space="preserve"><value>Enabled</value></data>
+  <data name="PluginDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="PluginRemovalPending" xml:space="preserve"><value>Plugin will be removed after restart</value></data>
 </root>

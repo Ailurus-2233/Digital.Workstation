@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+using DigitalWorkstation.Core.Services.Contributions;
+using Avalonia.Controls;
 using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Framework;
 using DigitalWorkstation.Core.Framework.Commands;

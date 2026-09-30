@@ -28,12 +28,14 @@ deep-read 产出（经 ABC 闭卷验证，main @ 04cfd02）；总索引与跨模
 
 **解决方案索引同步规则**：`Digital.Workstation.slnx` 的 `/_docs/` 是 `docs/` 的解决方案视图索引。新增或删除 `docs/` 下的任意文件时，必须同步在 `.slnx` 中新增或删除对应的 `<File Path="docs/..." />` 项，并保持其归属的 `/_docs/analysis/`、`/_docs/adr/` 或 `/_docs/agents/` 虚拟文件夹正确。完成标准：`docs/` 下每个实际文件都能在 `.slnx` 找到且每个索引路径都指向现有文件。
 
-- 改贡献契约/窗口管理接口（`Core/Abstractions`）时读 `docs/analysis/Core/Abstractions/`
+- 改贡献契约/模块服务契约/窗口管理接口（`Core/Abstractions`）时读 `docs/analysis/Core/Abstractions/`
 - 改日志/全局容器门面（`Logger`/`IoC`）时读 `docs/analysis/Core/Common/`
-- 增改事件契约（`Core/Models/Events`）时读 `docs/analysis/Core/Models/`
+- 增改事件契约（`Core/Common/Events`）时读 `docs/analysis/Core/Common/Events/`
 - 增改界面文案或多语言资源时读 `docs/analysis/Core/Resource/`
 - 改主题配色或图标常量时读 `docs/analysis/Core/UIPackage/`
-- 改启动序列、Shell 布局状态机或窗口管理器时读 `docs/analysis/Core/Framework/`
+- 改启动序列或 Shell 布局状态机时读 `docs/analysis/Core/Framework/`
 - 改启动台模块（进度窗、DashBoard 贡献）时读 `docs/analysis/Modules/DashBoard/`
 - 改主窗口 chrome、shell 预置贡献或面板交互时读 `docs/analysis/Modules/Workstation/`
 - 改程序集/native 解析或发布布局时读 `docs/analysis/Launcher/`
+
+- 改基础服务、窗口管理实现、设置存储、配置写入或插件发现时读 docs/analysis/Core/Services/；改 Framework 的启动接线时同时读 Framework 文档。

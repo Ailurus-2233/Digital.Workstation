@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+using DigitalWorkstation.Core.Services.Contributions;
+using System.Reflection;
 using Avalonia.Controls;
 using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Common;

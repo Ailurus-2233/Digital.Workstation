@@ -27,3 +27,14 @@ dotnet run --project Launcher/Launcher.csproj -c Debug
 5. 关闭应用，临时移走 Debug 根目录的 `DigitalWorkstation.Sample.dll` 或 Release 的整个 `plugins/Sample` 目录。直接运行现有 `Output/Debug/Launcher.exe` 或 `Output/Release/Launcher.exe`，避免构建将插件复制回来；主页右侧显示“暂无已加载的插件”（英文为上述空提示），左侧仍正常，状态栏无示例插件条目。关闭后恢复文件，再运行现有程序，右侧插件项及状态栏提示恢复。
 
 本轮插件加载与主页展示已由用户确认验收通过。Debug/Release 编译均通过（0 警告、0 错误）；等宽调整因运行中应用占用正常输出，使用临时输出目录完成 Debug 编译检查。
+
+## 插件启动配置手动验收（待用户确认）
+
+1. `dotnet run --project Launcher/Launcher.csproj -c Debug`。打开文件 > 首选项 > 插件管理：示例插件显示已加载、启动时加载勾选，页面只显示名称和加载状态，不显示路径；Ctrl+P 可搜索首选项，打开设置后选择插件管理标签。
+2. 取消示例插件勾选：条目提示重启后生效，本次仍显示已加载，主页与状态栏贡献仍存在。重新勾选：条目重启提示消失。
+3. 再禁用并关闭后直接运行现有 Launcher.exe：主页无 SamplePlugin、状态栏无插件贡献；插件管理仍列出该项，状态为已禁用、复选框未勾选。日志出现英文 Skipping disabled plugin，启动进度不包含该插件。
+4. 启用并关闭后直接运行现有 Launcher.exe：主页及插件状态栏恢复，管理页显示已加载且无待重启提示。取消勾选后立即正常退出，再启动，也应保留选择。
+5. 关闭程序后手工将 `%AppData%/Digital.Workstation/plugins.json` 的示例入口全名设为 false，再启动应禁用；移走配置应恢复默认启用。临时写入损坏 JSON，启动应记录英文 Warning 并回退默认，恢复原配置后继续。
+6. 用 `-c Release` 重复禁用、重启、重新启用，确认独立插件目录下行为一致。切到英文并重启，检查页面标题、加载状态、开关、空态及重启提示。Debug/Release 共用该用户配置，验证前记录并在完成后恢复原选择。
+
+编译检查仅确认代码与 XAML 可编译；上述桌面交互仍需本机手动验收，不新增自动化测试。

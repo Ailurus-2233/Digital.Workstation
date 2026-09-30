@@ -36,3 +36,7 @@
 | `IoC is already initialized` | 搜全部 `IoC.Initialize` 调用点 |
 | 访问容器 NRE | 确认 `Initialize` 先于访问执行；注意静态初始化器时序 |
 | 日志格式/级别异常 | Logger.cs 私有构造函数（第 31-48 行），注意 DEBUG/Release 两条配置链都要看 |
+
+## 共享事件归属
+
+Events/ 已合并入 Common 项目。相关记录见 [Events/error.md](Events/error.md)，修改事件前先读 [Events/common.md](Events/common.md)。

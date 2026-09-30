@@ -3,7 +3,7 @@
     <Project Path="Core/Abstractions/Abstractions.csproj" />
     <Project Path="Core/Common/Common.csproj" />
     <Project Path="Core/Framework/Framework.csproj" />
-    <Project Path="Core/Models/Models.csproj" />
+    <Project Path="Core/Services/Services.csproj" />
     <Project Path="Core/Resource/Resource.csproj" />
     <Project Path="Core/UIPackage/UIPackage.csproj" />
   </Folder>
@@ -56,6 +56,16 @@
     <File Path="docs/analysis/Core/Common/reference.md" />
     <File Path="docs/analysis/Core/Common/testing.md" />
   </Folder>
+  <Folder Name="/_docs/analysis/Core/Services/">
+    <File Path="docs/analysis/Core/Services/api.md" />
+    <File Path="docs/analysis/Core/Services/common.md" />
+    <File Path="docs/analysis/Core/Services/error.md" />
+    <File Path="docs/analysis/Core/Services/file-list.md" />
+    <File Path="docs/analysis/Core/Services/glossary.md" />
+    <File Path="docs/analysis/Core/Services/pitfalls.md" />
+    <File Path="docs/analysis/Core/Services/reference.md" />
+    <File Path="docs/analysis/Core/Services/testing.md" />
+  </Folder>
   <Folder Name="/_docs/analysis/Core/Framework/">
     <File Path="docs/analysis/Core/Framework/api.md" />
     <File Path="docs/analysis/Core/Framework/common.md" />
@@ -66,15 +76,15 @@
     <File Path="docs/analysis/Core/Framework/reference.md" />
     <File Path="docs/analysis/Core/Framework/testing.md" />
   </Folder>
-  <Folder Name="/_docs/analysis/Core/Models/">
-    <File Path="docs/analysis/Core/Models/api.md" />
-    <File Path="docs/analysis/Core/Models/common.md" />
-    <File Path="docs/analysis/Core/Models/error.md" />
-    <File Path="docs/analysis/Core/Models/file-list.md" />
-    <File Path="docs/analysis/Core/Models/glossary.md" />
-    <File Path="docs/analysis/Core/Models/pitfalls.md" />
-    <File Path="docs/analysis/Core/Models/reference.md" />
-    <File Path="docs/analysis/Core/Models/testing.md" />
+  <Folder Name="/_docs/analysis/Core/Common/Events/">
+    <File Path="docs/analysis/Core/Common/Events/api.md" />
+    <File Path="docs/analysis/Core/Common/Events/common.md" />
+    <File Path="docs/analysis/Core/Common/Events/error.md" />
+    <File Path="docs/analysis/Core/Common/Events/file-list.md" />
+    <File Path="docs/analysis/Core/Common/Events/glossary.md" />
+    <File Path="docs/analysis/Core/Common/Events/pitfalls.md" />
+    <File Path="docs/analysis/Core/Common/Events/reference.md" />
+    <File Path="docs/analysis/Core/Common/Events/testing.md" />
   </Folder>
   <Folder Name="/_docs/analysis/Core/Resource/">
     <File Path="docs/analysis/Core/Resource/api.md" />

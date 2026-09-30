@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Abstractions/Abstractions.csproj" />
+    <ProjectReference Include="../Common/Common.csproj" />
+    <InternalsVisibleTo Include="DigitalWorkstation.Core.Framework" />
+    <EmbeddedResource Include="../../Build/PluginSharedAssemblies.txt" LogicalName="DigitalWorkstation.Core.Services.Plugins.SharedAssemblies" />
+  </ItemGroup>
+</Project>

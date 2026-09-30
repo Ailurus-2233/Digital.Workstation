@@ -1,0 +1,34 @@
+<UserControl x:Class="DigitalWorkstation.Settings.Views.PluginsPageView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:prism="http://prismlibrary.com/"
+    xmlns:resource="using:DigitalWorkstation.Settings.Resources"
+    prism:ViewModelLocator.AutoWireViewModel="True">
+    <ScrollViewer Margin="0,12,0,0" HorizontalScrollBarVisibility="Disabled">
+        <ItemsControl ItemsSource="{Binding Plugins}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="0,0,0,12" Padding="16" CornerRadius="8"
+                        BorderThickness="1" BorderBrush="{DynamicResource SemiColorBorder}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Spacing="6" Margin="0,0,16,0" VerticalAlignment="Center">
+                                <TextBlock FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding Name}" />
+                                <TextBlock Foreground="{DynamicResource SemiColorText2}" Text="{Binding Status}" />
+                                <TextBlock IsVisible="{Binding IsPendingRestart}"
+                                    Text="{x:Static resource:SettingsResources.PluginPendingRestart}" />
+                                <TextBlock IsVisible="{Binding IsRemovalPending}"
+                                    Text="{x:Static resource:SettingsResources.PluginRemovalPending}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <ToggleButton IsChecked="{Binding IsEnabled, Mode=TwoWay}" IsEnabled="{Binding CanModify}"
+                                    Content="{x:Static resource:SettingsResources.PluginEnabled}" />
+                                <Button Command="{Binding DeleteCommand}"
+                                    Content="{x:Static resource:SettingsResources.PluginDelete}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+</UserControl>

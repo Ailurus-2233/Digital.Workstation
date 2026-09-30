@@ -117,4 +117,5 @@ public static class WorkstationResources
     ///     shell 预置状态栏"就绪"项的文本
     /// </summary>
     public static string StatusReadyTitle => ResourceText.Get(typeof(WorkstationResources), nameof(StatusReadyTitle));
+
 }

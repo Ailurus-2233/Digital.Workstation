@@ -28,7 +28,7 @@
 本模块是面向整个解决方案的基础设施层，按设计意图被以下角色依赖（依据类注释与解决方案结构推断；按本模块深读边界未逐一核实调用点，具体消费项目需在对应模块的深读中确认）：
 
 - **Launcher（shell 宿主，`Launcher/Launcher.csproj`）**：预期在 Prism.Avalonia 应用引导阶段调用 `IoC.Initialize(registry, provider)`——这是 `Initialize` 唯一合法的调用场景（一次性、启动期）。依据：`IoC` 类注释「提供对 Prism 容器注册和解析的全局访问」（Core/Common/IoC.cs 第 4-6 行）。
-- **全部 Core 与 Modules 项目**（`Core/Framework`、`Core/Models`、`Core/Resource`、`Core/UIPackage`、`Modules/DashBoard`、`Modules/Workstation` 等）：预期通过 `Logger.*` 静态方法打日志、通过 `IoC.Provider.Resolve<T>()` 解析服务。`Logger`/`IoC` 的纯静态 API 形态决定了消费方零注入成本，这是该层存在的意义。
+- **全部 Core 与 Modules 项目**（`Core/Framework`、`Core/Common/Events`、`Core/Resource`、`Core/UIPackage`、`Modules/DashBoard`、`Modules/Workstation` 等）：预期通过 `Logger.*` 静态方法打日志、通过 `IoC.Provider.Resolve<T>()` 解析服务。`Logger`/`IoC` 的纯静态 API 形态决定了消费方零注入成本，这是该层存在的意义。
 
 > 待进一步调查：各项目 `.csproj` 中对 `Common.csproj` 的实际 ProjectReference 清单，以及 `IoC.Initialize` 的真实调用点（属 Launcher/其他模块深读范围）。
 
@@ -72,3 +72,7 @@ IoC (static 门面)
 ### 与 Core/Abstractions 的关系
 
 Common 在工程上引用 Abstractions（见上「项目引用」），但类型层面当前**零耦合**：Abstractions 的全部类型（`IWindowManager`、五个 `I*Contribution` 接口、`ShellRegions` 等，见 docs/analysis/Core/Abstractions/reference.md）都不出现在 Logger.cs/IoC.cs 中。两模块的分工：Abstractions 是纯契约（接口/常量/枚举，无第三方依赖除 Avalonia），Common 是基础设施实现门面（Serilog 日志 + Prism 容器访问）。
+
+## 共享事件归属
+
+Events/ 已合并入 Common 项目。相关记录见 [Events/reference.md](Events/reference.md)，修改事件前先读 [Events/common.md](Events/common.md)。

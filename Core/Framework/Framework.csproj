@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -7,10 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="..\..\Build\PluginSharedAssemblies.txt" LogicalName="DigitalWorkstation.Core.Framework.Plugins.SharedAssemblies" />
         <ProjectReference Include="..\Abstractions\Abstractions.csproj"/>
         <ProjectReference Include="..\Common\Common.csproj"/>
-        <ProjectReference Include="..\Models\Models.csproj" />
+        <ProjectReference Include="..\Services\Services.csproj" />
         <ProjectReference Include="..\UIPackage\UIPackage.csproj" />
         <ProjectReference Include="..\Resource\Resource.csproj" />
     </ItemGroup>

@@ -34,10 +34,11 @@
 |---|---|---|---|
 | Core/Abstractions | [Core/Abstractions/](Core/Abstractions/common.md) | 纯契约层：贡献接口与定位枚举（`Contributions/`）、菜单契约 `IMenuItemContribution` 与 `MenuGroupAttribute`/`MenuItemAttribute`（`Menus/`）、命令契约 `ICommandContribution` 与 `CommandAttribute`（`Commands/`，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）、设置契约 `SettingGroupAttribute`/`SettingItemAttribute`/`ISettingsService`（`Settings/`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）、`ShellRegions` 常量（`Regions/`）、窗口管理接口（`WindowManager/`），零实现 | 无项目依赖（包：Avalonia） |
 | Core/Common | [Core/Common/](Core/Common/common.md) | 基础设施静态门面：Serilog 静态日志 `Logger` 与 Prism 容器静态访问器 `IoC`，进程内单例 | Abstractions（包：Prism.Avalonia/DryIoc、Serilog） |
-| Core/Models | [Core/Models/](Core/Models/common.md) | 跨模块事件契约与负载 DTO 层：启动序列三件套 + 工作区交互三件套 + 设置变更事件 `SettingChangedEvent`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3，共 7 个事件），全是空 `PubSubEvent<T>` 子类与 record/枚举 | Common |
+| Core/Common/Events | [Core/Common/Events/](Core/Common/Events/common.md) | 跨模块事件契约与负载 DTO 层：启动序列三件套 + 工作区交互三件套 + 设置变更事件 `SettingChangedEvent`（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3，共 9 个事件），全是空 `PubSubEvent<T>` 子类与 record/枚举 | Common 子模块，无独立项目 |
 | Core/Resource | [Core/Resource/](Core/Resource/common.md) | 共享本地化机制 `ResourceText.Get(Type, key)` 与产品名 `SharedResources`；模块私有文案随所属程序集，缺键返回键名 | 无项目依赖 |
 | Core/UIPackage | [Core/UIPackage/](Core/UIPackage/common.md) | 共享 UI 资源包：`WorkstationTheme` 聚合 4 个第三方主题包、`VSCodePalette` 深色色键、`Icons` 15 个 StreamGeometry path 常量 | 无项目依赖（包：Avalonia/Semi.Avalonia/Ursa） |
-| Core/Framework | [Core/Framework/](Core/Framework/common.md) | 应用框架层：启动与窗口管理、Shell 布局和持久化、贡献注册收集及菜单建树、命令面板、设置存储与语言应用；框架自有文案在 `Resources/FrameworkResources.*` | Abstractions、Common、Models、UIPackage、Resource |
+| Core/Framework | [Core/Framework/](Core/Framework/common.md) | 应用启动编排、Shell 状态机与窗口模板、贡献扫描收集、框架设置声明 | Abstractions、Common、Services、UIPackage、Resource |
+| Core/Services | [Core/Services/](Core/Services/common.md)（源码同步入口） | 窗口管理、配置与布局存储、设置与贡献目录、插件发现与启动选择、重启 | Abstractions、Common |
 | Modules/DashBoard | [Modules/DashBoard/](Modules/DashBoard/common.md) | 启动进度窗（进度/失败/继续退出决策）与启动台状态栏贡献；私有文案在 `Resources/DashBoardResources.*` | Abstractions、Framework、Resource、UIPackage |
 | Modules/Settings | [Modules/Settings/](Modules/Settings/common.md)（源码同步入口） | 设置页模块：普通 MainContent 主视图（分组树 + 枚举编辑器）；按贡献者的资源类型解析分组、设置项和选项；重启 UX 文案在 `Resources/SettingsResources.*` | Abstractions、Framework、Resource、UIPackage |
 | Modules/Workstation | [Modules/Workstation/](Modules/Workstation/common.md) | 应用宿主与 shell：`MainWindow` VS Code 式五区布局、`MainWindowViewModel` 驱动布局状态（含命令收集与手势 KeyBinding 接线，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)；ActivityBar 左下角"设置"纯导航按钮，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 6）、`WorkstationApplication` 入口、shell 预置贡献 | Framework、Resource、UIPackage、DashBoard、Settings |
@@ -68,17 +69,18 @@ graph TD
   ST --> UIP
   FW --> Abs
   FW --> Com["Core/Common"]
-  FW --> Mod["Core/Models"]
+  FW --> Svc["Core/Services"]
+  Svc --> Com
+  Svc --> Abs
   FW --> UIP
   FW --> Res
-  Mod --> Com
   Com --> Abs
 ```
 
 要点（细节见各 `reference.md`）：
 
-- **业务模块不引用 shell**：DashBoard 只引用 Core 层项目，对 shell 的集成全靠实现 Abstractions 的贡献接口 + Models 的事件（`Modules/DashBoard/common.md`「依赖面收窄到 Core」）。
-- **Models 经 Framework 传递到达消费方**：DashBoard/Settings/Workstation 不直接引用 Models，经 `Framework → Models` 传递引用获得事件类型（`Core/Models/reference.md` 被依赖关系表）。
+- **业务模块不引用 shell**：DashBoard 只引用 Core 层项目，对 shell 的集成全靠实现 Abstractions 的贡献接口 + Common/Events 的事件（`Modules/DashBoard/common.md`「依赖面收窄到 Core」）。
+- **共享事件经 Framework 传递到达消费方**：DashBoard/Settings/Workstation 经 Common 获取事件，经 `Framework → Common` 传递引用获得事件类型（`Core/Common/Events/reference.md` 被依赖关系表）。
 - **Resource/UIPackage 是 Core 层最底**：无任何项目依赖，被 Framework 与三个 Modules 项目直接引用。
 - 包依赖（非项目依赖）：Abstractions 仅 Avalonia；Common 为 Prism.Avalonia/Prism.DryIoc.Avalonia/Serilog；UIPackage 为 Avalonia/Semi.Avalonia 系列/Irihi.Ursa.Themes.Semi。
 
@@ -109,15 +111,15 @@ graph TD
 1. [Launcher/error.md](Launcher/error.md)：分水岭判据——看不到 `"Application startup."` 日志 = 崩在 `AssemblyLoader` 引导阶段；看到后才崩 = Avalonia 启动后的问题。Release 分类目录布局与 `Build/ManageDlls.targets` 的对偶关系见 [Launcher/reference.md](Launcher/reference.md)。
 2. [Core/Common/common.md](Core/Common/common.md)：日志只有 Console sink，GUI 子系统无附加控制台时不可见——先确认日志是否可达。
 3. [Core/Framework/common.md](Core/Framework/common.md)「状态流转」：三阶段启动序列（CoreServices → LoadingModules → Ready）逐步骤，含模块加载及 UI 线程贡献工厂准备失败的捕获与决策回传（`RunStartupSequenceAsync`）。失败批次被拒绝，依赖失败模块的后续模块在加载前进入失败决策；普通 DI 注册与其他副作用不回滚。宿主无批次贡献及最终 Shell 准备完成后才发布 Ready。
-4. [Core/Models/common.md](Core/Models/common.md)：启动事件三件套的负载语义（`StartupProgress`/`ModuleLoadFailure`/`StartupFailureAction`）。
+4. [Core/Common/Events/common.md](Core/Common/Events/common.md)：启动事件三件套的负载语义（`StartupProgress`/`ModuleLoadFailure`/`StartupFailureAction`）。
 5. [Modules/DashBoard/common.md](Modules/DashBoard/common.md)「启动台链」：进度/失败在启动台 UI 上的呈现与「继续/退出」回传路径。
 
 ### 4. 新增一条跨模块事件契约并发布/订阅
 
-1. [Core/Models/common.md](Core/Models/common.md)：事件定义形态——空 `PubSubEvent<T>` 子类 + record 负载 + 「谁发布、谁订阅」XML 注释；`EventAggregator.GetEvent<T>()` 按类型身份撮合，事件类型只能有唯一定义点（本模块）。
-2. [Core/Models/reference.md](Core/Models/reference.md)：现有 6 个事件的负载结构与字符串级契约（如 `OpenMainViewEvent` 负载 = `IMainViewContribution.Id`，不匹配则静默无反应）。
+1. [Core/Common/Events/common.md](Core/Common/Events/common.md)：事件定义形态——空 `PubSubEvent<T>` 子类 + record 负载 + 「谁发布、谁订阅」XML 注释；`EventAggregator.GetEvent<T>()` 按类型身份撮合，事件类型只能有唯一定义点（本模块）。
+2. [Core/Common/Events/reference.md](Core/Common/Events/reference.md)：现有 6 个事件的负载结构与字符串级契约（如 `OpenMainViewEvent` 负载 = `IMainViewContribution.Id`，不匹配则静默无反应）。
 3. 发布/订阅样例：[Core/Framework/common.md](Core/Framework/common.md)（启动序列发布端）、[Modules/DashBoard/common.md](Modules/DashBoard/common.md)（启动台订阅/发布端）、[Modules/Workstation/common.md](Modules/Workstation/common.md)（`MainWindowViewModel` 订阅端）。
-4. 接线：消费方经 `Framework → Models` 传递引用即可解析事件类型，通常无需新增 ProjectReference（[Core/Models/common.md](Core/Models/common.md) 场景 3）。
+4. 接线：消费方经 `Framework → Common` 传递引用即可解析事件类型，通常无需新增 ProjectReference（[Core/Common/Events/common.md](Core/Common/Events/common.md) 场景 3）。
 
 ### 5. 改主题配色 / 新增共享图标
 

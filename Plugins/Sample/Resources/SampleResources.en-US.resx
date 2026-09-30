@@ -16,4 +16,5 @@
     <value>Sample plugin loaded</value>
     <comment>示例插件成功加载后显示在状态栏的文本</comment>
   </data>
+  <data name="PluginName" xml:space="preserve"><value>Sample plugin</value><comment>Plugin display name.</comment></data>
 </root>

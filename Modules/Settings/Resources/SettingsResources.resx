@@ -70,4 +70,19 @@
     <value>立即重启</value>
     <comment>设置页重启横幅上「立即重启」按钮的标题（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）</comment>
   </data>
+
+  <data name="PluginsTitle" xml:space="preserve"><value>插件管理</value></data>
+  <data name="PluginsDescription" xml:space="preserve"><value>选择下次启动时加载的插件。未配置的插件默认启用，修改后重启生效。</value></data>
+  <data name="PluginsRestartMessage" xml:space="preserve"><value>插件启动配置已修改，重启后生效。</value></data>
+  <data name="PluginsRestartNow" xml:space="preserve"><value>立即重启</value></data>
+  <data name="PluginsEmpty" xml:space="preserve"><value>未发现插件。</value></data>
+  <data name="PluginLoadedStatus" xml:space="preserve"><value>本次启动：已加载</value></data>
+  <data name="PluginDisabledStatus" xml:space="preserve"><value>本次启动：已禁用</value></data>
+  <data name="PluginFailedStatus" xml:space="preserve"><value>本次启动：加载失败</value></data>
+  <data name="PluginPendingRestart" xml:space="preserve"><value>重启后生效</value></data>
+  <data name="PluginLoadAtStartup" xml:space="preserve"><value>启动时加载</value></data>
+  <data name="GeneralSettingsTabTitle" xml:space="preserve"><value>通用设置</value><comment>Settings tab title.</comment></data>
+  <data name="PluginEnabled" xml:space="preserve"><value>启用</value></data>
+  <data name="PluginDelete" xml:space="preserve"><value>删除</value></data>
+  <data name="PluginRemovalPending" xml:space="preserve"><value>重启后删除插件</value></data>
 </root>

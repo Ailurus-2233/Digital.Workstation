@@ -21,14 +21,14 @@
 | **PrismApplication / Prism** | 本框架基类来源（`Prism.DryIoc.PrismApplication`）：提供容器（DryIoc）、模块目录（`IModuleCatalog`/`IModuleManager`）、事件聚合器（`IEventAggregator`）、Region 与 ViewModelLocator 基础设施；本模块大量"空覆盖"都是在改 Prism 默认行为 | `FrameworkApplication.cs:16、20` |
 | **IoC（类）** | Common 模块的静态容器引用持有者；本模块在 `RegisterFrameworkServices` 里完成其一次性初始化，`FrameworkWindowManager.GetWindow` 经 `IoC.Provider` 解析窗口 | `FrameworkApplication.cs:148`、`FrameworkWindowManager.cs:37` |
 | **ViewModel 定位约定** | `ConfigureViewModelLocator` 的命名映射规则：`Views`→`ViewModels` 命名空间替换 + `Window`/`Page`/`View` 后缀补 `ViewModel`/`Model`；View 侧需 `AutoWireViewModel="True"` | `FrameworkApplication.cs:237-269` |
-| **面板对齐（Panel Alignment）** | BottomPanel 在窗口底部的水平跨度，类比文本对齐。四档：左（贴左，横跨 SideBar 与 MainContent 下方，AuxiliaryPanel 通高到底）、右（贴右，横跨 MainContent 与 AuxiliaryPanel 下方，SideBar 通高到底）、居中（仅占 MainContent 下方，默认，两侧栏通高）、两端（横跨三列全宽）。完整领域定义（含与"面板位置"的区分）见根目录 CONTEXT.md | `Layout/PanelAlignment.cs:7` |
+| **面板对齐（Panel Alignment）** | BottomPanel 在窗口底部的水平跨度，类比文本对齐。四档：左（贴左，横跨 SideBar 与 MainContent 下方，AuxiliaryPanel 通高到底）、右（贴右，横跨 MainContent 与 AuxiliaryPanel 下方，SideBar 通高到底）、居中（仅占 MainContent 下方，默认，两侧栏通高）、两端（横跨三列全宽）。完整领域定义（含与"面板位置"的区分）见根目录 CONTEXT.md | `Core/Abstractions/Layout/PanelAlignment.cs:7` |
 | **FrameworkWindow** | 带基础布局的窗口基类（继承 UrsaWindow）：内置 VS Code 式五区 shell + 状态栏 + 标题栏菜单栏（代码创建的 `Menu` 宽松绑定 ViewModel 的 `MenuBarItems`，[ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)），布局档位由 `PanelAlignment` 依赖属性决定，切换即整体替换布局模板。真实子类：Modules/Workstation 的 `MainWindow`。与"主窗口（MainWindow）"词条的区别：那是**角色**（启动序列登记的那个窗口实例），这是**类型基类** | `Windows/FrameworkWindow.cs:19` |
-| **布局持久化（Layout Persistence）** | layout.json 的独立 DTO 记录工具视图位置、显隐、尺寸、选择和面板对齐；容错读取由 LayoutPersistence 负责，防抖写入与重置删除由统一配置写入模块负责。重置等待在途写入，正常 Exit 完成保存 | Layout/LayoutPersistence.cs、Persistence/ |
+| **布局持久化（Layout Persistence）** | layout.json 的独立 DTO 记录工具视图位置、显隐、尺寸、选择和面板对齐；容错读取由 LayoutPersistence 负责，防抖写入与重置删除由统一配置写入模块负责。重置等待在途写入，正常 Exit 完成保存 | Core/Services/Layout/LayoutPersistence.cs、Persistence/ |
 | **拖拽会话（Drag Session）** | 一次工具视图拖拽的存续期：`ToolViewButton` 在 `DoDragDropAsync` 期间把 `ToolViewDragSession.IsActive` 置 true 并广播 `ActiveChanged`；shell 借此临时显露隐藏面板作为投放区 | `Layout/ToolViewDragSession.cs:11` |
 | **命令（Command）** | 以标题与可选快捷键（Gesture）声明的全局动作（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）：方法标 `CommandAttribute` 经 `RegisterCommands` 扫描生成 `ICommandContribution`（扁平模型，稳定 `Id` 默认「声明类全名.方法名」），与菜单体系互不相干；完整领域定义见根目录 CONTEXT.md | `Core/Abstractions/Commands/CommandAttribute.cs`；注册端 `Commands/CommandRegistration.cs:14` |
 | **命令面板（Command Palette）** | 窗口顶部居中的命令检索浮层（Ctrl+P 唤起）：子串过滤、↑↓/Enter/Esc 导航、单击执行、失焦关闭、MRU 内存置顶。自包含控件 `CommandPalette`，VM 只暴露 `Commands` 集合（宽松绑定）；`FrameworkWindow` 构造时内置 | `Windows/CommandPalette.cs:18`、`Windows/FrameworkWindow.cs:36-44` |
 | **MRU（最近使用）** | 命令面板内 `_recentIds` 记忆：最近执行的命令 Id（新者在前）浮到列表最前；只在内存中，重启即清（[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) 决策 8，持久化留作后续） | `Windows/CommandPalette.cs:29` |
-| **命令手势（Gesture）** | 命令的快捷键文本（如 `"Ctrl+Shift+P"`）：`CommandAttribute.Gesture` 声明 → shell 收集后 `FrameworkWindow.RegisterCommandGestures` 解析为窗口级 KeyBinding。机制在 Framework、接线在 shell 模块（同 LayoutPersistence 惯例） | `Windows/FrameworkWindow.cs:114` |
+| **命令手势（Gesture）** | 命令的快捷键文本（如 `"Ctrl+Shift+P"`）：`CommandAttribute.Gesture` 声明 → shell 收集后 `FrameworkWindow.RegisterCommandGestures` 解析为窗口级 KeyBinding。机制在 Services、接线在 shell 模块（同 LayoutPersistence 惯例） | `Windows/FrameworkWindow.cs:114` |
 | **占位线（Insertion Line）** | 拖拽落点指示：`ToolViewBar` ControlTheme 模板里的 `PART_InsertionLine`（2px、取分隔条悬停高亮色），DragOver 时按指针位置移到落点缝隙——横向 Bar 竖线、纵向 Bar 横线；不改现有 tab 的样式 | `Windows/FrameworkWindowTheme.axaml:492`（ControlTheme）、`Layout/ToolViewBar.cs:185`（`ShowInsertion`） |
 | **菜单路径引用 / 标题声明** | `MenuGroup(path)` 只挂接稳定路径，不需要所有者资源；`MenuGroup(path, resourceType, titleKey)` 另为末端节点声明标题。建树采用首个非 null PathTitle，无声明时显示 Id 段 | Menus/MenuRegistration.cs、Menus/MenuTreeBuilder.cs |
 | **FrameworkResources** | Framework 自己的资源所属类型，包含命令面板及常规/语言设置文案；由 ResourceText 查询，不是其他模块文案的共享仓库 | Resources/FrameworkResources.* |
@@ -54,8 +54,8 @@
 | `ToolViewButton` / `ToolViewBar` | 工具视图的拖拽源按钮（tab 头/导航项）/ Bar 投放目标（算落点、显示占位线、发出 `ToolViewMove`） |
 | `ToolViewMove` / `ToolViewDragSession` | 一次拖拽落点的命令参数 / 拖拽进行中的全局信号 |
 
-| **贡献批次（ContributionBatch）** | 一次模块加载产生的 Shell 贡献登记边界，准备成功后发布，失败后不可见；不等于 DI 事务 | Contributions/ShellContributionCatalog.cs |
-| **有效设置目录（SettingCatalog）** | 按 Id 首个生效的设置项与分组解释，设置服务和页面共享 | Settings/SettingCatalog.cs |
+| **贡献批次（ContributionBatch）** | 一次模块加载产生的 Shell 贡献登记边界，准备成功后发布，失败后不可见；不等于 DI 事务 | Core/Services/Contributions/ShellContributionCatalog.cs |
+| **有效设置目录（SettingCatalog）** | 按 Id 首个生效的设置项与分组解释，设置服务和页面共享 | Core/Services/Settings/SettingCatalog.cs |
 | **布局配置投影** | ShellLayoutConfiguration 在独立 DTO 与 State 之间转换，不读取 UI 集合 | Layout/ShellLayoutConfiguration.cs |
 | **共享布局尺寸** | ShellLayoutMetrics 为卡片模板和列宽提供同一外边距来源 | Layout/ShellLayoutMetrics.cs |
 
@@ -64,3 +64,15 @@
 - **插件（Plugin）**：领域定义见根 CONTEXT.md；技术入口为标记 PluginAttribute 的 IModule。
 - **插件加载上下文（PluginLoadContext）**：Release 中一个插件私有依赖的解析与缓存范围，进程内常驻；公共契约共享宿主实际程序集。
 - **共享程序集清单**：Build/PluginSharedAssemblies.txt 的简单名/前缀规则，构建排除副本与运行时共享同源。
+
+- **插件启动选择**：以入口全名为身份的持久化 bool；启动值决定本次是否加载，当前值决定下次启动，差异产生待重启提示。实现见 Plugins/PluginStartupService.cs。
+
+## 基础服务项目拆分
+
+窗口管理、配置写入、布局存储、贡献目录、设置目录与存储、插件发现及启动选择、ApplicationRestarter 已归 Services；本页相关行为是 Framework 使用这些服务的协议，源码归属与接口见 [Services/glossary.md](../Services/glossary.md)。Framework 显式 Register/Start 基础服务并在真实 Exit 停止，语言声明及设置 Id 不变。模块附加服务已接入加载后启动、失败清理与退出逆序停止。
+
+## 模块附加服务接线
+
+Framework 在模块/插件入口初始化后、贡献准备前调用 Services.ModuleServiceCatalog.Start；失败拒绝贡献批次并 Stop 同批服务。内置模块失败状态回到 NotStarted；依赖检查仍按 availableModules。
+
+真实 Exit 先设置退出守卫、逆序 Dispose 模块服务目录，再 Dispose 基础服务，保证停止回调仍可使用基础配置。服务契约与登记方式见 [Services/api.md](../Services/api.md)，故障和运行验收见 [Services/testing.md](../Services/testing.md)。不回滚普通容器登记或模块入口自行产生的副作用。

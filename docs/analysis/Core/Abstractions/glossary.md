@@ -1,4 +1,4 @@
-﻿# Abstractions — 术语表
+# Abstractions — 术语表
 
 ## 领域术语与缩写
 
@@ -45,3 +45,9 @@
 | `IStatusBarItemContribution` | 状态栏一个「图标 + 文本」状态指示 |
 | `IWindowManager` / `IMainWindowManager` | 应用窗口显隐服务 / 主窗口（托盘显隐类场景）专属服务 |
 | `WindowManagerExtenstion`（源码拼写如此） | `IWindowManager` 的泛型调用糖 |
+
+## 共享布局档位契约
+
+PanelAlignment 已从 Framework/Layout 迁入 Core/Abstractions/Layout/PanelAlignment.cs，命名空间 DigitalWorkstation.Core.Abstractions.Layout。Left/Right/Center/Justify 的枚举值和语义保持不变。Framework 模板与 Services 的布局 DTO 共用它，避免 Services 反向引用 Framework。SetPanelAlignmentEvent 已归 Common/Events；窗口管理与 ISettingsService 的实现已归 Services。
+
+IModuleService：模块附加服务生命周期契约；服务构造与登记不启动工作，Start/Stop 的调用时机归框架编排。

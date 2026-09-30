@@ -12,6 +12,16 @@ namespace DigitalWorkstation.Launcher;
 /// </summary>
 public sealed class AssemblyLoader
 {
+#region Singleton
+
+    private static readonly Lazy<AssemblyLoader> SingleInstance = new(() => new AssemblyLoader());
+
+    private static AssemblyLoader Instance => SingleInstance.Value;
+
+    private AssemblyLoader() { }
+
+#endregion
+
     /// <summary>
     ///     程序所在目录。所有相对路径都基于它解析，
     ///     保证从任意工作目录（如用绝对路径从 home 启动）都能正确定位程序集。
@@ -23,12 +33,12 @@ public sealed class AssemblyLoader
     /// </summary>
     private static readonly string[] BootRequiredAssemblyFiles =
     [
-        "Libraries/Serilog/Serilog.dll",
-        "Libraries/Serilog/Serilog.Sinks.Console.dll",
-        "Core/DigitalWorkstation.Core.Common.dll",
-        "Libraries/Avalonia/Avalonia.Base.dll",
-        "Libraries/Avalonia/Avalonia.Controls.dll",
-        "Libraries/Avalonia/Avalonia.dll"
+        "libraries/Serilog/Serilog.dll",
+        "libraries/Serilog/Serilog.Sinks.Console.dll",
+        "core/DigitalWorkstation.Core.Common.dll",
+        "libraries/Avalonia/Avalonia.Base.dll",
+        "libraries/Avalonia/Avalonia.Controls.dll",
+        "libraries/Avalonia/Avalonia.dll"
     ];
 
     /// <summary>
@@ -43,19 +53,7 @@ public sealed class AssemblyLoader
         { Path.Combine(BaseDirectory, "runtimes/"), 2 }
     };
 
-    #region Singleton
-
-    private static readonly Lazy<AssemblyLoader> SingleInstance = new(() => new AssemblyLoader());
-
-    private static AssemblyLoader Instance => SingleInstance.Value;
-
-    private AssemblyLoader()
-    {
-    }
-
-    #endregion
-
-    #region public API
+#region public API
 
     /// <summary>
     ///     初始化：预加载必要程序集 + 注册动态解析。
@@ -95,11 +93,12 @@ public sealed class AssemblyLoader
         var fullPath = Path.GetFullPath(path);
         if (!Directory.Exists(fullPath)) return null;
 
-        return (from ext in SourceArray
-            select Path.Combine(fullPath, $"{assemblyName}{ext}")
-            into assemblyPath
-            where File.Exists(assemblyPath)
-            select Assembly.LoadFrom(assemblyPath)).FirstOrDefault();
+        return (
+                   from ext in SourceArray
+                   select Path.Combine(fullPath, $"{assemblyName}{ext}")
+                   into assemblyPath
+                   where File.Exists(assemblyPath)
+                   select Assembly.LoadFrom(assemblyPath)).FirstOrDefault();
     }
 
     /// <summary>
@@ -108,20 +107,19 @@ public sealed class AssemblyLoader
     public static void RefreshRuntimeEnvironmentPath()
     {
         var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
-        var separator = Path.PathSeparator;
-        var paths = currentPath.Split(separator).ToList();
-        foreach (var path in Instance._searchPaths.Where(p => !paths.Contains(p)))
-            paths.Add(path);
+        var separator   = Path.PathSeparator;
+        var paths       = currentPath.Split(separator).ToList();
+        foreach (var path in Instance._searchPaths.Where(p => !paths.Contains(p))) paths.Add(path);
         Environment.SetEnvironmentVariable("PATH", string.Join(separator, paths));
     }
 
-    #endregion
+#endregion
 
-    #region Assembly Resolve fields
+#region Assembly Resolve fields
 
-    private static readonly object SearchPathsLock = new();
+    private static readonly Lock SearchPathsLock = new();
 
-    private static readonly object InitLock = new();
+    private static readonly Lock InitLock = new();
 
     private static readonly string[] SourceArray = [".dll", ".exe"];
 
@@ -138,10 +136,11 @@ public sealed class AssemblyLoader
     /// </summary>
     private static bool IsDesignEnvironment()
     {
-#if DEBUG
+    #if DEBUG
         return true;
-#endif
+    #endif
 #pragma warning disable CS0162 // 检测到不可到达的代码
+        // ReSharper disable once HeuristicUnreachableCode
         return false;
 #pragma warning restore CS0162 // 检测到不可到达的代码
     }
@@ -153,10 +152,9 @@ public sealed class AssemblyLoader
             var fullPath = Path.GetFullPath(Path.Combine(BaseDirectory, f));
             if (!File.Exists(fullPath)) continue;
             // 用 LoadFile（不是 LoadFrom）避免 probing/AssemblyResolve 递归
-            var assembly = Assembly.LoadFile(fullPath);
-            var name = assembly.GetName().Name;
-            if (name != null)
-                _resolvedCache[name] = assembly;
+            var assembly                           = Assembly.LoadFile(fullPath);
+            var name                               = assembly.GetName().Name;
+            if (name != null) _resolvedCache[name] = assembly;
         }
     }
 
@@ -173,9 +171,9 @@ public sealed class AssemblyLoader
             // 附带子目录（递归深度 2）
             var subList = new List<string>();
             foreach (var subPaths in BaseFolderPath
-                         .Select(keyValuePair => new { keyValuePair, path = keyValuePair.Key })
-                         .Where(@t => Path.Exists(@t.path))
-                         .Select(@t => GetAllSubDirectories(@t.path, @t.keyValuePair.Value)))
+                                    .Select(keyValuePair => new { keyValuePair, path = keyValuePair.Key })
+                                    .Where(@t => Path.Exists(@t.path))
+                                    .Select(@t => GetAllSubDirectories(@t.path, @t.keyValuePair.Value)))
                 subList.AddRange(subPaths);
 
             _searchPaths.AddRange(subList);
@@ -202,9 +200,9 @@ public sealed class AssemblyLoader
         return subDirectories;
     }
 
-    #endregion
+#endregion
 
-    #region Resolve Assembly
+#region Resolve Assembly
 
     /// <summary>
     ///     动态程序集解析。
@@ -251,11 +249,14 @@ public sealed class AssemblyLoader
 
     private static bool IsPluginAssembly(Assembly assembly)
     {
-        if (AssemblyLoadContext.GetLoadContext(assembly)?.Name?.StartsWith(
-                "DigitalWorkstation.Plugin:", StringComparison.Ordinal) == true) return true;
+        if (AssemblyLoadContext.GetLoadContext(assembly)
+                              ?.Name?.StartsWith("DigitalWorkstation.Plugin:", StringComparison.Ordinal) ==
+            true)
+            return true;
         if (assembly.IsDynamic || string.IsNullOrEmpty(assembly.Location)) return false;
         var relative = Path.GetRelativePath(Path.Combine(BaseDirectory, "plugins"), assembly.Location);
-        return !Path.IsPathRooted(relative) && relative != ".." &&
+        return !Path.IsPathRooted(relative) &&
+               relative != ".."             &&
                !relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal);
     }
 
@@ -264,7 +265,7 @@ public sealed class AssemblyLoader
         // 缓存 native 目录，供 P/Invoke 兜底 probing 使用（dlopen 会搜索 NativeLibrary 已加载目录）
         CacheNativeDirectory(assemblyName);
 
-        var folder = assemblyName.Split('.')[0];
+        var folder       = assemblyName.Split('.')[0];
         var targetFolder = _searchPaths.FirstOrDefault(x => x.Contains(folder, StringComparison.OrdinalIgnoreCase));
         if (targetFolder != null)
         {
@@ -293,16 +294,17 @@ public sealed class AssemblyLoader
     {
         if (_nativeDirs.ContainsKey(assemblyName)) return;
 
-        var folder = assemblyName.Split('.')[0];
+        var folder     = assemblyName.Split('.')[0];
         var packageDir = Path.Combine(BaseDirectory, "libraries/", folder);
         if (!Directory.Exists(packageDir)) return;
 
         foreach (var file in Directory.EnumerateFiles(packageDir, "*.*", SearchOption.AllDirectories))
         {
             if (Path.GetExtension(file) is not (".dylib" or ".so" or ".dll")) continue;
-            if (file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) &&
+            if (file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)                      &&
                 !Path.GetFileName(file).Contains("native", StringComparison.OrdinalIgnoreCase) &&
-                !file.Contains("/runtimes/", StringComparison.OrdinalIgnoreCase)) continue;
+                !file.Contains("/runtimes/", StringComparison.OrdinalIgnoreCase))
+                continue;
             _nativeDirs[assemblyName] = Path.GetDirectoryName(file)!;
             return;
         }
@@ -310,9 +312,9 @@ public sealed class AssemblyLoader
 
     private static readonly ConcurrentDictionary<string, string> _nativeDirs = new();
 
-    #endregion
+#endregion
 
-    #region Resolve Native Library
+#region Resolve Native Library
 
     /// <summary>
     ///     native 库被归入 runtimes/&lt;rid&gt;/native/ 后默认 probing 找不到，
@@ -337,23 +339,26 @@ public sealed class AssemblyLoader
     public static void RegisterNativeResolversForAvalonia()
     {
         NativeLibrary.SetDllImportResolver(typeof(SkiaSharp.SKImageInfo).Assembly, ResolveNativeLibrary);
-        NativeLibrary.SetDllImportResolver(typeof(HarfBuzzSharp.Blob).Assembly, ResolveNativeLibrary);
+        NativeLibrary.SetDllImportResolver(typeof(HarfBuzzSharp.Blob).Assembly,    ResolveNativeLibrary);
         // Avalonia 的 macOS 后端通过 MicroComRuntime 对 libAvaloniaNative 做 P/Invoke，
         // AvaloniaNativePlatform 是 internal，按名字从已加载程序集中取 Avalonia.Native 程序集
         var avaloniaNative = AppDomain.CurrentDomain.GetAssemblies()
-            .FirstOrDefault(a => a.GetName().Name == "Avalonia.Native");
-        if (avaloniaNative != null)
-            NativeLibrary.SetDllImportResolver(avaloniaNative, ResolveNativeLibrary);
+                                      .FirstOrDefault(a => a.GetName().Name == "Avalonia.Native");
+        if (avaloniaNative != null) NativeLibrary.SetDllImportResolver(avaloniaNative, ResolveNativeLibrary);
     }
 
     /// <summary>
     ///     当前运行时标识对应的 native 目录，如 runtimes/osx/native/。
     /// </summary>
-    private static readonly string NativeLibraryDir =
-        Path.Combine(BaseDirectory, "runtimes/",
-            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win-x64" :
-            RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "osx" : "linux-x64",
-            "native/");
+    private static readonly string NativeLibraryDir = Path.Combine(BaseDirectory,
+                                                                   "runtimes/",
+                                                                   RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                                                                       ?
+                                                                       "win-x64"
+                                                                       : RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+                                                                           ? "osx"
+                                                                           : "linux-x64",
+                                                                   "native/");
 
     /// <summary>
     ///     立即预加载所有 native 库并常驻。
@@ -370,16 +375,16 @@ public sealed class AssemblyLoader
             dirs.AddRange(Directory.EnumerateDirectories(librariesRoot, "native", SearchOption.AllDirectories));
 
         foreach (var dir in dirs.Distinct())
-        foreach (var file in Directory.EnumerateFiles(dir))
-        {
-            if (Path.GetExtension(file) is not (".dylib" or ".so" or ".dll")) continue;
-            if (!NativeLibrary.TryLoad(file, out var handle)) continue;
-            // 记录原始文件名（libSkiaSharp / SkiaSharp / libAvaloniaNative 等），
-            // 供 DllImportResolver 按 DllImport 名称直接命中已加载 handle
-            _loadedNativeHandles[Path.GetFileNameWithoutExtension(file)] = handle;
-            if (file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-                _loadedNativeHandles[Path.GetFileName(file)] = handle;
-        }
+            foreach (var file in Directory.EnumerateFiles(dir))
+            {
+                if (Path.GetExtension(file) is not (".dylib" or ".so" or ".dll")) continue;
+                if (!NativeLibrary.TryLoad(file, out var handle)) continue;
+                // 记录原始文件名（libSkiaSharp / SkiaSharp / libAvaloniaNative 等），
+                // 供 DllImportResolver 按 DllImport 名称直接命中已加载 handle
+                _loadedNativeHandles[Path.GetFileNameWithoutExtension(file)] = handle;
+                if (file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                    _loadedNativeHandles[Path.GetFileName(file)] = handle;
+            }
     }
 
     private static readonly ConcurrentDictionary<string, IntPtr> _loadedNativeHandles =
@@ -393,8 +398,7 @@ public sealed class AssemblyLoader
     private static IntPtr ResolveNativeLibrary(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
         // step 1. 已预加载的 handle 直接命中
-        if (_loadedNativeHandles.TryGetValue(libraryName, out var loaded))
-            return loaded;
+        if (_loadedNativeHandles.TryGetValue(libraryName, out var loaded)) return loaded;
 
         // step 2. 程序集解析时缓存的同包 native 目录
         if (_nativeDirs.TryGetValue(assembly.GetName().Name ?? "", out var cachedDir))
@@ -415,13 +419,13 @@ public sealed class AssemblyLoader
         if (!Directory.Exists(librariesRoot)) return IntPtr.Zero;
 
         var ridSegment = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win-x64" :
-            RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "osx" : "linux-x64";
+                         RuntimeInformation.IsOSPlatform(OSPlatform.OSX)     ? "osx" : "linux-x64";
         foreach (var pattern in NativeFilePatterns(libraryName))
         {
             var file = Directory.EnumerateFiles(librariesRoot, pattern, SearchOption.AllDirectories)
-                .FirstOrDefault(f => f.Contains($"/runtimes/{ridSegment}/", StringComparison.OrdinalIgnoreCase));
-            if (file != null && NativeLibrary.TryLoad(file, out var handle))
-                return handle;
+                                .FirstOrDefault(f => f.Contains($"/runtimes/{ridSegment}/",
+                                                                StringComparison.OrdinalIgnoreCase));
+            if (file != null && NativeLibrary.TryLoad(file, out var handle)) return handle;
         }
 
         return IntPtr.Zero;
@@ -432,8 +436,7 @@ public sealed class AssemblyLoader
         foreach (var file in NativeFilePatterns(libraryName))
         {
             var path = Path.Combine(dir, file);
-            if (File.Exists(path) && NativeLibrary.TryLoad(path, out var handle))
-                return handle;
+            if (File.Exists(path) && NativeLibrary.TryLoad(path, out var handle)) return handle;
         }
 
         return IntPtr.Zero;
@@ -441,12 +444,10 @@ public sealed class AssemblyLoader
 
     private static string[] NativeFilePatterns(string libraryName)
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            return [$"{libraryName}.dll", libraryName];
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            return [$"lib{libraryName}.dylib", $"{libraryName}.dylib"];
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return [$"{libraryName}.dll", libraryName];
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) return [$"lib{libraryName}.dylib", $"{libraryName}.dylib"];
         return [$"lib{libraryName}.so", $"{libraryName}.so"];
     }
 
-    #endregion
+#endregion
 }

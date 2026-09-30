@@ -43,3 +43,7 @@ Core/Common/
 
 - `obj/`：MSBuild/NuGet 中间产物。其中 `obj/Debug/Common.GlobalUsings.g.cs` 是理解 IoC.cs 为何不需要 using 的关键证据；`project.assets.json` 记录包解析结果。均自动生成，不属于源码。
 - `Output/Debug/`：5 个月前的空目录遗留；当前构建输出由 `Build/Base.props` 重定向到仓库根 `Output/$(Configuration)/`，此目录已不被使用。
+
+## 共享事件归属
+
+Events/ 已合并入 Common 项目。相关记录见 [Events/file-list.md](Events/file-list.md)，修改事件前先读 [Events/common.md](Events/common.md)。

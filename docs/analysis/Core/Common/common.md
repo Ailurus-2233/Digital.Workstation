@@ -2,7 +2,7 @@
 
 ## 模块做什么
 
-Core/Common 是 Digital.Workstation 的基础设施静态门面层，整个模块只有两个公开类，位于 `Core/Common/Logger.cs` 和 `Core/Common/IoC.cs`：
+Core/Common 是 Digital.Workstation 的基础设施静态门面层，静态门面部分包含两个公开类，位于 `Core/Common/Logger.cs` 和 `Core/Common/IoC.cs`：
 
 1. **`Logger`**（Core/Common/Logger.cs）——基于 Serilog 的静态日志门面。进程内单例，把日志写到控制台 sink，向全解决方案暴露 `Verbose`/`Debug`/`Information`/`Warning`/`Error`/`Fatal` 六个级别的静态方法（`Error`/`Fatal` 各有一个带 `Exception?` 的重载），调用方不需要持有任何日志实例。
 2. **`IoC`**（Core/Common/IoC.cs）——Prism 依赖注入容器的静态访问器。进程内单例，持有 Prism 的 `IContainerRegistry`（注册侧）与 `IContainerProvider`（解析侧）两个引用，通过一次性 `IoC.Initialize(registry, provider)` 注入，之后任何代码可通过 `IoC.Registry` / `IoC.Provider` 全局访问容器。
@@ -30,3 +30,7 @@ Core/Common 是 Digital.Workstation 的基础设施静态门面层，整个模�
 3. **要让单元测试能重置 IoC 容器**：改 `Core/Common/IoC.cs`——当前 `IsInitialized`（第 56 行）无复位路径，需新增内部/公开 `Reset()` 方法清 `_registry`/`_provider`/`IsInitialized`，注意 `Registry`/`Provider` 的 setter 是 `private`（第 41、50 行），只能在类内操作。
 4. **要新增日志级别方法（如带属性包的结构化日志）**：在 `Core/Common/Logger.cs` 的 `#region Public API`（第 52 行起）仿照 `Information`（第 96-99 行）加静态方法，内部走 `Log`（第 57 行）。
 5. **要改日志输出模板**：改 `Core/Common/Logger.cs` 第 37、44 行的 `outputTemplate` 字符串（两处必须同步改，DEBUG 与 Release 各一份）。
+
+## 共享事件
+
+Events/ 承载共享事件契约与负载，编译进 Common 程序集。改事件前先读 [Events/common.md](Events/common.md)，签名见 [Events/api.md](Events/api.md)。原 Models 项目已删除；事件发布/订阅行为保持不变。

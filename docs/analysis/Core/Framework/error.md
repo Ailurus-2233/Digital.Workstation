@@ -4,7 +4,7 @@
 
 | 异常类型 | 触发条件 | 抛出位置 |
 |---|---|---|
-| `ArgumentException("TargetWindow type is illegal")` | `IoC.Provider.Resolve(type)` 的解析结果为 null 或不是 `Window`（类型未注册到容器，或注册的不是窗口类型） | `FrameworkWindowManager.GetWindow`，`WindowManager/FrameworkWindowManager.cs:37` |
+| `ArgumentException("TargetWindow type is illegal")` | `IoC.Provider.Resolve(type)` 的解析结果为 null 或不是 `Window`（类型未注册到容器，或注册的不是窗口类型） | `FrameworkWindowManager.GetWindow`，`Core/Services/WindowManager/FrameworkWindowManager.cs:37` |
 | `InvalidOperationException($"Window of type {type} is already registered.")` | 同一运行时类型的窗口在已注册（尚未关闭）时再次 `ShowWindow`/`ShowDialog` | `FrameworkWindowManager.InitializeWindow`，`FrameworkWindowManager.cs:49` |
 | `InvalidOperationException("Main window is not set. Cannot show window.")`（常量 `NullMainWindowError`，第 27 行） | `_mainWindow` 为 null 时调用 `ShowWindow(Window)`/`ShowWindow(Window, object)`（第 89、110 行）；`_mainWindow` 为 null 或不活跃（`IsActive=false`）时调用 `ShowDialog` 实例版（第 130、140 行）；`HandleMainWindow()` 取不到主窗口**或主窗口已在 `_windowMap` 中**（第 166 行） | `FrameworkWindowManager` 各处 |
 | `KeyNotFoundException($"No window of type {type} is currently open.")` | 对未打开（或已关闭被移除映射）的窗口类型调 `HideWindow(Type)` | `FrameworkWindowManager.HideWindow`，`FrameworkWindowManager.cs:155` |
@@ -12,7 +12,7 @@
 | `NullReferenceException` | `IoC.Initialize` 之前任何代码访问 `IoC.Provider`/`IoC.Registry`（字段以 `null!` 抑制编译警告） | 经 `FrameworkWindowManager.GetWindow`（第 37 行）等，根源在 Core/Common |
 | 模块加载任意异常 | `moduleManager.LoadModule` 抛出的任何异常 | 不向上抛——`RunStartupSequenceAsync` 的 catch（`FrameworkApplication.cs:94`）捕获 |
 | `InvalidOperationException($"布局模板资源缺失：{key}")` | `FrameworkWindow` 构造或 `PanelAlignment` 切换时，对应档位的 `WindowLayout*` 布局模板经 `TryGetResource` 查不到（模板资源未编译进程序集，或键名与 axaml 漂移）——窗口构造期即失败 | `FrameworkWindow.UpdateLayoutTemplate`，`Windows/FrameworkWindow.cs:94` |
-| 无——**不抛异常** | layout.json 读/写/删的任何失败（JSON 损坏、枚举字符串非法、版本不识别、IO 失败） | `LayoutPersistence` 全路径 `catch (Exception)` + `Logger.Warning` 静默回落：`Load` 返回 null（`Layout/LayoutPersistence.cs:49、55、64`）、`Flush` 放弃本次写盘（:126）、`Delete` 放弃删除（:100） |
+| 无——**不抛异常** | layout.json 读/写/删的任何失败（JSON 损坏、枚举字符串非法、版本不识别、IO 失败） | `LayoutPersistence` 全路径 `catch (Exception)` + `Logger.Warning` 静默回落：`Load` 返回 null（`Core/Services/Layout/LayoutPersistence.cs:49、55、64`）、`Flush` 放弃本次写盘（:126）、`Delete` 放弃删除（:100） |
 
 ## 错误处理路径
 
@@ -86,3 +86,19 @@ LayoutPersistence.Load 保留文件缺失静默返回 null、空内容/未知版
 ## 插件发现与准备失败
 
 PluginDiscovery 将已识别插件的非法入口、重复身份与程序集加载失败作为 Error 返回；Framework 将其与初始化/贡献准备异常统一发布 ModuleLoadFailedEvent，等待 Continue/Exit。DependsOn 引用了非内置模块名称，或所需内置模块不在 availableModules 中，也在插件自己的启动项失败。Continue 拒绝贡献批次，不撤销其他副作用。根目录无插件、普通依赖 DLL 不含标记时不构成模块失败。
+
+## 插件启动配置容错
+
+plugins.json 缺失按默认启用处理；损坏、根值为 null 或值非 bool 时整份回退默认启用并记录英文 Warning，原文件不在读取时覆盖。保存失败由统一写入器保留待写快照；立即重启保存失败时留在当前进程。
+
+已识别入口的程序集加载/校验错误保留入口全名，用户继续启动后仍能在插件管理页禁用该项。初始化或贡献准备失败也写入快照的 Error；禁用项不执行这些步骤。无法读取元数据或含多个入口的非法安装仍走扫描失败描述符，以路径名称作为 Id；选择这类错误项只能跳过对应失败启动项，不能修复安装结构。
+
+## 基础服务项目拆分
+
+窗口管理、配置写入、布局存储、贡献目录、设置目录与存储、插件发现及启动选择、ApplicationRestarter 已归 Services；本页相关行为是 Framework 使用这些服务的协议，源码归属与接口见 [Services/error.md](../Services/error.md)。Framework 显式 Register/Start 基础服务并在真实 Exit 停止，语言声明及设置 Id 不变。模块附加服务已接入加载后启动、失败清理与退出逆序停止。
+
+## 模块附加服务接线
+
+Framework 在模块/插件入口初始化后、贡献准备前调用 Services.ModuleServiceCatalog.Start；失败拒绝贡献批次并 Stop 同批服务。内置模块失败状态回到 NotStarted；依赖检查仍按 availableModules。
+
+真实 Exit 先设置退出守卫、逆序 Dispose 模块服务目录，再 Dispose 基础服务，保证停止回调仍可使用基础配置。服务契约与登记方式见 [Services/api.md](../Services/api.md)，故障和运行验收见 [Services/testing.md](../Services/testing.md)。不回滚普通容器登记或模块入口自行产生的副作用。

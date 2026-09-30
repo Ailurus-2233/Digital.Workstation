@@ -9,6 +9,12 @@ namespace DigitalWorkstation.Sample;
 /// </summary>
 public sealed class SampleStatusBarItem : IStatusBarItemContribution
 {
+    public SampleStatusBarItem(SampleModuleService service)
+    {
+        if (!service.IsRunning)
+            throw new InvalidOperationException("The sample module service must be started before preparing contributions.");
+    }
+
     public string Id => "sample.status";
 
     public string Title => SampleResources.PluginLoaded;

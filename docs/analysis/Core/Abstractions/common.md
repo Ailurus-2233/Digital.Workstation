@@ -1,4 +1,4 @@
-﻿# Abstractions — 模块简述
+# Abstractions — 模块简述
 
 ## 模块做什么
 
@@ -6,7 +6,7 @@
 
 1. **Shell 贡献契约**（`Contributions/`、`Menus/`、`Commands/`、`Regions/` 四个目录）：模块向 shell 界面区域（ActivityBar、SideBar、MainContent、AuxiliaryPanel、BottomPanel、菜单栏、状态栏、命令面板）注入条目的契约；`Regions/` 目录另有两个常量类——`ShellRegions`（Prism Region 名称，目前全仓零消费方，属存量公共契约）与 `WellKnownViews`（shell 与模块共知的主视图 Id 常量，如 `Settings = "settings.main"`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 5）。接口类贡献共 4 个：`IMainViewContribution`、`IStatusBarItemContribution`（均在 `Contributions/`）、`IMenuItemContribution`（`Menus/`）、`ICommandContribution`（`Commands/`，全局命令列表契约，扁平模型有稳定 `Id`，见 [ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md) docs/adr/0005-command-registration-palette.md）；原导航项/面板 tab 两接口已合并删除，统一为**工具视图（Tool View）**声明式契约（[ADR-0002](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)，docs/adr/0002-toolview-drag-persistence.md）：`ToolViewAttribute`（标 View 类）+ 配套枚举 `ToolViewPlacement` + 元数据类 `ToolViewContribution`（均在 `Contributions/`），经 Framework 侧 `RegisterToolViews(Assembly)` 扫描注册。`Menus/` 目录另有两个菜单注册 attribute `MenuGroupAttribute`/`MenuItemAttribute`（菜单契约的声明式注册入口，见 [ADR-0001](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）；`Commands/` 目录另有命令注册 attribute `CommandAttribute`（标方法、免类级 attribute，命令契约的声明式注册入口，见 [ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）。命名空间相应分 `DigitalWorkstation.Core.Abstractions.Contributions`、`DigitalWorkstation.Core.Abstractions.Menus`、`DigitalWorkstation.Core.Abstractions.Commands`、`DigitalWorkstation.Core.Abstractions.Regions` 四组。
 
-   契约层另有第五块——**设置项契约**（`Settings/` 目录，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1）：两个 attribute 声明类 `SettingGroupAttribute`（标类，声明设置分组）/`SettingItemAttribute`（标公共静态可读属性，声明设置项），两个元数据类 `SettingGroupContribution`/`SettingItemContribution`（均仅 required init 属性，由 Framework 侧 `RegisterSettings(Assembly)` 扫描生成并注册，模块不手写），以及设置值读写服务接口 `ISettingsService`（`Get<T>`/`Set<T>`/`IsPendingRestart`，Framework 实现，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3；`IsPendingRestart` 为决策 7 的「重启后生效」判定）。命名空间 `DigitalWorkstation.Core.Abstractions.Settings`。
+   契约层另有第五块——**设置项契约**（`Settings/` 目录，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1）：两个 attribute 声明类 `SettingGroupAttribute`（标类，声明设置分组）/`SettingItemAttribute`（标公共静态可读属性，声明设置项），两个元数据类 `SettingGroupContribution`/`SettingItemContribution`（均仅 required init 属性，由 Framework 侧 `RegisterSettings(Assembly)` 扫描生成并注册，模块不手写），以及设置值读写服务接口 `ISettingsService`（`Get<T>`/`Set<T>`/`IsPendingRestart`，Services 实现，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3；`IsPendingRestart` 为决策 7 的「重启后生效」判定）。命名空间 `DigitalWorkstation.Core.Abstractions.Settings`。
 2. **窗口管理契约**（`WindowManager/` 目录）：`IWindowManager`（以类型或实例为中心显示/隐藏/关闭窗口与对话框）、`IMainWindowManager`（主窗口显隐与批量关闭）、以及泛型扩展类 `WindowManagerExtenstion`（注意源码中拼写为 Extenstion）。
 
 3. **插件发现契约**（`Plugins/`）：`PluginAttribute` 标记自动发现的入口类，入口同时实现 Prism IModule；DependsOn 只声明显式内置模块名。抽象层不引用 Prism，入口形态、身份冲突和依赖有效性由 Framework 启动管线校验。插件能力复用既有贡献契约。
@@ -15,7 +15,7 @@
 
 ## 核心设计逻辑
 
-- **纯契约、零实现**：本项目只有接口、枚举、常量、七个 attribute 声明类（`MenuGroupAttribute`/`MenuItemAttribute`/`ToolViewAttribute`/`CommandAttribute`/`SettingGroupAttribute`/`SettingItemAttribute`/`PluginAttribute`）、三个元数据类（`ToolViewContribution` 与 `SettingGroupContribution`/`SettingItemContribution`，均仅 required init 属性）和一个静态扩展类。实现落在 shell 宿主与各模块中。这是典型的「抽象在 Core、实现在别处」的分层方式，使模块只依赖本程序集即可参与 shell 的 UI 组合与设置读写，不依赖 shell/Framework 实现。
+- **纯契约、零实现**：本项目只有接口、枚举、常量、七个 attribute 声明类（`MenuGroupAttribute`/`MenuItemAttribute`/`ToolViewAttribute`/`CommandAttribute`/`SettingGroupAttribute`/`SettingItemAttribute`/`PluginAttribute`）、三个元数据类（`ToolViewContribution` 与 `SettingGroupContribution`/`SettingItemContribution`，均仅 required init 属性）和一个静态扩展类。实现落在 shell 宿主与各模块中。这是典型的「抽象在 Core、实现在别处」的分层方式，使模块只依赖本程序集即可参与 shell 的 UI 组合与设置读写，不依赖 shell/Services 实现。
 - **贡献点模式（contribution pattern）**：模块声明贡献，shell 收集后渲染。主视图/状态栏实现接口并按接口注册；工具视图由 View 类的 `ToolViewAttribute` 经 `RegisterToolViews` 生成元数据并注册 View 类型；菜单由类级 `MenuGroupAttribute`/方法级 `MenuItemAttribute` 经 `RegisterMenus` 生成接口实现；命令只需方法级 `CommandAttribute`，经 `RegisterCommands` 生成扁平列表贡献；设置由 `SettingGroupAttribute`/静态属性上的 `SettingItemAttribute` 经 `RegisterSettings` 生成元数据。设置属性只是声明锚点，读写走 `ISettingsService`。菜单按稳定 `Path` + 分组/位次定位、用 `PathTitle` 单独承载末端节点标题；命令有稳定 Id、无路径；设置分组按稳定 Id 合并，首个声明的来源与名称生效、位次取最小。
 - **文本来源显式、标识与翻译分离**：文本声明必须传资源所属类型，查询所属资源而非全局键表；仅挂接已有菜单的 `[MenuGroup("shell.file")]` 不声明标题，无需导入 shell 资源。菜单 Path 与设置 Group/Id 是稳定标识；改翻译或来源不改变节点身份。工具视图扫描时解析、菜单/命令贡献首次解析时解析；设置保留来源与名称键到设置页构造时解析。应用语言下次启动生效，不能靠重建菜单树翻译旧贡献。
 - **图标走 StreamGeometry path 字符串**：`IconPath`/`Icon` 属性（`IStatusBarItemContribution.IconPath`、`IMenuItemContribution.IconPath`、`ICommandContribution.IconPath`、`ToolViewContribution.IconPath`、`ToolViewAttribute.Icon`、`CommandAttribute.Icon`）是 `StreamGeometry` 的 path 字符串而非图像资源，由 `PathIcon` 消费并随主题变色——统一了图标来源且支持主题化。
@@ -38,3 +38,15 @@
 3. **加窗口管理操作**（如「激活已存在窗口」）：在 `WindowManager/IWindowManager.cs` 加 `Type` 版方法声明，并在 `WindowManager/IWindowManagerExtenstion.cs` 补一条对应的泛型扩展（泛型版统一只是转发 `typeof(TWindow)`）。实现方（shell 侧）需同步实现。
 4. **改 Region 名称**：只改 `Regions/ShellRegions.cs` 中的 `nameof` 目标；由于值来自 `nameof`，重命名常量本身时引用方编译安全，但**序列化/配置中已存的 Region 名字符串**会失配。
 5. **改图标机制**：`IconPath`/`Icon` 出现在 6 个文件中（`Contributions/IStatusBarItemContribution.cs`、`Contributions/ToolViewContribution.cs`、`Contributions/ToolViewAttribute.cs`、`Menus/IMenuItemContribution.cs`、`Commands/ICommandContribution.cs`、`Commands/CommandAttribute.cs`），要换图标来源需一次性改这 6 个文件。
+
+## 共享布局档位契约
+
+PanelAlignment 已从 Framework/Layout 迁入 Core/Abstractions/Layout/PanelAlignment.cs，命名空间 DigitalWorkstation.Core.Abstractions.Layout。Left/Right/Center/Justify 的枚举值和语义保持不变。Framework 模板与 Services 的布局 DTO 共用它，避免 Services 反向引用 Framework。SetPanelAlignmentEvent 已归 Common/Events；窗口管理与 ISettingsService 的实现已归 Services。
+
+## 模块服务生命周期契约
+
+Services/IModuleService.cs 声明同步 Start/Stop，命名空间 DigitalWorkstation.Core.Abstractions.Services。Start 准备状态，Stop 清理完整或部分启动。实现位于所属模块，Framework 通过 Services 生命周期目录编排。构造只接受依赖，不启动工作；细节见 api.md。
+
+## 插件名称与稳定 Key
+
+PluginAttribute 使用 [Plugin("稳定Key", typeof(资源类型), nameof(资源类型.名称键))]，公开只读 Key、ResourceType、NameKey。参数不能为空；资源所有者必须位于插件程序集。保留无参构造兼容旧插件，旧声明回退到入口类型全名。DependsOn 仍只引用内置模块名。示例声明名称为示例插件、Key 为 sample。入口全名继续用作模块目录和启动依赖身份；Key 用作插件配置身份，两者不可混用。

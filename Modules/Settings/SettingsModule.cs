@@ -1,3 +1,4 @@
+using DigitalWorkstation.Core.Services.Contributions;
 using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Settings.Views;
 using DigitalWorkstation.Core.Framework.Contributions;
@@ -15,6 +16,7 @@ public class SettingsModule : IModule
     {
         containerRegistry.RegisterShellContribution<IMainViewContribution, SettingsMainView>();
         containerRegistry.Register<SettingsPageView>();
+        containerRegistry.Register<PluginsPageView>();
     }
 
     public void OnInitialized(IContainerProvider containerProvider)

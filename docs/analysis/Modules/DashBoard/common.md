@@ -67,3 +67,7 @@ DashBoardModule.RegisterTypes（DashBoardModule.cs:8-14）
 本模块私有文案由 `DigitalWorkstation.DashBoard.Resources.DashBoardResources` 与 `Modules/DashBoard/Resources/DashBoardResources.resx`、`DashBoardResources.en-US.resx` 持有；共享产品名仅取 `Core/Resource` 的 `SharedResources.ProductName`。facade 调共享 `ResourceText.Get`，不删除 Core/Resource 依赖。DashBoardNavigationTitle 与五个 Splash* 键属于本模块，Framework 不依赖这些私有资源；启动事件仍只传阶段与数据。
 
 向已有 shell 菜单加项时，类标 `[MenuGroup("shell.file")]` 并注册 RegisterMenus，菜单项以 typeof(DashBoardResources) + nameof 声明自己的标题。无需引用 WorkstationResources 或复制文件菜单标题；reference-only 路径的标题由 shell 声明补齐。
+
+## Services 拆分接线
+
+基础服务实现现位于 Core/Services，经 Framework 的项目引用传递。贡献登记扩展使用 DigitalWorkstation.Core.Services.Contributions；UI 扫描、收集与布局状态机仍在 Framework。布局存储在 Services.Layout，PanelAlignment 在 Abstractions.Layout，SetPanelAlignmentEvent 在 Common.Events；重启入口为 Services.ApplicationRestarter。配置路径、语言设置 Id、插件上下文前缀和 Release 分类目录保持原规则。新项目入口见 Services 的模块认知文档。

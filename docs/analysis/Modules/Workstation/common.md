@@ -64,3 +64,11 @@ LoadToolViews 将当前贡献和可选 DTO 交给 ShellLayoutConfiguration.Resto
 本模块私有文案由 `DigitalWorkstation.Workstation.Resources.WorkstationResources` 与 `Modules/Workstation/Resources/WorkstationResources.resx`、`WorkstationResources.en-US.resx` 持有；共享产品名仅取 `Core/Resource` 的 `SharedResources.ProductName`。facade 调共享 `ResourceText.Get`，不删除 Core/Resource 依赖。主页实际位于本模块，Home*、关于标题、shell 菜单/命令/状态栏与设置导航均归 Workstation。菜单根路径固定为 `shell.file`、`shell.view`、`shell.help`；标题键不再充当路径。终端标题由注册器解析，建树器按稳定路径合并，重复终端声明首个标题生效、位次仍取最小值。
 
 菜单根标题仅由 FileMenus（shell.file）、ViewPanelMenus（shell.view）、HelpMenus（shell.help）声明。FileNavigationMenus、ViewAlignmentMenus、ViewLayoutMenus 使用 reference-only MenuGroup，只挂接稳定路径；外部模块同样可用 `[MenuGroup("shell.file")]` 加入文件菜单，不导入 WorkstationResources、不复制根标题。reference-only 的 ResourceType/TitleKey/PathTitle 为 null，不参与首个标题决议；先挂接后声明时补齐真实标题，未声明节点显示稳定 Id。
+
+## 插件管理入口迁移
+
+插件配置页面、ViewModel 和中英文资源已迁移到 Modules/Settings。Workstation 通过既有首选项菜单、命令和设置按钮打开 WellKnownViews.Settings；进入后选择插件管理标签。独立插件主视图贡献及 OpenPlugins 菜单/命令已删除。接口、状态与文件说明见 [Settings/common.md](../Settings/common.md)。
+
+## Services 拆分接线
+
+基础服务实现现位于 Core/Services，经 Framework 的项目引用传递。贡献登记扩展使用 DigitalWorkstation.Core.Services.Contributions；UI 扫描、收集与布局状态机仍在 Framework。布局存储在 Services.Layout，PanelAlignment 在 Abstractions.Layout，SetPanelAlignmentEvent 在 Common.Events；重启入口为 Services.ApplicationRestarter。配置路径、语言设置 Id、插件上下文前缀和 Release 分类目录保持原规则。新项目入口见 Services 的模块认知文档。

@@ -1,4 +1,4 @@
-﻿# Abstractions — 对外接口与调用方式
+# Abstractions — 对外接口与调用方式
 
 命名空间七组：`DigitalWorkstation.Core.Abstractions.Contributions`（Contributions/ 目录，主视图/状态栏两接口 + 工具视图枚举/attribute/元数据三类型）、`DigitalWorkstation.Core.Abstractions.Menus`（Menus/ 目录，菜单路径/分组模型三类型）、`DigitalWorkstation.Core.Abstractions.Commands`（Commands/ 目录，命令契约 + 注册 attribute 两类型，[ADR-0005](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）、`DigitalWorkstation.Core.Abstractions.Regions`（Regions/ 目录，`ShellRegions` 与 `WellKnownViews` 两个常量类）、`DigitalWorkstation.Core.Abstractions.Settings`（Settings/ 目录，设置分组/设置项两 attribute + 两元数据类 + `ISettingsService`，[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）与 `DigitalWorkstation.Core.Abstractions.WindowManager`（WindowManager/ 目录）。另有 `DigitalWorkstation.Core.Abstractions.Plugins`（插件入口标记，见下）。全部为 `public`；项目无 internal 类型。
 
@@ -223,7 +223,7 @@ shell 与模块共同知晓的主视图 Id 常量（[ADR-0006](https://github.co
 
 ### `ISettingsService`（Settings/ISettingsService.cs）
 
-设置值读写服务（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）：Framework 实现，启动时一次性把 settings.json 加载入内存；读纯走内存——已修改取用户值，未修改取声明的默认值（默认值不是单独存储层）；写 = 更新内存 + 防抖落盘 + 广播 `SettingChangedEvent`（事件契约在 Core/Models）。另承载「重启后生效」判定（决策 7）。
+设置值读写服务（[ADR-0006](https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）：Services 实现，启动时一次性把 settings.json 加载入内存；读纯走内存——已修改取用户值，未修改取声明的默认值（默认值不是单独存储层）；写 = 更新内存 + 防抖落盘 + 广播 `SettingChangedEvent`（事件契约在 Core/Common/Events）。另承载「重启后生效」判定（决策 7）。
 
 | 成员 | 签名（行号） | 语义 |
 |---|---|---|
@@ -299,3 +299,19 @@ public sealed class DevicePlugin : IModule
 ```
 
 标记仅参与发现，不自动扫描菜单、工具视图或设置；插件仍在 RegisterTypes 调对应贡献登记方法。发现和私有程序集解析机制见 ../Framework/common.md。
+
+## 共享布局档位契约
+
+PanelAlignment 已从 Framework/Layout 迁入 Core/Abstractions/Layout/PanelAlignment.cs，命名空间 DigitalWorkstation.Core.Abstractions.Layout。Left/Right/Center/Justify 的枚举值和语义保持不变。Framework 模板与 Services 的布局 DTO 共用它，避免 Services 反向引用 Framework。SetPanelAlignmentEvent 已归 Common/Events；窗口管理与 ISettingsService 的实现已归 Services。
+
+## IModuleService
+
+文件 Core/Abstractions/Services/IModuleService.cs，命名空间 DigitalWorkstation.Core.Abstractions.Services。两个方法：void Start()、void Stop()。
+
+在模块入口初始化完成后、贡献准备前，Framework 在 UI 线程调用 Start。同模块按服务登记顺序启动；失败批次与正常退出逆序 Stop。Start 部分执行后抛异常也调用 Stop，构造抛异常则没有可停止实例。Stop 不依赖贡献仍可见，不等待 UI 线程才能结束的工作。服务实现保存自己的任务、取消与资源状态。
+
+登记方式见 Services/api.md；模块不自行调用 Start/Stop，普通单例登记不意味着参与生命周期。契约不依赖 Prism 或 Framework。
+
+## 插件名称与稳定 Key
+
+PluginAttribute 使用 [Plugin("稳定Key", typeof(资源类型), nameof(资源类型.名称键))]，公开只读 Key、ResourceType、NameKey。参数不能为空；资源所有者必须位于插件程序集。保留无参构造兼容旧插件，旧声明回退到入口类型全名。DependsOn 仍只引用内置模块名。示例声明名称为示例插件、Key 为 sample。入口全名继续用作模块目录和启动依赖身份；Key 用作插件配置身份，两者不可混用。
