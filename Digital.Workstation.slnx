@@ -15,9 +15,6 @@
   <Folder Name="/Plugins/">
     <Project Path="Plugins/Sample/Sample.csproj" />
   </Folder>
-  <Folder Name="/UnitTest/">
-    <Project Path="UnitTest/Framework/Framework.csproj" />
-  </Folder>
   <Folder Name="/_build/">
     <File Path="Build/Base.props" />
     <File Path="Build/Base.targets" />
@@ -32,115 +29,6 @@
     <File Path=".gitignore" />
     <File Path="LICENSE" />
     <File Path="README.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/">
-    <File Path="docs/analysis/README.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Core/Abstractions/">
-    <File Path="docs/analysis/Core/Abstractions/api.md" />
-    <File Path="docs/analysis/Core/Abstractions/common.md" />
-    <File Path="docs/analysis/Core/Abstractions/error.md" />
-    <File Path="docs/analysis/Core/Abstractions/file-list.md" />
-    <File Path="docs/analysis/Core/Abstractions/glossary.md" />
-    <File Path="docs/analysis/Core/Abstractions/pitfalls.md" />
-    <File Path="docs/analysis/Core/Abstractions/reference.md" />
-    <File Path="docs/analysis/Core/Abstractions/testing.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Core/Common/">
-    <File Path="docs/analysis/Core/Common/api.md" />
-    <File Path="docs/analysis/Core/Common/common.md" />
-    <File Path="docs/analysis/Core/Common/error.md" />
-    <File Path="docs/analysis/Core/Common/file-list.md" />
-    <File Path="docs/analysis/Core/Common/glossary.md" />
-    <File Path="docs/analysis/Core/Common/pitfalls.md" />
-    <File Path="docs/analysis/Core/Common/reference.md" />
-    <File Path="docs/analysis/Core/Common/testing.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Core/Services/">
-    <File Path="docs/analysis/Core/Services/api.md" />
-    <File Path="docs/analysis/Core/Services/common.md" />
-    <File Path="docs/analysis/Core/Services/error.md" />
-    <File Path="docs/analysis/Core/Services/file-list.md" />
-    <File Path="docs/analysis/Core/Services/glossary.md" />
-    <File Path="docs/analysis/Core/Services/pitfalls.md" />
-    <File Path="docs/analysis/Core/Services/reference.md" />
-    <File Path="docs/analysis/Core/Services/testing.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Core/Framework/">
-    <File Path="docs/analysis/Core/Framework/api.md" />
-    <File Path="docs/analysis/Core/Framework/common.md" />
-    <File Path="docs/analysis/Core/Framework/error.md" />
-    <File Path="docs/analysis/Core/Framework/file-list.md" />
-    <File Path="docs/analysis/Core/Framework/glossary.md" />
-    <File Path="docs/analysis/Core/Framework/pitfalls.md" />
-    <File Path="docs/analysis/Core/Framework/reference.md" />
-    <File Path="docs/analysis/Core/Framework/testing.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Core/Common/Events/">
-    <File Path="docs/analysis/Core/Common/Events/api.md" />
-    <File Path="docs/analysis/Core/Common/Events/common.md" />
-    <File Path="docs/analysis/Core/Common/Events/error.md" />
-    <File Path="docs/analysis/Core/Common/Events/file-list.md" />
-    <File Path="docs/analysis/Core/Common/Events/glossary.md" />
-    <File Path="docs/analysis/Core/Common/Events/pitfalls.md" />
-    <File Path="docs/analysis/Core/Common/Events/reference.md" />
-    <File Path="docs/analysis/Core/Common/Events/testing.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Core/Resource/">
-    <File Path="docs/analysis/Core/Resource/api.md" />
-    <File Path="docs/analysis/Core/Resource/common.md" />
-    <File Path="docs/analysis/Core/Resource/error.md" />
-    <File Path="docs/analysis/Core/Resource/file-list.md" />
-    <File Path="docs/analysis/Core/Resource/glossary.md" />
-    <File Path="docs/analysis/Core/Resource/pitfalls.md" />
-    <File Path="docs/analysis/Core/Resource/reference.md" />
-    <File Path="docs/analysis/Core/Resource/testing.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Core/UIPackage/">
-    <File Path="docs/analysis/Core/UIPackage/api.md" />
-    <File Path="docs/analysis/Core/UIPackage/common.md" />
-    <File Path="docs/analysis/Core/UIPackage/error.md" />
-    <File Path="docs/analysis/Core/UIPackage/file-list.md" />
-    <File Path="docs/analysis/Core/UIPackage/glossary.md" />
-    <File Path="docs/analysis/Core/UIPackage/pitfalls.md" />
-    <File Path="docs/analysis/Core/UIPackage/reference.md" />
-    <File Path="docs/analysis/Core/UIPackage/testing.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Launcher/">
-    <File Path="docs/analysis/Launcher/api.md" />
-    <File Path="docs/analysis/Launcher/common.md" />
-    <File Path="docs/analysis/Launcher/error.md" />
-    <File Path="docs/analysis/Launcher/file-list.md" />
-    <File Path="docs/analysis/Launcher/glossary.md" />
-    <File Path="docs/analysis/Launcher/pitfalls.md" />
-    <File Path="docs/analysis/Launcher/reference.md" />
-    <File Path="docs/analysis/Launcher/testing.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Modules/DashBoard/">
-    <File Path="docs/analysis/Modules/DashBoard/api.md" />
-    <File Path="docs/analysis/Modules/DashBoard/common.md" />
-    <File Path="docs/analysis/Modules/DashBoard/error.md" />
-    <File Path="docs/analysis/Modules/DashBoard/file-list.md" />
-    <File Path="docs/analysis/Modules/DashBoard/glossary.md" />
-    <File Path="docs/analysis/Modules/DashBoard/pitfalls.md" />
-    <File Path="docs/analysis/Modules/DashBoard/reference.md" />
-    <File Path="docs/analysis/Modules/DashBoard/testing.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Modules/Settings/">
-    <File Path="docs/analysis/Modules/Settings/common.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Modules/Workstation/">
-    <File Path="docs/analysis/Modules/Workstation/api.md" />
-    <File Path="docs/analysis/Modules/Workstation/common.md" />
-    <File Path="docs/analysis/Modules/Workstation/error.md" />
-    <File Path="docs/analysis/Modules/Workstation/file-list.md" />
-    <File Path="docs/analysis/Modules/Workstation/glossary.md" />
-    <File Path="docs/analysis/Modules/Workstation/pitfalls.md" />
-    <File Path="docs/analysis/Modules/Workstation/reference.md" />
-    <File Path="docs/analysis/Modules/Workstation/testing.md" />
-  </Folder>
-  <Folder Name="/_docs/analysis/Plugins/Sample/">
-    <File Path="docs/analysis/Plugins/Sample/common.md" />
   </Folder>
   <Folder Name="/_docs/adr/">
     <File Path="docs/adr/0001-attribute-menu-registration.md" />
