@@ -71,7 +71,7 @@ Launcher 自动为 Plugins/**/*.csproj 建立只参与构建的项目引用，�
 
 ## 输出目录（Output/）说明
 
-Build/Base.props 统一将输出写入 Output/$(Configuration)/。
+Build/Base.props 统一将输出写入解决方案根目录的 Output/$(Configuration)/；从解决方案或单独的 .csproj 构建都使用此路径。旧版本构建留在项目目录内的 Output/ 可直接删除。
 
 - Output/Debug/
 	- 宿主、模块、插件和依赖 DLL 平铺，插件发现仅扫描程序根目录的 DLL；同名多版本依赖隔离在 Release 验证

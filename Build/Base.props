@@ -5,7 +5,8 @@
         <!-- 本文件在 Directory.Build.props 阶段（早于 SDK 设默认 Debug）就展开 BaseOutputPath，
              必须在此先给 Configuration 一个默认值，否则会被固化成 "Output//" -->
         <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
-        <BaseOutputPath>$(SolutionDir)Output\$(Configuration)\</BaseOutputPath>
+        <!-- 输出路径始终以仓库根目录为基准，不依赖 IDE 或命令行传入的 SolutionDir -->
+        <BaseOutputPath>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..', 'Output', '$(Configuration)'))</BaseOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 
@@ -68,7 +69,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OutputPath)' == '' and '$(_InUnitTest)' == 'true'">
-        <OutputPath>$(SolutionDir)UnitTest\Output\$(Configuration)\</OutputPath>
+        <OutputPath>$(BaseOutputPath)tests\$(MSBuildProjectName)\</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OutputPath)' == ''">

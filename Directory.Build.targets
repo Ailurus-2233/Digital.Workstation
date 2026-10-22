@@ -1,7 +1,7 @@
 <Project>
-    <Import Project="$(SolutionDir)Build\Base.targets"
+    <Import Project="$(MSBuildThisFileDirectory)Build\Base.targets"
             Condition=" '$(MSBuildProjectDirectory)' != '' "/>
-    <Import Project="$(SolutionDir)Build\ManageDlls.targets"
+    <Import Project="$(MSBuildThisFileDirectory)Build\ManageDlls.targets"
             Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\')) " />
-    <Import Project="$(SolutionDir)Build\Plugins.targets" Condition="'$(_InPlugins)' == 'true'" />
+    <Import Project="$(MSBuildThisFileDirectory)Build\Plugins.targets" Condition="'$(_InPlugins)' == 'true'" />
 </Project>

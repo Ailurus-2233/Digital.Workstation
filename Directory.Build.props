@@ -1,6 +1,6 @@
 <Project>
-    <Import Project="$(SolutionDir)Build\Base.props"
+    <Import Project="$(MSBuildThisFileDirectory)Build\Base.props"
             Condition=" '$(MSBuildProjectDirectory)' != '' "/>
-    <Import Project="$(SolutionDir)Build\ManageDlls.props"
+    <Import Project="$(MSBuildThisFileDirectory)Build\ManageDlls.props"
             Condition=" '$(MSBuildProjectDirectory)' != '' and !$(MSBuildProjectDirectory.Contains('\UnitTest\')) "/>
 </Project>
