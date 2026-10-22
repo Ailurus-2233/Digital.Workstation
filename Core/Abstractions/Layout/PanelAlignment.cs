@@ -2,7 +2,7 @@ namespace DigitalWorkstation.Core.Abstractions.Layout;
 
 /// <summary>
 ///     面板对齐：FrameworkWindow 基础布局的档位，决定 BottomPanel 在窗口底部的水平跨度
-///     （领域术语见根目录 CONTEXT.md）；面板不占的列由侧栏通高到底吸收，不留空挡
+///     面板不占的列由侧栏通高到底吸收，不留空挡
 /// </summary>
 public enum PanelAlignment
 {

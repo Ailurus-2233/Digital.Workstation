@@ -2,7 +2,7 @@ namespace DigitalWorkstation.Core.Abstractions.Settings;
 
 /// <summary>
 ///     声明一个设置项：标注在公共静态可读属性上，经 SettingRegistration.RegisterSettings
-///     扫描后生成 <see cref="SettingItemContribution" /> 注册进容器（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1）。
+///     扫描后生成 <see cref="SettingItemContribution" /> 注册进容器。
 ///     属性只是声明锚点——属性类型即设置值类型，扫描不读取属性值，读写一律经 ISettingsService；
 ///     非公共/非静态/无 getter 的属性连候选都进不了（静默忽略，同菜单/命令扫描惯例）
 /// </summary>
@@ -10,7 +10,7 @@ namespace DigitalWorkstation.Core.Abstractions.Settings;
 public sealed class SettingItemAttribute(string group, Type resourceType, string name) : Attribute
 {
     /// <summary>
-    ///     稳定标识；null = 默认「声明类全名.属性名」（仿命令 Id 规则，ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）。
+    ///     稳定标识；null = 默认「声明类全名.属性名」（仿命令 Id 规则）。
     ///     全局唯一，是 settings.json 的 key 与 ISettingsService 读写的依据
     /// </summary>
     public string? Id { get; set; }
@@ -31,7 +31,7 @@ public sealed class SettingItemAttribute(string group, Type resourceType, string
     public string Name { get; } = name;
 
     /// <summary>
-    ///     默认值：用户从未修改时 <see cref="ISettingsService.Get{T}" /> 的返回值（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 3）。
+    ///     默认值：用户从未修改时 <see cref="ISettingsService.Get{T}" /> 的返回值。
     ///     必须是属性类型的编译期常量（attribute 实参限制）；类型不匹配在扫描时记日志跳过。
     ///     枚举成员显示名从 ResourceType 解析，键按「设置项名称键 + 成员名」约定生成，缺键回退完整键名
     /// </summary>
@@ -43,7 +43,7 @@ public sealed class SettingItemAttribute(string group, Type resourceType, string
     public int Order { get; set; }
 
     /// <summary>
-    ///     是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动由消费方读取生效（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
+    ///     是否需重启生效：修改后值立即落盘、当前进程行为不变、下次启动由消费方读取生效
     /// </summary>
     public bool RequiresRestart { get; set; }
 }

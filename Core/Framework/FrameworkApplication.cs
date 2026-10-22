@@ -36,7 +36,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
     }
 
     /// <summary>
-    ///     框架初始化完成后执行启动序列：初始化核心服务 → 逐模块异步加载 → 就绪后显示主窗口（ADR-0004 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）。
+    ///     框架初始化完成后执行启动序列：初始化核心服务 → 逐模块异步加载 → 就绪后显示主窗口。
     ///     不调用 base：base 会把尚未完成模块加载的 MainWindow 直接设为桌面生命周期主窗口
     /// </summary>
     public override void OnFrameworkInitializationCompleted()
@@ -53,14 +53,14 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
     }
 
     /// <summary>
-    ///     抑制 Prism 同步 InitializeModules 一次性加载；模块改由启动序列逐模块异步加载（ADR-0004 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）
+    ///     抑制 Prism 同步 InitializeModules 一次性加载；模块改由启动序列逐模块异步加载
     /// </summary>
     protected override void InitializeModules()
     {
     }
 
     /// <summary>
-    ///     供子类提供启动台窗口；模块加载进度与失败决策均经启动台呈现（ADR-0004 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0004-startup-sequence.md)）
+    ///     供子类提供启动台窗口；模块加载进度与失败决策均经启动台呈现
     /// </summary>
     protected abstract Window CreateSplashWindow();
 
@@ -301,7 +301,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
     }
 
     /// <summary>
-    ///     按已存语言设置应用 UI 区域性（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7：下次启动由消费方读取生效）。
+    ///     按已存语言设置应用 UI 区域性，下次启动由消费方读取生效。
     ///     必须先于一切模块 RegisterTypes——菜单/工具视图标题在注册扫描时经 ResourceText.Get 一次性解析；
     ///     未存值时回退声明默认值（zh-CN），与操作系统区域性无关
     /// </summary>

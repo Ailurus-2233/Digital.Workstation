@@ -5,7 +5,7 @@ using DigitalWorkstation.Core.Resource;
 namespace DigitalWorkstation.Settings.ViewModels;
 
 /// <summary>
-///     枚举设置项的编辑器模型（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8：enum → 下拉框）：
+///     枚举设置项的编辑器模型（enum → 下拉框）：
 ///     选项为枚举全部成员，显示名在贡献指定的资源所有者中按「设置项名称键 + 成员名」查找，
 ///     缺键回退完整组合键本身；改选即写入 ISettingsService（落盘 + 广播变更事件）
 /// </summary>

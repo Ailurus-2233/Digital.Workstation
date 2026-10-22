@@ -12,8 +12,8 @@ namespace DigitalWorkstation.Settings.ViewModels;
 
 /// <summary>
 ///     设置页 ViewModel：左侧设置分组树（按稳定 Id 合并后的分组），右侧选中分组的设置项编辑器。
-///     数据来自 ShellContributionCollector 的设置项收集（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 5：普通主视图贡献，无特权机制）。
-///     另承载需重启 UX（决策 7）：订阅 SettingChangedEvent 刷新项级「重启后生效」标记与顶部横幅
+///     数据来自 ShellContributionCollector 的设置项收集（普通主视图贡献，无特权机制）。
+///     另承载需重启 UX：订阅 SettingChangedEvent 刷新项级「重启后生效」标记与顶部横幅
 /// </summary>
 
 public sealed partial class SettingsPageViewModel : ObservableObject
@@ -54,7 +54,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     private IReadOnlyList<SettingItemModel> _items = [];
 
     /// <summary>
-    ///     顶部横幅是否可见：存在未生效的需重启修改（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
+    ///     顶部横幅是否可见：存在未生效的需重启修改
     /// </summary>
     [ObservableProperty]
     private bool _hasPendingRestartChanges;
@@ -70,7 +70,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     public string RestartNowButtonTitle => SettingsResources.SettingsRestartNowButtonTitle;
 
     /// <summary>
-    ///     横幅「立即重启」：强制落盘后启动新进程并退出当前进程（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）
+    ///     横幅「立即重启」：强制落盘后启动新进程并退出当前进程
     /// </summary>
     [RelayCommand]
     private static void RestartNow()
@@ -128,7 +128,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     }
 
     /// <summary>
-    ///     按声明类型推断编辑器（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8）；当前仅实现 enum → 下拉框，
+    ///     按声明类型推断编辑器；当前仅实现 enum → 下拉框，
     ///     其余类型（bool/string/int/double）随首个真实设置项落地时再补，暂记日志跳过
     /// </summary>
     private SettingItemModel? CreateItemModel(SettingItemContribution contribution)

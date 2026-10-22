@@ -1,7 +1,7 @@
 namespace DigitalWorkstation.Core.Abstractions.Settings;
 
 /// <summary>
-///     声明一个设置分组：标注在任何类上，经 SettingRegistration.RegisterSettings 扫描注册（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 1）。
+///     声明一个设置分组：标注在任何类上，经 SettingRegistration.RegisterSettings 扫描注册。
 ///     分组按稳定 Id 全局合并——同 Id 首个声明的资源来源与名称生效，位次取最小；
 ///     设置项经 <see cref="SettingItemAttribute.Group" /> 引用分组 Id 归组，
 ///     没有任何本 attribute 声明的分组也可用（由设置项引用隐式产生，位次视为 0）

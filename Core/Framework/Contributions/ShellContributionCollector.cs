@@ -15,7 +15,7 @@ namespace DigitalWorkstation.Core.Framework.Contributions;
 public class ShellContributionCollector(ShellContributionCatalog catalog, SettingCatalog settings)
 {
     /// <summary>
-    ///     收集全部工具视图贡献（ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)），按 <see cref="ToolViewContribution.Order" /> 升序；
+    ///     收集全部工具视图贡献，按 <see cref="ToolViewContribution.Order" /> 升序；
     ///     三处 Bar 与钉住区的分派由消费方按 Placement/AllowMove 决定
     /// </summary>
     public IReadOnlyList<ToolViewContribution> GetToolViews()
@@ -37,7 +37,7 @@ public class ShellContributionCollector(ShellContributionCatalog catalog, Settin
     }
 
     /// <summary>
-    ///     收集全部菜单贡献（不过滤不排序；分组排序与建树由 <see cref="Menus.MenuTreeBuilder" /> 负责，ADR-0001 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0001-attribute-menu-registration.md)）
+    ///     收集全部菜单贡献（不过滤不排序；分组排序与建树由 <see cref="Menus.MenuTreeBuilder" /> 负责）
     /// </summary>
     public IReadOnlyList<IMenuItemContribution> GetMenuItems()
     {
@@ -45,7 +45,7 @@ public class ShellContributionCollector(ShellContributionCatalog catalog, Settin
     }
 
     /// <summary>
-    ///     收集全部命令贡献（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)），按 Order 升序、同 Order 按解析后标题字典序（Ordinal）；
+    ///     收集全部命令贡献，按 Order 升序、同 Order 按解析后标题字典序（Ordinal）；
     ///     Id 冲突时保留先注册者，后者丢弃并记日志
     /// </summary>
     public IReadOnlyList<ICommandContribution> GetCommands()

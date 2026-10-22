@@ -5,7 +5,7 @@ using DigitalWorkstation.Workstation.Resources;
 namespace DigitalWorkstation.Workstation.Menus;
 
 /// <summary>
-///     shell 预置的"重置布局"项（视图菜单 Layout 组，ADR-0002 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0002-toolview-drag-persistence.md)）：
+///     shell 预置的"重置布局"项（视图菜单 Layout 组）：
 ///     点击发布 <see cref="ResetLayoutEvent" />，主窗口删除持久化配置并按 attribute 默认重建布局
 /// </summary>
 [MenuGroup("shell.view", Group = "Layout", GroupOrder = 300)]

@@ -60,23 +60,23 @@
   </resheader>
   <data name="CommandPaletteWatermark" xml:space="preserve">
     <value>输入命令以执行</value>
-    <comment>命令面板输入框的水印（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）</comment>
+    <comment>命令面板输入框的水印</comment>
   </data>
   <data name="NoMatchingCommands" xml:space="preserve">
     <value>无匹配命令</value>
-    <comment>命令面板无匹配结果时的空态文案（ADR-0005 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0005-command-registration-palette.md)）</comment>
+    <comment>命令面板无匹配结果时的空态文案</comment>
   </data>
   <data name="SettingsGeneralGroupName" xml:space="preserve">
     <value>常规</value>
-    <comment>设置页"常规"分组的显示名（Framework 预置设置分组，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）</comment>
+    <comment>设置页"常规"分组的显示名（Framework 预置设置分组）</comment>
   </data>
   <data name="SettingsLanguageName" xml:space="preserve">
     <value>语言</value>
-    <comment>设置项"语言"的显示名（Framework 预置，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md)）</comment>
+    <comment>设置项"语言"的显示名（Framework 预置）</comment>
   </data>
   <data name="SettingsLanguageNameZhCN" xml:space="preserve">
     <value>中文（简体）</value>
-    <comment>语言设置项成员 ZhCN 的显示名（键按「设置项名称键 + 成员名」约定生成，ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 8）</comment>
+    <comment>语言设置项成员 ZhCN 的显示名（键按「设置项名称键 + 成员名」约定生成）</comment>
   </data>
   <data name="SettingsLanguageNameEnUS" xml:space="preserve">
     <value>English (US)</value>

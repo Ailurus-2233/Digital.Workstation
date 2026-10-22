@@ -30,18 +30,5 @@
     <File Path="LICENSE" />
     <File Path="README.md" />
   </Folder>
-  <Folder Name="/_docs/adr/">
-    <File Path="docs/adr/0001-attribute-menu-registration.md" />
-    <File Path="docs/adr/0002-toolview-drag-persistence.md" />
-    <File Path="docs/adr/0004-startup-sequence.md" />
-    <File Path="docs/adr/0005-command-registration-palette.md" />
-    <File Path="docs/adr/0006-attribute-settings-registration.md" />
-    <File Path="docs/adr/0007-startup-plugin-loading.md" />
-  </Folder>
-  <Folder Name="/_docs/agents/">
-    <File Path="docs/agents/domain.md" />
-    <File Path="docs/agents/issue-tracker.md" />
-    <File Path="docs/agents/verification.md" />
-  </Folder>
   <Project Path="Launcher/Launcher.csproj" />
 </Solution>

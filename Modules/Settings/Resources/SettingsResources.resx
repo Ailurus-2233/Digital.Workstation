@@ -60,15 +60,15 @@
   </resheader>
   <data name="SettingsRestartPendingMark" xml:space="preserve">
     <value>重启后生效</value>
-    <comment>设置页需重启设置项被修改后的项级标记文本（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）</comment>
+    <comment>设置页需重启设置项被修改后的项级标记文本</comment>
   </data>
   <data name="SettingsRestartBannerText" xml:space="preserve">
     <value>部分设置的更改将在重启后生效</value>
-    <comment>设置页顶部「存在未生效的需重启修改」横幅文本（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）</comment>
+    <comment>设置页顶部「存在未生效的需重启修改」横幅文本</comment>
   </data>
   <data name="SettingsRestartNowButtonTitle" xml:space="preserve">
     <value>立即重启</value>
-    <comment>设置页重启横幅上「立即重启」按钮的标题（ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) 决策 7）</comment>
+    <comment>设置页重启横幅上「立即重启」按钮的标题</comment>
   </data>
 
   <data name="PluginsTitle" xml:space="preserve"><value>插件管理</value></data>

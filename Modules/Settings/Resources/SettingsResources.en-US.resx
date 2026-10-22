@@ -60,15 +60,15 @@
   </resheader>
   <data name="SettingsRestartPendingMark" xml:space="preserve">
     <value>Restart to apply</value>
-    <comment>Item-level marker text next to a modified restart-required setting on the settings page (ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) decision 7)</comment>
+    <comment>Item-level marker text next to a modified restart-required setting on the settings page</comment>
   </data>
   <data name="SettingsRestartBannerText" xml:space="preserve">
     <value>Some setting changes will take effect after restart</value>
-    <comment>Settings page top banner text shown while restart-required changes are pending (ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) decision 7)</comment>
+    <comment>Settings page top banner text shown while restart-required changes are pending</comment>
   </data>
   <data name="SettingsRestartNowButtonTitle" xml:space="preserve">
     <value>Restart Now</value>
-    <comment>Title of the Restart Now button on the settings page restart banner (ADR-0006 (https://github.com/Ailurus-2233/Digital.Workstation/blob/main/docs/adr/0006-attribute-settings-registration.md) decision 7)</comment>
+    <comment>Title of the Restart Now button on the settings page restart banner</comment>
   </data>
 
   <data name="PluginsTitle" xml:space="preserve"><value>Plugin management</value></data>
