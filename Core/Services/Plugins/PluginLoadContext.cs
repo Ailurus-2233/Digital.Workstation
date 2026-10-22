@@ -5,7 +5,7 @@ using System.Runtime.Loader;
 
 namespace DigitalWorkstation.Core.Services.Plugins;
 
-/// <summary>Release 每插件独立解析私有依赖；共享契约返回宿主已经使用的实际程序集实例。</summary>
+/// <summary>每插件独立解析私有依赖（Debug 也解析宿主依赖清单之外的插件库）；共享契约返回宿主已经使用的实际程序集实例。</summary>
 internal sealed class PluginLoadContext : AssemblyLoadContext
 {
     // Launcher uses this prefix to keep its global resolver outside plugin contexts.
@@ -141,6 +141,11 @@ internal sealed class PluginLoadContext : AssemblyLoadContext
         {
             yield return Environment.SystemDirectory;
             yield break;
+        }
+        if (OperatingSystem.IsMacOS())
+        {
+            yield return "/System/Library/Frameworks/Security.framework";
+            yield return "/System/Library/Frameworks/CoreFoundation.framework";
         }
         yield return "/usr/lib";
         yield return "/lib";

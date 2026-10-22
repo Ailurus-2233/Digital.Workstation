@@ -14,6 +14,13 @@
     mc:Ignorable="d">
     <!--  设置页：左侧设置分组树、右侧选中分组的设置项编辑器  -->
     <UserControl.DataTemplates>
+        <DataTemplate DataType="viewmodels:StringSettingItemModel">
+            <StackPanel Margin="0,6" Spacing="6">
+                <TextBlock Text="{Binding Name}" />
+                <TextBox Text="{Binding Value, Mode=TwoWay}" />
+                <TextBlock Text="{Binding RestartPendingMarkText}" IsVisible="{Binding ShowRestartPending}" />
+            </StackPanel>
+        </DataTemplate>
         <!--  枚举设置项：名称 + 「重启后生效」项级标记 + 下拉框（成员显示名已本地化）  -->
         <DataTemplate DataType="viewmodels:EnumSettingItemModel">
             <Grid Margin="0,6" ColumnDefinitions="*,Auto,Auto">

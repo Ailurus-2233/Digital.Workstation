@@ -128,11 +128,12 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     }
 
     /// <summary>
-    ///     按声明类型推断编辑器；当前仅实现 enum → 下拉框，
-    ///     其余类型（bool/string/int/double）随首个真实设置项落地时再补，暂记日志跳过
+    ///     按声明类型推断编辑器；支持 string → 文本框和 enum → 下拉框，
+    ///     其余类型（bool/int/double）随首个真实设置项落地时再补，暂记日志跳过
     /// </summary>
     private SettingItemModel? CreateItemModel(SettingItemContribution contribution)
     {
+        if (contribution.ValueType == typeof(string)) return new StringSettingItemModel(contribution, _settings);
         if (contribution.ValueType.IsEnum)
         {
             return new EnumSettingItemModel(contribution, _settings);

@@ -3,7 +3,6 @@ using System.Resources;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using System.Runtime.Loader;
 using DigitalWorkstation.Core.Abstractions.Plugins;
 
 namespace DigitalWorkstation.Core.Services.Plugins;
@@ -47,11 +46,7 @@ internal static class PluginDiscovery
             }
             try
             {
-#if DEBUG
-                var context = AssemblyLoadContext.Default;
-#else
                 var context = new PluginLoadContext(candidate.Path, sharedModules);
-#endif
                 var assembly = context.LoadFromAssemblyPath(candidate.Path);
                 var type = assembly.GetType(candidate.Name, throwOnError: true)!;
                 if (!type.IsClass || !type.IsVisible || type.IsAbstract || type.ContainsGenericParameters ||

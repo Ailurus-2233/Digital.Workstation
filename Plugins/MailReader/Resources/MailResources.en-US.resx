@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?><root><resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>2.0</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+<data name="Account" xml:space="preserve"><value>Account and credentials</value></data>
+<data name="AuthenticationFailed" xml:space="preserve"><value>Authentication failed. Check username, password / app password and IMAP access, then retry.</value></data>
+<data name="Cancelled" xml:space="preserve"><value>Refresh cancelled. You can retry.</value></data>
+<data name="ConfigureHint" xml:space="preserve"><value>Enter your IMAP server, port, TLS mode and username in Settings → Mail reader, then enter a password in Account and credentials and refresh. Changing connection settings clears this inbox.</value></data>
+<data name="ConnectionFailed" xml:space="preserve"><value>Connection or retrieval failed. Check network and server settings, then refresh to retry. Messages already loaded in this session remain readable.</value></data>
+<data name="ConnectionSettings" xml:space="preserve"><value>Open Settings → Mail reader</value></data>
+<data name="CopyBody" xml:space="preserve"><value>Copy entire body</value></data>
+<data name="CopyFailed" xml:space="preserve"><value>Cannot write to clipboard. Select the body and copy it instead.</value></data>
+<data name="CredentialHint" xml:space="preserve"><value>Saved credentials are read when refreshing. Unsaved passwords last only for this session and never enter ordinary settings.</value></data>
+<data name="CredentialSaved" xml:space="preserve"><value>Credential saved in protected system storage.</value></data>
+<data name="Date" xml:space="preserve"><value>Date</value></data>
+<data name="Empty" xml:space="preserve"><value>The inbox is empty.</value></data>
+<data name="From" xml:space="preserve"><value>From</value></data>
+<data name="ImageOmitted" xml:space="preserve"><value>Image not loaded</value></data>
+<data name="InvalidConfiguration" xml:space="preserve"><value>Invalid connection settings. Check server, username, port (1–65535) and TLS mode.</value></data>
+<data name="Loaded" xml:space="preserve"><value>Loaded {0} messages. Select one from the list.</value></data>
+<data name="Loading" xml:space="preserve"><value>Connecting and reading the latest 100 messages…</value></data>
+<data name="NoSubject" xml:space="preserve"><value>(No subject)</value></data>
+<data name="Password" xml:space="preserve"><value>Password / app password</value></data>
+<data name="PasswordRequired" xml:space="preserve"><value>Complete connection settings and enter a password / app password.</value></data>
+<data name="PluginName" xml:space="preserve"><value>Mail reader</value></data>
+<data name="Port" xml:space="preserve"><value>Port (1–65535)</value></data>
+<data name="Refresh" xml:space="preserve"><value>Refresh</value></data>
+<data name="SavePassword" xml:space="preserve"><value>Save credential securely</value></data>
+<data name="SelectHint" xml:space="preserve"><value>Select a message in the sidebar to read it.</value></data>
+<data name="Server" xml:space="preserve"><value>IMAP server</value></data>
+<data name="SessionOnly" xml:space="preserve"><value>Secure storage is unavailable, locked or denied. Session mode only: passwords are not saved; enter them again after restart.</value></data>
+<data name="Tls" xml:space="preserve"><value>TLS connection</value></data>
+<data name="TlsFailed" xml:space="preserve"><value>TLS connection or certificate validation failed. Check server, port, TLS mode and system clock, then retry.</value></data>
+<data name="TlsSslOnConnect" xml:space="preserve"><value>TLS on connect</value></data>
+<data name="TlsStartTls" xml:space="preserve"><value>STARTTLS (required)</value></data>
+<data name="To" xml:space="preserve"><value>To</value></data>
+<data name="Username" xml:space="preserve"><value>Username</value></data>
+</root>

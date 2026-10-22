@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:r="using:DigitalWorkstation.MailReader.Resources" x:Class="DigitalWorkstation.MailReader.MailReadingView">
+    <Grid RowDefinitions="Auto,*" Margin="16">
+        <StackPanel Spacing="8" Margin="0,0,0,12">
+            <TextBlock FontSize="20" Text="{x:Static r:MailResources.PluginName}" />
+            <TextBlock Text="{Binding AccountDisplay}" TextWrapping="Wrap" />
+            <Expander Header="{x:Static r:MailResources.Account}" IsExpanded="True" HorizontalAlignment="Stretch">
+                <StackPanel Spacing="8" Margin="8">
+                    <TextBlock Text="{x:Static r:MailResources.ConfigureHint}" TextWrapping="Wrap" />
+                    <Button Content="{x:Static r:MailResources.ConnectionSettings}" Command="{Binding OpenSettingsCommand}" />
+                    <TextBlock Text="{x:Static r:MailResources.Password}" />
+                    <TextBox PasswordChar="●" Text="{Binding Password, Mode=TwoWay}" MaxWidth="500" HorizontalAlignment="Left" MinWidth="180" />
+                    <WrapPanel>
+                        <Button Content="{x:Static r:MailResources.SavePassword}" Command="{Binding SavePasswordCommand}" Margin="0,0,8,4" />
+                        <Button Content="{x:Static r:MailResources.Refresh}" Command="{Binding RefreshCommand}" Margin="0,0,8,4" />
+                    </WrapPanel>
+                    <TextBlock Text="{Binding CredentialStatus}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Expander>
+        </StackPanel>
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="8">
+                <TextBlock Text="{x:Static r:MailResources.SelectHint}" IsVisible="{Binding !HasSelectedMessage}" />
+                <StackPanel Spacing="8" IsVisible="{Binding HasSelectedMessage}">
+                <SelectableTextBlock Text="{Binding SelectedMessage.Subject}" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static r:MailResources.From}" />
+                <SelectableTextBlock Text="{Binding SelectedMessage.From}" TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static r:MailResources.To}" />
+                <SelectableTextBlock Text="{Binding SelectedMessage.To}" TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static r:MailResources.Date}" />
+                <SelectableTextBlock Text="{Binding SelectedMessage.DisplayDate}" />
+                <Button Content="{x:Static r:MailResources.CopyBody}" Click="CopyBody" />
+                <SelectableTextBlock Text="{Binding SelectedMessage.Body}" TextWrapping="Wrap" Margin="0,8" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

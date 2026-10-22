@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:r="using:DigitalWorkstation.MailReader.Resources" x:Class="DigitalWorkstation.MailReader.MailListView">
+    <Grid RowDefinitions="Auto,Auto,*" Margin="8">
+        <StackPanel Spacing="6">
+            <TextBlock FontSize="18" Text="{x:Static r:MailResources.PluginName}" />
+            <WrapPanel>
+                <Button Margin="0,0,6,4" Content="{x:Static r:MailResources.Refresh}" Command="{Binding RefreshCommand}" />
+                <Button Margin="0,0,0,4" Content="{x:Static r:MailResources.Account}" Command="{Binding OpenReadingCommand}" />
+            </WrapPanel>
+            <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" Height="3" />
+        </StackPanel>
+        <TextBlock Grid.Row="1" Margin="0,8" Text="{Binding Status}" TextWrapping="Wrap" />
+        <ListBox Grid.Row="2" ItemsSource="{Binding Messages}" SelectedItem="{Binding SelectedMessage, Mode=TwoWay}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Spacing="3" Margin="0,4">
+                        <TextBlock Text="{Binding Subject}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding From}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding DisplayDate}" FontSize="11" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</UserControl>

@@ -13,7 +13,7 @@
     <Project Path="Modules/Workstation/Workstation.csproj" />
   </Folder>
   <Folder Name="/Plugins/">
-    <Project Path="Plugins/Sample/Sample.csproj" />
+    <Project Path="Plugins/MailReader/MailReader.csproj" />
   </Folder>
   <Folder Name="/_build/">
     <File Path="Build/Base.props" />

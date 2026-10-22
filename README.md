@@ -24,7 +24,7 @@
 	- DashBoard：启动台（DashBoardWindow 进度窗）：显示核心服务初始化与逐模块加载进度（模块名 + i/N），模块失败时提供"继续（跳过）/退出"；另向状态栏贡献"启动台"条目
 
 - Plugins/
-	- Sample：通过 [Plugin] 标记自动发现的示例插件，启动成功后向状态栏贡献插件已加载提示
+	- MailReader：通过 [Plugin] 自动发现的邮件阅读插件，在主要侧边栏列出 IMAP 收件箱邮件，中央页面阅读正文
 
 ## 目录结构说明
 
@@ -74,7 +74,7 @@ Launcher 自动为 Plugins/**/*.csproj 建立只参与构建的项目引用，�
 Build/Base.props 统一将输出写入解决方案根目录的 Output/$(Configuration)/；从解决方案或单独的 .csproj 构建都使用此路径。旧版本构建留在项目目录内的 Output/ 可直接删除。
 
 - Output/Debug/
-	- 宿主、模块、插件和依赖 DLL 平铺，插件发现仅扫描程序根目录的 DLL；同名多版本依赖隔离在 Release 验证
+	- 宿主、模块、插件和依赖 DLL 平铺，插件发现仅扫描程序根目录的 DLL，并通过插件加载上下文解析私有依赖；同名多版本依赖隔离在 Release 验证
 - Output/Release/
 	- Launcher.exe / Launcher.dll：启动器输出通常在该目录根部
 	- core/：Core 项目输出（DigitalWorkstation.Core.*）
@@ -97,6 +97,14 @@ Build/Base.props 统一将输出写入解决方案根目录的 Output/$(Configur
 1. 在 Plugins/<插件名>/ 下新增 net10.0 类库项目，引用 Core/Abstractions 与所需的 Core/Framework 等宿主项目。
 2. 在入口 DLL 中声明唯一一个带 [Plugin] 标记的公开 IModule 实现；RegisterTypes / OnInitialized 与 Modules 中的模块一致。无需在 WorkstationApplication 中调用 AddModule。
 3. 构建设置会自动启用 EnableDynamicLoading、依赖清单与私有依赖复制；如需在 IDE 解决方案树中展示项目，将其加入 Digital.Workstation.slnx 的 /Plugins/ 文件夹。
-4. 执行 Debug 启动命令验证插件被发现；再执行 Release 构建并启动，验证 plugins/<插件名>/ 中的依赖和资源能正常加载。示例 Sample 加载成功后，状态栏显示插件已加载提示。
+4. 执行 Debug 启动命令验证插件被发现；再执行 Release 构建并启动，验证 plugins/<插件名>/ 中的依赖和资源能正常加载。MailReader 加载成功后，主要侧边栏显示邮件阅读入口。
 
 分发插件时复制整个 plugins/<插件名>/ 目录，保留 .deps.json 与 runtimes 子树；替换或移除插件后重启应用生效。共享清单是构建过滤和运行时共享的同一事实来源：第三方库使用宿主实际携带的精确程序集名，并列出共享栈的 native package ID；仅 Core 契约保留前缀规则。Serilog.Sinks.File 等宿主未携带的扩展仍是插件私有依赖。修改宿主插件契约或 UI 依赖边界时同步检查该清单。
+
+## 邮件阅读（IMAP）
+
+在设置的“邮件阅读”组填写企业提供的 IMAP 服务器、端口、TLS 方式和用户名；插件不预设某一家服务商的地址。点击邮件侧边栏“账户与凭据”，输入密码／客户端授权码，可选择安全保存，然后手动刷新。连接仅支持 TLS on connect 或必须成功升级的 STARTTLS，并使用系统证书验证。当前只实现 IMAP 手动读取：取服务器顺序最近 100 封，再按邮件时间降序显示；只读打开收件箱，不改变已读标记或删除邮件。HTML-only 正文转换为安全可选择的纯文本，不加载资源或执行脚本。
+
+连接字段沿用 settings.json，密码不进入普通设置或日志。安全存储由 ICredentialStore 替换：Windows 使用当前用户 DPAPI 加密文件，macOS 使用系统 Keychain，Linux 使用 Secret Service 的 secret-tool（密码经标准输入传入，需系统提供该命令）。存储不可用、锁定或拒绝访问时界面明确提示会话模式，重启需重新输入。凭据按服务器、端口、TLS 和用户名隔离，修改连接设置会取消请求并清空列表；若要保存新凭据，请再次点击安全保存。
+
+本切片没有磁盘邮件缓存、自动轮询、POP3、附件下载或 HTML 格式阅读。Windows 编译不能替代 macOS/Linux 的运行验证。首次从 Sample 升级时，构建会删除已知旧 Sample 入口产物，避免增量输出再次发现示例插件。
