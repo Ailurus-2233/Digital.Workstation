@@ -19,6 +19,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
     private readonly ISettingsService _settings;
     private readonly ICredentialStore _credentials;
     private readonly IEventAggregator _events;
+    private readonly Func<ImapClient> _createClient;
     private CancellationTokenSource? _request;
     private int _generation;
     private int _refreshing;
@@ -27,10 +28,15 @@ public sealed partial class MailService : ObservableObject, IModuleService
     private MailAccount _account;
 
     public MailService(ISettingsService settings, ICredentialStore credentials, IEventAggregator events)
+        : this(settings, credentials, events, () => new ImapClient { Timeout = 30000 }) { }
+
+    internal MailService(ISettingsService settings, ICredentialStore credentials, IEventAggregator events,
+        Func<ImapClient> createClient)
     {
         _settings = settings;
         _credentials = credentials;
         _events = events;
+        _createClient = createClient;
         _account = MailSettings.Read(settings);
     }
 
@@ -142,9 +148,9 @@ public sealed partial class MailService : ObservableObject, IModuleService
         }
     }
 
-    private static async Task<IReadOnlyList<MailMessage>> FetchAsync(MailAccount account, string password, CancellationToken token)
+    private async Task<IReadOnlyList<MailMessage>> FetchAsync(MailAccount account, string password, CancellationToken token)
     {
-        using var client = new ImapClient { Timeout = 30000 };
+        using var client = _createClient();
         // Default certificate validation remains enabled; StartTls is mandatory, never opportunistic.
         await client.ConnectAsync(account.Server, int.Parse(account.Port), account.Tls == MailTls.SslOnConnect ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls, token);
         await client.AuthenticateAsync(account.Username, password, token);
@@ -154,7 +160,8 @@ public sealed partial class MailService : ObservableObject, IModuleService
         if (inbox.Count > 0)
         {
             // Resolve the last server sequence positions to stable UIDs in this UIDVALIDITY epoch.
-            var summaries = await inbox.FetchAsync(Math.Max(0, inbox.Count - 100), -1, MessageSummaryItems.UniqueId, token);
+            var startIndex = Math.Max(0, inbox.Count - 100);
+            var summaries = await inbox.FetchAsync(startIndex, -1, MessageSummaryItems.UniqueId, token);
             foreach (var summary in summaries.TakeLast(100))
             {
                 token.ThrowIfCancellationRequested();

@@ -5,8 +5,6 @@
 <data name="ConfigureHint" xml:space="preserve"><value>Enter your IMAP server, port, TLS mode and username in Settings → Mail reader, then enter a password in Account and credentials and refresh. Changing connection settings clears this inbox.</value></data>
 <data name="ConnectionFailed" xml:space="preserve"><value>Connection or retrieval failed. Check network and server settings, then refresh to retry. Messages already loaded in this session remain readable.</value></data>
 <data name="ConnectionSettings" xml:space="preserve"><value>Open Settings → Mail reader</value></data>
-<data name="CopyBody" xml:space="preserve"><value>Copy entire body</value></data>
-<data name="CopyFailed" xml:space="preserve"><value>Cannot write to clipboard. Select the body and copy it instead.</value></data>
 <data name="CredentialHint" xml:space="preserve"><value>Saved credentials are read when refreshing. Unsaved passwords last only for this session and never enter ordinary settings.</value></data>
 <data name="CredentialSaved" xml:space="preserve"><value>Credential saved in protected system storage.</value></data>
 <data name="Date" xml:space="preserve"><value>Date</value></data>

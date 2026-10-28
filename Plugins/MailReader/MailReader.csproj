@@ -18,6 +18,9 @@
         <PackageReference Include="HtmlAgilityPack" Version="1.13.1" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
     </ItemGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="MailReader.DataFlowTests" />
+    </ItemGroup>
     <!-- Sample was replaced, so an incremental build must not rediscover its stale entry DLL. -->
     <Target Name="RemoveRetiredSampleEntry" BeforeTargets="Build">
         <ItemGroup>

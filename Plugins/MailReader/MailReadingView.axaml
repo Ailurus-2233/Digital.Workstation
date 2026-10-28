@@ -30,7 +30,6 @@
                 <SelectableTextBlock Text="{Binding SelectedMessage.To}" TextWrapping="Wrap" />
                 <TextBlock Text="{x:Static r:MailResources.Date}" />
                 <SelectableTextBlock Text="{Binding SelectedMessage.DisplayDate}" />
-                <Button Content="{x:Static r:MailResources.CopyBody}" Click="CopyBody" />
                 <SelectableTextBlock Text="{Binding SelectedMessage.Body}" TextWrapping="Wrap" Margin="0,8" />
                 </StackPanel>
             </StackPanel>

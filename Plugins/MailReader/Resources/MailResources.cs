@@ -8,8 +8,6 @@ public static class MailResources
     public static string ConfigureHint => ResourceText.Get(typeof(MailResources), nameof(ConfigureHint));
     public static string ConnectionFailed => ResourceText.Get(typeof(MailResources), nameof(ConnectionFailed));
     public static string ConnectionSettings => ResourceText.Get(typeof(MailResources), nameof(ConnectionSettings));
-    public static string CopyBody => ResourceText.Get(typeof(MailResources), nameof(CopyBody));
-    public static string CopyFailed => ResourceText.Get(typeof(MailResources), nameof(CopyFailed));
     public static string CredentialHint => ResourceText.Get(typeof(MailResources), nameof(CredentialHint));
     public static string CredentialSaved => ResourceText.Get(typeof(MailResources), nameof(CredentialSaved));
     public static string Date => ResourceText.Get(typeof(MailResources), nameof(Date));

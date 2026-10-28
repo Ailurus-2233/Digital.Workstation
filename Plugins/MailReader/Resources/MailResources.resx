@@ -5,8 +5,6 @@
 <data name="ConfigureHint" xml:space="preserve"><value>请在设置的“邮件阅读”组填写 IMAP 服务器、端口、TLS 方式和用户名，再在“账户与凭据”输入密码并手动刷新。修改连接参数会清空当前列表。</value></data>
 <data name="ConnectionFailed" xml:space="preserve"><value>连接或收信失败。请检查网络和服务器设置后点击刷新重试；已有本次会话邮件仍可阅读。</value></data>
 <data name="ConnectionSettings" xml:space="preserve"><value>打开设置 → 邮件阅读</value></data>
-<data name="CopyBody" xml:space="preserve"><value>复制完整正文</value></data>
-<data name="CopyFailed" xml:space="preserve"><value>无法写入剪贴板，请选择正文后复制。</value></data>
 <data name="CredentialHint" xml:space="preserve"><value>已保存的凭据将在刷新时读取。未保存的密码仅供本次会话使用；密码不会写入普通设置。</value></data>
 <data name="CredentialSaved" xml:space="preserve"><value>凭据已由当前系统安全存储。</value></data>
 <data name="Date" xml:space="preserve"><value>时间</value></data>
