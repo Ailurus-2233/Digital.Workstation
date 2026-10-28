@@ -8,6 +8,7 @@ using DigitalWorkstation.Core.Common.Events;
 using DigitalWorkstation.MailReader.Resources;
 using MailKit;
 using MailKit.Net.Imap;
+using MailKit.Net.Pop3;
 using MailKit.Security;
 
 namespace DigitalWorkstation.MailReader;
@@ -20,6 +21,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
     private readonly ICredentialStore _credentials;
     private readonly IEventAggregator _events;
     private readonly Func<ImapClient> _createClient;
+    private readonly Func<Pop3Client> _createPop3Client;
     private CancellationTokenSource? _request;
     private int _generation;
     private int _refreshing;
@@ -31,12 +33,13 @@ public sealed partial class MailService : ObservableObject, IModuleService
         : this(settings, credentials, events, () => new ImapClient { Timeout = 30000 }) { }
 
     internal MailService(ISettingsService settings, ICredentialStore credentials, IEventAggregator events,
-        Func<ImapClient> createClient)
+        Func<ImapClient> createClient, Func<Pop3Client>? createPop3Client = null)
     {
         _settings = settings;
         _credentials = credentials;
         _events = events;
         _createClient = createClient;
+        _createPop3Client = createPop3Client ?? (() => new Pop3Client { Timeout = 30000 });
         _account = MailSettings.Read(settings);
     }
 
@@ -47,7 +50,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
     [ObservableProperty] private string _password = "";
     [ObservableProperty] private bool _isBusy;
     public bool HasSelectedMessage => SelectedMessage is not null;
-    public string AccountDisplay => $"IMAP · {_account.Username} · {_account.Server}";
+    public string AccountDisplay => $"{_account.Protocol} · {_account.Username} · {_account.Server}";
 
     public void Start()
     {
@@ -139,6 +142,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
         catch (OperationCanceledException) { if (_running && generation == _generation) Status = MailResources.Cancelled; }
         catch (MailKit.Security.AuthenticationException) { if (_running && generation == _generation) Status = MailResources.AuthenticationFailed; }
         catch (SslHandshakeException) { if (_running && generation == _generation) Status = MailResources.TlsFailed; }
+        catch (Pop3IdentityException) { if (_running && generation == _generation) Status = MailResources.Pop3IdentityFailed; }
         catch { if (_running && generation == _generation) Status = MailResources.ConnectionFailed; }
         finally
         {
@@ -150,6 +154,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
 
     private async Task<IReadOnlyList<MailMessage>> FetchAsync(MailAccount account, string password, CancellationToken token)
     {
+        if (account.Protocol == MailProtocol.POP3) return await FetchPop3Async(account, password, token);
         using var client = _createClient();
         // Default certificate validation remains enabled; StartTls is mandatory, never opportunistic.
         await client.ConnectAsync(account.Server, int.Parse(account.Port), account.Tls == MailTls.SslOnConnect ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls, token);
@@ -170,6 +175,35 @@ public sealed partial class MailService : ObservableObject, IModuleService
                     string.IsNullOrWhiteSpace(mime.Subject) ? MailResources.NoSubject : mime.Subject,
                     mime.From.ToString(), mime.To.ToString(), mime.Date, MailText.Read(mime)));
             }
+        }
+        await client.DisconnectAsync(true, token);
+        return messages.OrderByDescending(message => message.Date).ToArray();
+    }
+
+    private sealed class Pop3IdentityException : Exception { }
+
+    private async Task<IReadOnlyList<MailMessage>> FetchPop3Async(MailAccount account, string password, CancellationToken token)
+    {
+        using var client = _createPop3Client();
+        await client.ConnectAsync(account.Server, int.Parse(account.Port),
+            account.Tls == MailTls.SslOnConnect ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls, token);
+        await client.AuthenticateAsync(account.Username, password, token);
+        IList<string> uids;
+        try { uids = await client.GetMessageUidsAsync(token); }
+        catch (Exception error) when (error is NotSupportedException or Pop3CommandException or Pop3ProtocolException)
+        { throw new Pop3IdentityException(); }
+        if (uids.Count != client.Count || uids.Any(string.IsNullOrWhiteSpace)
+            || uids.Distinct(StringComparer.Ordinal).Count() != uids.Count)
+            throw new Pop3IdentityException();
+
+        var messages = new List<MailMessage>();
+        // Sequence positions are used only inside this session; UIDL is the persistent identity.
+        for (var index = Math.Max(0, client.Count - 100); index < client.Count; index++)
+        {
+            using var mime = await client.GetMessageAsync(index, token);
+            messages.Add(new MailMessage($"{account.Key}:{uids[index]}",
+                string.IsNullOrWhiteSpace(mime.Subject) ? MailResources.NoSubject : mime.Subject,
+                mime.From.ToString(), mime.To.ToString(), mime.Date, MailText.Read(mime)));
         }
         await client.DisconnectAsync(true, token);
         return messages.OrderByDescending(message => message.Date).ToArray();

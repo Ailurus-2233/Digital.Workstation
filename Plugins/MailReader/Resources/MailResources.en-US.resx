@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?><root><resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>2.0</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
 <data name="Account" xml:space="preserve"><value>Account and credentials</value></data>
-<data name="AuthenticationFailed" xml:space="preserve"><value>Authentication failed. Check username, password / app password and IMAP access, then retry.</value></data>
+<data name="AuthenticationFailed" xml:space="preserve"><value>Authentication failed. Check username, password / app password and access for the selected protocol, then retry.</value></data>
 <data name="Cancelled" xml:space="preserve"><value>Refresh cancelled. You can retry.</value></data>
-<data name="ConfigureHint" xml:space="preserve"><value>Enter your IMAP server, port, TLS mode and username in Settings → Mail reader, then enter a password in Account and credentials and refresh. Changing connection settings clears this inbox.</value></data>
+<data name="ConfigureHint" xml:space="preserve"><value>Select IMAP or POP3 and enter your mail server, port, TLS mode and username in Settings → Mail reader, then enter a password in Account and credentials and refresh. Changing connection settings clears this inbox.</value></data>
 <data name="ConnectionFailed" xml:space="preserve"><value>Connection or retrieval failed. Check network and server settings, then refresh to retry. Messages already loaded in this session remain readable.</value></data>
 <data name="ConnectionSettings" xml:space="preserve"><value>Open Settings → Mail reader</value></data>
 <data name="CredentialHint" xml:space="preserve"><value>Saved credentials are read when refreshing. Unsaved passwords last only for this session and never enter ordinary settings.</value></data>
@@ -18,11 +18,11 @@
 <data name="Password" xml:space="preserve"><value>Password / app password</value></data>
 <data name="PasswordRequired" xml:space="preserve"><value>Complete connection settings and enter a password / app password.</value></data>
 <data name="PluginName" xml:space="preserve"><value>Mail reader</value></data>
-<data name="Port" xml:space="preserve"><value>Port (1–65535)</value></data>
+<data name="Port" xml:space="preserve"><value>Port (IMAP TLS usually 993; POP3 TLS usually 995; check provider)</value></data>
 <data name="Refresh" xml:space="preserve"><value>Refresh</value></data>
 <data name="SavePassword" xml:space="preserve"><value>Save credential securely</value></data>
 <data name="SelectHint" xml:space="preserve"><value>Select a message in the sidebar to read it.</value></data>
-<data name="Server" xml:space="preserve"><value>IMAP server</value></data>
+<data name="Server" xml:space="preserve"><value>Mail server</value></data>
 <data name="SessionOnly" xml:space="preserve"><value>Secure storage is unavailable, locked or denied. Session mode only: passwords are not saved; enter them again after restart.</value></data>
 <data name="Tls" xml:space="preserve"><value>TLS connection</value></data>
 <data name="TlsFailed" xml:space="preserve"><value>TLS connection or certificate validation failed. Check server, port, TLS mode and system clock, then retry.</value></data>
@@ -30,4 +30,5 @@
 <data name="TlsStartTls" xml:space="preserve"><value>STARTTLS (required)</value></data>
 <data name="To" xml:space="preserve"><value>To</value></data>
 <data name="Username" xml:space="preserve"><value>Username</value></data>
-</root>
+<data name="Protocol" xml:space="preserve"><value>Receiving protocol</value></data><data name="Pop3IdentityFailed" xml:space="preserve"><value>The POP3 server does not support UIDL or returned invalid message identifiers. Contact your provider or use IMAP.</value></data>
+<data name="ProtocolIMAP" xml:space="preserve"><value>IMAP</value></data><data name="ProtocolPOP3" xml:space="preserve"><value>POP3</value></data></root>
