@@ -6,6 +6,7 @@ namespace DigitalWorkstation.MailReader;
 
 public sealed record MailMessage(string Id, string Subject, string From, string To, DateTimeOffset Date, string Body)
 {
+    public MailContent? Content { get; init; }
     public string DisplayDate => Date.ToLocalTime().ToString("g");
 }
 

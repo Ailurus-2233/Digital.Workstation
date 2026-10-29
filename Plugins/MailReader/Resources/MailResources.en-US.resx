@@ -31,4 +31,12 @@
 <data name="To" xml:space="preserve"><value>To</value></data>
 <data name="Username" xml:space="preserve"><value>Username</value></data>
 <data name="Protocol" xml:space="preserve"><value>Receiving protocol</value></data><data name="Pop3IdentityFailed" xml:space="preserve"><value>The POP3 server does not support UIDL or returned invalid message identifiers. Contact your provider or use IMAP.</value></data>
-<data name="ProtocolIMAP" xml:space="preserve"><value>IMAP</value></data><data name="ProtocolPOP3" xml:space="preserve"><value>POP3</value></data></root>
+<data name="ProtocolIMAP" xml:space="preserve"><value>IMAP</value></data><data name="ProtocolPOP3" xml:space="preserve"><value>POP3</value></data><data name="Attachments" xml:space="preserve"><value>Attachments</value></data>
+<data name="SaveAttachment" xml:space="preserve"><value>Save attachment</value></data>
+<data name="AttachmentSaved" xml:space="preserve"><value>Attachment saved.</value></data>
+<data name="SaveCancelled" xml:space="preserve"><value>Save cancelled.</value></data>
+<data name="AttachmentSaveFailed" xml:space="preserve"><value>Unable to save. Choose a writable folder and an unused filename. Uncached attachments are unavailable offline.</value></data>
+<data name="RemoteImageBlocked" xml:space="preserve"><value>External image blocked</value></data>
+<data name="InlineImageUnavailable" xml:space="preserve"><value>Inline image missing, invalid or unsupported</value></data>
+<data name="LinkFailed" xml:space="preserve"><value>Unable to open link.</value></data>
+</root>

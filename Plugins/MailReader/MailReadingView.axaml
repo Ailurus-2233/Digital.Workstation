@@ -1,5 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:r="using:DigitalWorkstation.MailReader.Resources" x:Class="DigitalWorkstation.MailReader.MailReadingView">
+             xmlns:r="using:DigitalWorkstation.MailReader.Resources" xmlns:mail="using:DigitalWorkstation.MailReader" x:Class="DigitalWorkstation.MailReader.MailReadingView">
     <Grid RowDefinitions="Auto,*" Margin="16">
         <StackPanel Spacing="8" Margin="0,0,0,12">
             <TextBlock FontSize="20" Text="{x:Static r:MailResources.PluginName}" />
@@ -30,7 +30,7 @@
                 <SelectableTextBlock Text="{Binding SelectedMessage.To}" TextWrapping="Wrap" />
                 <TextBlock Text="{x:Static r:MailResources.Date}" />
                 <SelectableTextBlock Text="{Binding SelectedMessage.DisplayDate}" />
-                <SelectableTextBlock Text="{Binding SelectedMessage.Body}" TextWrapping="Wrap" Margin="0,8" />
+                <mail:MailContentView Message="{Binding SelectedMessage}" Margin="0,8" />
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

@@ -31,4 +31,12 @@
 <data name="To" xml:space="preserve"><value>收件人</value></data>
 <data name="Username" xml:space="preserve"><value>用户名</value></data>
 <data name="Protocol" xml:space="preserve"><value>收信协议</value></data><data name="Pop3IdentityFailed" xml:space="preserve"><value>POP3 服务器不支持 UIDL 或返回的邮件标识无效，无法安全识别邮件。请联系服务商或改用 IMAP。</value></data>
-<data name="ProtocolIMAP" xml:space="preserve"><value>IMAP</value></data><data name="ProtocolPOP3" xml:space="preserve"><value>POP3</value></data></root>
+<data name="ProtocolIMAP" xml:space="preserve"><value>IMAP</value></data><data name="ProtocolPOP3" xml:space="preserve"><value>POP3</value></data><data name="Attachments" xml:space="preserve"><value>附件</value></data>
+<data name="SaveAttachment" xml:space="preserve"><value>保存附件</value></data>
+<data name="AttachmentSaved" xml:space="preserve"><value>附件已保存。</value></data>
+<data name="SaveCancelled" xml:space="preserve"><value>已取消保存。</value></data>
+<data name="AttachmentSaveFailed" xml:space="preserve"><value>无法保存附件。请确认目录可写并选择未使用的文件名；离线时未缓存的附件不可用。</value></data>
+<data name="RemoteImageBlocked" xml:space="preserve"><value>外部图片未加载</value></data>
+<data name="InlineImageUnavailable" xml:space="preserve"><value>内嵌图片缺失、无效或不支持</value></data>
+<data name="LinkFailed" xml:space="preserve"><value>无法打开链接。</value></data>
+</root>

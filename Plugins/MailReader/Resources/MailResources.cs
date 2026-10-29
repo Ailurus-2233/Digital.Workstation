@@ -4,6 +4,14 @@ public static class MailResources
 {
     public static string Protocol => ResourceText.Get(typeof(MailResources), nameof(Protocol));
     public static string Pop3IdentityFailed => ResourceText.Get(typeof(MailResources), nameof(Pop3IdentityFailed));
+    public static string Attachments => ResourceText.Get(typeof(MailResources), nameof(Attachments));
+    public static string SaveAttachment => ResourceText.Get(typeof(MailResources), nameof(SaveAttachment));
+    public static string AttachmentSaved => ResourceText.Get(typeof(MailResources), nameof(AttachmentSaved));
+    public static string SaveCancelled => ResourceText.Get(typeof(MailResources), nameof(SaveCancelled));
+    public static string AttachmentSaveFailed => ResourceText.Get(typeof(MailResources), nameof(AttachmentSaveFailed));
+    public static string RemoteImageBlocked => ResourceText.Get(typeof(MailResources), nameof(RemoteImageBlocked));
+    public static string InlineImageUnavailable => ResourceText.Get(typeof(MailResources), nameof(InlineImageUnavailable));
+    public static string LinkFailed => ResourceText.Get(typeof(MailResources), nameof(LinkFailed));
     public static string Account => ResourceText.Get(typeof(MailResources), nameof(Account));
     public static string AuthenticationFailed => ResourceText.Get(typeof(MailResources), nameof(AuthenticationFailed));
     public static string Cancelled => ResourceText.Get(typeof(MailResources), nameof(Cancelled));

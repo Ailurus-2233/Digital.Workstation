@@ -171,9 +171,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
             {
                 token.ThrowIfCancellationRequested();
                 using var mime = await inbox.GetMessageAsync(summary.UniqueId, token);
-                messages.Add(new MailMessage($"{account.Key}:{inbox.UidValidity}:{summary.UniqueId.Id}",
-                    string.IsNullOrWhiteSpace(mime.Subject) ? MailResources.NoSubject : mime.Subject,
-                    mime.From.ToString(), mime.To.ToString(), mime.Date, MailText.Read(mime)));
+                messages.Add(MailContentReader.Read($"{account.Key}:{inbox.UidValidity}:{summary.UniqueId.Id}", mime));
             }
         }
         await client.DisconnectAsync(true, token);
@@ -201,9 +199,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
         for (var index = Math.Max(0, client.Count - 100); index < client.Count; index++)
         {
             using var mime = await client.GetMessageAsync(index, token);
-            messages.Add(new MailMessage($"{account.Key}:{uids[index]}",
-                string.IsNullOrWhiteSpace(mime.Subject) ? MailResources.NoSubject : mime.Subject,
-                mime.From.ToString(), mime.To.ToString(), mime.Date, MailText.Read(mime)));
+            messages.Add(MailContentReader.Read($"{account.Key}:{uids[index]}", mime));
         }
         await client.DisconnectAsync(true, token);
         return messages.OrderByDescending(message => message.Date).ToArray();
