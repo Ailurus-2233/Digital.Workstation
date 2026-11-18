@@ -12,6 +12,11 @@ public static class MailResources
     public static string RemoteImageBlocked => ResourceText.Get(typeof(MailResources), nameof(RemoteImageBlocked));
     public static string InlineImageUnavailable => ResourceText.Get(typeof(MailResources), nameof(InlineImageUnavailable));
     public static string LinkFailed => ResourceText.Get(typeof(MailResources), nameof(LinkFailed));
+    public static string CacheLoaded => ResourceText.Get(typeof(MailResources), nameof(CacheLoaded));
+    public static string CacheSaved => ResourceText.Get(typeof(MailResources), nameof(CacheSaved));
+    public static string CacheReadFailed => ResourceText.Get(typeof(MailResources), nameof(CacheReadFailed));
+    public static string CacheWriteFailed => ResourceText.Get(typeof(MailResources), nameof(CacheWriteFailed));
+    public static string AttachmentOffline => ResourceText.Get(typeof(MailResources), nameof(AttachmentOffline));
     public static string Account => ResourceText.Get(typeof(MailResources), nameof(Account));
     public static string AuthenticationFailed => ResourceText.Get(typeof(MailResources), nameof(AuthenticationFailed));
     public static string Cancelled => ResourceText.Get(typeof(MailResources), nameof(Cancelled));

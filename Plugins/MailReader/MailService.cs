@@ -22,6 +22,12 @@ public sealed partial class MailService : ObservableObject, IModuleService
     private readonly IEventAggregator _events;
     private readonly Func<ImapClient> _createClient;
     private readonly Func<Pop3Client> _createPop3Client;
+    private readonly IMailCache? _cache;
+    private readonly DispatcherTimer? _pollTimer;
+    private string? _cacheAccountKey;
+    private bool _pendingAutomaticRefresh;
+    private int _lifecycle;
+    internal Task AutomaticRefresh { get; private set; } = Task.CompletedTask;
     private CancellationTokenSource? _request;
     private int _generation;
     private int _refreshing;
@@ -30,16 +36,24 @@ public sealed partial class MailService : ObservableObject, IModuleService
     private MailAccount _account;
 
     public MailService(ISettingsService settings, ICredentialStore credentials, IEventAggregator events)
-        : this(settings, credentials, events, () => new ImapClient { Timeout = 30000 }) { }
+        : this(settings, credentials, events, () => new ImapClient { Timeout = 30000 },
+            cache: new MailCache(MailCache.DefaultDirectory), automatic: true) { }
 
     internal MailService(ISettingsService settings, ICredentialStore credentials, IEventAggregator events,
-        Func<ImapClient> createClient, Func<Pop3Client>? createPop3Client = null)
+        Func<ImapClient> createClient, Func<Pop3Client>? createPop3Client = null,
+        IMailCache? cache = null, bool automatic = false, TimeSpan? pollInterval = null)
     {
         _settings = settings;
         _credentials = credentials;
         _events = events;
         _createClient = createClient;
         _createPop3Client = createPop3Client ?? (() => new Pop3Client { Timeout = 30000 });
+        _cache = cache;
+        if (automatic)
+        {
+            _pollTimer = new DispatcherTimer { Interval = pollInterval ?? TimeSpan.FromMinutes(5) };
+            _pollTimer.Tick += (_, _) => RequestAutomaticRefresh();
+        }
         _account = MailSettings.Read(settings);
     }
 
@@ -47,6 +61,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
     [ObservableProperty, NotifyPropertyChangedFor(nameof(HasSelectedMessage))] private MailMessage? _selectedMessage;
     [ObservableProperty] private string _status = MailResources.ConfigureHint;
     [ObservableProperty] private string _credentialStatus = MailResources.CredentialHint;
+    [ObservableProperty] private string _cacheStatus = "";
     [ObservableProperty] private string _password = "";
     [ObservableProperty] private bool _isBusy;
     public bool HasSelectedMessage => SelectedMessage is not null;
@@ -54,16 +69,53 @@ public sealed partial class MailService : ObservableObject, IModuleService
 
     public void Start()
     {
+        if (_running) return;
         _running = true;
+        var lifecycle = Interlocked.Increment(ref _lifecycle);
         _events.GetEvent<SettingChangedEvent>().Subscribe(SettingsChanged);
+        void SyncAccount()
+        {
+            if (!_running || lifecycle != _lifecycle) return;
+            // Stop unsubscribes, so settings may have changed while this instance was idle.
+            var account = MailSettings.Read(_settings);
+            if (account != _account) ResetAccount(account);
+        }
+        if (Dispatcher.UIThread.CheckAccess()) SyncAccount(); else Dispatcher.UIThread.Post(SyncAccount);
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!_running || lifecycle != _lifecycle) return;
+            _pollTimer?.Start();
+            _pendingAutomaticRefresh = _refreshing != 0;
+            RequestAutomaticRefresh();
+        });
+    }
+    private void RequestAutomaticRefresh()
+    {
+        if (!_running || _pollTimer is null) return;
+        if (_refreshing != 0) return;
+        if (string.IsNullOrWhiteSpace(_account.Server) && string.IsNullOrWhiteSpace(_account.Username))
+        {
+            Status = MailResources.ConfigureHint;
+            return;
+        }
+        AutomaticRefresh = RefreshAsync();
     }
     public void Stop()
     {
         _running = false;
+        var lifecycle = Interlocked.Increment(ref _lifecycle);
         _events.GetEvent<SettingChangedEvent>().Unsubscribe(SettingsChanged);
         Interlocked.Increment(ref _generation);
         _request?.Cancel();
-        Dispatcher.UIThread.Post(() => { Password = ""; Messages = []; SelectedMessage = null; });
+        void End()
+        {
+            if (lifecycle != _lifecycle) return;
+            _pollTimer?.Stop();
+            _pendingAutomaticRefresh = false;
+            _cacheAccountKey = null;
+            Password = ""; Messages = []; SelectedMessage = null; CacheStatus = "";
+        }
+        if (Dispatcher.UIThread.CheckAccess()) End(); else Dispatcher.UIThread.Post(End);
     }
     private void SettingsChanged(SettingChanged changed)
     {
@@ -72,17 +124,28 @@ public sealed partial class MailService : ObservableObject, IModuleService
         _request?.Cancel();
         void Reset()
         {
-            _account = MailSettings.Read(_settings);
-            _resetting = true;
-            Password = "";
-            _resetting = false;
-            Messages = [];
-            SelectedMessage = null;
-            CredentialStatus = MailResources.CredentialHint;
-            Status = MailResources.ConfigureHint;
-            OnPropertyChanged(nameof(AccountDisplay));
+            ResetAccount(MailSettings.Read(_settings));
+            if (_pollTimer is not null && _running)
+            {
+                _pendingAutomaticRefresh = _refreshing != 0;
+                RequestAutomaticRefresh();
+            }
         }
         if (Dispatcher.UIThread.CheckAccess()) Reset(); else Dispatcher.UIThread.Post(Reset);
+    }
+    private void ResetAccount(MailAccount account)
+    {
+        _account = account;
+        _resetting = true;
+        Password = "";
+        _resetting = false;
+        Messages = [];
+        SelectedMessage = null;
+        _cacheAccountKey = null;
+        CacheStatus = "";
+        CredentialStatus = MailResources.CredentialHint;
+        Status = MailResources.ConfigureHint;
+        OnPropertyChanged(nameof(AccountDisplay));
     }
     partial void OnPasswordChanged(string value)
     {
@@ -123,6 +186,20 @@ public sealed partial class MailService : ObservableObject, IModuleService
         try
         {
             if (!account.IsValid) { Status = MailResources.InvalidConfiguration; return; }
+            if (_cache is not null && _cacheAccountKey != account.Key)
+            {
+                try
+                {
+                    var cached = await Task.Run(() => _cache.ReadAsync(account.Key, request.Token), request.Token);
+                    if (generation != _generation || !_running) return;
+                    _cacheAccountKey = account.Key;
+                    Messages = cached;
+                    CacheStatus = cached.Count == 0 ? "" : string.Format(MailResources.CacheLoaded, cached.Count);
+                }
+                catch (OperationCanceledException) { throw; }
+                catch { if (generation == _generation && _running) CacheStatus = MailResources.CacheReadFailed; }
+                if (generation != _generation || !_running) return;
+            }
             Status = MailResources.Loading;
             if (string.IsNullOrEmpty(password))
             {
@@ -134,10 +211,21 @@ public sealed partial class MailService : ObservableObject, IModuleService
             if (string.IsNullOrEmpty(password)) { Status = MailResources.PasswordRequired; return; }
             var messages = await Task.Run(() => FetchAsync(account, password, request.Token), request.Token);
             if (generation != _generation || !_running) return;
+            _cacheAccountKey = account.Key;
             var previousId = SelectedMessage?.Id;
             Messages = messages;
             SelectedMessage = messages.FirstOrDefault(message => message.Id == previousId);
             Status = messages.Count == 0 ? MailResources.Empty : string.Format(MailResources.Loaded, messages.Count);
+            if (_cache is not null)
+            {
+                try
+                {
+                    await Task.Run(() => _cache.WriteAsync(account.Key, messages, request.Token), request.Token);
+                    if (generation == _generation && _running) CacheStatus = MailResources.CacheSaved;
+                }
+                catch (OperationCanceledException) { throw; }
+                catch { if (generation == _generation && _running) CacheStatus = MailResources.CacheWriteFailed; }
+            }
         }
         catch (OperationCanceledException) { if (_running && generation == _generation) Status = MailResources.Cancelled; }
         catch (MailKit.Security.AuthenticationException) { if (_running && generation == _generation) Status = MailResources.AuthenticationFailed; }
@@ -149,6 +237,11 @@ public sealed partial class MailService : ObservableObject, IModuleService
             _request = null;
             IsBusy = false;
             Interlocked.Exchange(ref _refreshing, 0);
+            if (_running && _pendingAutomaticRefresh)
+            {
+                _pendingAutomaticRefresh = false;
+                Dispatcher.UIThread.Post(RequestAutomaticRefresh);
+            }
         }
     }
 

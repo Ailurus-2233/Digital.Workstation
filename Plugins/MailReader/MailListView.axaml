@@ -9,7 +9,7 @@
             </WrapPanel>
             <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" Height="3" />
         </StackPanel>
-        <TextBlock Grid.Row="1" Margin="0,8" Text="{Binding Status}" TextWrapping="Wrap" />
+        <StackPanel Grid.Row="1" Margin="0,8" Spacing="4"><TextBlock Text="{Binding Status}" TextWrapping="Wrap" /><TextBlock Text="{Binding CacheStatus}" TextWrapping="Wrap" /></StackPanel>
         <ListBox Grid.Row="2" ItemsSource="{Binding Messages}" SelectedItem="{Binding SelectedMessage, Mode=TwoWay}"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListBox.ItemTemplate>

@@ -3,9 +3,9 @@ namespace DigitalWorkstation.MailReader;
 public sealed record MailRun(string Text, bool Bold = false, bool Italic = false, string? Link = null);
 public sealed record MailBlock(string Kind, MailRun[] Runs, int Level = 0, string? ImageId = null, string? Description = null, int HeadingLevel = 0);
 public sealed record MailImage(string Id, string MediaType, byte[] Data);
-public sealed record MailAttachment(string Name, string MediaType, byte[]? Data)
+public sealed record MailAttachment(string Name, string MediaType, byte[]? Data, long? CachedSize = null)
 {
-    public long? Size => Data?.LongLength;
+    public long? Size => Data?.LongLength ?? CachedSize;
 }
 
 // Data only: no MIME handles, controls, URLs to fetch, or executable markup are retained.
@@ -24,6 +24,7 @@ public sealed class MailContent(MailBlock[] blocks, MailImage[] images, MailAtta
             && pair.First.Data.AsSpan().SequenceEqual(pair.Second.Data))
         && Attachments.Length == other.Attachments.Length && Attachments.Zip(other.Attachments).All(pair =>
             pair.First.Name == pair.Second.Name && pair.First.MediaType == pair.Second.MediaType
+            && pair.First.Size == pair.Second.Size
             && (pair.First.Data is null) == (pair.Second.Data is null)
             && (pair.First.Data is null || pair.First.Data.AsSpan().SequenceEqual(pair.Second.Data)));
     public override bool Equals(object? obj) => obj is MailContent other && Equals(other);

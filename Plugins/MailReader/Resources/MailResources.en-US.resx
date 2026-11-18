@@ -39,4 +39,9 @@
 <data name="RemoteImageBlocked" xml:space="preserve"><value>External image blocked</value></data>
 <data name="InlineImageUnavailable" xml:space="preserve"><value>Inline image missing, invalid or unsupported</value></data>
 <data name="LinkFailed" xml:space="preserve"><value>Unable to open link.</value></data>
+<data name="CacheLoaded" xml:space="preserve"><value>Loaded {0} cached messages; readable offline if refresh fails.</value></data>
+<data name="CacheSaved" xml:space="preserve"><value>Local cache updated; messages remain readable if refresh fails.</value></data>
+<data name="CacheReadFailed" xml:space="preserve"><value>Unable to read local cache or its contents are invalid. Try refreshing online.</value></data>
+<data name="CacheWriteFailed" xml:space="preserve"><value>Unable to save cache. Previous disk cache is preserved; new messages are available only in this session.</value></data>
+<data name="AttachmentOffline" xml:space="preserve"><value>Attachment not cached. Refresh online before saving.</value></data>
 </root>

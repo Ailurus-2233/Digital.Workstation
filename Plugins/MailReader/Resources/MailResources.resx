@@ -39,4 +39,9 @@
 <data name="RemoteImageBlocked" xml:space="preserve"><value>外部图片未加载</value></data>
 <data name="InlineImageUnavailable" xml:space="preserve"><value>内嵌图片缺失、无效或不支持</value></data>
 <data name="LinkFailed" xml:space="preserve"><value>无法打开链接。</value></data>
+<data name="CacheLoaded" xml:space="preserve"><value>已载入 {0} 封本地缓存；连接失败时仍可离线阅读。</value></data>
+<data name="CacheSaved" xml:space="preserve"><value>本地缓存已更新；连接失败时仍可阅读。</value></data>
+<data name="CacheReadFailed" xml:space="preserve"><value>本地缓存读取失败或内容无效；可尝试联网刷新。</value></data>
+<data name="CacheWriteFailed" xml:space="preserve"><value>本地缓存保存失败；此前磁盘缓存保留，当前新邮件仅在会话中可用。</value></data>
+<data name="AttachmentOffline" xml:space="preserve"><value>附件未缓存，离线不可下载；请联网刷新后保存。</value></data>
 </root>

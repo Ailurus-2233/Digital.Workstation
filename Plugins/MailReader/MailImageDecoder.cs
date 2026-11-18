@@ -5,6 +5,9 @@ namespace DigitalWorkstation.MailReader;
 
 internal static class MailImageDecoder
 {
+    internal static bool Supports(string mediaType) => mediaType.ToLowerInvariant() is
+        "image/png" or "image/jpeg" or "image/gif" or "image/bmp" or "image/webp";
+
     public static Bitmap Decode(byte[] data)
     {
         if (data.Length > 20 * 1024 * 1024) throw new InvalidDataException("Image exceeds the encoded size limit.");

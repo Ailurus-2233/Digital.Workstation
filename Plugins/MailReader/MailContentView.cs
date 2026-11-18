@@ -89,6 +89,11 @@ public sealed class MailContentView : StackPanel
             var status = Text("");
             var label = $"{attachment.Name} ({attachment.Size?.ToString() ?? "?"} bytes)";
             var button = new Button { Content = Text($"{MailResources.SaveAttachment}: {label}") };
+            if (attachment.Data is null)
+            {
+                button.IsEnabled = false;
+                status.Text = MailResources.AttachmentOffline;
+            }
             button.Click += async (_, _) =>
             {
                 button.IsEnabled = false;
@@ -118,7 +123,7 @@ public sealed class MailContentView : StackPanel
         {
             var image = matches[0];
             // SVG and other active/vector formats are never passed to a rendering engine.
-            if (image.MediaType.ToLowerInvariant() is "image/png" or "image/jpeg" or "image/gif" or "image/bmp" or "image/webp")
+            if (MailImageDecoder.Supports(image.MediaType))
             {
                 try
                 {
