@@ -44,4 +44,5 @@
 <data name="CacheReadFailed" xml:space="preserve"><value>Unable to read local cache or its contents are invalid. Try refreshing online.</value></data>
 <data name="CacheWriteFailed" xml:space="preserve"><value>Unable to save cache. Previous disk cache is preserved; new messages are available only in this session.</value></data>
 <data name="AttachmentOffline" xml:space="preserve"><value>Attachment not cached. Refresh online before saving.</value></data>
+  <data name="ProxyFailed" xml:space="preserve"><value>Proxy connection failed. Check the address, credentials, and proxy availability.</value></data>
 </root>

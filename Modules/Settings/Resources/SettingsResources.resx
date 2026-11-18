@@ -85,4 +85,25 @@
   <data name="PluginEnabled" xml:space="preserve"><value>启用</value></data>
   <data name="PluginDelete" xml:space="preserve"><value>删除</value></data>
   <data name="PluginRemovalPending" xml:space="preserve"><value>重启后删除插件</value></data>
+  <data name="ProxyEnabled" xml:space="preserve"><value>启用网络代理</value></data>
+  <data name="ProxyAddress" xml:space="preserve"><value>代理地址（HTTP 或 SOCKS5）</value></data>
+  <data name="ProxyUsername" xml:space="preserve"><value>代理用户名（可选）</value></data>
+  <data name="ProxyPassword" xml:space="preserve"><value>代理密码</value></data>
+  <data name="ProxyPasswordHint" xml:space="preserve"><value>留空以沿用此地址和用户名已保存的密码</value></data>
+  <data name="ProxyModules" xml:space="preserve"><value>使用代理的模块和插件</value></data>
+  <data name="ProxySave" xml:space="preserve"><value>保存代理设置</value></data>
+  <data name="ProxySaved" xml:space="preserve"><value>已保存，下次连接生效。</value></data>
+  <data name="ProxyInvalidAddress" xml:space="preserve"><value>请输入有效的 HTTP 或 SOCKS5 代理地址，用户名和密码请单独填写。</value></data>
+  <data name="ProxyUsernameRequired" xml:space="preserve"><value>请输入与密码对应的代理用户名。</value></data>
+  <data name="ProxyPasswordRequired" xml:space="preserve"><value>请为此代理地址和用户名输入密码。</value></data>
+  <data name="ProxyStorageUnavailable" xml:space="preserve"><value>无法访问系统凭据存储。请解锁后重新保存。</value></data>
+  <data name="ProxyTestTarget" xml:space="preserve"><value>测试网址</value></data>
+  <data name="ProxyTestButton" xml:space="preserve"><value>测试代理</value></data>
+  <data name="ProxyTesting" xml:space="preserve"><value>正在通过代理连接…</value></data>
+  <data name="ProxyTestSuccess" xml:space="preserve"><value>已通过代理连接到 {0}（HTTP {1}）。</value></data>
+  <data name="ProxyTestHttpError" xml:space="preserve"><value>测试请求返回 HTTP {0}。</value></data>
+  <data name="ProxyTestAuthFailed" xml:space="preserve"><value>代理拒绝了认证，请检查用户名和密码。</value></data>
+  <data name="ProxyTestInvalidTarget" xml:space="preserve"><value>请输入域名或完整的 HTTP、HTTPS 网址。</value></data>
+  <data name="ProxyTestTimeout" xml:space="preserve"><value>连接超时，请检查代理和目标网址后重试。</value></data>
+  <data name="ProxyTestFailed" xml:space="preserve"><value>连接失败，请检查代理地址、凭据和测试网址。</value></data>
 </root>

@@ -44,4 +44,5 @@
 <data name="CacheReadFailed" xml:space="preserve"><value>本地缓存读取失败或内容无效；可尝试联网刷新。</value></data>
 <data name="CacheWriteFailed" xml:space="preserve"><value>本地缓存保存失败；此前磁盘缓存保留，当前新邮件仅在会话中可用。</value></data>
 <data name="AttachmentOffline" xml:space="preserve"><value>附件未缓存，离线不可下载；请联网刷新后保存。</value></data>
+  <data name="ProxyFailed" xml:space="preserve"><value>代理连接失败，请检查代理地址、凭据和服务状态。</value></data>
 </root>

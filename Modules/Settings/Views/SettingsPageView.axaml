@@ -14,6 +14,35 @@
     mc:Ignorable="d">
     <!--  设置页：左侧设置分组树、右侧选中分组的设置项编辑器  -->
     <UserControl.DataTemplates>
+        <DataTemplate DataType="viewmodels:ProxySettingItemModel">
+            <StackPanel Margin="0,12" Spacing="8" MaxWidth="560" HorizontalAlignment="Stretch"
+                        IsEnabled="{Binding !SaveCommand.IsRunning}">
+                <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                <CheckBox Content="{x:Static resource:SettingsResources.ProxyEnabled}" IsChecked="{Binding Enabled}" />
+                <TextBlock Text="{x:Static resource:SettingsResources.ProxyAddress}" />
+                <TextBox Text="{Binding Address}" Watermark="http://127.0.0.1:7890" />
+                <TextBlock Text="{x:Static resource:SettingsResources.ProxyUsername}" />
+                <TextBox Text="{Binding Username}" />
+                <TextBlock Text="{x:Static resource:SettingsResources.ProxyPassword}" />
+                <TextBox Text="{Binding Password}" PasswordChar="●" Watermark="{x:Static resource:SettingsResources.ProxyPasswordHint}" />
+                <TextBlock Text="{x:Static resource:SettingsResources.ProxyTestTarget}" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBox Text="{Binding TestTarget, Mode=TwoWay}" />
+                    <Button Grid.Column="1" Command="{Binding TestConnectionCommand}" Content="{x:Static resource:SettingsResources.ProxyTestButton}" />
+                </Grid>
+                <TextBlock Text="{Binding TestStatus}" TextWrapping="Wrap" IsVisible="{Binding !!TestStatus.Length}" />
+                <TextBlock Text="{x:Static resource:SettingsResources.ProxyModules}" />
+                <ItemsControl ItemsSource="{Binding Modules}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding Module.DisplayName}" IsChecked="{Binding IsSelected}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Command="{Binding SaveCommand}" Content="{x:Static resource:SettingsResources.ProxySave}" />
+                <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+            </StackPanel>
+        </DataTemplate>
         <DataTemplate DataType="viewmodels:StringSettingItemModel">
             <StackPanel Margin="0,6" Spacing="6">
                 <TextBlock Text="{Binding Name}" />

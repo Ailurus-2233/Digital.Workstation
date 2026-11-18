@@ -82,4 +82,5 @@
     <value>English (US)</value>
     <comment>Display name of language setting member EnUS (same convention)</comment>
   </data>
+  <data name="NetworkProxy" xml:space="preserve"><value>Network proxy</value></data>
 </root>

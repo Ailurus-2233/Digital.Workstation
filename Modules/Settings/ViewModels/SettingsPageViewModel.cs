@@ -1,4 +1,5 @@
 using DigitalWorkstation.Core.Services;
+using DigitalWorkstation.Core.Services.Network;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DigitalWorkstation.Core.Abstractions.Settings;
@@ -20,11 +21,13 @@ public sealed partial class SettingsPageViewModel : ObservableObject
 {
     private readonly IReadOnlyList<SettingItemContribution> _contributions;
     private readonly ISettingsService _settings;
+    private readonly NetworkService _network;
 
     public SettingsPageViewModel(ShellContributionCollector collector, ISettingsService settings,
-        IEventAggregator eventAggregator)
+        IEventAggregator eventAggregator, NetworkService network)
     {
         _settings = settings;
+        _network = network;
         _contributions = collector.GetSettingItems();
         Groups = collector.GetSettingGroups()
             .Select(group => new SettingGroupModel(group))
@@ -133,6 +136,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// </summary>
     private SettingItemModel? CreateItemModel(SettingItemContribution contribution)
     {
+        if (contribution.Id == ProxySettings.SettingId) return new ProxySettingItemModel(contribution, _settings, _network);
         if (contribution.ValueType == typeof(string)) return new StringSettingItemModel(contribution, _settings);
         if (contribution.ValueType.IsEnum)
         {

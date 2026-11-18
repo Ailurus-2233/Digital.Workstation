@@ -82,4 +82,5 @@
     <value>English (US)</value>
     <comment>语言设置项成员 EnUS 的显示名（同上约定）</comment>
   </data>
+  <data name="NetworkProxy" xml:space="preserve"><value>网络代理</value></data>
 </root>

@@ -1,4 +1,5 @@
 using DigitalWorkstation.Core.Abstractions.Settings;
+using DigitalWorkstation.Core.Services.Network;
 using DigitalWorkstation.Core.Framework.Resources;
 
 namespace DigitalWorkstation.Core.Framework.Settings;
@@ -11,6 +12,9 @@ namespace DigitalWorkstation.Core.Framework.Settings;
 public static class GeneralSettings
 {
     public const string GroupId = "framework.general";
+
+    [SettingItem(GroupId, typeof(FrameworkResources), "NetworkProxy", Id = ProxySettings.SettingId, Order = 10)]
+    public static ProxySettings NetworkProxy => ProxySettings.Default;
 
     /// <summary>
     ///     语言设置项 Id（默认规则「声明类全名.属性名」），供启动序列等消费方读写

@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Avalonia.Threading;
+using DigitalWorkstation.Core.Abstractions.Network;
+using MailKit.Net.Proxy;
 using DigitalWorkstation.Core.Abstractions.Services;
 using DigitalWorkstation.Core.Abstractions.Settings;
 using DigitalWorkstation.Core.Abstractions.Regions;
@@ -18,6 +20,7 @@ namespace DigitalWorkstation.MailReader;
 public sealed partial class MailService : ObservableObject, IModuleService
 {
     private readonly ISettingsService _settings;
+    private readonly INetworkService? _network;
     private readonly ICredentialStore _credentials;
     private readonly IEventAggregator _events;
     private readonly Func<ImapClient> _createClient;
@@ -35,17 +38,22 @@ public sealed partial class MailService : ObservableObject, IModuleService
     private bool _resetting;
     private MailAccount _account;
 
-    public MailService(ISettingsService settings, ICredentialStore credentials, IEventAggregator events)
+    public MailService(ISettingsService settings, ICredentialStore credentials, IEventAggregator events, INetworkService network)
+        : this(settings, credentials, events, () => new ImapClient { Timeout = 30000 },
+            cache: new MailCache(MailCache.DefaultDirectory), automatic: true, network: network) { }
+
+    internal MailService(ISettingsService settings, ICredentialStore credentials, IEventAggregator events)
         : this(settings, credentials, events, () => new ImapClient { Timeout = 30000 },
             cache: new MailCache(MailCache.DefaultDirectory), automatic: true) { }
 
     internal MailService(ISettingsService settings, ICredentialStore credentials, IEventAggregator events,
         Func<ImapClient> createClient, Func<Pop3Client>? createPop3Client = null,
-        IMailCache? cache = null, bool automatic = false, TimeSpan? pollInterval = null)
+        IMailCache? cache = null, bool automatic = false, TimeSpan? pollInterval = null, INetworkService? network = null)
     {
         _settings = settings;
         _credentials = credentials;
         _events = events;
+        _network = network;
         _createClient = createClient;
         _createPop3Client = createPop3Client ?? (() => new Pop3Client { Timeout = 30000 });
         _cache = cache;
@@ -230,6 +238,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
         catch (OperationCanceledException) { if (_running && generation == _generation) Status = MailResources.Cancelled; }
         catch (MailKit.Security.AuthenticationException) { if (_running && generation == _generation) Status = MailResources.AuthenticationFailed; }
         catch (SslHandshakeException) { if (_running && generation == _generation) Status = MailResources.TlsFailed; }
+        catch (NetworkProxyException) { if (_running && generation == _generation) Status = MailResources.ProxyFailed; }
         catch (Pop3IdentityException) { if (_running && generation == _generation) Status = MailResources.Pop3IdentityFailed; }
         catch { if (_running && generation == _generation) Status = MailResources.ConnectionFailed; }
         finally
@@ -250,7 +259,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
         if (account.Protocol == MailProtocol.POP3) return await FetchPop3Async(account, password, token);
         using var client = _createClient();
         // Default certificate validation remains enabled; StartTls is mandatory, never opportunistic.
-        await client.ConnectAsync(account.Server, int.Parse(account.Port), account.Tls == MailTls.SslOnConnect ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls, token);
+        await ConnectAsync(client, account, token);
         await client.AuthenticateAsync(account.Username, password, token);
         var inbox = client.Inbox;
         await inbox.OpenAsync(FolderAccess.ReadOnly, token);
@@ -271,13 +280,43 @@ public sealed partial class MailService : ObservableObject, IModuleService
         return messages.OrderByDescending(message => message.Date).ToArray();
     }
 
+    private async Task ConnectAsync(IMailService client, MailAccount account, CancellationToken token)
+    {
+        var port = int.Parse(account.Port);
+        var tls = account.Tls == MailTls.SslOnConnect ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+        var route = _network is null ? null : await _network.GetProxyAsync(MailPlugin.Id, token);
+        if (route is null)
+        {
+            await client.ConnectAsync(account.Server, port, tls, token);
+            return;
+        }
+
+        var host = route.Address.IdnHost;
+        var proxyPort = route.Address.Port;
+        IProxyClient proxy = (route.Address.Scheme, route.Credential) switch
+        {
+            ("http", null) => new HttpProxyClient(host, proxyPort),
+            ("http", { } credential) => new HttpProxyClient(host, proxyPort, credential),
+            ("socks5", null) => new Socks5Client(host, proxyPort),
+            ("socks5", { } credential) => new Socks5Client(host, proxyPort, credential),
+            _ => throw new NetworkProxyException()
+        };
+        Stream tunnel;
+        try { tunnel = await proxy.ConnectAsync(account.Server, port, client.Timeout, token); }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
+        catch (Exception) { throw new NetworkProxyException(); }
+
+        // MailKit owns the stream after connecting and validates TLS against the mailbox host.
+        try { await client.ConnectAsync(tunnel, account.Server, port, tls, token); }
+        catch { tunnel.Dispose(); throw; }
+    }
+
     private sealed class Pop3IdentityException : Exception { }
 
     private async Task<IReadOnlyList<MailMessage>> FetchPop3Async(MailAccount account, string password, CancellationToken token)
     {
         using var client = _createPop3Client();
-        await client.ConnectAsync(account.Server, int.Parse(account.Port),
-            account.Tls == MailTls.SslOnConnect ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls, token);
+        await ConnectAsync(client, account, token);
         await client.AuthenticateAsync(account.Username, password, token);
         IList<string> uids;
         try { uids = await client.GetMessageUidsAsync(token); }

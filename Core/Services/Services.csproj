@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
     <ProjectReference Include="../Abstractions/Abstractions.csproj" />
     <ProjectReference Include="../Common/Common.csproj" />
     <InternalsVisibleTo Include="DigitalWorkstation.Core.Framework" />

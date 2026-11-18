@@ -2,6 +2,7 @@ using DigitalWorkstation.Core.Resource;
 namespace DigitalWorkstation.MailReader.Resources;
 public static class MailResources
 {
+    public static string ProxyFailed => ResourceText.Get(typeof(MailResources), nameof(ProxyFailed));
     public static string Protocol => ResourceText.Get(typeof(MailResources), nameof(Protocol));
     public static string Pop3IdentityFailed => ResourceText.Get(typeof(MailResources), nameof(Pop3IdentityFailed));
     public static string Attachments => ResourceText.Get(typeof(MailResources), nameof(Attachments));

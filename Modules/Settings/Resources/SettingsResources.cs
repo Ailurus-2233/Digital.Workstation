@@ -7,6 +7,27 @@ namespace DigitalWorkstation.Settings.Resources;
 /// </summary>
 public static class SettingsResources
 {
+    public static string ProxyTestTarget => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTestTarget));
+    public static string ProxyTestButton => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTestButton));
+    public static string ProxyTesting => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTesting));
+    public static string ProxyTestSuccess => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTestSuccess));
+    public static string ProxyTestHttpError => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTestHttpError));
+    public static string ProxyTestAuthFailed => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTestAuthFailed));
+    public static string ProxyTestInvalidTarget => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTestInvalidTarget));
+    public static string ProxyTestTimeout => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTestTimeout));
+    public static string ProxyTestFailed => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTestFailed));
+    public static string ProxyEnabled => ResourceText.Get(typeof(SettingsResources), nameof(ProxyEnabled));
+    public static string ProxyAddress => ResourceText.Get(typeof(SettingsResources), nameof(ProxyAddress));
+    public static string ProxyUsername => ResourceText.Get(typeof(SettingsResources), nameof(ProxyUsername));
+    public static string ProxyPassword => ResourceText.Get(typeof(SettingsResources), nameof(ProxyPassword));
+    public static string ProxyPasswordHint => ResourceText.Get(typeof(SettingsResources), nameof(ProxyPasswordHint));
+    public static string ProxyModules => ResourceText.Get(typeof(SettingsResources), nameof(ProxyModules));
+    public static string ProxySave => ResourceText.Get(typeof(SettingsResources), nameof(ProxySave));
+    public static string ProxySaved => ResourceText.Get(typeof(SettingsResources), nameof(ProxySaved));
+    public static string ProxyInvalidAddress => ResourceText.Get(typeof(SettingsResources), nameof(ProxyInvalidAddress));
+    public static string ProxyUsernameRequired => ResourceText.Get(typeof(SettingsResources), nameof(ProxyUsernameRequired));
+    public static string ProxyPasswordRequired => ResourceText.Get(typeof(SettingsResources), nameof(ProxyPasswordRequired));
+    public static string ProxyStorageUnavailable => ResourceText.Get(typeof(SettingsResources), nameof(ProxyStorageUnavailable));
     /// <summary>
     ///     设置页需重启设置项被修改后的项级标记文本
     /// </summary>

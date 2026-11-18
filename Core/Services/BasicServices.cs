@@ -1,4 +1,7 @@
 using DigitalWorkstation.Core.Services.Lifecycle;
+using DigitalWorkstation.Core.Abstractions.Network;
+using DigitalWorkstation.Core.Services.Network;
+using DigitalWorkstation.Core.Services.Credentials;
 using DigitalWorkstation.Core.Abstractions.Settings;
 using DigitalWorkstation.Core.Abstractions.WindowManager;
 using DigitalWorkstation.Core.Common;
@@ -34,6 +37,10 @@ public sealed class BasicServices(
         registry.RegisterSingleton<LayoutPersistence>();
         registry.RegisterSingleton<PluginStartupService>();
         registry.RegisterSingleton<SettingsService>();
+        registry.RegisterSingleton<NetworkService>(provider => new NetworkService(
+            provider.Resolve<ISettingsService>(), provider.Resolve<ShellContributionCatalog>(),
+            new PlatformPasswordStore("Digital.Workstation.NetworkProxy", "Digital Workstation Proxy")));
+        registry.RegisterSingleton(typeof(INetworkService), provider => provider.Resolve<NetworkService>());
         registry.RegisterSingleton(typeof(ISettingsService), provider => provider.Resolve<SettingsService>());
         registry.RegisterSingleton<ModuleServiceCatalog>();
         registry.RegisterSingleton<BasicServices>();

@@ -1,5 +1,6 @@
 using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Abstractions.Plugins;
+using DigitalWorkstation.Core.Abstractions.Network;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Framework.Settings;
 using DigitalWorkstation.Core.Services.Contributions;
@@ -8,12 +9,15 @@ using DigitalWorkstation.MailReader.Resources;
 
 namespace DigitalWorkstation.MailReader;
 
-[Plugin("mail-reader", typeof(MailResources), nameof(MailResources.PluginName))]
+[Plugin(MailPlugin.Id, typeof(MailResources), nameof(MailResources.PluginName))]
 public sealed class MailPlugin : IModule
 {
+    public const string Id = "mail-reader";
+
     public void RegisterTypes(IContainerRegistry registry)
     {
         registry.RegisterSingleton<ICredentialStore, PlatformCredentialStore>();
+        registry.RegisterShellContribution<ProxyModule>(_ => new ProxyModule(Id, MailResources.PluginName));
         registry.RegisterModuleService<MailService>();
         registry.RegisterSettings(typeof(MailPlugin).Assembly);
         registry.RegisterToolViews(typeof(MailPlugin).Assembly);
