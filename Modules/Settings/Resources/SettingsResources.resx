@@ -89,8 +89,11 @@
   <data name="ProxyAddress" xml:space="preserve"><value>代理地址（HTTP 或 SOCKS5）</value></data>
   <data name="ProxyUsername" xml:space="preserve"><value>代理用户名（可选）</value></data>
   <data name="ProxyPassword" xml:space="preserve"><value>代理密码</value></data>
-  <data name="ProxyPasswordHint" xml:space="preserve"><value>留空以沿用此地址和用户名已保存的密码</value></data>
+  <data name="ProxyPasswordHint" xml:space="preserve"><value>密码留空时，沿用此地址和用户名已保存的密码。</value></data>
+  <data name="ProxyModulesEmpty" xml:space="preserve"><value>当前没有支持网络代理的模块或插件。</value></data>
   <data name="ProxyModules" xml:space="preserve"><value>使用代理的模块和插件</value></data>
+  <data name="ProxyModuleName" xml:space="preserve"><value>插件或模块名称</value></data>
+  <data name="ProxyModuleEnabled" xml:space="preserve"><value>启用</value></data>
   <data name="ProxySave" xml:space="preserve"><value>保存代理设置</value></data>
   <data name="ProxySaved" xml:space="preserve"><value>已保存，下次连接生效。</value></data>
   <data name="ProxyInvalidAddress" xml:space="preserve"><value>请输入有效的 HTTP 或 SOCKS5 代理地址，用户名和密码请单独填写。</value></data>

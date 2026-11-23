@@ -89,8 +89,11 @@
   <data name="ProxyAddress" xml:space="preserve"><value>Proxy address (HTTP or SOCKS5)</value></data>
   <data name="ProxyUsername" xml:space="preserve"><value>Proxy username (optional)</value></data>
   <data name="ProxyPassword" xml:space="preserve"><value>Proxy password</value></data>
-  <data name="ProxyPasswordHint" xml:space="preserve"><value>Leave blank to use the saved password for this address and username</value></data>
+  <data name="ProxyPasswordHint" xml:space="preserve"><value>Leave the password blank to use the saved password for this address and username.</value></data>
+  <data name="ProxyModulesEmpty" xml:space="preserve"><value>No loaded modules or plugins support the network proxy.</value></data>
   <data name="ProxyModules" xml:space="preserve"><value>Modules and plugins using this proxy</value></data>
+  <data name="ProxyModuleName" xml:space="preserve"><value>Plugin or module name</value></data>
+  <data name="ProxyModuleEnabled" xml:space="preserve"><value>Use</value></data>
   <data name="ProxySave" xml:space="preserve"><value>Save proxy settings</value></data>
   <data name="ProxySaved" xml:space="preserve"><value>Saved. The next connection will use these settings.</value></data>
   <data name="ProxyInvalidAddress" xml:space="preserve"><value>Enter a valid HTTP or SOCKS5 proxy address. Enter credentials separately.</value></data>

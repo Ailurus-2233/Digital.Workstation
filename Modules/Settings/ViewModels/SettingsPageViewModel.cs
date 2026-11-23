@@ -54,7 +54,10 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     ///     右侧编辑区：选中分组的设置项（组内按位次小者靠前）
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ProxyEditor))]
     private IReadOnlyList<SettingItemModel> _items = [];
+
+    public ProxySettingItemModel? ProxyEditor => Items.OfType<ProxySettingItemModel>().FirstOrDefault();
 
     /// <summary>
     ///     顶部横幅是否可见：存在未生效的需重启修改

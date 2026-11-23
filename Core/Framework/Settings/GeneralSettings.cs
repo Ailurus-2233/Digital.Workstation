@@ -5,15 +5,17 @@ using DigitalWorkstation.Core.Framework.Resources;
 namespace DigitalWorkstation.Core.Framework.Settings;
 
 /// <summary>
-///     Framework 预置设置项：「常规 / 语言」（zh-CN / en-US，需重启）。
+///     Framework 预置的常规与网络代理设置。
 ///     声明锚点属性体不会被读取——读写一律经 ISettingsService，扫描只读 attribute 与属性类型
 /// </summary>
 [SettingGroup(GeneralSettings.GroupId, typeof(FrameworkResources), nameof(FrameworkResources.SettingsGeneralGroupName), Order = 0)]
+[SettingGroup(ProxyGroupId, typeof(FrameworkResources), nameof(NetworkProxy))]
 public static class GeneralSettings
 {
     public const string GroupId = "framework.general";
+    private const string ProxyGroupId = "framework.network-proxy";
 
-    [SettingItem(GroupId, typeof(FrameworkResources), "NetworkProxy", Id = ProxySettings.SettingId, Order = 10)]
+    [SettingItem(ProxyGroupId, typeof(FrameworkResources), nameof(NetworkProxy), Id = ProxySettings.SettingId)]
     public static ProxySettings NetworkProxy => ProxySettings.Default;
 
     /// <summary>

@@ -15,32 +15,52 @@
     <!--  设置页：左侧设置分组树、右侧选中分组的设置项编辑器  -->
     <UserControl.DataTemplates>
         <DataTemplate DataType="viewmodels:ProxySettingItemModel">
-            <StackPanel Margin="0,12" Spacing="8" MaxWidth="560" HorizontalAlignment="Stretch"
-                        IsEnabled="{Binding !SaveCommand.IsRunning}">
-                <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+            <StackPanel Margin="0,6" Spacing="16" IsEnabled="{Binding !SaveCommand.IsRunning}">
                 <CheckBox Content="{x:Static resource:SettingsResources.ProxyEnabled}" IsChecked="{Binding Enabled}" />
-                <TextBlock Text="{x:Static resource:SettingsResources.ProxyAddress}" />
-                <TextBox Text="{Binding Address}" Watermark="http://127.0.0.1:7890" />
-                <TextBlock Text="{x:Static resource:SettingsResources.ProxyUsername}" />
-                <TextBox Text="{Binding Username}" />
-                <TextBlock Text="{x:Static resource:SettingsResources.ProxyPassword}" />
-                <TextBox Text="{Binding Password}" PasswordChar="●" Watermark="{x:Static resource:SettingsResources.ProxyPasswordHint}" />
-                <TextBlock Text="{x:Static resource:SettingsResources.ProxyTestTarget}" />
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <TextBox Text="{Binding TestTarget, Mode=TwoWay}" />
-                    <Button Grid.Column="1" Command="{Binding TestConnectionCommand}" Content="{x:Static resource:SettingsResources.ProxyTestButton}" />
-                </Grid>
-                <TextBlock Text="{Binding TestStatus}" TextWrapping="Wrap" IsVisible="{Binding !!TestStatus.Length}" />
-                <TextBlock Text="{x:Static resource:SettingsResources.ProxyModules}" />
-                <ItemsControl ItemsSource="{Binding Modules}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <CheckBox Content="{Binding Module.DisplayName}" IsChecked="{Binding IsSelected}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <Button Command="{Binding SaveCommand}" Content="{x:Static resource:SettingsResources.ProxySave}" />
-                <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+                <StackPanel Spacing="4">
+                    <TextBlock Text="{x:Static resource:SettingsResources.ProxyAddress}" />
+                    <TextBox Text="{Binding Address}" Watermark="http://127.0.0.1:7890" />
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="4">
+                        <TextBlock Text="{x:Static resource:SettingsResources.ProxyUsername}" TextWrapping="Wrap" />
+                        <TextBox Grid.Row="1" Text="{Binding Username}" />
+                        <TextBlock Grid.Column="1" Text="{x:Static resource:SettingsResources.ProxyPassword}" TextWrapping="Wrap" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Password}" PasswordChar="●" />
+                    </Grid>
+                    <TextBlock Text="{x:Static resource:SettingsResources.ProxyPasswordHint}" TextWrapping="Wrap"
+                               FontSize="12" Foreground="{DynamicResource SemiColorText2}" />
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <TextBlock FontWeight="SemiBold" Text="{x:Static resource:SettingsResources.ProxyTestTarget}" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBox Text="{Binding TestTarget, Mode=TwoWay}" />
+                        <Button Grid.Column="1" Command="{Binding TestConnectionCommand}" Content="{x:Static resource:SettingsResources.ProxyTestButton}" />
+                    </Grid>
+                    <TextBlock IsVisible="{Binding !!TestStatus.Length}" Text="{Binding TestStatus}" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <TextBlock FontWeight="SemiBold" Text="{x:Static resource:SettingsResources.ProxyModules}" />
+                    <DataGrid ItemsSource="{Binding Modules}" IsVisible="{Binding HasModules}" IsReadOnly="True"
+                              AutoGenerateColumns="False" CanUserResizeColumns="False" CanUserReorderColumns="False"
+                              CanUserSortColumns="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{x:Static resource:SettingsResources.ProxyModuleName}"
+                                                Width="9*" Binding="{Binding Module.DisplayName}" />
+                            <DataGridTemplateColumn Header="{x:Static resource:SettingsResources.ProxyModuleEnabled}" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  AutomationProperties.Name="{Binding Module.DisplayName}"
+                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBlock IsVisible="{Binding !HasModules}" Text="{x:Static resource:SettingsResources.ProxyModulesEmpty}"
+                               TextWrapping="Wrap" Foreground="{DynamicResource SemiColorText2}" />
+                </StackPanel>
             </StackPanel>
         </DataTemplate>
         <DataTemplate DataType="viewmodels:StringSettingItemModel">
@@ -121,9 +141,16 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </Border>
-                    <ScrollViewer Grid.Column="1" Margin="12,0,0,0">
-                        <ItemsControl ItemsSource="{Binding Items}" />
-                    </ScrollViewer>
+                    <Grid Grid.Column="1" Margin="12,0,0,0" RowDefinitions="*,Auto">
+                        <ScrollViewer>
+                            <ItemsControl ItemsSource="{Binding Items}" />
+                        </ScrollViewer>
+                        <Grid Grid.Row="1" Margin="0,8,0,0" ColumnDefinitions="*,Auto" ColumnSpacing="12"
+                              DataContext="{Binding ProxyEditor}" IsVisible="{Binding ., Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Command="{Binding SaveCommand}" Content="{x:Static resource:SettingsResources.ProxySave}" />
+                        </Grid>
+                    </Grid>
                 </Grid>
             </Grid>
                 </TabItem>

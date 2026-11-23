@@ -19,6 +19,7 @@ public sealed partial class ProxySettingItemModel : SettingItemModel
 {
     private readonly NetworkService _network;
     public IReadOnlyList<ProxyModuleChoice> Modules { get; }
+    public bool HasModules => Modules.Count > 0;
 
     public ProxySettingItemModel(SettingItemContribution contribution, ISettingsService settings, NetworkService network)
         : base(contribution, settings)

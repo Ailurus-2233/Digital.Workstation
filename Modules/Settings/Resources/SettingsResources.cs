@@ -22,6 +22,9 @@ public static class SettingsResources
     public static string ProxyPassword => ResourceText.Get(typeof(SettingsResources), nameof(ProxyPassword));
     public static string ProxyPasswordHint => ResourceText.Get(typeof(SettingsResources), nameof(ProxyPasswordHint));
     public static string ProxyModules => ResourceText.Get(typeof(SettingsResources), nameof(ProxyModules));
+    public static string ProxyModuleName => ResourceText.Get(typeof(SettingsResources), nameof(ProxyModuleName));
+    public static string ProxyModuleEnabled => ResourceText.Get(typeof(SettingsResources), nameof(ProxyModuleEnabled));
+    public static string ProxyModulesEmpty => ResourceText.Get(typeof(SettingsResources), nameof(ProxyModulesEmpty));
     public static string ProxySave => ResourceText.Get(typeof(SettingsResources), nameof(ProxySave));
     public static string ProxySaved => ResourceText.Get(typeof(SettingsResources), nameof(ProxySaved));
     public static string ProxyInvalidAddress => ResourceText.Get(typeof(SettingsResources), nameof(ProxyInvalidAddress));
