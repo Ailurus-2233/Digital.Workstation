@@ -25,7 +25,9 @@ public static class SettingsResources
     public static string ProxyModuleName => ResourceText.Get(typeof(SettingsResources), nameof(ProxyModuleName));
     public static string ProxyModuleEnabled => ResourceText.Get(typeof(SettingsResources), nameof(ProxyModuleEnabled));
     public static string ProxyModulesEmpty => ResourceText.Get(typeof(SettingsResources), nameof(ProxyModulesEmpty));
-    public static string ProxySave => ResourceText.Get(typeof(SettingsResources), nameof(ProxySave));
+    public static string SettingsSave => ResourceText.Get(typeof(SettingsResources), nameof(SettingsSave));
+    public static string SettingsSaved => ResourceText.Get(typeof(SettingsResources), nameof(SettingsSaved));
+    public static string SettingsSaveFailed => ResourceText.Get(typeof(SettingsResources), nameof(SettingsSaveFailed));
     public static string ProxySaved => ResourceText.Get(typeof(SettingsResources), nameof(ProxySaved));
     public static string ProxyInvalidAddress => ResourceText.Get(typeof(SettingsResources), nameof(ProxyInvalidAddress));
     public static string ProxyUsernameRequired => ResourceText.Get(typeof(SettingsResources), nameof(ProxyUsernameRequired));

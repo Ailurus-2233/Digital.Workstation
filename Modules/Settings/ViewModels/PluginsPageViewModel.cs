@@ -1,4 +1,3 @@
-using DigitalWorkstation.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -7,23 +6,44 @@ using DigitalWorkstation.Settings.Resources;
 
 namespace DigitalWorkstation.Settings.ViewModels;
 
-public sealed class PluginsPageViewModel
+public sealed class PluginsPageViewModel : ObservableObject
 {
-    public PluginsPageViewModel(PluginStartupService startup) =>
+    private readonly PluginStartupService _startup;
+
+    public PluginsPageViewModel(PluginStartupService startup)
+    {
+        _startup = startup;
         Plugins = startup.Plugins.Select(plugin => new PluginStartupItemModel(plugin, startup)).ToArray();
+        foreach (var plugin in Plugins)
+            plugin.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(plugin.HasDraft)) OnPropertyChanged(nameof(HasDraft));
+            };
+    }
 
     public IReadOnlyList<PluginStartupItemModel> Plugins { get; }
+    public bool HasDraft => Plugins.Any(plugin => plugin.HasDraft);
+
+    public bool Save()
+    {
+        var drafts = Plugins.Where(plugin => plugin.HasDraft).ToArray();
+        if (!_startup.TrySaveStartupChoices(drafts.ToDictionary(plugin => plugin.Id, plugin => plugin.IsEnabled)))
+            return false;
+        foreach (var plugin in drafts) plugin.FinishSave();
+        return true;
+    }
 }
-public sealed partial class PluginStartupItemModel : ObservableObject
+public sealed partial class PluginStartupItemModel : DraftOptionModel
 {
     private readonly PluginStartupService _startup;
     private readonly PluginStartupInfo _plugin;
+    private bool _savedEnabled;
 
     public PluginStartupItemModel(PluginStartupInfo plugin, PluginStartupService startup)
     {
         _startup = startup;
         _plugin = plugin;
-        _isEnabled = startup.IsEnabled(plugin.Id);
+        _savedEnabled = _isEnabled = startup.IsEnabled(plugin.Id);
     }
 
     public string Id => _plugin.Id;
@@ -42,14 +62,20 @@ public sealed partial class PluginStartupItemModel : ObservableObject
     private void Delete()
     {
         _startup.Remove(Id);
+        IsEnabled = _startup.IsEnabled(Id);
+        FinishSave();
         OnPropertyChanged(nameof(IsRemovalPending));
         OnPropertyChanged(nameof(CanModify));
         DeleteCommand.NotifyCanExecuteChanged();
     }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsPendingRestart))]
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasDraft))]
     private bool _isEnabled;
 
-    partial void OnIsEnabledChanged(bool value) => _startup.SetEnabled(Id, value);
+    public override bool HasDraft => CanModify && IsEnabled != _savedEnabled;
+    protected override void AcceptDraft()
+    {
+        _savedEnabled = IsEnabled;
+        OnPropertyChanged(nameof(IsPendingRestart));
+    }
 }

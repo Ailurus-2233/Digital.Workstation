@@ -24,7 +24,7 @@ public static class GeneralSettings
     public static readonly string LanguageSettingId = $"{typeof(GeneralSettings).FullName}.{nameof(Language)}";
 
     /// <summary>
-    ///     界面语言：修改立即落盘、当前进程界面语言不变、下次启动生效
+    ///     界面语言：在设置页保存后，下次启动生效
     /// </summary>
     [SettingItem(GroupId, typeof(FrameworkResources), nameof(FrameworkResources.SettingsLanguageName),
         DefaultValue = UiLanguage.ZhCN, RequiresRestart = true)]

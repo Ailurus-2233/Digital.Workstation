@@ -1,11 +1,11 @@
 using DigitalWorkstation.Core.Services;
 using DigitalWorkstation.Core.Services.Network;
+using DigitalWorkstation.Core.Services.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DigitalWorkstation.Core.Abstractions.Settings;
 using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Framework.Contributions;
-using DigitalWorkstation.Core.Framework;
 using DigitalWorkstation.Core.Common.Events;
 using DigitalWorkstation.Settings.Resources;
 
@@ -20,21 +20,29 @@ namespace DigitalWorkstation.Settings.ViewModels;
 public sealed partial class SettingsPageViewModel : ObservableObject
 {
     private readonly IReadOnlyList<SettingItemContribution> _contributions;
-    private readonly ISettingsService _settings;
+    private readonly SettingsService _settings;
     private readonly NetworkService _network;
 
-    public SettingsPageViewModel(ShellContributionCollector collector, ISettingsService settings,
-        IEventAggregator eventAggregator, NetworkService network)
+    public SettingsPageViewModel(ShellContributionCollector collector, SettingsService settings,
+        IEventAggregator eventAggregator, NetworkService network, PluginsPageViewModel pluginsPage)
     {
         _settings = settings;
         _network = network;
+        PluginsPage = pluginsPage;
         _contributions = collector.GetSettingItems();
+        var itemsByGroup = _contributions.ToLookup(item => item.Group);
         Groups = collector.GetSettingGroups()
-            .Select(group => new SettingGroupModel(group))
+            .Select(group => new SettingGroupModel(group,
+                itemsByGroup[group.Id].Select(CreateItemModel).OfType<SettingItemModel>().ToArray()))
             .ToArray();
-        // 直接赋字段而不走属性，避免构造期触发一次多余的 Items 重建
+        foreach (var group in Groups)
+            group.PropertyChanged += (_, _) =>
+            {
+                OnPropertyChanged(nameof(HasSettingsDraft));
+                RestartNowCommand.NotifyCanExecuteChanged();
+            };
+        PluginsPage.PropertyChanged += (_, _) => RestartNowCommand.NotifyCanExecuteChanged();
         _selectedGroup = Groups.FirstOrDefault();
-        RebuildItems();
         _hasPendingRestartChanges = ComputeHasPendingRestartChanges();
         eventAggregator.GetEvent<SettingChangedEvent>().Subscribe(OnSettingChanged);
     }
@@ -43,6 +51,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     ///     左侧分组树（组间按位次小者靠前）
     /// </summary>
     public IReadOnlyList<SettingGroupModel> Groups { get; }
+    public bool HasSettingsDraft => Groups.Any(group => group.HasDraft);
 
     /// <summary>
     ///     当前选中的分组
@@ -50,19 +59,68 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     [ObservableProperty]
     private SettingGroupModel? _selectedGroup;
 
-    /// <summary>
-    ///     右侧编辑区：选中分组的设置项（组内按位次小者靠前）
-    /// </summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ProxyEditor))]
-    private IReadOnlyList<SettingItemModel> _items = [];
+    public PluginsPageViewModel PluginsPage { get; }
 
-    public ProxySettingItemModel? ProxyEditor => Items.OfType<ProxySettingItemModel>().FirstOrDefault();
+    [ObservableProperty] private int _selectedTabIndex;
+    [ObservableProperty] private string _saveStatus = "";
+
+    partial void OnSelectedGroupChanged(SettingGroupModel? value) => SaveStatus = "";
+    partial void OnSelectedTabIndexChanged(int value) => SaveStatus = "";
+
+    [RelayCommand]
+    private async Task SaveAsync()
+    {
+        SaveStatus = "";
+        var drafts = Groups.SelectMany(group => group.Items).Where(item => item.HasDraft).ToArray();
+        var changes = drafts.ToDictionary(item => item.Id, item => item.DraftValue);
+        var proxy = drafts.OfType<ProxySettingItemModel>().SingleOrDefault();
+        bool settingsSaved;
+        if (proxy is null)
+        {
+            settingsSaved = _settings.TrySave(changes);
+        }
+        else
+        {
+            var result = await _network.SaveAsync((ProxySettings)changes[proxy.Id]!, proxy.Password ?? "", updated =>
+            {
+                changes[proxy.Id] = updated;
+                return _settings.TrySave(changes);
+            });
+            if (result is not (ProxySaveResult.Saved or ProxySaveResult.ConfigurationWriteFailed))
+            {
+                SelectedTabIndex = 0;
+                SelectedGroup = Groups.First(group => group.Items.Contains(proxy));
+                SaveStatus = result switch
+                {
+                    ProxySaveResult.InvalidAddress => SettingsResources.ProxyInvalidAddress,
+                    ProxySaveResult.UsernameRequired => SettingsResources.ProxyUsernameRequired,
+                    ProxySaveResult.PasswordRequired => SettingsResources.ProxyPasswordRequired,
+                    _ => SettingsResources.ProxyStorageUnavailable
+                };
+                return;
+            }
+            settingsSaved = result == ProxySaveResult.Saved;
+        }
+
+        if (settingsSaved)
+            foreach (var item in drafts) item.FinishSave();
+        var hasPluginDraft = PluginsPage.HasDraft;
+        var pluginsSaved = !hasPluginDraft || PluginsPage.Save();
+        if (!settingsSaved || !pluginsSaved)
+        {
+            SaveStatus = SettingsResources.SettingsSaveFailed;
+            return;
+        }
+        SaveStatus = !hasPluginDraft && drafts is [ProxySettingItemModel]
+            ? SettingsResources.ProxySaved
+            : SettingsResources.SettingsSaved;
+    }
 
     /// <summary>
     ///     顶部横幅是否可见：存在未生效的需重启修改
     /// </summary>
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RestartNowCommand))]
     private bool _hasPendingRestartChanges;
 
     /// <summary>
@@ -78,18 +136,20 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// <summary>
     ///     横幅「立即重启」：强制落盘后启动新进程并退出当前进程
     /// </summary>
-    [RelayCommand]
-    private static void RestartNow()
+    [RelayCommand(CanExecute = nameof(CanRestartNow))]
+    private void RestartNow()
     {
-        ApplicationRestarter.Restart();
+        if (CanRestartNow()) ApplicationRestarter.Restart();
     }
+
+    private bool CanRestartNow() => HasPendingRestartChanges && !HasSettingsDraft && !PluginsPage.HasDraft;
 
     /// <summary>
     ///     设置变更到达：刷新对应项的「重启后生效」标记与横幅可见性（改回启动值时两者随之消失）
     /// </summary>
     private void OnSettingChanged(SettingChanged changed)
     {
-        foreach (var item in Items)
+        foreach (var item in Groups.SelectMany(group => group.Items))
         {
             if (item.Id == changed.SettingId)
             {
@@ -104,33 +164,6 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     {
         return _contributions.Any(
             contribution => contribution.RequiresRestart && _settings.IsPendingRestart(contribution.Id));
-    }
-
-    partial void OnSelectedGroupChanged(SettingGroupModel? value)
-    {
-        RebuildItems();
-    }
-
-    private void RebuildItems()
-    {
-        if (SelectedGroup is null)
-        {
-            Items = [];
-            return;
-        }
-
-        var items = new List<SettingItemModel>();
-        foreach (var contribution in _contributions.Where(
-                     contribution => contribution.Group == SelectedGroup.Key))
-        {
-            var model = CreateItemModel(contribution);
-            if (model is not null)
-            {
-                items.Add(model);
-            }
-        }
-
-        Items = items;
     }
 
     /// <summary>

@@ -15,7 +15,7 @@ public sealed class PluginStartupService
     private readonly HashSet<string> _removals = new(StringComparer.OrdinalIgnoreCase);
     private readonly DebouncedJsonFile<string[]> _removalFile;
     private readonly Lock _gate = new();
-    private readonly Dictionary<string, bool> _values = new(StringComparer.Ordinal);
+    private Dictionary<string, bool> _values = new(StringComparer.Ordinal);
     private readonly Dictionary<string, bool> _startupValues = new(StringComparer.Ordinal);
     private readonly DebouncedJsonFile<Dictionary<string, bool>> _file;
     private readonly Dictionary<string, PluginStartupInfo> _plugins = new(StringComparer.Ordinal);
@@ -69,6 +69,23 @@ public sealed class PluginStartupService
     public bool IsPendingRestart(string id)
     {
         lock (_gate) return _values.GetValueOrDefault(id, true) != _startupValues.GetValueOrDefault(id, true);
+    }
+
+    public bool TrySaveStartupChoices(IReadOnlyDictionary<string, bool> changes)
+    {
+        if (changes.Count == 0) return true;
+        lock (_gate)
+        {
+            var snapshot = new Dictionary<string, bool>(_values, StringComparer.Ordinal);
+            foreach (var (id, enabled) in changes)
+            {
+                if (!_plugins.ContainsKey(id)) throw new ArgumentException("Unknown plugin identity.", nameof(changes));
+                snapshot[id] = enabled;
+            }
+            if (!_file.TrySaveNow(snapshot)) return false;
+            _values = snapshot;
+            return true;
+        }
     }
 
     public void SetEnabled(string id, bool enabled)

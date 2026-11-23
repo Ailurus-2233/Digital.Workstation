@@ -37,7 +37,7 @@ public sealed class SettingsService(IEventAggregator eventAggregator, SettingCat
     /// <summary>
     ///     用户已修改的值（落盘内容的全量内存镜像）
     /// </summary>
-    private readonly Dictionary<string, JsonElement> _values = new(StringComparer.Ordinal);
+    private Dictionary<string, JsonElement> _values = new(StringComparer.Ordinal);
 
     /// <summary>
     ///     进程启动时的生效值快照（Load 载入内容的副本）：「重启后生效」判定的基准，
@@ -137,6 +137,28 @@ public sealed class SettingsService(IEventAggregator eventAggregator, SettingCat
         }
 
         eventAggregator.GetEvent<SettingChangedEvent>().Publish(new SettingChanged(settingId, value));
+    }
+
+    public bool TrySave(IReadOnlyDictionary<string, object?> changes)
+    {
+        if (changes.Count == 0) return true;
+        var contributions = changes.Keys.ToDictionary(id => id, FindContribution);
+        lock (_gate)
+        {
+            var snapshot = new Dictionary<string, JsonElement>(_values, StringComparer.Ordinal);
+            foreach (var (id, value) in changes)
+                snapshot[id] = JsonSerializer.SerializeToElement(value, SerializerOptions);
+            if (!_file.TrySaveNow(snapshot)) return false;
+
+            _values = snapshot;
+            foreach (var id in changes.Keys)
+                TrackPendingRestart(id, snapshot[id], contributions[id]);
+        }
+
+        var changed = eventAggregator.GetEvent<SettingChangedEvent>();
+        foreach (var (id, value) in changes)
+            changed.Publish(new SettingChanged(id, value));
+        return true;
     }
 
     public bool IsPendingRestart(string settingId)

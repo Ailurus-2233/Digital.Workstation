@@ -18,6 +18,7 @@ public sealed partial class ProxyModuleChoice(ProxyModule module, bool selected)
 public sealed partial class ProxySettingItemModel : SettingItemModel
 {
     private readonly NetworkService _network;
+    private ProxySettings _saved;
     public IReadOnlyList<ProxyModuleChoice> Modules { get; }
     public bool HasModules => Modules.Count > 0;
 
@@ -25,21 +26,48 @@ public sealed partial class ProxySettingItemModel : SettingItemModel
         : base(contribution, settings)
     {
         _network = network;
-        var current = network.Configuration;
+        var current = _saved = network.Configuration;
         _enabled = current.Enabled;
         _address = current.Address ?? "";
         _username = current.Username ?? "";
         Modules = network.Modules.OrderBy(module => module.DisplayName)
             .Select(module => new ProxyModuleChoice(module, current.Modules?.Contains(module.Id) == true)).ToArray();
+        foreach (var choice in Modules)
+            choice.PropertyChanged += (_, _) =>
+            {
+                OnPropertyChanged(nameof(ModulesModified));
+                OnPropertyChanged(nameof(HasDraft));
+            };
     }
 
-    [ObservableProperty] private bool _enabled;
-    [ObservableProperty] private string _address;
-    [ObservableProperty] private string _username;
-    [ObservableProperty] private string _password = "";
-    [ObservableProperty] private string _status = "";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(EnabledModified), nameof(HasDraft))] private bool _enabled;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(AddressModified), nameof(HasDraft))] private string _address;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(UsernameModified), nameof(HasDraft))] private string _username;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(PasswordModified), nameof(HasDraft))] private string _password = "";
     [ObservableProperty] private string _testTarget = "google.com";
     [ObservableProperty] private string _testStatus = "";
+
+    public bool EnabledModified => Enabled != _saved.Enabled;
+    private string TrimmedAddress => Address?.Trim() ?? "";
+    private string TrimmedUsername => Username?.Trim() ?? "";
+    public bool AddressModified => TrimmedAddress != (_saved.Address ?? "");
+    public bool UsernameModified => TrimmedUsername != (_saved.Username ?? "");
+    public bool PasswordModified => !string.IsNullOrEmpty(Password);
+    public bool ModulesModified =>
+        Modules.Any(choice => choice.IsSelected != (_saved.Modules?.Contains(choice.Module.Id) == true));
+
+    public override bool HasDraft =>
+        EnabledModified || AddressModified || UsernameModified || PasswordModified || ModulesModified;
+
+    protected override void AcceptDraft()
+    {
+        _saved = _network.Configuration;
+        Password = "";
+        OnPropertyChanged(nameof(EnabledModified));
+        OnPropertyChanged(nameof(AddressModified));
+        OnPropertyChanged(nameof(UsernameModified));
+        OnPropertyChanged(nameof(ModulesModified));
+    }
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
@@ -57,13 +85,14 @@ public sealed partial class ProxySettingItemModel : SettingItemModel
         TestStatus = SettingsResources.ProxyTesting;
         try
         {
-            var result = await _network.TestProxyAsync(TestTarget, Address, Username, Password, token);
+            var target = TestTarget?.Trim() ?? "";
+            var result = await _network.TestProxyAsync(target, TrimmedAddress, TrimmedUsername, Password ?? "", token);
             if (token.IsCancellationRequested) return;
             TestStatus = result switch
             {
                 { Status: HttpStatusCode.ProxyAuthenticationRequired } => SettingsResources.ProxyTestAuthFailed,
                 { Outcome: ProxyTestOutcome.ResponseReceived, Status: >= HttpStatusCode.OK and < HttpStatusCode.BadRequest } =>
-                    string.Format(SettingsResources.ProxyTestSuccess, TestTarget.Trim(), (int)result.Status.Value),
+                    string.Format(SettingsResources.ProxyTestSuccess, target, (int)result.Status.Value),
                 { Status: { } code } => string.Format(SettingsResources.ProxyTestHttpError, (int)code),
                 { Outcome: ProxyTestOutcome.InvalidTarget } => SettingsResources.ProxyTestInvalidTarget,
                 { Outcome: ProxyTestOutcome.InvalidProxy } => SettingsResources.ProxyInvalidAddress,
@@ -76,22 +105,14 @@ public sealed partial class ProxySettingItemModel : SettingItemModel
         catch (OperationCanceledException) when (token.IsCancellationRequested) { }
     }
 
-    [RelayCommand]
-    private async Task SaveAsync()
+    internal override ProxySettings DraftValue
     {
-        // Keep the choices of temporarily unloaded plugins when editing the visible list.
-        var hidden = (_network.Configuration.Modules ?? []).Except(Modules.Select(choice => choice.Module.Id));
-        var selected = hidden.Concat(Modules.Where(choice => choice.IsSelected).Select(choice => choice.Module.Id));
-        var config = new ProxySettings(Enabled, Address.Trim(), Username.Trim(), selected.ToArray());
-        var result = await _network.SaveAsync(config, Password);
-        Status = result switch
+        get
         {
-            ProxySaveResult.Saved => SettingsResources.ProxySaved,
-            ProxySaveResult.InvalidAddress => SettingsResources.ProxyInvalidAddress,
-            ProxySaveResult.UsernameRequired => SettingsResources.ProxyUsernameRequired,
-            ProxySaveResult.PasswordRequired => SettingsResources.ProxyPasswordRequired,
-            _ => SettingsResources.ProxyStorageUnavailable
-        };
-        if (result == ProxySaveResult.Saved) Password = "";
+            // Keep choices for temporarily unloaded modules.
+            var hidden = (_network.Configuration.Modules ?? []).Except(Modules.Select(choice => choice.Module.Id));
+            var selected = hidden.Concat(Modules.Where(choice => choice.IsSelected).Select(choice => choice.Module.Id));
+            return new ProxySettings(Enabled, TrimmedAddress, TrimmedUsername, selected.ToArray());
+        }
     }
 }

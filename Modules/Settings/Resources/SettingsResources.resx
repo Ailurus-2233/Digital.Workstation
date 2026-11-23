@@ -94,8 +94,10 @@
   <data name="ProxyModules" xml:space="preserve"><value>使用代理的模块和插件</value></data>
   <data name="ProxyModuleName" xml:space="preserve"><value>插件或模块名称</value></data>
   <data name="ProxyModuleEnabled" xml:space="preserve"><value>启用</value></data>
-  <data name="ProxySave" xml:space="preserve"><value>保存代理设置</value></data>
-  <data name="ProxySaved" xml:space="preserve"><value>已保存，下次连接生效。</value></data>
+  <data name="SettingsSave" xml:space="preserve"><value>保存</value></data>
+  <data name="SettingsSaved" xml:space="preserve"><value>上次保存成功。</value></data>
+  <data name="SettingsSaveFailed" xml:space="preserve"><value>写入本地配置失败，请重试。</value></data>
+  <data name="ProxySaved" xml:space="preserve"><value>上次保存成功，下次连接生效。</value></data>
   <data name="ProxyInvalidAddress" xml:space="preserve"><value>请输入有效的 HTTP 或 SOCKS5 代理地址，用户名和密码请单独填写。</value></data>
   <data name="ProxyUsernameRequired" xml:space="preserve"><value>请输入与密码对应的代理用户名。</value></data>
   <data name="ProxyPasswordRequired" xml:space="preserve"><value>请为此代理地址和用户名输入密码。</value></data>

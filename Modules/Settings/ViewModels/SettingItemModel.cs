@@ -8,17 +8,13 @@ namespace DigitalWorkstation.Settings.ViewModels;
 
 /// <summary>
 ///     设置页右侧编辑区的设置项模型基类：名称、读写通路与「重启后生效」标记状态。
-///     读写经反射调用 <see cref="ISettingsService" /> 的泛型方法——设置页是类型擦除消费方，
-///     具体值类型只在声明（<see cref="SettingItemContribution.ValueType" />）里
+///     按声明类型从 <see cref="ISettingsService" /> 读取初值。编辑后的值由页面统一提交。
 /// </summary>
 public abstract partial class SettingItemModel(SettingItemContribution contribution, ISettingsService settings)
-    : ObservableObject
+    : DraftOptionModel
 {
     private static readonly MethodInfo GetMethod =
         typeof(ISettingsService).GetMethod(nameof(ISettingsService.Get))!;
-
-    private static readonly MethodInfo SetMethod =
-        typeof(ISettingsService).GetMethod(nameof(ISettingsService.Set))!;
 
     /// <summary>
     ///     设置项 Id（ISettingsService 读写的依据）
@@ -73,11 +69,5 @@ public abstract partial class SettingItemModel(SettingItemContribution contribut
         return GetMethod.MakeGenericMethod(ValueType).Invoke(settings, [Id]);
     }
 
-    /// <summary>
-    ///     写新值：更新内存 + 防抖落盘 + 广播变更事件
-    /// </summary>
-    protected void SetValue(object? value)
-    {
-        SetMethod.MakeGenericMethod(ValueType).Invoke(settings, [Id, value]);
-    }
+    internal abstract object? DraftValue { get; }
 }

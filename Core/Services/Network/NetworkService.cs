@@ -5,6 +5,7 @@ using DigitalWorkstation.Core.Abstractions.Network;
 using DigitalWorkstation.Core.Abstractions.Settings;
 using DigitalWorkstation.Core.Services.Contributions;
 using DigitalWorkstation.Core.Services.Credentials;
+using DigitalWorkstation.Core.Services.Settings;
 
 namespace DigitalWorkstation.Core.Services.Network;
 
@@ -12,6 +13,9 @@ public sealed record ProxySettings(bool Enabled, string Address, string Username
 {
     public const string SettingId = "network.proxy";
     public static ProxySettings Default => new(false, "", "", []);
+
+    // Missing entries read the original address/username key used by older versions.
+    public Dictionary<string, int>? CredentialSlots { get; init; }
 
     internal Uri? ParseAddress() => ParseAddress(Address);
 
@@ -25,7 +29,7 @@ public sealed record ProxySettings(bool Enabled, string Address, string Username
     }
 }
 
-public enum ProxySaveResult { Saved, InvalidAddress, UsernameRequired, PasswordRequired, StorageUnavailable }
+public enum ProxySaveResult { Saved, InvalidAddress, UsernameRequired, PasswordRequired, StorageUnavailable, ConfigurationWriteFailed }
 
 public enum ProxyTestOutcome { ResponseReceived, InvalidTarget, InvalidProxy, UsernameRequired, CredentialsUnavailable, TimedOut, ConnectionFailed }
 public readonly record struct ProxyTestResult(ProxyTestOutcome Outcome, HttpStatusCode? Status = null);
@@ -34,36 +38,65 @@ public sealed class NetworkService(ISettingsService settings, ShellContributionC
     : INetworkService, IDisposable
 {
     private readonly Lock _httpGate = new();
+    private readonly SemaphoreSlim _saveGate = new(1);
+    private readonly SemaphoreSlim _credentialAccess = new(1);
     private readonly HttpTransport _direct = new(null);
     private HttpTransport? _proxied;
     private bool _disposed;
     public ProxySettings Configuration => settings.Get<ProxySettings>(ProxySettings.SettingId) ?? ProxySettings.Default;
     public IReadOnlyList<ProxyModule> Modules => catalog.Get<ProxyModule>().DistinctBy(module => module.Id).ToArray();
 
-    public async Task<ProxySaveResult> SaveAsync(ProxySettings configuration, string password)
+    public Task<ProxySaveResult> SaveAsync(ProxySettings configuration, string password) =>
+        SaveAsync(configuration, password, updated =>
+        {
+            if (settings is SettingsService store)
+                return store.TrySave(new Dictionary<string, object?> { [ProxySettings.SettingId] = updated });
+            settings.Set(ProxySettings.SettingId, updated);
+            return true;
+        });
+
+    public async Task<ProxySaveResult> SaveAsync(ProxySettings configuration, string password, Func<ProxySettings, bool> commit)
+    {
+        await _saveGate.WaitAsync();
+        try { return await SaveCoreAsync(configuration, password, commit); }
+        finally { _saveGate.Release(); }
+    }
+
+    private async Task<ProxySaveResult> SaveCoreAsync(ProxySettings configuration, string password, Func<ProxySettings, bool> commit)
     {
         var address = configuration.ParseAddress();
         if (address is null && (configuration.Enabled || configuration.Address.Length > 0))
             return ProxySaveResult.InvalidAddress;
         if (password.Length != 0 && configuration.Username.Length == 0) return ProxySaveResult.UsernameRequired;
+        var slots = Configuration.CredentialSlots;
         if (configuration.Username.Length > 0 && (configuration.Enabled || password.Length > 0))
         {
             if (address is null) return ProxySaveResult.InvalidAddress;
-            var key = CredentialKey(address, configuration.Username);
+            var identity = CredentialKey(address, configuration.Username);
+            var slot = slots?.GetValueOrDefault(identity) ?? 0;
             if (password.Length > 0)
             {
-                if (!await passwords.SaveAsync(key, password, CancellationToken.None))
-                    return ProxySaveResult.StorageUnavailable;
+                // Stage into the inactive slot. Only the committed JSON selects the new
+                // password, even if the write fails or the process exits between stores.
+                var next = slot == 1 ? 2 : 1;
+                await _credentialAccess.WaitAsync();
+                try
+                {
+                    if (!await passwords.SaveAsync(SlotKey(identity, next), password, CancellationToken.None))
+                        return ProxySaveResult.StorageUnavailable;
+                }
+                finally { _credentialAccess.Release(); }
+                slots = new Dictionary<string, int>(slots ?? []) { [identity] = next };
             }
             else
             {
-                var stored = await passwords.ReadAsync(key, CancellationToken.None);
+                var stored = await passwords.ReadAsync(SlotKey(identity, slot), CancellationToken.None);
                 if (!stored.SecureStorageAvailable) return ProxySaveResult.StorageUnavailable;
                 if (string.IsNullOrEmpty(stored.Password)) return ProxySaveResult.PasswordRequired;
             }
         }
-        settings.Set(ProxySettings.SettingId, configuration);
-        return ProxySaveResult.Saved;
+        return commit(configuration with { CredentialSlots = slots })
+            ? ProxySaveResult.Saved : ProxySaveResult.ConfigurationWriteFailed;
     }
 
     public async Task<NetworkProxy?> GetProxyAsync(string moduleId, CancellationToken token = default)
@@ -83,9 +116,18 @@ public sealed class NetworkService(ISettingsService settings, ShellContributionC
         {
             if (password.Length == 0)
             {
-                var stored = await passwords.ReadAsync(CredentialKey(address, username), token).ConfigureAwait(false);
-                password = stored.Password ?? throw new NetworkProxyException();
-                if (password.Length == 0) throw new NetworkProxyException();
+                var identity = CredentialKey(address, username);
+                // A later rotation can reuse an old slot. Resolve the active key and
+                // finish its read before allowing that slot to be overwritten.
+                await _credentialAccess.WaitAsync(token).ConfigureAwait(false);
+                try
+                {
+                    var key = SlotKey(identity, Configuration.CredentialSlots?.GetValueOrDefault(identity) ?? 0);
+                    var stored = await passwords.ReadAsync(key, token).ConfigureAwait(false);
+                    password = stored.Password ?? throw new NetworkProxyException();
+                    if (password.Length == 0) throw new NetworkProxyException();
+                }
+                finally { _credentialAccess.Release(); }
             }
             credentials = new NetworkCredential(username, password);
         }
@@ -123,6 +165,9 @@ public sealed class NetworkService(ISettingsService settings, ShellContributionC
 
     private static string CredentialKey(Uri address, string username) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"network.proxy\n{address.AbsoluteUri}\n{username}")));
+
+    private static string SlotKey(string identity, int slot) => slot == 0 ? identity :
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{identity}:{slot}")));
 
     public async Task<HttpResponseMessage> SendAsync(string moduleId, HttpRequestMessage request, CancellationToken token = default)
     {

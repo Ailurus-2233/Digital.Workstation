@@ -36,6 +36,20 @@ internal sealed class DebouncedJsonFile<T>(string path, JsonSerializerOptions op
         }
     }
 
+    // The candidate already includes earlier scheduled changes. Supersede their
+    // pending snapshot only on success; never retry a rejected draft on exit.
+    public bool TrySaveNow(T snapshot)
+    {
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (!Write(snapshot)) return false;
+            _pending = null;
+            _timer?.Change(Timeout.Infinite, Timeout.Infinite);
+            return true;
+        }
+    }
+
     public void Delete()
     {
         lock (_gate)
@@ -79,7 +93,13 @@ internal sealed class DebouncedJsonFile<T>(string path, JsonSerializerOptions op
     private bool SavePending()
     {
         if (_pending is null) return true;
+        if (!Write(_pending)) return false;
+        _pending = null;
+        return true;
+    }
 
+    private bool Write(T snapshot)
+    {
         string? temporaryPath = null;
         try
         {
@@ -87,18 +107,16 @@ internal sealed class DebouncedJsonFile<T>(string path, JsonSerializerOptions op
             temporaryPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
             using (var stream = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
             {
-                JsonSerializer.Serialize(stream, _pending, options);
+                JsonSerializer.Serialize(stream, snapshot, options);
                 stream.Flush(flushToDisk: true);
             }
 
             // 完整写入同目录临时文件后再替换；序列化或写入失败时旧配置仍可读取。
             File.Move(temporaryPath, path, overwrite: true);
-            _pending = null;
             return true;
         }
         catch (Exception exception)
         {
-            // Timer 回调不能让异常逃逸；保留快照，下一次保存或退出时仍可重试。
             Logger.Warning($"Failed to write configuration ({exception.GetType().Name}): {path}",
                 nameof(ConfigurationPersistence));
             return false;

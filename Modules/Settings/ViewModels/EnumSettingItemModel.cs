@@ -7,10 +7,11 @@ namespace DigitalWorkstation.Settings.ViewModels;
 /// <summary>
 ///     枚举设置项的编辑器模型（enum → 下拉框）：
 ///     选项为枚举全部成员，显示名在贡献指定的资源所有者中按「设置项名称键 + 成员名」查找，
-///     缺键回退完整组合键本身；改选即写入 ISettingsService（落盘 + 广播变更事件）
+///     缺键回退完整组合键本身。保存时提交选中的成员。
 /// </summary>
 public sealed partial class EnumSettingItemModel : SettingItemModel
 {
+    private EnumOption? _savedOption;
     /// <summary>
     ///     下拉框选项：枚举成员值 + 本地化显示名
     /// </summary>
@@ -24,8 +25,8 @@ public sealed partial class EnumSettingItemModel : SettingItemModel
             .Select(value => new EnumOption(value,
                 ResourceText.Get(contribution.ResourceType, $"{NameKey}{Enum.GetName(ValueType, value)}")))
             .ToArray();
-        // 直接赋字段而不走属性，避免把「读取当前值」误触发成一次写入
-        _selectedOption = Options.FirstOrDefault(option => Equals(option.Value, GetValue()));
+        var current = GetValue();
+        _savedOption = _selectedOption = Options.FirstOrDefault(option => Equals(option.Value, current));
     }
 
     /// <summary>
@@ -33,17 +34,11 @@ public sealed partial class EnumSettingItemModel : SettingItemModel
     /// </summary>
     public IReadOnlyList<EnumOption> Options { get; }
 
-    [ObservableProperty]
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasDraft))]
     private EnumOption? _selectedOption;
 
-    partial void OnSelectedOptionChanged(EnumOption? value)
-    {
-        // 与当前值相同不写入：不把「未修改」误落成一条用户修改记录
-        if (value is null || Equals(value.Value, GetValue()))
-        {
-            return;
-        }
+    public override bool HasDraft => SelectedOption is not null && SelectedOption != _savedOption;
+    protected override void AcceptDraft() => _savedOption = SelectedOption;
 
-        SetValue(value.Value);
-    }
+    internal override object? DraftValue => SelectedOption?.Value;
 }

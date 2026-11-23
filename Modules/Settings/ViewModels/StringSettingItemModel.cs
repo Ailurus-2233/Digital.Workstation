@@ -6,13 +6,13 @@ namespace DigitalWorkstation.Settings.ViewModels;
 /// <summary>Ordinary text settings only; secrets must use a separate credential store.</summary>
 public sealed partial class StringSettingItemModel : SettingItemModel
 {
+    private string _savedValue;
     public StringSettingItemModel(SettingItemContribution contribution, ISettingsService settings) : base(contribution, settings)
     {
-        _value = (string?)GetValue() ?? "";
+        _savedValue = _value = (string?)GetValue() ?? "";
     }
-    [ObservableProperty] private string _value;
-    partial void OnValueChanged(string value)
-    {
-        if (!Equals(value, GetValue())) SetValue(value);
-    }
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasDraft))] private string _value;
+    public override bool HasDraft => Value != _savedValue;
+    protected override void AcceptDraft() => _savedValue = Value;
+    internal override string DraftValue => Value;
 }
