@@ -26,4 +26,7 @@ public sealed class SettingGroupContribution
     ///     分组在设置页分组树中的排序权重，小者靠前；同 Id 多处声明取最小值
     /// </summary>
     public required int Order { get; init; }
+
+    public Func<object>? CreatePanel { get; init; }
 }
+

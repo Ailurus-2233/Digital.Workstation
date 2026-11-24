@@ -148,7 +148,10 @@
                             </ListBox>
                         </Border>
                         <ScrollViewer Grid.Column="1" Margin="12,0,0,0">
-                            <ItemsControl ItemsSource="{Binding SelectedGroup.Items}" Margin="0,0,0,64" />
+                            <StackPanel Margin="0,0,0,64">
+                                <ItemsControl ItemsSource="{Binding SelectedGroup.Items}" />
+                                <ContentControl Content="{Binding SelectedGroup.Panel}" />
+                            </StackPanel>
                         </ScrollViewer>
                     </Grid>
                 </Grid>
@@ -171,3 +174,4 @@
         </Border>
     </Grid>
 </UserControl>
+

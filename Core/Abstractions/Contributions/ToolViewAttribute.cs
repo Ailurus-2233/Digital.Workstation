@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Abstractions.Contributions;
+namespace DigitalWorkstation.Core.Abstractions.Contributions;
 
 /// <summary>
 ///     工具视图默认栖身的 Bar
@@ -48,6 +48,8 @@ public sealed class ToolViewAttribute(string id, Type resourceType, string title
     ///     图标的 StreamGeometry path 字符串（取 Icons 常量）；null = 无图标
     /// </summary>
     public string? Icon { get; set; }
+
+    public string? MainViewId { get; set; }
 
     /// <summary>
     ///     默认栖身的 Bar

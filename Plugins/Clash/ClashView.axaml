@@ -1,0 +1,53 @@
+<UserControl xmlns:r="using:DigitalWorkstation.Clash" xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="DigitalWorkstation.Clash.ClashView">
+  <UserControl.Styles>
+    <Style Selector="Button.cardAction"><Setter Property="Padding" Value="5"/><Setter Property="MinWidth" Value="26"/><Setter Property="MinHeight" Value="28"/></Style>
+    <Style Selector="Button.cardAction PathIcon"><Setter Property="Height" Value="14"/><Setter Property="Width" Value="14"/></Style>
+  </UserControl.Styles>
+  <Grid Margin="8" RowDefinitions="Auto,Auto,Auto,*">
+    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="4" Margin="0,0,0,6">
+      <ToggleButton Name="Power" Click="Toggle" AutomationProperties.Name="{x:Static r:ClashResources.Power}">
+        <PathIcon Width="16" Height="16" Data="M11 2h2v10h-2z M7 4l1 1.8a7 7 0 1 0 8 0L17 4a9 9 0 1 1-10 0z"/>
+      </ToggleButton>
+      <Button Grid.Column="2" Click="Add" ToolTip.Tip="{x:Static r:ClashResources.Add}" AutomationProperties.Name="{x:Static r:ClashResources.Add}">
+        <PathIcon Width="16" Height="16" Data="M10 2h4v8h8v4h-8v8h-4v-8H2v-4h8z"/>
+      </Button>
+      <Button Grid.Column="3" Name="RefreshButton" Click="RefreshAll" ToolTip.Tip="{x:Static r:ClashResources.RefreshAll}" AutomationProperties.Name="{x:Static r:ClashResources.RefreshAll}">
+        <PathIcon Width="16" Height="16" Data="M17.65 6.35A8 8 0 1 0 20 14h-2.1a6 6 0 1 1-1.67-6.23L13 11h8V3z"/>
+      </Button>
+    </Grid>
+    <StackPanel Grid.Row="1" Name="Editor" IsVisible="False" Spacing="5" Margin="0,6">
+      <TextBlock Name="EditorTitle" FontWeight="SemiBold"/>
+      <TextBox AutomationProperties.Name="{x:Static r:ClashResources.SubscriptionName}" Name="SourceName" Watermark="{x:Static r:ClashResources.SubscriptionName}"/>
+      <TextBox AutomationProperties.Name="{x:Static r:ClashResources.SubscriptionUrl}" Name="SourceUrl" Watermark="{x:Static r:ClashResources.SubscriptionUrl}" PasswordChar="●"/>
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <Button Content="{x:Static r:ClashResources.Save}" Click="Save"/>
+        <Button Content="{x:Static r:ClashResources.Cancel}" Click="Cancel"/>
+      </StackPanel>
+    </StackPanel>
+    <TextBlock Grid.Row="2" Name="Feedback" TextWrapping="Wrap"/>
+    <ScrollViewer Grid.Row="3">
+      <ItemsControl Name="Cards">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Padding="10" Margin="0,4" BorderThickness="1" CornerRadius="6" BorderBrush="{DynamicResource SemiColorBorder}">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                  <Button Click="Refresh" Classes="cardAction" ToolTip.Tip="{x:Static r:ClashResources.Refresh}" AutomationProperties.Name="{x:Static r:ClashResources.Refresh}">
+                    <PathIcon Data="M17.65 6.35A8 8 0 1 0 20 14h-2.1a6 6 0 1 1-1.67-6.23L13 11h8V3z"/>
+                  </Button>
+                  <Button Click="Edit" Classes="cardAction" ToolTip.Tip="{x:Static r:ClashResources.Edit}" AutomationProperties.Name="{x:Static r:ClashResources.Edit}">
+                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75z"/>
+                  </Button>
+                  <Button Click="Remove" Classes="cardAction" ToolTip.Tip="{x:Static r:ClashResources.Remove}" AutomationProperties.Name="{x:Static r:ClashResources.Remove}">
+                    <PathIcon Data="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6z M19 4h-3.5l-1-1h-5l-1 1H5v2h14z"/>
+                  </Button>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

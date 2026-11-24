@@ -25,11 +25,12 @@ public static class SettingRegistration
             foreach (var group in type.GetCustomAttributes<SettingGroupAttribute>())
             {
                 registry.RegisterShellContribution<SettingGroupContribution>(
-                    _ => new SettingGroupContribution
+                    provider => new SettingGroupContribution
                     {
                         Id = group.Id,
                         ResourceType = group.ResourceType,
                         Name = group.Name,
+                        CreatePanel = group.PanelType is { } panel ? () => provider.Resolve(panel) : null,
                         Order = group.Order
                     });
             }
@@ -74,3 +75,4 @@ public static class SettingRegistration
         }
     }
 }
+

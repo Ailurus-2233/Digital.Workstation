@@ -1,4 +1,4 @@
-﻿namespace DigitalWorkstation.Core.Abstractions.Contributions;
+namespace DigitalWorkstation.Core.Abstractions.Contributions;
 
 /// <summary>
 ///     工具视图（ToolView）的贡献元数据：由 Framework 侧 RegisterToolViews
@@ -39,7 +39,10 @@ public sealed class ToolViewContribution
     public required bool AllowMove { get; init; }
 
     /// <summary>
-    ///     内容视图类型，经容器解析以支持依赖注入
+    ///     选中工具时同步打开的主视图标识
     /// </summary>
+    public string? MainViewId { get; init; }
+
+    /// <summary>内容视图类型，经容器解析以支持依赖注入。</summary>
     public required Type ViewType { get; init; }
 }

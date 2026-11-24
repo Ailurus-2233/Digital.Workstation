@@ -1,0 +1,62 @@
+using DigitalWorkstation.Core.Resource;
+
+namespace DigitalWorkstation.Clash;
+
+public static class ClashResources
+{
+    internal static string Text(string key) => ResourceText.Get(typeof(ClashResources), key);
+    public static string Title => Text(nameof(Title));
+    public static string Port => Text(nameof(Port));
+    public static string Power => Text(nameof(Power));
+    public static string Add => Text(nameof(Add));
+    public static string RefreshAll => Text(nameof(RefreshAll));
+    public static string SubscriptionName => Text(nameof(SubscriptionName));
+    public static string SubscriptionUrl => Text(nameof(SubscriptionUrl));
+    public static string Save => Text(nameof(Save));
+    public static string Cancel => Text(nameof(Cancel));
+    public static string Refresh => Text(nameof(Refresh));
+    public static string Edit => Text(nameof(Edit));
+    public static string Remove => Text(nameof(Remove));
+    public static string PortRange => Text(nameof(PortRange));
+    public static string InvalidPort => Text(nameof(InvalidPort));
+    public static string DownloadFirst => Text(nameof(DownloadFirst));
+    public static string NodeRemoved => Text(nameof(NodeRemoved));
+    public static string InvalidSubscription => Text(nameof(InvalidSubscription));
+    public static string SelectFirst => Text(nameof(SelectFirst));
+    public static string LoadFirst => Text(nameof(LoadFirst));
+    public static string Stop => Text(nameof(Stop));
+    public static string Start => Text(nameof(Start));
+    public static string Busy => Text(nameof(Busy));
+    public static string All => Text(nameof(All));
+    public static string Untested => Text(nameof(Untested));
+    public static string Available => Text(nameof(Available));
+    public static string TimedOut => Text(nameof(TimedOut));
+    public static string Failed => Text(nameof(Failed));
+    public static string AllSources => Text(nameof(AllSources));
+    public static string Core => Text(nameof(Core));
+    public static string Download => Text(nameof(Download));
+    public static string Update => Text(nameof(Update));
+    public static string Delete => Text(nameof(Delete));
+    public static string StartFailed => Text(nameof(StartFailed));
+    public static string Exited => Text(nameof(Exited));
+    public static string EmptySource => Text(nameof(EmptySource));
+    public static string PortUnavailable => Text(nameof(PortUnavailable));
+    public static string Search => Text(nameof(Search));
+    public static string Source => Text(nameof(Source));
+    public static string State => Text(nameof(State));
+    public static string Measure => Text(nameof(Measure));
+    public static string Name => Text(nameof(Name));
+    public static string UseNode => Text(nameof(UseNode));
+    public static string Updated => Text(nameof(Updated));
+    public static string Latency => Text(nameof(Latency));
+    public static string Missing => Text(nameof(Missing));
+    public static string ReadingVersion => Text(nameof(ReadingVersion));
+    public static string Installed => Text(nameof(Installed));
+    public static string UnknownVersion => Text(nameof(UnknownVersion));
+    public static string UnreadableVersion => Text(nameof(UnreadableVersion));
+    public static string UnsupportedArch => Text(nameof(UnsupportedArch));
+    public static string NoAsset => Text(nameof(NoAsset));
+    public static string MissingDigest => Text(nameof(MissingDigest));
+    public static string InvalidDigest => Text(nameof(InvalidDigest));
+    public static string Fallback => Text(nameof(Fallback));
+}

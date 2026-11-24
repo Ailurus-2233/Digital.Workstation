@@ -15,6 +15,7 @@ public sealed class SettingGroupModel : ObservableObject
         Name = contribution.ResourceType is { } resourceType
             ? ResourceText.Get(resourceType, contribution.Name)
             : contribution.Name;
+        panel = new Lazy<object?>(() => contribution.CreatePanel?.Invoke());
         Items = items;
         foreach (var item in items)
             item.PropertyChanged += (_, e) =>
@@ -22,6 +23,9 @@ public sealed class SettingGroupModel : ObservableObject
                 if (e.PropertyName == nameof(item.HasDraft)) OnPropertyChanged(nameof(HasDraft));
             };
     }
+
+    private readonly Lazy<object?> panel;
+    public object? Panel => panel.Value;
 
     public bool HasDraft => Items.Any(item => item.HasDraft);
     public IReadOnlyList<SettingItemModel> Items { get; }
@@ -36,3 +40,4 @@ public sealed class SettingGroupModel : ObservableObject
     /// </summary>
     public string Name { get; }
 }
+

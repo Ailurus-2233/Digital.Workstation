@@ -54,6 +54,7 @@ public static class ToolViewRegistration
                 Order = attribute.Order,
                 Placement = attribute.Default,
                 AllowMove = attribute.AllowMove,
+                MainViewId = attribute.MainViewId,
                 ViewType = viewType
             };
             registry.RegisterShellContribution<ToolViewContribution>( _ => metadata);

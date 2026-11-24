@@ -185,6 +185,9 @@ public partial class MainWindowViewModel : ObservableObject
         {
             _mainViewsById[mainView.Id] = mainView;
         }
+        if (State.SideBar.Visible && State.SelectedActivity is { } selected &&
+            _contributionsById.TryGetValue(selected, out var tool) && tool.MainViewId is { } target)
+            OpenMainView(target);
         foreach (var submenu in MenuTreeBuilder.Build(_collector.GetMenuItems()))
         {
             MenuBarItems.Add(MenuItemViewModel.FromSubmenu(submenu, isTopLevel: true));
@@ -217,7 +220,14 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void SelectActivity(NavigationItemViewModel item)
     {
+        var target = item.Contribution.MainViewId;
+        if (target != null && State.MainContent.ActiveView != target && State.SelectedActivity == item.Id && State.SideBar.Visible)
+        {
+            OpenMainView(target);
+            return;
+        }
         ApplyLayout(State.SelectActivity(item.Id));
+        if (target != null && State.SideBar.Visible) OpenMainView(target);
     }
 
     /// <summary>
@@ -286,6 +296,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         ApplyLayout(next);
+        if (tab.Contribution.MainViewId is { } target) OpenMainView(target);
     }
 
     /// <summary>
@@ -301,6 +312,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         ApplyLayout(next);
+        if (tab.Contribution.MainViewId is { } target) OpenMainView(target);
     }
 
     /// <summary>

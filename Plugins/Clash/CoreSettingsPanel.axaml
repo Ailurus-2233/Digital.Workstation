@@ -1,0 +1,15 @@
+<UserControl xmlns:r="using:DigitalWorkstation.Clash" xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DigitalWorkstation.Clash.CoreSettingsPanel">
+  <Grid Margin="0,12" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12">
+    <StackPanel VerticalAlignment="Center">
+      <TextBlock Text="{x:Static r:ClashResources.Core}" FontWeight="SemiBold" />
+      <TextBlock Name="VersionText" TextWrapping="Wrap" />
+    </StackPanel>
+    <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+      <Button Name="Download" Content="{x:Static r:ClashResources.Download}" Click="Install" />
+      <Button Name="UpdateButton" Content="{x:Static r:ClashResources.Update}" Click="Install" />
+      <Button Name="DeleteButton" Content="{x:Static r:ClashResources.Delete}" Click="Remove" />
+    </StackPanel>
+    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Name="Feedback" TextWrapping="Wrap" />
+  </Grid>
+</UserControl>

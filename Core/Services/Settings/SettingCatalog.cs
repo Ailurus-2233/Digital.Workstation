@@ -47,6 +47,7 @@ public sealed class SettingCatalog(ShellContributionCatalog contributions)
                 return new SettingGroupContribution
                 {
                     Id = group.Key, ResourceType = first.ResourceType, Name = first.Name,
+                    CreatePanel = group.Select(g => g.CreatePanel).FirstOrDefault(p => p != null),
                     Order = group.Min(declaration => declaration.Order)
                 };
             }).ToList();
@@ -57,3 +58,4 @@ public sealed class SettingCatalog(ShellContributionCatalog contributions)
         return groups.OrderBy(group => group.Order).ThenBy(group => group.Id, StringComparer.Ordinal).ToArray();
     }
 }
+
