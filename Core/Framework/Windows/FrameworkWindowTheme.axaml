@@ -71,7 +71,7 @@
             </Border>
         </DataTemplate>
 
-        <!--  MainContent：单视图切换；默认显示 shell 内置空状态页；VS Code 式圆角卡片  -->
+        <!--  中央标签栏与当前页共用同一布局模板。 -->
         <DataTemplate x:Key="ShellMainContent">
             <Border
                 Background="{DynamicResource SemiColorBackground0}"
@@ -79,7 +79,44 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 Margin="{x:Static layout:ShellLayoutMetrics.CardMargin}">
-                <ContentControl Content="{Binding MainContent}" />
+                <Grid RowDefinitions="Auto,*">
+                    <ListBox ItemsSource="{Binding MainTabs}" SelectedItem="{Binding ActiveMainTab, Mode=TwoWay}"
+                             IsVisible="{Binding !!MainTabs.Count}" SelectionMode="Single"
+                             Background="Transparent" BorderThickness="0" Padding="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="ContextMenu" Value="{Binding ContextMenu}" />
+                                <Setter Property="Height" Value="28" />
+                                <Setter Property="MinHeight" Value="0" />
+                                <Setter Property="Padding" Value="12,0,4,0" />
+                                <Setter Property="VerticalContentAlignment" Value="Center" />
+                            </Style>
+                        </ListBox.Styles>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding Title}" MaxWidth="180" TextTrimming="CharacterEllipsis"
+                                               ToolTip.Tip="{Binding Title}" VerticalAlignment="Center" />
+                                    <TextBlock Text="●" FontSize="9" VerticalAlignment="Center"
+                                               IsVisible="{Binding Content.(layout:TabEditing.Editor).HasUnsavedChanges, FallbackValue=False}"
+                                               ToolTip.Tip="{Binding $parent[ListBox].DataContext.UnsavedChangesTitle}"
+                                               AutomationProperties.Name="{Binding $parent[ListBox].DataContext.UnsavedChangesTitle}" />
+                                    <Button Classes="tab-close" Width="22" Height="22" MinHeight="0"
+                                            AutomationProperties.Name="{Binding $parent[ListBox].DataContext.CloseTabTitle}"
+                                            ToolTip.Tip="{Binding $parent[ListBox].DataContext.CloseTabTitle}"
+                                            Command="{Binding $parent[ListBox].DataContext.CloseMainTabCommand}"
+                                            CommandParameter="{Binding}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <ContentControl Grid.Row="1" Content="{Binding MainContent}" />
+                </Grid>
             </Border>
         </DataTemplate>
 
@@ -564,6 +601,21 @@
     </Style>
     <Style Selector="GridSplitter:dragging">
         <Setter Property="Background" Value="{DynamicResource ChromeSashHoverBrush}" />
+    </Style>
+
+    <Style Selector="Button.tab-close">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                    <PathIcon Width="10" Height="10" Foreground="{DynamicResource SemiColorText1}"
+                              Data="M2 3.4 3.4 2 8 6.6 12.6 2 14 3.4 9.4 8 14 12.6 12.6 14 8 9.4 3.4 14 2 12.6 6.6 8 Z" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="Button.tab-close:pointerover">
+        <Setter Property="Background" Value="#18FFFFFF" />
     </Style>
 
     <!--  面板收起按钮  -->

@@ -111,4 +111,6 @@
   <data name="ProxyTestInvalidTarget" xml:space="preserve"><value>Enter a domain name or a full HTTP or HTTPS URL.</value></data>
   <data name="ProxyTestTimeout" xml:space="preserve"><value>The connection timed out. Check the proxy and test website, then try again.</value></data>
   <data name="ProxyTestFailed" xml:space="preserve"><value>Connection failed. Check the proxy address, credentials, and test website.</value></data>
+  <data name="SettingsTitle"><value>Settings</value></data>
+  <data name="UnsavedSettingsPrompt"><value>Your settings have unsaved changes. Save them before closing?</value></data>
 </root>

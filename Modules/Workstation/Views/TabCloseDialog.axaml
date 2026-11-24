@@ -1,0 +1,12 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:r="using:DigitalWorkstation.Workstation.Resources" x:Class="DigitalWorkstation.Workstation.Views.TabCloseDialog"
+        Width="400" SizeToContent="Height" CanResize="False" ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="20" Spacing="20">
+        <TextBlock Name="Message" TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Classes="Primary" Content="{x:Static r:WorkstationResources.SaveChanges}" Click="Save" />
+            <Button Content="{x:Static r:WorkstationResources.DiscardChanges}" Click="Discard" />
+            <Button Content="{x:Static r:WorkstationResources.CancelClose}" Click="Cancel" IsCancel="True" />
+        </StackPanel>
+    </StackPanel>
+</Window>

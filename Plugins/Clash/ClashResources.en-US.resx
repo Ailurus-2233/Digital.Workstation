@@ -53,4 +53,5 @@
 <data name="MissingDigest"><value>The release has no SHA-256 digest.</value></data>
 <data name="InvalidDigest"><value>Mihomo release verification failed.</value></data>
 <data name="Fallback"><value>Mihomo update failed. Using the installed core: {0}</value></data>
+  <data name="NodeList"><value>Node list</value></data>
 </root>

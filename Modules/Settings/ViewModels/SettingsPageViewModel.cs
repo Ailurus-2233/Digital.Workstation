@@ -4,6 +4,7 @@ using DigitalWorkstation.Core.Services.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DigitalWorkstation.Core.Abstractions.Settings;
+using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Framework.Contributions;
 using DigitalWorkstation.Core.Common.Events;
@@ -17,7 +18,7 @@ namespace DigitalWorkstation.Settings.ViewModels;
 ///     另承载需重启 UX：订阅 SettingChangedEvent 刷新项级「重启后生效」标记与顶部横幅
 /// </summary>
 
-public sealed partial class SettingsPageViewModel : ObservableObject
+public sealed partial class SettingsPageViewModel : ObservableObject, IEditableTab
 {
     private readonly IReadOnlyList<SettingItemContribution> _contributions;
     private readonly SettingsService _settings;
@@ -39,9 +40,14 @@ public sealed partial class SettingsPageViewModel : ObservableObject
             group.PropertyChanged += (_, _) =>
             {
                 OnPropertyChanged(nameof(HasSettingsDraft));
+                NotifyDraftChanged();
                 RestartNowCommand.NotifyCanExecuteChanged();
             };
-        PluginsPage.PropertyChanged += (_, _) => RestartNowCommand.NotifyCanExecuteChanged();
+        PluginsPage.PropertyChanged += (_, _) =>
+        {
+            NotifyDraftChanged();
+            RestartNowCommand.NotifyCanExecuteChanged();
+        };
         _selectedGroup = Groups.FirstOrDefault();
         _hasPendingRestartChanges = ComputeHasPendingRestartChanges();
         eventAggregator.GetEvent<SettingChangedEvent>().Subscribe(OnSettingChanged);
@@ -52,6 +58,22 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     /// </summary>
     public IReadOnlyList<SettingGroupModel> Groups { get; }
     public bool HasSettingsDraft => Groups.Any(group => group.HasDraft);
+    public bool HasUnsavedChanges => HasSettingsDraft || PluginsPage.HasDraft;
+    public string ClosePrompt => SettingsResources.UnsavedSettingsPrompt;
+    public long DraftVersion { get; private set; }
+    public Task? PendingSave => SaveCommand.ExecutionTask is { IsCompleted: false } task ? task : null;
+
+    private void NotifyDraftChanged()
+    {
+        DraftVersion++;
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+    }
+
+    public async Task<bool> SaveChangesAsync()
+    {
+        await (PendingSave ?? SaveCommand.ExecuteAsync(null));
+        return !HasUnsavedChanges;
+    }
 
     /// <summary>
     ///     当前选中的分组
@@ -69,6 +91,19 @@ public sealed partial class SettingsPageViewModel : ObservableObject
 
     [RelayCommand]
     private async Task SaveAsync()
+    {
+        try
+        {
+            await SaveDraftsAsync();
+        }
+        catch (Exception error)
+        {
+            Logger.Error(error, "Failed to save settings.", nameof(SettingsPageViewModel));
+            SaveStatus = SettingsResources.SettingsSaveFailed;
+        }
+    }
+
+    private async Task SaveDraftsAsync()
     {
         SaveStatus = "";
         var drafts = Groups.SelectMany(group => group.Items).Where(item => item.HasDraft).ToArray();

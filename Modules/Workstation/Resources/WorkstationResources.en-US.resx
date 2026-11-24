@@ -158,4 +158,12 @@
     <value>Ready</value>
     <comment>Text of the shell built-in status bar "Ready" item</comment>
   </data>
+  <data name="CloseTabTitle"><value>Close tab</value></data>
+  <data name="CloseTab"><value>Close</value></data>
+  <data name="CloseOtherTabs"><value>Close others</value></data>
+  <data name="CloseAllTabs"><value>Close all</value></data>
+  <data name="UnsavedChanges"><value>Unsaved changes</value></data>
+  <data name="SaveChanges"><value>Save</value></data>
+  <data name="DiscardChanges"><value>Discard changes</value></data>
+  <data name="CancelClose"><value>Cancel</value></data>
 </root>

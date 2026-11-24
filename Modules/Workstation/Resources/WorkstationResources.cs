@@ -7,6 +7,14 @@ namespace DigitalWorkstation.Workstation.Resources;
 /// </summary>
 public static class WorkstationResources
 {
+    public static string UnsavedChanges => ResourceText.Get(typeof(WorkstationResources), nameof(UnsavedChanges));
+    public static string SaveChanges => ResourceText.Get(typeof(WorkstationResources), nameof(SaveChanges));
+    public static string DiscardChanges => ResourceText.Get(typeof(WorkstationResources), nameof(DiscardChanges));
+    public static string CancelClose => ResourceText.Get(typeof(WorkstationResources), nameof(CancelClose));
+    public static string CloseTabTitle => ResourceText.Get(typeof(WorkstationResources), nameof(CloseTabTitle));
+    public static string CloseTab => ResourceText.Get(typeof(WorkstationResources), nameof(CloseTab));
+    public static string CloseOtherTabs => ResourceText.Get(typeof(WorkstationResources), nameof(CloseOtherTabs));
+    public static string CloseAllTabs => ResourceText.Get(typeof(WorkstationResources), nameof(CloseAllTabs));
     /// <summary>主页产品说明。</summary>
     public static string HomeDescription => ResourceText.Get(typeof(WorkstationResources), nameof(HomeDescription));
 

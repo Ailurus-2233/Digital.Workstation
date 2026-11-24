@@ -11,6 +11,7 @@ namespace DigitalWorkstation.Settings;
 public class SettingsMainView : IMainViewContribution
 {
     public string Id => WellKnownViews.Settings;
+    public string Title => Resources.SettingsResources.SettingsTitle;
 
     public Type ViewType => typeof(SettingsPageView);
 }

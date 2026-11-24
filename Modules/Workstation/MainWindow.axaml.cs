@@ -16,6 +16,7 @@ public partial class MainWindow : FrameworkWindow
         {
             return;
         }
+        viewModel.ConfirmTabCloseAsync = (title, message) => Views.TabCloseDialog.ShowAsync(this, title, message);
         viewModel.EnsureContributionsLoaded();
         RegisterNativeMenu(viewModel.MenuBarItems);
         // 命令手势 KeyBinding：机制在 Framework（RegisterCommandGestures），接线在本模块

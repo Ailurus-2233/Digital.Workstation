@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using DigitalWorkstation.Core.Abstractions.Contributions;
 using DigitalWorkstation.MailReader.Resources;
 
@@ -15,5 +16,20 @@ public partial class MailListView : UserControl
     {
         InitializeComponent();
         DataContext = service;
+    }
+
+    private void OnMessageTapped(object? sender, TappedEventArgs e)
+    {
+        if (e.Source is Control { DataContext: MailMessage message } && DataContext is MailService service)
+            service.OpenMessageCommand.Execute(message);
+    }
+
+    private void OnMessageKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && sender is ListBox { SelectedItem: MailMessage message } && DataContext is MailService service)
+        {
+            service.OpenMessageCommand.Execute(message);
+            e.Handled = true;
+        }
     }
 }

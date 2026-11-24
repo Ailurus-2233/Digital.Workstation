@@ -7,6 +7,8 @@ namespace DigitalWorkstation.Settings.Resources;
 /// </summary>
 public static class SettingsResources
 {
+    public static string UnsavedSettingsPrompt => ResourceText.Get(typeof(SettingsResources), nameof(UnsavedSettingsPrompt));
+    public static string SettingsTitle => ResourceText.Get(typeof(SettingsResources), nameof(SettingsTitle));
     public static string ProxyTestTarget => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTestTarget));
     public static string ProxyTestButton => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTestButton));
     public static string ProxyTesting => ResourceText.Get(typeof(SettingsResources), nameof(ProxyTesting));

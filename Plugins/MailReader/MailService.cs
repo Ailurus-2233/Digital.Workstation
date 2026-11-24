@@ -122,6 +122,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
             _pendingAutomaticRefresh = false;
             _cacheAccountKey = null;
             Password = ""; Messages = []; SelectedMessage = null; CacheStatus = "";
+            _events.GetEvent<CloseMainDocumentsEvent>().Publish(MailMainView.ViewId);
         }
         if (Dispatcher.UIThread.CheckAccess()) End(); else Dispatcher.UIThread.Post(End);
     }
@@ -143,6 +144,8 @@ public sealed partial class MailService : ObservableObject, IModuleService
     }
     private void ResetAccount(MailAccount account)
     {
+        if (account.Key != _account.Key)
+            _events.GetEvent<CloseMainDocumentsEvent>().Publish(MailMainView.ViewId);
         _account = account;
         _resetting = true;
         Password = "";
@@ -162,12 +165,15 @@ public sealed partial class MailService : ObservableObject, IModuleService
         Interlocked.Increment(ref _generation);
         _request?.Cancel();
     }
-    partial void OnSelectedMessageChanged(MailMessage? value)
+    [RelayCommand]
+    private void OpenMessage(MailMessage message)
     {
-        if (value is not null) _events.GetEvent<OpenMainViewEvent>().Publish(MailMainView.ViewId);
+        SelectedMessage = message;
+        _events.GetEvent<OpenMainDocumentEvent>().Publish(new MainDocument(
+            MailMainView.ViewId, message.Id, message.Subject, message));
     }
     [RelayCommand] private void OpenSettings() => _events.GetEvent<OpenMainViewEvent>().Publish(WellKnownViews.Settings);
-    [RelayCommand] private void OpenReading() => _events.GetEvent<OpenMainViewEvent>().Publish(MailMainView.ViewId);
+    [RelayCommand] private void OpenAccount() => _events.GetEvent<OpenMainViewEvent>().Publish(MailAccountMainView.ViewId);
 
     [RelayCommand]
     private async Task SavePasswordAsync()

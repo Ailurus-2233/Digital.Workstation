@@ -111,4 +111,6 @@
   <data name="ProxyTestInvalidTarget" xml:space="preserve"><value>请输入域名或完整的 HTTP、HTTPS 网址。</value></data>
   <data name="ProxyTestTimeout" xml:space="preserve"><value>连接超时，请检查代理和目标网址后重试。</value></data>
   <data name="ProxyTestFailed" xml:space="preserve"><value>连接失败，请检查代理地址、凭据和测试网址。</value></data>
+  <data name="SettingsTitle"><value>设置</value></data>
+  <data name="UnsavedSettingsPrompt"><value>设置项有未保存的修改，是否保存后关闭？</value></data>
 </root>

@@ -53,4 +53,5 @@
 <data name="MissingDigest"><value>发布包缺少 SHA-256 摘要</value></data>
 <data name="InvalidDigest"><value>Mihomo 发布包校验失败</value></data>
 <data name="Fallback"><value>Mihomo 更新失败，使用已安装内核：{0}</value></data>
+  <data name="NodeList"><value>节点列表</value></data>
 </root>

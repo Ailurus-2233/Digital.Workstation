@@ -5,13 +5,13 @@
             <TextBlock FontSize="18" Text="{x:Static r:MailResources.PluginName}" />
             <WrapPanel>
                 <Button Margin="0,0,6,4" Content="{x:Static r:MailResources.Refresh}" Command="{Binding RefreshCommand}" />
-                <Button Margin="0,0,0,4" Content="{x:Static r:MailResources.Account}" Command="{Binding OpenReadingCommand}" />
+                <Button Margin="0,0,0,4" Content="{x:Static r:MailResources.Account}" Command="{Binding OpenAccountCommand}" />
             </WrapPanel>
             <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" Height="3" />
         </StackPanel>
         <StackPanel Grid.Row="1" Margin="0,8" Spacing="4"><TextBlock Text="{Binding Status}" TextWrapping="Wrap" /><TextBlock Text="{Binding CacheStatus}" TextWrapping="Wrap" /></StackPanel>
         <ListBox Grid.Row="2" ItemsSource="{Binding Messages}" SelectedItem="{Binding SelectedMessage, Mode=TwoWay}"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                 Tapped="OnMessageTapped" KeyDown="OnMessageKeyDown" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Spacing="3" Margin="0,4">

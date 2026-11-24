@@ -6,6 +6,7 @@ public static class ClashResources
 {
     internal static string Text(string key) => ResourceText.Get(typeof(ClashResources), key);
     public static string Title => Text(nameof(Title));
+    public static string NodeList => Text(nameof(NodeList));
     public static string Port => Text(nameof(Port));
     public static string Power => Text(nameof(Power));
     public static string Add => Text(nameof(Add));

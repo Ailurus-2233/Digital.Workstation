@@ -75,28 +75,24 @@ public static class MenuTreeBuilder
             entries.Add((child.Group, child.GroupOrder, child.NodeOrder, child.Title, Emit(child)));
         }
 
-        var sorted = entries
-            .OrderBy(entry => entry.GroupOrder)
-            .ThenBy(entry => entry.Group is null ? 0 : 1)
-            .ThenBy(entry => entry.Group, StringComparer.Ordinal)
-            .ThenBy(entry => entry.Order)
-            .ThenBy(entry => entry.Title, StringComparer.Ordinal)
-            .ToArray();
-
-        var children = new List<MenuTreeEntry>(sorted.Length * 2);
-        (string? Group, int GroupOrder)? previousGroup = null;
-        foreach (var entry in sorted)
+        var children = new List<MenuTreeEntry>();
+        foreach (var group in OrderedGroups(entries, e => (e.GroupOrder, e.Group), e => e.Order, e => e.Title))
         {
-            var currentGroup = (entry.Group, entry.GroupOrder);
-            if (previousGroup is { } previous && previous != currentGroup)
-            {
+            if (children.Count > 0)
                 children.Add(MenuTreeSeparator.Instance);
-            }
-            previousGroup = currentGroup;
-            children.Add(entry.Entry);
+            children.AddRange(group.Select(e => e.Entry));
         }
 
         return new MenuTreeSubmenu(node.Title, children);
+    }
+
+    internal static IEnumerable<IEnumerable<T>> OrderedGroups<T>(IEnumerable<T> items,
+        Func<T, (int Order, string? Name)> groupKey, Func<T, int> order, Func<T, string> title)
+    {
+        return items.GroupBy(groupKey)
+            .OrderBy(group => group.Key.Order)
+            .ThenBy(group => group.Key.Name, StringComparer.Ordinal)
+            .Select(group => group.OrderBy(order).ThenBy(title, StringComparer.Ordinal));
     }
 
     private sealed record LeafAccum(string? Group, int GroupOrder, int Order, string Title, string? IconPath,

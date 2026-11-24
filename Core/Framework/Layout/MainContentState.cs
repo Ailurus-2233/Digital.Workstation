@@ -1,7 +1,7 @@
 ﻿namespace DigitalWorkstation.Core.Framework.Layout;
 
 /// <summary>
-///     MainContent 的布局状态，单视图切换
+///     当前主标签对应的视图贡献，主页时为空。文档身份由标签持有。
 /// </summary>
 public sealed record MainContentState
 {

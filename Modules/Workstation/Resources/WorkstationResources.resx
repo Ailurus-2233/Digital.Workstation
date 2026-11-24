@@ -158,4 +158,12 @@
     <value>就绪</value>
     <comment>shell 预置状态栏"就绪"项的文本</comment>
   </data>
+  <data name="CloseTabTitle"><value>关闭标签页</value></data>
+  <data name="CloseTab"><value>关闭</value></data>
+  <data name="CloseOtherTabs"><value>关闭其他</value></data>
+  <data name="CloseAllTabs"><value>全部关闭</value></data>
+  <data name="UnsavedChanges"><value>有未保存的修改</value></data>
+  <data name="SaveChanges"><value>保存</value></data>
+  <data name="DiscardChanges"><value>放弃修改</value></data>
+  <data name="CancelClose"><value>取消</value></data>
 </root>

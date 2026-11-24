@@ -39,7 +39,7 @@ public sealed class ToolViewContribution
     public required bool AllowMove { get; init; }
 
     /// <summary>
-    ///     选中工具时同步打开的主视图标识
+    ///     工具面板内可显式打开的主视图标识
     /// </summary>
     public string? MainViewId { get; init; }
 

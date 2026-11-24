@@ -29,5 +29,6 @@ public sealed class ClashMainView : IMainViewContribution
 {
     public const string ViewId = "clash.node-list";
     public string Id => ViewId;
+    public string Title => ClashResources.NodeList;
     public Type ViewType => typeof(NodeListView);
 }

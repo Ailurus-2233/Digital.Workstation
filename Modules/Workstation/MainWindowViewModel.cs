@@ -27,7 +27,6 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly EmptyStateView _homeContent;
     private readonly Dictionary<string, NavigationItemViewModel> _itemsById = new();
     private readonly Dictionary<string, IMainViewContribution> _mainViewsById = new();
-    private readonly Dictionary<string, object> _mainViewContents = new();
     /// <summary>
     ///     全部工具视图（含钉住项）的元数据索引；归属随拖拽变化，索引不变
     /// </summary>
@@ -49,6 +48,8 @@ public partial class MainWindowViewModel : ObservableObject
         _eventAggregator = eventAggregator;
         _persistence = persistence;
         eventAggregator.GetEvent<OpenMainViewEvent>().Subscribe(OpenMainView);
+        eventAggregator.GetEvent<OpenMainDocumentEvent>().Subscribe(OpenMainDocument);
+        eventAggregator.GetEvent<CloseMainDocumentsEvent>().Subscribe(CloseMainDocuments);
         eventAggregator.GetEvent<ReturnHomeEvent>().Subscribe(ReturnHome);
         eventAggregator.GetEvent<TogglePanelVisibilityEvent>().Subscribe(TogglePanel);
         eventAggregator.GetEvent<SetPanelAlignmentEvent>().Subscribe(SetPanelAlignment);
@@ -56,7 +57,6 @@ public partial class MainWindowViewModel : ObservableObject
         // 拖拽会话期间临时显露隐藏面板，作为「向隐藏面板拖入」的投放区
         ToolViewDragSession.ActiveChanged += active => IsToolViewDragActive = active;
         _homeContent = containerProvider.Resolve<EmptyStateView>();
-        _mainContent = _homeContent;
     }
 
     [ObservableProperty]
@@ -91,11 +91,22 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private object? _sideBarContent;
-    /// <summary>
-    ///     MainContent 当前内容；初始为 shell 内置空状态页，OpenMainViewEvent 到达后整体替换
-    /// </summary>
+    public ObservableCollection<MainTab> MainTabs { get; } = [];
+    public Func<string, string, Task<TabCloseChoice>>? ConfirmTabCloseAsync { get; set; }
+    private readonly SemaphoreSlim _tabCloseGate = new(1, 1);
+
     [ObservableProperty]
-    private object _mainContent;
+    [NotifyPropertyChangedFor(nameof(MainContent))]
+    private MainTab? _activeMainTab;
+
+    public object MainContent => ActiveMainTab?.Content ?? _homeContent;
+    public string CloseTabTitle => WorkstationResources.CloseTabTitle;
+    public string UnsavedChangesTitle => WorkstationResources.UnsavedChanges;
+
+    partial void OnActiveMainTabChanged(MainTab? value)
+    {
+        State = State.OpenMainView(value?.ViewId);
+    }
 
     [ObservableProperty]
     private string? _sideBarTitle;
@@ -180,14 +191,11 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         _toolViews = _collector.GetToolViews();
-        LoadToolViews(_persistence.Load());
         foreach (var mainView in _collector.GetMainViews())
         {
             _mainViewsById[mainView.Id] = mainView;
         }
-        if (State.SideBar.Visible && State.SelectedActivity is { } selected &&
-            _contributionsById.TryGetValue(selected, out var tool) && tool.MainViewId is { } target)
-            OpenMainView(target);
+        LoadToolViews(_persistence.Load());
         foreach (var submenu in MenuTreeBuilder.Build(_collector.GetMenuItems()))
         {
             MenuBarItems.Add(MenuItemViewModel.FromSubmenu(submenu, isTopLevel: true));
@@ -215,19 +223,13 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    ///     点击导航项：切换选中并驱动 SideBar 展开/收起；内容视图按导航项缓存，收起再展开不丢
+    ///     点击导航项时展开对应侧栏，保持当前主标签。
     /// </summary>
     [RelayCommand]
     private void SelectActivity(NavigationItemViewModel item)
     {
-        var target = item.Contribution.MainViewId;
-        if (target != null && State.MainContent.ActiveView != target && State.SelectedActivity == item.Id && State.SideBar.Visible)
-        {
-            OpenMainView(target);
-            return;
-        }
+        if (State.SelectedActivity == item.Id && State.SideBar.Visible) return;
         ApplyLayout(State.SelectActivity(item.Id));
-        if (target != null && State.SideBar.Visible) OpenMainView(target);
     }
 
     /// <summary>
@@ -242,13 +244,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     private void ReturnHome()
     {
-        if (ReferenceEquals(MainContent, _homeContent) && State.MainContent.ActiveView is null)
-        {
-            return;
-        }
-
-        State = State with { MainContent = State.MainContent with { ActiveView = null } };
-        MainContent = _homeContent;
+        ActiveMainTab = null;
     }
 
     /// <summary>
@@ -258,30 +254,153 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (!_toolViewContents.TryGetValue(id, out var content))
         {
-            content = _containerProvider.Resolve(_contributionsById[id].ViewType);
+            var tool = _contributionsById[id];
+            content = _containerProvider.Resolve(tool.ViewType);
+            if (content is Control control && tool.MainViewId is { } target && _mainViewsById.TryGetValue(target, out var mainView))
+            {
+                var link = new Button { Content = mainView.Title, Margin = new Avalonia.Thickness(8, 6) };
+                link.Click += (_, _) => OpenMainView(target);
+                DockPanel.SetDock(link, Dock.Top);
+                content = new DockPanel { Children = { link, control } };
+            }
             _toolViewContents[id] = content;
         }
 
         return content;
     }
-    /// <summary>
-    ///     SideBar 内交互请求打开主视图：单视图切换，整体替换当前内容；视图实例按 Id 缓存
-    /// </summary>
-    private void OpenMainView(string viewId)
+    private void OpenMainView(string viewId) => OpenTab(viewId, null);
+
+    private void OpenMainDocument(MainDocument document) => OpenTab(document.ViewId, document);
+
+    private void OpenTab(string viewId, MainDocument? document)
     {
         if (!_mainViewsById.TryGetValue(viewId, out var contribution))
         {
             return;
         }
 
-        if (!_mainViewContents.TryGetValue(viewId, out var content))
+        var tab = MainTabs.FirstOrDefault(item => item.ViewId == viewId && item.DocumentId == document?.DocumentId);
+        if (tab is null)
         {
-            content = _containerProvider.Resolve(contribution.ViewType);
-            _mainViewContents[viewId] = content;
+            var content = _containerProvider.Resolve(contribution.ViewType);
+            if (document is not null && content is Control page) page.DataContext = document.Model;
+            tab = new MainTab(viewId, document?.DocumentId, document?.Title ?? contribution.Title, content);
+            tab.ContextMenu.Opening += (_, _) => tab.ContextMenu.ItemsSource = BuildTabMenu(tab);
+            MainTabs.Add(tab);
         }
+        else if (document is not null && tab.Content is Control view &&
+                 tab.Editor is not { HasUnsavedChanges: true } && tab.Editor?.PendingSave is not { IsCompleted: false })
+        {
+            view.DataContext = document.Model;
+        }
+        ActiveMainTab = tab;
+    }
 
-        State = State.OpenMainView(viewId);
-        MainContent = content;
+    private IReadOnlyList<Control> BuildTabMenu(MainTab tab) => TabMenu.BuildItems(
+    [
+        new MenuItem { Header = WorkstationResources.CloseTab, Command = CloseMainTabCommand, CommandParameter = tab },
+        new MenuItem
+        {
+            Header = WorkstationResources.CloseOtherTabs, Command = CloseOtherTabsCommand,
+            CommandParameter = tab, IsEnabled = MainTabs.Count > 1
+        },
+        new MenuItem { Header = WorkstationResources.CloseAllTabs, Command = CloseAllTabsCommand }
+    ], tab.Content as Control);
+
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private Task CloseMainTabAsync(MainTab tab) => CloseTabsAsync([tab]);
+
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private Task CloseOtherTabsAsync(MainTab tab) => MainTabs.Contains(tab)
+        ? CloseTabsAsync(MainTabs.Where(other => other != tab).ToArray(), tab)
+        : Task.CompletedTask;
+
+    [RelayCommand]
+    private Task CloseAllTabsAsync() => CloseTabsAsync(MainTabs.ToArray());
+
+    private async Task CloseTabsAsync(IReadOnlyList<MainTab> targets, MainTab? keep = null)
+    {
+        await _tabCloseGate.WaitAsync();
+        try
+        {
+            // 每次等待后从头复核。前一页确认放弃后，用户可能在另一页保存期间继续编辑它。
+            var discarded = new Dictionary<MainTab, (IEditableTab Editor, long Version)>();
+            while (true)
+            {
+                if (keep is not null && !MainTabs.Contains(keep)) return;
+                var tab = targets.FirstOrDefault(NeedsDecision);
+                if (tab is null) break;
+                if (!await ResolveDraftAsync(tab, discarded)) return;
+            }
+            if (keep is not null) ActiveMainTab = keep;
+            foreach (var tab in targets) RemoveMainTab(tab);
+
+            bool NeedsDecision(MainTab tab)
+            {
+                if (tab.Editor is not { } editor || !MainTabs.Contains(tab)) return false;
+                if (editor.PendingSave is { IsCompleted: false }) return true;
+                return editor.HasUnsavedChanges && (!discarded.TryGetValue(tab, out var approved) ||
+                    !ReferenceEquals(approved.Editor, editor) || approved.Version != editor.DraftVersion);
+            }
+        }
+        finally
+        {
+            _tabCloseGate.Release();
+        }
+    }
+
+    private async Task<bool> ResolveDraftAsync(MainTab tab,
+        Dictionary<MainTab, (IEditableTab Editor, long Version)> discarded)
+    {
+        var editor = tab.Editor!;
+        try
+        {
+            if (editor.PendingSave is { IsCompleted: false } pending)
+            {
+                await pending;
+                if (!ReferenceEquals(tab.Editor, editor) || !editor.HasUnsavedChanges) return true;
+            }
+            else
+            {
+                if (!editor.HasUnsavedChanges) return true;
+                if (ConfirmTabCloseAsync is null) return false;
+                var version = editor.DraftVersion;
+                var choice = await ConfirmTabCloseAsync(tab.Title, editor.ClosePrompt);
+                if (choice == TabCloseChoice.Cancel) return false;
+                if (!ReferenceEquals(tab.Editor, editor) || editor.DraftVersion != version ||
+                    editor.PendingSave is { IsCompleted: false }) return true;
+                if (choice == TabCloseChoice.Discard)
+                {
+                    discarded[tab] = (editor, version);
+                    return true;
+                }
+                if (await editor.SaveChangesAsync() && !editor.HasUnsavedChanges) return true;
+            }
+        }
+        catch (Exception error)
+        {
+            DigitalWorkstation.Core.Common.Logger.Error(error, "Failed to close the tab.", nameof(MainWindowViewModel));
+        }
+        if (MainTabs.Contains(tab)) ActiveMainTab = tab;
+        return false;
+    }
+
+    private void RemoveMainTab(MainTab tab)
+    {
+        var index = MainTabs.IndexOf(tab);
+        if (index < 0) return;
+        if (ActiveMainTab == tab)
+            ActiveMainTab = index > 0 ? MainTabs[index - 1] : MainTabs.ElementAtOrDefault(1);
+        MainTabs.RemoveAt(index);
+    }
+
+    private async void CloseMainDocuments(string viewId)
+    {
+        var documents = MainTabs.Where(tab => tab.ViewId == viewId && tab.DocumentId is not null).ToArray();
+        // 失效的只读文档（如旧账户邮件）即使另一个关闭弹窗正在等待，也应立即释放。
+        foreach (var tab in documents)
+            if (tab.Editor is null) RemoveMainTab(tab);
+        await CloseTabsAsync(documents.Where(tab => tab.Editor is not null).ToArray());
     }
     /// <summary>
     ///     点击 AuxiliaryPanel tab：面板收起时 ShellLayoutState 拒绝（状态不变，本方法直接返回）
@@ -296,7 +415,6 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         ApplyLayout(next);
-        if (tab.Contribution.MainViewId is { } target) OpenMainView(target);
     }
 
     /// <summary>
@@ -312,7 +430,6 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         ApplyLayout(next);
-        if (tab.Contribution.MainViewId is { } target) OpenMainView(target);
     }
 
     /// <summary>

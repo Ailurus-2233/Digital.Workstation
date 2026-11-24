@@ -233,7 +233,7 @@ public sealed record ShellLayoutState
     /// <summary>
     ///     切换 MainContent 活动视图，仅改 MainContent
     /// </summary>
-    public ShellLayoutState OpenMainView(string view)
+    public ShellLayoutState OpenMainView(string? view)
     {
         return this with { MainContent = MainContent with { ActiveView = view } };
     }
