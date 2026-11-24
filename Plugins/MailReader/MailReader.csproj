@@ -15,6 +15,8 @@
 
     <ItemGroup>
         <PackageReference Include="MailKit" Version="4.18.1" />
+        <!-- MimeKit 4.18.1 requests Pkcs 10.0.0. Use the patched version. -->
+        <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
         <PackageReference Include="HtmlAgilityPack" Version="1.13.1" />
     </ItemGroup>
     <ItemGroup>
