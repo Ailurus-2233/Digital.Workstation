@@ -2,6 +2,16 @@ using DigitalWorkstation.Core.Resource;
 namespace DigitalWorkstation.MailReader.Resources;
 public static class MailResources
 {
+    public static string RememberLoginCode => ResourceText.Get(typeof(MailResources), nameof(RememberLoginCode));
+    public static string SignInHint => ResourceText.Get(typeof(MailResources), nameof(SignInHint));
+    public static string MessageList => ResourceText.Get(typeof(MailResources), nameof(MessageList));
+    public static string Authenticate => ResourceText.Get(typeof(MailResources), nameof(Authenticate));
+    public static string Authenticating => ResourceText.Get(typeof(MailResources), nameof(Authenticating));
+    public static string LoginSucceeded => ResourceText.Get(typeof(MailResources), nameof(LoginSucceeded));
+    public static string LoginUnavailable => ResourceText.Get(typeof(MailResources), nameof(LoginUnavailable));
+    public static string LoginCancelled => ResourceText.Get(typeof(MailResources), nameof(LoginCancelled));
+    public static string LoginSettingsSaveFailed => ResourceText.Get(typeof(MailResources), nameof(LoginSettingsSaveFailed));
+    public static string LoginConnectionFailed => ResourceText.Get(typeof(MailResources), nameof(LoginConnectionFailed));
     public static string ProxyFailed => ResourceText.Get(typeof(MailResources), nameof(ProxyFailed));
     public static string Protocol => ResourceText.Get(typeof(MailResources), nameof(Protocol));
     public static string Pop3IdentityFailed => ResourceText.Get(typeof(MailResources), nameof(Pop3IdentityFailed));
@@ -18,14 +28,10 @@ public static class MailResources
     public static string CacheReadFailed => ResourceText.Get(typeof(MailResources), nameof(CacheReadFailed));
     public static string CacheWriteFailed => ResourceText.Get(typeof(MailResources), nameof(CacheWriteFailed));
     public static string AttachmentOffline => ResourceText.Get(typeof(MailResources), nameof(AttachmentOffline));
-    public static string Account => ResourceText.Get(typeof(MailResources), nameof(Account));
     public static string AuthenticationFailed => ResourceText.Get(typeof(MailResources), nameof(AuthenticationFailed));
     public static string Cancelled => ResourceText.Get(typeof(MailResources), nameof(Cancelled));
     public static string ConfigureHint => ResourceText.Get(typeof(MailResources), nameof(ConfigureHint));
     public static string ConnectionFailed => ResourceText.Get(typeof(MailResources), nameof(ConnectionFailed));
-    public static string ConnectionSettings => ResourceText.Get(typeof(MailResources), nameof(ConnectionSettings));
-    public static string CredentialHint => ResourceText.Get(typeof(MailResources), nameof(CredentialHint));
-    public static string CredentialSaved => ResourceText.Get(typeof(MailResources), nameof(CredentialSaved));
     public static string Date => ResourceText.Get(typeof(MailResources), nameof(Date));
     public static string Empty => ResourceText.Get(typeof(MailResources), nameof(Empty));
     public static string From => ResourceText.Get(typeof(MailResources), nameof(From));
@@ -39,7 +45,6 @@ public static class MailResources
     public static string PluginName => ResourceText.Get(typeof(MailResources), nameof(PluginName));
     public static string Port => ResourceText.Get(typeof(MailResources), nameof(Port));
     public static string Refresh => ResourceText.Get(typeof(MailResources), nameof(Refresh));
-    public static string SavePassword => ResourceText.Get(typeof(MailResources), nameof(SavePassword));
     public static string SelectHint => ResourceText.Get(typeof(MailResources), nameof(SelectHint));
     public static string Server => ResourceText.Get(typeof(MailResources), nameof(Server));
     public static string SessionOnly => ResourceText.Get(typeof(MailResources), nameof(SessionOnly));

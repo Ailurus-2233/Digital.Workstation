@@ -8,7 +8,7 @@ namespace DigitalWorkstation.MailReader;
 public enum MailTls { SslOnConnect, StartTls }
 public enum MailProtocol { IMAP, POP3 }
 
-[SettingGroup("mail-reader", typeof(MailResources), nameof(MailResources.PluginName))]
+[SettingGroup("mail-reader", typeof(MailResources), nameof(MailResources.PluginName), PanelType = typeof(MailAccountView))]
 public static class MailSettings
 {
     [SettingItem("mail-reader", typeof(MailResources), "Protocol", Id = "mail-reader.protocol", DefaultValue = MailProtocol.IMAP, Order = -1)]
@@ -22,7 +22,7 @@ public static class MailSettings
     [SettingItem("mail-reader", typeof(MailResources), "Username", Id = "mail-reader.username", DefaultValue = "", Order = 3)]
     public static string Username => "";
 
-    public static MailAccount Read(ISettingsService settings) => new(
+    public static MailAccount Read(ISettingValues settings) => new(
         (settings.Get<string>("mail-reader.server") ?? "").Trim(),
         settings.Get<string>("mail-reader.port") ?? "",
         settings.Get<MailTls>("mail-reader.tls"),

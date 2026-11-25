@@ -34,7 +34,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject, IEditableT
         var itemsByGroup = _contributions.ToLookup(item => item.Group);
         Groups = collector.GetSettingGroups()
             .Select(group => new SettingGroupModel(group,
-                itemsByGroup[group.Id].Select(CreateItemModel).OfType<SettingItemModel>().ToArray()))
+                itemsByGroup[group.Id].Select(CreateItemModel).OfType<SettingItemModel>().ToArray(), settings.TrySave))
             .ToArray();
         foreach (var group in Groups)
             group.PropertyChanged += (_, _) =>

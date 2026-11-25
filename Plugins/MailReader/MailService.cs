@@ -5,7 +5,6 @@ using DigitalWorkstation.Core.Abstractions.Network;
 using MailKit.Net.Proxy;
 using DigitalWorkstation.Core.Abstractions.Services;
 using DigitalWorkstation.Core.Abstractions.Settings;
-using DigitalWorkstation.Core.Abstractions.Regions;
 using DigitalWorkstation.Core.Common.Events;
 using DigitalWorkstation.MailReader.Resources;
 using MailKit;
@@ -32,6 +31,8 @@ public sealed partial class MailService : ObservableObject, IModuleService
     private int _lifecycle;
     internal Task AutomaticRefresh { get; private set; } = Task.CompletedTask;
     private CancellationTokenSource? _request;
+    private CancellationTokenSource? _loginRequest;
+    private bool _applyingLogin;
     private int _generation;
     private int _refreshing;
     private volatile bool _running;
@@ -65,13 +66,16 @@ public sealed partial class MailService : ObservableObject, IModuleService
         _account = MailSettings.Read(settings);
     }
 
-    [ObservableProperty] private IReadOnlyList<MailMessage> _messages = [];
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasMessages), nameof(ShowInboxWarning))]
+    private IReadOnlyList<MailMessage> _messages = [];
     [ObservableProperty, NotifyPropertyChangedFor(nameof(HasSelectedMessage))] private MailMessage? _selectedMessage;
     [ObservableProperty] private string _status = MailResources.ConfigureHint;
-    [ObservableProperty] private string _credentialStatus = MailResources.CredentialHint;
     [ObservableProperty] private string _cacheStatus = "";
     [ObservableProperty] private string _password = "";
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(ShowInboxWarning))] private string _inboxFeedback = MailResources.ConfigureHint;
+    public bool HasMessages => Messages.Count > 0;
+    public bool ShowInboxWarning => HasMessages && InboxFeedback.Length > 0;
     public bool HasSelectedMessage => SelectedMessage is not null;
     public string AccountDisplay => $"{_account.Protocol} · {_account.Username} · {_account.Server}";
 
@@ -103,7 +107,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
         if (_refreshing != 0) return;
         if (string.IsNullOrWhiteSpace(_account.Server) && string.IsNullOrWhiteSpace(_account.Username))
         {
-            Status = MailResources.ConfigureHint;
+            InboxFeedback = Status = MailResources.ConfigureHint;
             return;
         }
         AutomaticRefresh = RefreshAsync();
@@ -111,6 +115,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
     public void Stop()
     {
         _running = false;
+        _loginRequest?.Cancel();
         var lifecycle = Interlocked.Increment(ref _lifecycle);
         _events.GetEvent<SettingChangedEvent>().Unsubscribe(SettingsChanged);
         Interlocked.Increment(ref _generation);
@@ -122,6 +127,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
             _pendingAutomaticRefresh = false;
             _cacheAccountKey = null;
             Password = ""; Messages = []; SelectedMessage = null; CacheStatus = "";
+            InboxFeedback = "";
             _events.GetEvent<CloseMainDocumentsEvent>().Publish(MailMainView.ViewId);
         }
         if (Dispatcher.UIThread.CheckAccess()) End(); else Dispatcher.UIThread.Post(End);
@@ -134,7 +140,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
         void Reset()
         {
             ResetAccount(MailSettings.Read(_settings));
-            if (_pollTimer is not null && _running)
+            if (_pollTimer is not null && _running && !_applyingLogin)
             {
                 _pendingAutomaticRefresh = _refreshing != 0;
                 RequestAutomaticRefresh();
@@ -154,8 +160,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
         SelectedMessage = null;
         _cacheAccountKey = null;
         CacheStatus = "";
-        CredentialStatus = MailResources.CredentialHint;
-        Status = MailResources.ConfigureHint;
+        InboxFeedback = Status = MailResources.ConfigureHint;
         OnPropertyChanged(nameof(AccountDisplay));
     }
     partial void OnPasswordChanged(string value)
@@ -172,19 +177,58 @@ public sealed partial class MailService : ObservableObject, IModuleService
         _events.GetEvent<OpenMainDocumentEvent>().Publish(new MainDocument(
             MailMainView.ViewId, message.Id, message.Subject, message));
     }
-    [RelayCommand] private void OpenSettings() => _events.GetEvent<OpenMainViewEvent>().Publish(WellKnownViews.Settings);
-    [RelayCommand] private void OpenAccount() => _events.GetEvent<OpenMainViewEvent>().Publish(MailAccountMainView.ViewId);
-
-    [RelayCommand]
-    private async Task SavePasswordAsync()
+    internal async Task<string> AuthenticateAsync(ISettingGroupDraft draft, MailAccount account, string loginCode,
+        bool rememberCode, CancellationToken token)
     {
-        if (!_running || !_account.IsValid || string.IsNullOrEmpty(Password)) { CredentialStatus = MailResources.PasswordRequired; return; }
+        if (account != MailSettings.Read(draft)) return MailResources.LoginCancelled;
+        if (!account.IsValid) return MailResources.InvalidConfiguration;
+        if (string.IsNullOrEmpty(loginCode)) return MailResources.PasswordRequired;
+        if (!_running || _loginRequest is not null) return MailResources.LoginUnavailable;
+        using var request = CancellationTokenSource.CreateLinkedTokenSource(token);
+        _loginRequest = request;
         var generation = _generation;
-        var key = _account.Key;
-        // Saving credentials is separate from settings and never makes a network connection.
-        var saved = await _credentials.SaveAsync(key, Password, CancellationToken.None);
-        if (_running && generation == _generation)
-            CredentialStatus = saved ? MailResources.CredentialSaved : MailResources.SessionOnly;
+        try
+        {
+            await Task.Run(async () =>
+            {
+                using IMailService client = account.Protocol == MailProtocol.POP3 ? _createPop3Client() : _createClient();
+                await LoginAsync(client, account, loginCode, request.Token);
+                await client.DisconnectAsync(true, request.Token);
+            }, request.Token);
+            if (request.IsCancellationRequested || generation != _generation || account != MailSettings.Read(draft))
+                return MailResources.LoginCancelled;
+
+            // Saving the group publishes settings changes synchronously. Start its inbox refresh
+            // once the verified session credential is available for the new account.
+            _applyingLogin = true;
+            try
+            {
+                if (!draft.TrySave()) return MailResources.LoginSettingsSaveFailed;
+                if (!_running || _account != account || request.IsCancellationRequested) return MailResources.LoginCancelled;
+                Password = loginCode;
+            }
+            finally { _applyingLogin = false; }
+
+            if (_pollTimer is not null)
+            {
+                _pendingAutomaticRefresh = _refreshing != 0;
+                RequestAutomaticRefresh();
+            }
+            if (!rememberCode) return MailResources.LoginSucceeded;
+            // The account has committed. Leaving the editor can suppress its feedback,
+            // but must allow this account's credential write to finish.
+            bool saved;
+            try { saved = await _credentials.SaveAsync(account.Key, loginCode, CancellationToken.None); }
+            catch { saved = false; }
+            if (!_running || account != _account) return MailResources.LoginCancelled;
+            return saved ? MailResources.LoginSucceeded : $"{MailResources.LoginSucceeded} {MailResources.SessionOnly}";
+        }
+        catch (OperationCanceledException) { return MailResources.LoginCancelled; }
+        catch (MailKit.Security.AuthenticationException) { return MailResources.AuthenticationFailed; }
+        catch (SslHandshakeException) { return MailResources.TlsFailed; }
+        catch (NetworkProxyException) { return MailResources.ProxyFailed; }
+        catch { return MailResources.LoginConnectionFailed; }
+        finally { _loginRequest = null; }
     }
 
     [RelayCommand]
@@ -196,10 +240,18 @@ public sealed partial class MailService : ObservableObject, IModuleService
         var generation = _generation;
         var account = _account;
         var password = Password;
+        var notice = "";
+        var cacheWarning = "";
         IsBusy = true;
+        InboxFeedback = "";
         try
         {
-            if (!account.IsValid) { Status = MailResources.InvalidConfiguration; return; }
+            if (!account.IsValid)
+            {
+                notice = Status = account.Server.Length == 0 && account.Username.Length == 0
+                    ? MailResources.ConfigureHint : MailResources.InvalidConfiguration;
+                return;
+            }
             if (_cache is not null && _cacheAccountKey != account.Key)
             {
                 try
@@ -211,7 +263,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
                     CacheStatus = cached.Count == 0 ? "" : string.Format(MailResources.CacheLoaded, cached.Count);
                 }
                 catch (OperationCanceledException) { throw; }
-                catch { if (generation == _generation && _running) CacheStatus = MailResources.CacheReadFailed; }
+                catch { if (generation == _generation && _running) cacheWarning = CacheStatus = MailResources.CacheReadFailed; }
                 if (generation != _generation || !_running) return;
             }
             Status = MailResources.Loading;
@@ -219,10 +271,14 @@ public sealed partial class MailService : ObservableObject, IModuleService
             {
                 var result = await _credentials.ReadAsync(account.Key, request.Token);
                 if (generation != _generation || !_running) return;
-                CredentialStatus = result.SecureStorageAvailable ? MailResources.CredentialHint : MailResources.SessionOnly;
                 password = result.Password ?? "";
+                if (password.Length == 0)
+                {
+                    Status = MailResources.PasswordRequired;
+                    notice = result.SecureStorageAvailable ? MailResources.SignInHint : $"{MailResources.SignInHint} {MailResources.SessionOnly}";
+                    return;
+                }
             }
-            if (string.IsNullOrEmpty(password)) { Status = MailResources.PasswordRequired; return; }
             var messages = await Task.Run(() => FetchAsync(account, password, request.Token), request.Token);
             if (generation != _generation || !_running) return;
             _cacheAccountKey = account.Key;
@@ -230,6 +286,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
             Messages = messages;
             SelectedMessage = messages.FirstOrDefault(message => message.Id == previousId);
             Status = messages.Count == 0 ? MailResources.Empty : string.Format(MailResources.Loaded, messages.Count);
+            if (messages.Count == 0) notice = Status;
             if (_cache is not null)
             {
                 try
@@ -238,18 +295,27 @@ public sealed partial class MailService : ObservableObject, IModuleService
                     if (generation == _generation && _running) CacheStatus = MailResources.CacheSaved;
                 }
                 catch (OperationCanceledException) { throw; }
-                catch { if (generation == _generation && _running) CacheStatus = MailResources.CacheWriteFailed; }
+                catch { if (generation == _generation && _running) cacheWarning = CacheStatus = MailResources.CacheWriteFailed; }
             }
         }
-        catch (OperationCanceledException) { if (_running && generation == _generation) Status = MailResources.Cancelled; }
-        catch (MailKit.Security.AuthenticationException) { if (_running && generation == _generation) Status = MailResources.AuthenticationFailed; }
-        catch (SslHandshakeException) { if (_running && generation == _generation) Status = MailResources.TlsFailed; }
-        catch (NetworkProxyException) { if (_running && generation == _generation) Status = MailResources.ProxyFailed; }
-        catch (Pop3IdentityException) { if (_running && generation == _generation) Status = MailResources.Pop3IdentityFailed; }
-        catch { if (_running && generation == _generation) Status = MailResources.ConnectionFailed; }
+        catch (Exception failure)
+        {
+            if (_running && generation == _generation)
+                notice = Status = failure switch
+                {
+                    OperationCanceledException => MailResources.Cancelled,
+                    MailKit.Security.AuthenticationException => MailResources.AuthenticationFailed,
+                    SslHandshakeException => MailResources.TlsFailed,
+                    NetworkProxyException => MailResources.ProxyFailed,
+                    Pop3IdentityException => MailResources.Pop3IdentityFailed,
+                    _ => MailResources.ConnectionFailed
+                };
+        }
         finally
         {
             _request = null;
+            if (_running && generation == _generation)
+                InboxFeedback = string.Join(Environment.NewLine, new[] { notice, cacheWarning }.Where(text => text.Length > 0));
             IsBusy = false;
             Interlocked.Exchange(ref _refreshing, 0);
             if (_running && _pendingAutomaticRefresh)
@@ -265,8 +331,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
         if (account.Protocol == MailProtocol.POP3) return await FetchPop3Async(account, password, token);
         using var client = _createClient();
         // Default certificate validation remains enabled; StartTls is mandatory, never opportunistic.
-        await ConnectAsync(client, account, token);
-        await client.AuthenticateAsync(account.Username, password, token);
+        await LoginAsync(client, account, password, token);
         var inbox = client.Inbox;
         await inbox.OpenAsync(FolderAccess.ReadOnly, token);
         var messages = new List<MailMessage>();
@@ -284,6 +349,12 @@ public sealed partial class MailService : ObservableObject, IModuleService
         }
         await client.DisconnectAsync(true, token);
         return messages.OrderByDescending(message => message.Date).ToArray();
+    }
+
+    private async Task LoginAsync(IMailService client, MailAccount account, string password, CancellationToken token)
+    {
+        await ConnectAsync(client, account, token);
+        await client.AuthenticateAsync(account.Username, password, token);
     }
 
     private async Task ConnectAsync(IMailService client, MailAccount account, CancellationToken token)
@@ -322,8 +393,7 @@ public sealed partial class MailService : ObservableObject, IModuleService
     private async Task<IReadOnlyList<MailMessage>> FetchPop3Async(MailAccount account, string password, CancellationToken token)
     {
         using var client = _createPop3Client();
-        await ConnectAsync(client, account, token);
-        await client.AuthenticateAsync(account.Username, password, token);
+        await LoginAsync(client, account, password, token);
         IList<string> uids;
         try { uids = await client.GetMessageUidsAsync(token); }
         catch (Exception error) when (error is NotSupportedException or Pop3CommandException or Pop3ProtocolException)

@@ -7,10 +7,14 @@ namespace DigitalWorkstation.Settings.ViewModels;
 /// <summary>
 ///     设置页左侧分组树的分组节点：显示名按当前 UI 区域性解析（缺键回退键名本身）
 /// </summary>
-public sealed class SettingGroupModel : ObservableObject
+public sealed class SettingGroupModel : ObservableObject, ISettingGroupDraft
 {
-    public SettingGroupModel(SettingGroupContribution contribution, IReadOnlyList<SettingItemModel> items)
+    private readonly Func<IReadOnlyDictionary<string, object?>, bool> _save;
+
+    public SettingGroupModel(SettingGroupContribution contribution, IReadOnlyList<SettingItemModel> items,
+        Func<IReadOnlyDictionary<string, object?>, bool> save)
     {
+        _save = save;
         Key = contribution.Id;
         Name = contribution.ResourceType is { } resourceType
             ? ResourceText.Get(resourceType, contribution.Name)
@@ -26,6 +30,17 @@ public sealed class SettingGroupModel : ObservableObject
 
     private readonly Lazy<object?> panel;
     public object? Panel => panel.Value;
+
+    public T? Get<T>(string settingId) =>
+        Items.FirstOrDefault(item => item.Id == settingId)?.DraftValue is T value ? value : default;
+
+    public bool TrySave()
+    {
+        var drafts = Items.Where(item => item.HasDraft).ToArray();
+        if (!_save(drafts.ToDictionary(item => item.Id, item => item.DraftValue))) return false;
+        foreach (var item in drafts) item.FinishSave();
+        return true;
+    }
 
     public bool HasDraft => Items.Any(item => item.HasDraft);
     public IReadOnlyList<SettingItemModel> Items { get; }

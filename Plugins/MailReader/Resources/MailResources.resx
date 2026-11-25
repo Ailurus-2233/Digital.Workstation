@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?><root><resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>2.0</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
-<data name="Account" xml:space="preserve"><value>账户与凭据</value></data>
-<data name="AuthenticationFailed" xml:space="preserve"><value>认证失败。请检查用户名、密码／授权码和邮箱的当前收信协议权限后重试。</value></data>
+<data name="AuthenticationFailed" xml:space="preserve"><value>邮箱认证失败，请在设置中检查邮箱地址、登录码和收信协议权限。</value></data>
 <data name="Cancelled" xml:space="preserve"><value>刷新已取消，可重新刷新。</value></data>
-<data name="ConfigureHint" xml:space="preserve"><value>请在设置的“邮件阅读”组选择 IMAP 或 POP3 并填写服务器、端口、TLS 方式和用户名，再在“账户与凭据”输入密码并手动刷新。修改连接参数会清空当前列表。</value></data>
+<data name="ConfigureHint" xml:space="preserve"><value>请在设置 → 邮件阅读中配置邮箱。</value></data>
 <data name="ConnectionFailed" xml:space="preserve"><value>连接或收信失败。请检查网络和服务器设置后点击刷新重试；已有本次会话邮件仍可阅读。</value></data>
-<data name="ConnectionSettings" xml:space="preserve"><value>打开设置 → 邮件阅读</value></data>
-<data name="CredentialHint" xml:space="preserve"><value>已保存的凭据将在刷新时读取。未保存的密码仅供本次会话使用；密码不会写入普通设置。</value></data>
-<data name="CredentialSaved" xml:space="preserve"><value>凭据已由当前系统安全存储。</value></data>
 <data name="Date" xml:space="preserve"><value>时间</value></data>
 <data name="Empty" xml:space="preserve"><value>收件箱没有邮件。</value></data>
 <data name="From" xml:space="preserve"><value>发件人</value></data>
@@ -15,12 +11,11 @@
 <data name="Loaded" xml:space="preserve"><value>已读取 {0} 封邮件，请在列表中选择。</value></data>
 <data name="Loading" xml:space="preserve"><value>正在连接并读取最近 100 封邮件…</value></data>
 <data name="NoSubject" xml:space="preserve"><value>（无主题）</value></data>
-<data name="Password" xml:space="preserve"><value>密码／客户端授权码</value></data>
-<data name="PasswordRequired" xml:space="preserve"><value>请先完成连接设置并输入密码／授权码。</value></data>
+<data name="Password" xml:space="preserve"><value>登录码（客户端授权码）</value></data>
+<data name="PasswordRequired" xml:space="preserve"><value>请输入邮箱的客户端授权码。</value></data>
 <data name="PluginName" xml:space="preserve"><value>邮件阅读</value></data>
 <data name="Port" xml:space="preserve"><value>端口（IMAP TLS 通常 993，POP3 TLS 通常 995；以服务商为准）</value></data>
 <data name="Refresh" xml:space="preserve"><value>手动刷新</value></data>
-<data name="SavePassword" xml:space="preserve"><value>安全保存凭据</value></data>
 <data name="SelectHint" xml:space="preserve"><value>从左侧邮件列表选择邮件以阅读正文。</value></data>
 <data name="Server" xml:space="preserve"><value>收信服务器</value></data>
 <data name="SessionOnly" xml:space="preserve"><value>安全存储不可用、已锁定或访问被拒绝。当前仅会话模式：密码不落盘，重启后需重新输入。</value></data>
@@ -29,7 +24,7 @@
 <data name="TlsSslOnConnect" xml:space="preserve"><value>连接时使用 TLS</value></data>
 <data name="TlsStartTls" xml:space="preserve"><value>STARTTLS（必须支持）</value></data>
 <data name="To" xml:space="preserve"><value>收件人</value></data>
-<data name="Username" xml:space="preserve"><value>用户名</value></data>
+<data name="Username" xml:space="preserve"><value>邮箱地址</value></data>
 <data name="Protocol" xml:space="preserve"><value>收信协议</value></data><data name="Pop3IdentityFailed" xml:space="preserve"><value>POP3 服务器不支持 UIDL 或返回的邮件标识无效，无法安全识别邮件。请联系服务商或改用 IMAP。</value></data>
 <data name="ProtocolIMAP" xml:space="preserve"><value>IMAP</value></data><data name="ProtocolPOP3" xml:space="preserve"><value>POP3</value></data><data name="Attachments" xml:space="preserve"><value>附件</value></data>
 <data name="SaveAttachment" xml:space="preserve"><value>保存附件</value></data>
@@ -45,4 +40,14 @@
 <data name="CacheWriteFailed" xml:space="preserve"><value>本地缓存保存失败；此前磁盘缓存保留，当前新邮件仅在会话中可用。</value></data>
 <data name="AttachmentOffline" xml:space="preserve"><value>附件未缓存，离线不可下载；请联网刷新后保存。</value></data>
   <data name="ProxyFailed" xml:space="preserve"><value>代理连接失败，请检查代理地址、凭据和服务状态。</value></data>
+<data name="MessageList" xml:space="preserve"><value>邮件列表</value></data>
+<data name="Authenticate" xml:space="preserve"><value>认证</value></data>
+<data name="Authenticating" xml:space="preserve"><value>正在登录…</value></data>
+<data name="LoginSucceeded" xml:space="preserve"><value>登录成功。</value></data>
+<data name="LoginUnavailable" xml:space="preserve"><value>当前无法认证，请稍后重试。</value></data>
+<data name="LoginCancelled" xml:space="preserve"><value>登录已取消，请重新认证。</value></data>
+<data name="LoginSettingsSaveFailed" xml:space="preserve"><value>邮箱已通过认证，但连接设置保存失败。</value></data>
+<data name="LoginConnectionFailed" xml:space="preserve"><value>连接邮箱失败，请检查网络和服务器设置。</value></data>
+<data name="RememberLoginCode" xml:space="preserve"><value>记住登录码</value></data>
+<data name="SignInHint" xml:space="preserve"><value>请在设置 → 邮件阅读中输入登录码并认证。</value></data>
 </root>

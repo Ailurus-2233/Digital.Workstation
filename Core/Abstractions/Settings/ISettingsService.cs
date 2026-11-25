@@ -6,13 +6,15 @@ namespace DigitalWorkstation.Core.Abstractions.Settings;
 ///     写 = 更新内存 + 防抖落盘 + 广播 SettingChangedEvent（事件契约在 Core/Common/Events）。
 ///     另承载「重启后生效」判定：跟踪本次进程内的值是否偏离启动时的生效值
 /// </summary>
-public interface ISettingsService
+public interface ISettingsService : ISettingValues
 {
+    T? ISettingValues.Get<T>(string settingId) where T : default => Get<T>(settingId);
+
     /// <summary>
     ///     读取设置值：<paramref name="settingId" /> 已修改返回用户值，未修改返回声明的默认值，
     ///     未声明（含持久化值反序列化失败回退后仍无声明）返回 <typeparamref name="T" /> 的默认值并记日志
     /// </summary>
-    T? Get<T>(string settingId);
+    new T? Get<T>(string settingId);
 
     /// <summary>
     ///     写入设置值：立即更新内存、防抖落盘 settings.json、广播变更事件；

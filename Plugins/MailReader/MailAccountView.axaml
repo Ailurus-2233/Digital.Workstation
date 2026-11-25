@@ -1,20 +1,13 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:r="using:DigitalWorkstation.MailReader.Resources" x:Class="DigitalWorkstation.MailReader.MailAccountView">
-    <ScrollViewer Margin="16">
-        <StackPanel Spacing="8">
-            <TextBlock FontSize="20" Text="{x:Static r:MailResources.Account}" />
-            <TextBlock Text="{Binding AccountDisplay}" TextWrapping="Wrap" />
-            <TextBlock Text="{x:Static r:MailResources.ConfigureHint}" TextWrapping="Wrap" />
-            <Button Content="{x:Static r:MailResources.ConnectionSettings}" Command="{Binding OpenSettingsCommand}" />
-            <TextBlock Text="{x:Static r:MailResources.Password}" />
-            <TextBox PasswordChar="●" Text="{Binding Password, Mode=TwoWay}" MaxWidth="500" HorizontalAlignment="Left" MinWidth="180" />
-            <WrapPanel>
-                <Button Content="{x:Static r:MailResources.SavePassword}" Command="{Binding SavePasswordCommand}" Margin="0,0,8,4" />
-                <Button Content="{x:Static r:MailResources.Refresh}" Command="{Binding RefreshCommand}" Margin="0,0,8,4" />
-            </WrapPanel>
-            <TextBlock Text="{Binding CredentialStatus}" TextWrapping="Wrap" />
-            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
-            <TextBlock Text="{Binding CacheStatus}" TextWrapping="Wrap" />
-        </StackPanel>
-    </ScrollViewer>
+    <StackPanel Margin="0,6" Spacing="6">
+        <TextBlock Text="{x:Static r:MailResources.Password}" />
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBox Name="LoginCode" PasswordChar="●" IsUndoEnabled="False"
+                     AutomationProperties.Name="{x:Static r:MailResources.Password}" />
+            <Button Grid.Column="1" Name="AuthenticateButton" Content="{x:Static r:MailResources.Authenticate}" Click="Authenticate" />
+        </Grid>
+        <CheckBox Name="RememberCode" IsChecked="False" Content="{x:Static r:MailResources.RememberLoginCode}" />
+        <TextBlock Name="Feedback" TextWrapping="Wrap" />
+    </StackPanel>
 </UserControl>

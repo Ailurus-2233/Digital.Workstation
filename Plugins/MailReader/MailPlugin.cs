@@ -22,7 +22,6 @@ public sealed class MailPlugin : IModule
         registry.RegisterSettings(typeof(MailPlugin).Assembly);
         registry.RegisterToolViews(typeof(MailPlugin).Assembly);
         registry.RegisterShellContribution<IMainViewContribution, MailMainView>();
-        registry.RegisterShellContribution<IMainViewContribution, MailAccountMainView>();
         registry.Register<MailAccountView>();
         registry.Register<MailReadingView>();
     }
@@ -35,12 +34,4 @@ public sealed class MailMainView : IMainViewContribution
     public string Id => ViewId;
     public Type ViewType => typeof(MailReadingView);
     public string Title => MailResources.PluginName;
-}
-
-public sealed class MailAccountMainView : IMainViewContribution
-{
-    public const string ViewId = "mail-reader.account";
-    public string Id => ViewId;
-    public string Title => MailResources.Account;
-    public Type ViewType => typeof(MailAccountView);
 }
