@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:DigitalWorkstation.NotifyPanel" xmlns:ui="using:DigitalWorkstation.Core.UIPackage"
+             x:Class="DigitalWorkstation.NotifyPanel.NotificationBubble"
+             HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="16,0,16,32"
+             MinWidth="200" MaxWidth="360" Focusable="False">
+    <Border x:Name="Card" IsVisible="False" Opacity="0" CornerRadius="8" Padding="16,12"
+            Background="{DynamicResource SemiColorBackground2}" BoxShadow="0 3 12 0 #66000000">
+        <Grid RowDefinitions="Auto,1,Auto" RowSpacing="8">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <PathIcon x:Name="LevelIcon" Width="16" Height="16" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="SemiBold"
+                           Text="{Binding Level, Converter={x:Static local:NotifyResources.LevelLabel}}" />
+                <Button x:Name="DismissButton" Grid.Column="2" Width="24" Height="24" MinWidth="0" MinHeight="0"
+                        Padding="0" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center" AutomationProperties.Name="{x:Static local:NotifyResources.Dismiss}">
+                    <PathIcon Width="12" Height="12" Foreground="{DynamicResource SemiColorText1}" Data="{x:Static ui:Icons.Exit}" />
+                </Button>
+            </Grid>
+            <Border Grid.Row="1" Background="{Binding #LevelIcon.Foreground}" />
+            <TextBlock Grid.Row="2" Text="{Binding Message}" TextWrapping="Wrap" MaxLines="5" TextTrimming="CharacterEllipsis" />
+        </Grid>
+    </Border>
+</UserControl>

@@ -29,6 +29,7 @@ public abstract class FrameworkWindow : UrsaWindow
     private readonly FrameworkWindowTheme _theme = new();
     private readonly ContentControl _layoutHost = new();
     private readonly CommandPalette _palette = new();
+    private readonly Panel _layers = new();
 
     protected FrameworkWindow()
     {
@@ -38,7 +39,9 @@ public abstract class FrameworkWindow : UrsaWindow
         // 命令面板：顶部浮层代码创建，叠在布局宿主之上（不动四份布局模板）；
         // ItemsSource 宽松绑定 ViewModel 的 Commands 集合，Ctrl+P 直接开关
         _palette[!CommandPalette.ItemsSourceProperty] = new Binding("Commands");
-        Content = new Panel { Children = { _layoutHost, _palette } };
+        _layers.Children.Add(_layoutHost);
+        _layers.Children.Add(_palette);
+        Content = _layers;
         KeyBindings.Add(new KeyBinding
         {
             Gesture = new KeyGesture(Key.P, KeyModifiers.Control),
@@ -58,6 +61,8 @@ public abstract class FrameworkWindow : UrsaWindow
         DataTemplates.Add(new FuncDataTemplate<MenuItemViewModel>((item, _) => BuildMenuItemHeader(item!)));
         UpdateLayoutTemplate();
     }
+
+    public void AddOverlay(Control overlay) => _layers.Children.Add(overlay);
 
     /// <summary>
     ///     菜单项头部：图标槽位 + 标题。弹出层内的项始终预留 14×14 槽位（null 图标渲染空 PathIcon，

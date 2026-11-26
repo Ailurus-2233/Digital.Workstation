@@ -36,8 +36,6 @@ public sealed partial class ClashView : UserControl
         var updating = service.Operation == ClashOperation.UpdatingSubscriptions;
         SubscriptionDivider.IsVisible = !updating;
         SubscriptionProgress.IsIndeterminate = SubscriptionProgress.IsVisible = updating;
-        Feedback.Text = service.Message;
-        Feedback.IsVisible = !string.IsNullOrEmpty(service.Message);
     }
 
     private void BeginEdit(Subscription? source)

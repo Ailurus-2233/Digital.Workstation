@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Title"><value>Notifications</value></data>
+  <data name="ClearAll"><value>Clear all</value></data>
+  <data name="Empty"><value>No notifications</value></data>
+  <data name="Remove"><value>Remove notification</value></data>
+  <data name="Dismiss"><value>Dismiss notification</value></data>
+  <data name="Information"><value>Information</value></data>
+  <data name="Success"><value>Success</value></data>
+  <data name="Warning"><value>Warning</value></data>
+  <data name="Error"><value>Error</value></data>
+</root>

@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using DigitalWorkstation.Core.Abstractions.Settings;
+using DigitalWorkstation.Core.Abstractions.Notifications;
 using Avalonia.Styling;
 using DigitalWorkstation.Core.Abstractions.WindowManager;
 using DigitalWorkstation.Core.Common;
@@ -155,6 +156,7 @@ public abstract class FrameworkApplication<TWindow> : PrismApplication where TWi
                     if (_isShuttingDown) return false;
                     onFailure?.Invoke(ex);
                     Logger.Error(ex, $"Failed to prepare module or plugin {name}");
+                    Container.Resolve<INotifyService>().Notify(NotifyLevel.Error, $"{name}: {ex.Message}");
                     var failureAction = WaitForFailureActionAsync(eventAggregator);
                     eventAggregator.GetEvent<ModuleLoadFailedEvent>().Publish(
                         new ModuleLoadFailure(name, current, total, ex.Message));

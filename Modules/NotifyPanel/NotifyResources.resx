@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Title"><value>通知</value></data>
+  <data name="ClearAll"><value>清空通知</value></data>
+  <data name="Empty"><value>暂无通知</value></data>
+  <data name="Remove"><value>删除此通知</value></data>
+  <data name="Dismiss"><value>关闭气泡</value></data>
+  <data name="Information"><value>信息</value></data>
+  <data name="Success"><value>成功</value></data>
+  <data name="Warning"><value>警告</value></data>
+  <data name="Error"><value>错误</value></data>
+</root>

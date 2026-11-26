@@ -3,7 +3,7 @@
     <Style Selector="Button.cardAction"><Setter Property="Padding" Value="5"/><Setter Property="MinWidth" Value="26"/><Setter Property="MinHeight" Value="28"/></Style>
     <Style Selector="Button.cardAction PathIcon"><Setter Property="Height" Value="14"/><Setter Property="Width" Value="14"/></Style>
   </UserControl.Styles>
-  <Grid Margin="8" RowDefinitions="Auto,3,Auto,Auto,*">
+  <Grid Margin="8" RowDefinitions="Auto,3,Auto,*">
     <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="4" Margin="0,0,0,6">
       <ToggleButton Name="Power" Click="Toggle" AutomationProperties.Name="{x:Static r:ClashResources.Power}">
         <PathIcon Width="16" Height="16" Data="M11 2h2v10h-2z M7 4l1 1.8a7 7 0 1 0 8 0L17 4a9 9 0 1 1-10 0z"/>
@@ -29,8 +29,7 @@
         <Button Content="{x:Static r:ClashResources.Cancel}" Click="Cancel"/>
       </StackPanel>
     </StackPanel>
-    <TextBlock Grid.Row="3" Name="Feedback" TextWrapping="Wrap" IsVisible="False"/>
-    <ScrollViewer Grid.Row="4">
+    <ScrollViewer Grid.Row="3">
       <ItemsControl Name="Cards">
         <ItemsControl.ItemTemplate>
           <DataTemplate>

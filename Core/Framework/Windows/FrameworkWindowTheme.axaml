@@ -5,6 +5,18 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Styles.Resources>
+        <DataTemplate x:Key="ToolViewIconTemplate">
+            <Grid>
+                <PathIcon Data="{Binding Icon}" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                <Border Width="14" Height="14" Margin="7,0,0,5" CornerRadius="7"
+                        HorizontalAlignment="Right" VerticalAlignment="Top" IsHitTestVisible="False"
+                        Background="{DynamicResource SemiColorDanger}"
+                        IsVisible="{Binding Contribution.Badge.BadgeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}">
+                    <TextBlock FontSize="10" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
+                               VerticalAlignment="Center" Text="{Binding Contribution.Badge.BadgeText}" />
+                </Border>
+            </Grid>
+        </DataTemplate>
         <!--  ActivityBar 导航项：图标按钮，Command 宽松绑定到窗口 ViewModel（Framework 不引用具体 ViewModel 类型）  -->
         <DataTemplate x:Key="NavigationItemTemplate">
             <layout:ToolViewButton
@@ -16,7 +28,7 @@
                 CommandParameter="{Binding}"
                 DragTabId="{Binding Id}"
                 ToolTip.Tip="{Binding Title}">
-                <PathIcon Data="{Binding Icon}" />
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ToolViewIconTemplate}" />
             </layout:ToolViewButton>
         </DataTemplate>
 
@@ -161,7 +173,7 @@
                                             CommandParameter="{Binding}"
                                             DragTabId="{Binding Id}">
                                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                                <PathIcon Data="{Binding Icon}" Height="14" Width="14" />
+                                                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ToolViewIconTemplate}" />
                                                 <TextBlock FontSize="12" Text="{Binding Title}" />
                                             </StackPanel>
                                         </layout:ToolViewButton>
@@ -217,7 +229,7 @@
                                             CommandParameter="{Binding}"
                                             DragTabId="{Binding Id}">
                                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                                <PathIcon Data="{Binding Icon}" Height="14" Width="14" />
+                                                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ToolViewIconTemplate}" />
                                                 <TextBlock FontSize="12" Text="{Binding Title}" />
                                             </StackPanel>
                                         </layout:ToolViewButton>
@@ -575,6 +587,10 @@
         <Setter Property="Foreground" Value="{DynamicResource ChromeActivityBarItemActiveForeground}" />
     </Style>
     <!--  面板 tab  -->
+    <Style Selector="Button.panel-tab PathIcon">
+        <Setter Property="Width" Value="14" />
+        <Setter Property="Height" Value="14" />
+    </Style>
     <Style Selector="Button.panel-tab">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />

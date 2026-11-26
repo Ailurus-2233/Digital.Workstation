@@ -6,6 +6,12 @@
 /// </summary>
 public static class Icons
 {
+    public const string Bell =
+        "M12 22a2.4 2.4 0 0 0 2.35-2h-4.7A2.4 2.4 0 0 0 12 22ZM20 16l-2-2v-4a6 6 0 0 0-5-5.92V3a1 1 0 0 0-2 0v1.08A6 6 0 0 0 6 10v4l-2 2v2h16ZM8 15v-5a4 4 0 1 1 8 0v5l1 1H7Z";
+
+    public const string Broom =
+        "M11 1h2v10h-2z M8 12h8l1 3H7z M7 16h10l3 7h-4l-1-4v4h-3v-4l-1 4H8l1-4-2 4H4z";
+
     /// <summary>
     ///     设置齿轮，shell 预置"设置"导航项
     /// </summary>
@@ -56,6 +62,9 @@ public static class Icons
     /// </summary>
     public const string Ready =
         "M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2m0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8m4.59-12.42L10 14.17l-2.59-2.58L6 13l4 4 8-8-1.41-1.42Z";
+
+    public const string Warning = "M1 21 12 2l11 19H1Zm10-3h2v-2h-2v2Zm0-4h2V9h-2v5Z";
+    public const string Error = "M8 2h8l6 6v8l-6 6H8l-6-6V8Zm.4 5L7 8.4l3.6 3.6L7 15.6 8.4 17l3.6-3.6 3.6 3.6 1.4-1.4-3.6-3.6L17 8.4 15.6 7 12 10.6Z";
 
     /// <summary>
     ///     左对齐横线组，面板对齐菜单"左对齐"项与对齐按钮的左对齐态

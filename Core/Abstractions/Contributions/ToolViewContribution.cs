@@ -1,4 +1,11 @@
+using System.ComponentModel;
+
 namespace DigitalWorkstation.Core.Abstractions.Contributions;
+
+public interface IToolViewBadge : INotifyPropertyChanged
+{
+    string? BadgeText { get; }
+}
 
 /// <summary>
 ///     工具视图（ToolView）的贡献元数据：由 Framework 侧 RegisterToolViews
@@ -22,6 +29,9 @@ public sealed class ToolViewContribution
     ///     图标的 StreamGeometry path 字符串，由 PathIcon 消费并随主题变色；null = 无图标
     /// </summary>
     public required string? IconPath { get; init; }
+
+    /// <summary>可选的动态图标角标。文本为空时隐藏。</summary>
+    public IToolViewBadge? Badge { get; init; }
 
     /// <summary>
     ///     同一 Bar 内的默认排序权重，小者靠前

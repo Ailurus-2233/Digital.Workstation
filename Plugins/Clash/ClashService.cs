@@ -1,5 +1,7 @@
 using Avalonia.Threading;
+using DigitalWorkstation.Core.Abstractions.Notifications;
 using DigitalWorkstation.Core.Abstractions.Settings;
+using DigitalWorkstation.Core.Common;
 using DigitalWorkstation.Core.Common.Events;
 using System.Net;
 using System.Net.Sockets;
@@ -39,16 +41,18 @@ public sealed class ClashService : IModuleService
 
     private readonly ISettingsService? hostSettings;
     private readonly IEventAggregator? events;
+    private readonly INotifyService? notifications;
     private DispatcherTimer? settingsTimer;
 
-    public ClashService(ISettingsService settings, IEventAggregator events) : this(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Digital.Workstation", "Clash"), coreFolder: Path.GetDirectoryName(typeof(ClashPlugin).Assembly.Location))
+    public ClashService(ISettingsService settings, IEventAggregator events, INotifyService notifications) : this(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Digital.Workstation", "Clash"), coreFolder: Path.GetDirectoryName(typeof(ClashPlugin).Assembly.Location), notifications: notifications)
     {
         hostSettings = settings;
         this.events = events;
     }
-    internal ClashService(string directory, Uri? delayTarget = null, string? coreFolder = null)
+    internal ClashService(string directory, Uri? delayTarget = null, string? coreFolder = null, INotifyService? notifications = null)
     {
         this.directory = directory;
+        this.notifications = notifications;
         this.coreFolder = coreFolder ?? directory;
         this.delayTarget = delayTarget ?? new Uri("https://www.gstatic.com/generate_204");
     }
@@ -130,10 +134,12 @@ public sealed class ClashService : IModuleService
             Changed?.Invoke();
             await action();
         }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
         catch (Exception ex)
         {
             if (operation == ClashOperation.UpdatingSubscriptions) subscriptionError = ex.Message;
             else operationMessage = ex.Message;
+            ReportProblem(NotifyLevel.Error, ex.Message, ex);
         }
         finally
         {
@@ -141,6 +147,22 @@ public sealed class ClashService : IModuleService
             operationGate.Release();
             Changed?.Invoke();
         }
+    }
+
+    private void ReportProblem(NotifyLevel level, string message, Exception? exception = null)
+    {
+        try
+        {
+            Directory.CreateDirectory(directory);
+            var detail = exception?.ToString() ?? message;
+            File.AppendAllText(Path.Combine(directory, "operations.log"),
+                $"[{DateTimeOffset.Now:O}] [{level}] {detail}{Environment.NewLine}");
+        }
+        catch (Exception logError) when (logError is IOException or UnauthorizedAccessException)
+        {
+            Logger.Error(logError, $"Could not save Clash operations.log: {message}", nameof(ClashService));
+        }
+        notifications?.Notify(level, $"{ClashResources.Title}: {message}");
     }
 
     private void Save(Preferences settings)
@@ -171,18 +193,23 @@ public sealed class ClashService : IModuleService
             lifetime.Token.ThrowIfCancellationRequested();
             engine = new Engine(directory, settings, executable);
             var nodes = await engine.ReadAsync(settings, lifetime.Token);
-            if (settings.Selected != null && nodes.Any(n => n.Key == settings.Selected))
+            bool selectionRemoved = settings.Selected != null && !nodes.Any(n => n.Key == settings.Selected);
+            if (settings.Selected != null && !selectionRemoved)
             {
                 await engine.SelectAsync(settings.Selected, lifetime.Token);
                 if (settings.Enabled) await OpenPort(settings.Port);
             }
             else
             {
-                if (settings.Selected != null) operationMessage = ClashResources.NodeRemoved;
                 settings = settings with { Enabled = false, Selected = null };
             }
             Save(settings);
             Nodes = nodes;
+            if (selectionRemoved)
+            {
+                operationMessage = ClashResources.NodeRemoved;
+                ReportProblem(NotifyLevel.Warning, operationMessage);
+            }
         }
         catch { CloseEngine(); throw; }
     }
@@ -273,6 +300,7 @@ public sealed class ClashService : IModuleService
             catch (Exception ex) when (!lifetime.IsCancellationRequested) { failures.Add($"{source.Name}：{ex.Message}"); }
         }
         subscriptionError = string.Join("\n", failures);
+        if (failures.Count > 0) ReportProblem(NotifyLevel.Error, subscriptionError);
     }
 
     public async Task Remove(Subscription source)

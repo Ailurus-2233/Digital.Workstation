@@ -8,6 +8,7 @@ using DigitalWorkstation.Core.Framework.Menus;
 using DigitalWorkstation.DashBoard;
 using DigitalWorkstation.DashBoard.Views.Windows;
 using DigitalWorkstation.Settings;
+using DigitalWorkstation.NotifyPanel;
 using DigitalWorkstation.Workstation.Contributions;
 using DigitalWorkstation.Workstation.Views;
 
@@ -19,6 +20,7 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
     {
         moduleCatalog.AddModule<DashBoardModule>();
         moduleCatalog.AddModule<SettingsModule>();
+        moduleCatalog.AddModule<NotifyPanelModule>();
     }
     
     protected override void RegisterCustomService(IContainerRegistry containerRegistry)
@@ -43,7 +45,10 @@ public class WorkstationApplication : FrameworkApplication<MainWindow>
     /// </summary>
     protected override void PrepareShell()
     {
-        if (MainWindow is MainWindow window) window.PrepareContributions();
+        if (MainWindow is not MainWindow window) return;
+        window.PrepareContributions();
+        foreach (var bubble in Container.Resolve<ShellContributionCatalog>().Get<NotificationBubble>())
+            window.AddOverlay(bubble);
     }
 
     /// <summary>
