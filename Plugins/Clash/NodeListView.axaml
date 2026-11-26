@@ -1,4 +1,14 @@
 <UserControl xmlns:r="using:DigitalWorkstation.Clash" xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="DigitalWorkstation.Clash.NodeListView">
+  <UserControl.Styles>
+    <Style Selector="PathIcon#MeasureSpinner[IsVisible=True]">
+      <Style.Animations>
+        <Animation Duration="0:0:1" IterationCount="Infinite">
+          <KeyFrame Cue="0%"><Setter Property="RotateTransform.Angle" Value="0"/></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="RotateTransform.Angle" Value="360"/></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+  </UserControl.Styles>
   <Grid Margin="12" RowDefinitions="Auto,Auto,*">
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,8">
       <WrapPanel>
@@ -7,7 +17,11 @@
         <ComboBox Name="States" AutomationProperties.Name="{x:Static r:ClashResources.State}" Margin="0,0,0,2"/>
       </WrapPanel>
       <Button Grid.Column="1" Name="MeasureButton" Click="Measure" VerticalAlignment="Top" ToolTip.Tip="{x:Static r:ClashResources.Measure}" AutomationProperties.Name="{x:Static r:ClashResources.Measure}">
-        <PathIcon Width="16" Height="16" Data="M2 12h4l3-8 5 15 2-7h6v2h-4l-4 10L9 10l-2 4H2z"/>
+        <Grid Width="16" Height="16">
+          <PathIcon Name="MeasureIcon" Data="M2 12h4l3-8 5 15 2-7h6v2h-4l-4 10L9 10l-2 4H2z"/>
+          <PathIcon Name="MeasureSpinner" IsVisible="False" RenderTransformOrigin="50%,50%"
+                    Data="M12 2a10 10 0 1 1-10 10h3a7 7 0 1 0 7-7z"/>
+        </Grid>
       </Button>
     </Grid>
     <TextBlock Grid.Row="1" Name="Status" TextWrapping="Wrap"/>
@@ -27,7 +41,7 @@
         </DataGridTemplateColumn>
         <DataGridTextColumn Header="{x:Static r:ClashResources.Source}" Binding="{Binding Source.Name}" SortMemberPath="Source.Name" Width="*" MinWidth="80"/>
         <DataGridTextColumn Header="{x:Static r:ClashResources.Updated}" Binding="{Binding Updated}" SortMemberPath="Source.UpdatedAt" Width="155"/>
-        <DataGridTextColumn Header="{x:Static r:ClashResources.Latency}" Binding="{Binding Latency}" SortMemberPath="Delay" Width="90"/>
+        <DataGridTextColumn Header="{x:Static r:ClashResources.Latency}" Binding="{Binding Latency}" SortMemberPath="LatencySortKey" Width="90"/>
       </DataGrid.Columns>
     </DataGrid>
   </Grid>

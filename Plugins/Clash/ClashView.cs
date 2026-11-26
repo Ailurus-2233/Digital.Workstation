@@ -33,7 +33,11 @@ public sealed partial class ClashView : UserControl
         ToolTip.SetTip(Power, service.Listening ? string.Format(ClashResources.Stop, service.Settings.Port) : ClashResources.Start);
         Cards.ItemsSource = service.Settings.Sources;
         RefreshButton.IsEnabled = !service.Busy && service.Settings.Sources.Length > 0;
-        Feedback.Text = service.Busy ? ClashResources.Busy : service.Message;
+        var updating = service.Operation == ClashOperation.UpdatingSubscriptions;
+        SubscriptionDivider.IsVisible = !updating;
+        SubscriptionProgress.IsIndeterminate = SubscriptionProgress.IsVisible = updating;
+        Feedback.Text = service.Message;
+        Feedback.IsVisible = !string.IsNullOrEmpty(service.Message);
     }
 
     private void BeginEdit(Subscription? source)
@@ -58,12 +62,13 @@ public sealed partial class ClashView : UserControl
     {
         await service.Import(SourceName.Text ?? "", SourceUrl.Text ?? "", editing);
         Editor.IsVisible = false;
-    });
-    private async void RefreshAll(object? sender, RoutedEventArgs e) => await service.Run(service.RefreshAll);
+    }, ClashOperation.UpdatingSubscriptions);
+    private async void RefreshAll(object? sender, RoutedEventArgs e) =>
+        await service.Run(service.RefreshAll, ClashOperation.UpdatingSubscriptions);
     private async void Refresh(object? sender, RoutedEventArgs e)
     {
         var source = (Subscription)((Button)sender!).DataContext!;
-        await service.Run(() => service.Import(source.Name, source.Url, source));
+        await service.Run(() => service.Import(source.Name, source.Url, source), ClashOperation.UpdatingSubscriptions);
     }
     private async void Remove(object? sender, RoutedEventArgs e)
     {

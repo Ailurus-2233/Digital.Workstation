@@ -35,6 +35,7 @@ public sealed record Node(Subscription Source, string Key, string Name, NodeStat
 {
     public string Updated => Source.UpdatedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "—";
     public string Latency => Delay.HasValue ? $"{Delay} ms" : ClashResources.Text(State.ToString());
+    public double? LatencySortKey => State is NodeState.Failed or NodeState.TimedOut ? double.PositiveInfinity : Delay;
     public override string ToString() => $"{Name} · {Source.Name} · {Latency}";
 }
 

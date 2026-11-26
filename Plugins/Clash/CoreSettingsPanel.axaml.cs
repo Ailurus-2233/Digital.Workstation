@@ -26,7 +26,7 @@ public sealed partial class CoreSettingsPanel : UserControl
         bool exists = file.Exists;
         Download.IsEnabled = !service.Busy && !exists;
         UpdateButton.IsEnabled = DeleteButton.IsEnabled = !service.Busy && exists;
-        Feedback.Text = service.Busy ? ClashResources.Busy : service.Message;
+        Feedback.Text = service.Operation == ClashOperation.Other ? ClashResources.Busy : service.Message;
         if (!exists)
         {
             revision++;

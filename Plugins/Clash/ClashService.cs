@@ -8,6 +8,8 @@ using DigitalWorkstation.Core.Abstractions.Services;
 
 namespace DigitalWorkstation.Clash;
 
+internal enum ClashOperation { Idle, Other, UpdatingSubscriptions, Measuring, SelectingNode }
+
 public sealed class ClashService : IModuleService
 {
     private readonly string directory;
@@ -15,14 +17,23 @@ public sealed class ClashService : IModuleService
     internal string CorePath => MihomoInstaller.Executable(coreFolder);
     private readonly Uri delayTarget;
     private readonly CancellationTokenSource lifetime = new();
+    private readonly SemaphoreSlim operationGate = new(1, 1);
     private readonly HttpClient download = new(new HttpClientHandler { UseProxy = false }) { MaxResponseContentBufferSize = 16 * 1024 * 1024 };
     private readonly MihomoInstaller installer = new();
     private Engine? engine;
     private string SettingsPath => Path.Combine(directory, "settings.json");
     public Preferences Settings { get; private set; } = new();
     public List<Node> Nodes { get; private set; } = [];
-    public string Message { get; private set; } = "";
-    public bool Busy { get; private set; }
+    private string subscriptionError = "";
+    private string operationMessage = "";
+    public string Message => (subscriptionError, operationMessage) switch
+    {
+        ("", _) => operationMessage,
+        (_, "") => subscriptionError,
+        _ => $"{subscriptionError}\n{operationMessage}"
+    };
+    internal ClashOperation Operation { get; private set; }
+    public bool Busy => Operation != ClashOperation.Idle;
     public bool Listening => Settings.Enabled && engine?.Alive == true;
     public event Action? Changed;
 
@@ -98,15 +109,38 @@ public sealed class ClashService : IModuleService
         download.Dispose();
     }
 
-    public async Task Run(Func<Task> action)
+    public Task Run(Func<Task> action) => Run(action, ClashOperation.Other);
+
+    internal async Task Run(Func<Task> action, ClashOperation operation)
     {
-        if (Busy || lifetime.IsCancellationRequested) return;
-        Busy = true;
-        Message = "";
-        Changed?.Invoke();
-        try { await action(); }
-        catch (Exception ex) { Message = ex.Message; }
-        finally { Busy = false; Changed?.Invoke(); }
+        if (lifetime.IsCancellationRequested) return;
+        if (operation == ClashOperation.SelectingNode)
+        {
+            try { await operationGate.WaitAsync(lifetime.Token); }
+            catch (OperationCanceledException) { return; }
+        }
+        else if (!operationGate.Wait(0)) return;
+
+        try
+        {
+            if (lifetime.IsCancellationRequested) return;
+            Operation = operation;
+            operationMessage = "";
+            if (operation == ClashOperation.UpdatingSubscriptions) subscriptionError = "";
+            Changed?.Invoke();
+            await action();
+        }
+        catch (Exception ex)
+        {
+            if (operation == ClashOperation.UpdatingSubscriptions) subscriptionError = ex.Message;
+            else operationMessage = ex.Message;
+        }
+        finally
+        {
+            Operation = ClashOperation.Idle;
+            operationGate.Release();
+            Changed?.Invoke();
+        }
     }
 
     private void Save(Preferences settings)
@@ -121,8 +155,12 @@ public sealed class ClashService : IModuleService
     private async Task Reload(Preferences settings)
     {
         CloseEngine();
-        Nodes = [];
-        if (settings.Sources.Length == 0) { Save(settings with { Enabled = false, Selected = null }); return; }
+        if (settings.Sources.Length == 0)
+        {
+            Save(settings with { Enabled = false, Selected = null });
+            Nodes = [];
+            return;
+        }
         try
         {
             lifetime.Token.ThrowIfCancellationRequested();
@@ -132,18 +170,19 @@ public sealed class ClashService : IModuleService
                 ? CorePath : await installer.ResolveAsync(coreFolder, lifetime.Token);
             lifetime.Token.ThrowIfCancellationRequested();
             engine = new Engine(directory, settings, executable);
-            Nodes = await engine.ReadAsync(settings, lifetime.Token);
-            if (settings.Selected != null && Nodes.Any(n => n.Key == settings.Selected))
+            var nodes = await engine.ReadAsync(settings, lifetime.Token);
+            if (settings.Selected != null && nodes.Any(n => n.Key == settings.Selected))
             {
                 await engine.SelectAsync(settings.Selected, lifetime.Token);
                 if (settings.Enabled) await OpenPort(settings.Port);
             }
             else
             {
-                if (settings.Selected != null) Message = ClashResources.NodeRemoved;
+                if (settings.Selected != null) operationMessage = ClashResources.NodeRemoved;
                 settings = settings with { Enabled = false, Selected = null };
             }
             Save(settings);
+            Nodes = nodes;
         }
         catch { CloseEngine(); throw; }
     }
@@ -233,18 +272,22 @@ public sealed class ClashService : IModuleService
             try { await Import(source.Name, source.Url, source); }
             catch (Exception ex) when (!lifetime.IsCancellationRequested) { failures.Add($"{source.Name}：{ex.Message}"); }
         }
-        if (failures.Count > 0) Message = string.Join("\n", failures);
+        subscriptionError = string.Join("\n", failures);
     }
 
     public async Task Remove(Subscription source)
     {
+        subscriptionError = "";
         await Change(Settings with { Sources = Settings.Sources.Where(s => s.Id != source.Id).ToArray() });
         File.Delete(Path.Combine(directory, source.CacheName));
     }
 
     public async Task Select(Node node)
     {
-        await engine!.SelectAsync(node.Key, lifetime.Token);
+        if (!Nodes.Any(current => current.Key == node.Key))
+            throw new InvalidOperationException(ClashResources.NodeRemoved);
+        if (engine?.Alive != true) throw new InvalidOperationException(ClashResources.LoadFirst);
+        await engine.SelectAsync(node.Key, lifetime.Token);
         Save(Settings with { Selected = node.Key });
     }
 
